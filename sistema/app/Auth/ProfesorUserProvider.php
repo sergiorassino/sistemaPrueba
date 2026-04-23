@@ -29,7 +29,13 @@ class ProfesorUserProvider implements UserProvider
             return null;
         }
 
-        return Profesor::where('dni', $credentials['dni'])->first();
+        $query = Profesor::where('dni', $credentials['dni']);
+
+        if (array_key_exists('nivel', $credentials) && $credentials['nivel'] !== '' && $credentials['nivel'] !== null) {
+            $query->where('nivel', (int) $credentials['nivel']);
+        }
+
+        return $query->first();
     }
 
     public function validateCredentials(Authenticatable $user, array $credentials): bool

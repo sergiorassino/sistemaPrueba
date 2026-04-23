@@ -19,85 +19,87 @@
         </button>
     </div>
 
-    <div class="card overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="table-header">Nivel</th>
-                    <th class="table-header">Abreviatura</th>
-                    <th class="table-header text-right">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-100">
-                @forelse ($niveles as $n)
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="table-cell font-medium">{{ $n->nivel }}</td>
-                        <td class="table-cell">
-                            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-mono">
-                                {{ $n->abrev }}
-                            </span>
-                        </td>
-                        <td class="table-cell text-right">
-                            <div class="flex items-center justify-end gap-2">
-                                <button wire:click="openEdit({{ $n->id }})"
-                                        class="btn-secondary btn-sm">Editar</button>
-                                <button wire:click="confirmDelete({{ $n->id }})"
-                                        class="btn-danger btn-sm">Eliminar</button>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="3" class="table-cell text-center text-gray-400 py-8">
-                            No hay niveles registrados.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+    {{-- Listado: grilla compacta (.gf-*) --}}
+    <div class="gf-wrap">
+        <div class="gf min-w-[480px]">
+            <div class="gf-head">
+                <div class="gf-th flex-1 min-w-[12rem]">Nivel</div>
+                <div class="gf-th w-28">Abreviatura</div>
+                <div class="gf-th-right w-48">Acciones</div>
+            </div>
+
+            @forelse ($niveles as $n)
+                <div class="gf-row gf-row-hover">
+                    <div class="gf-td flex-1 min-w-[12rem] font-medium">{{ $n->nivel }}</div>
+                    <div class="gf-td w-28">
+                        <span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 text-[10px] font-mono">
+                            {{ $n->abrev }}
+                        </span>
+                    </div>
+                    <div class="gf-td-actions w-48">
+                        <button wire:click="openEdit({{ $n->id }})" class="btn-secondary btn-sm">Editar</button>
+                        <button wire:click="confirmDelete({{ $n->id }})" class="btn-danger btn-sm">Eliminar</button>
+                    </div>
+                </div>
+            @empty
+                <div class="gf-empty">No hay niveles registrados.</div>
+            @endforelse
+        </div>
     </div>
 
-    {{-- Create / Edit Modal --}}
+    {{-- Modal Crear / Editar: grilla compacta --}}
     @if ($showModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50"
+             x-data x-init="$el.querySelector('input')?.focus()">
             <div class="bg-white rounded-lg shadow-xl w-full max-w-md" @click.stop>
                 <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                     <h3 class="text-base font-semibold text-gray-800">
                         {{ $editId ? 'Editar nivel' : 'Nuevo nivel' }}
                     </h3>
-                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-600">
+                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-600 cursor-pointer">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
                 </div>
-                <div class="px-6 py-5 space-y-4">
-                    <div>
-                        <label class="form-label" for="nivel-nombre">Nombre del nivel</label>
-                        <input wire:model="nivel"
-                               id="nivel-nombre"
-                               type="text"
-                               maxlength="50"
-                               placeholder="Ej: Nivel Secundario"
-                               class="form-input @error('nivel') border-red-400 @enderror">
-                        @error('nivel') <p class="form-error">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="form-label" for="nivel-abrev">Abreviatura (máx. 5 caracteres)</label>
-                        <input wire:model="abrev"
-                               id="nivel-abrev"
-                               type="text"
-                               maxlength="5"
-                               placeholder="Ej: Secu"
-                               class="form-input @error('abrev') border-red-400 @enderror">
-                        @error('abrev') <p class="form-error">{{ $message }}</p> @enderror
+
+                <div class="px-6 py-4">
+                    <div class="gf w-full">
+                        <div class="gf-row @error('nivel') bg-red-50 @enderror">
+                            <div class="gf-label gf-label-req w-44">Nombre del nivel</div>
+                            <div class="gf-cell @error('nivel') gf-cell-err @enderror">
+                                <input wire:model="nivel" id="nivel-nombre" type="text" maxlength="50"
+                                       placeholder="Ej: Nivel Secundario"
+                                       class="gf-input @error('nivel') gf-input-err @enderror">
+                            </div>
+                        </div>
+                        @error('nivel')
+                            <div class="gf-error-row">
+                                <div class="gf-error-spacer w-44"></div>
+                                <div class="gf-error-msg">{{ $message }}</div>
+                            </div>
+                        @enderror
+
+                        <div class="gf-row @error('abrev') bg-red-50 @enderror">
+                            <div class="gf-label gf-label-req w-44">Abreviatura <span class="font-normal text-gray-400">(máx. 5)</span></div>
+                            <div class="gf-cell @error('abrev') gf-cell-err @enderror">
+                                <input wire:model="abrev" id="nivel-abrev" type="text" maxlength="5"
+                                       placeholder="Ej: Secu"
+                                       class="gf-input @error('abrev') gf-input-err @enderror">
+                            </div>
+                        </div>
+                        @error('abrev')
+                            <div class="gf-error-row">
+                                <div class="gf-error-spacer w-44"></div>
+                                <div class="gf-error-msg">{{ $message }}</div>
+                            </div>
+                        @enderror
                     </div>
                 </div>
+
                 <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
                     <button wire:click="$set('showModal', false)" class="btn-secondary">Cancelar</button>
-                    <button wire:click="save"
-                            wire:loading.attr="disabled"
-                            class="btn-primary">
+                    <button wire:click="save" wire:loading.attr="disabled" class="btn-primary">
                         <span wire:loading.remove wire:target="save">Guardar</span>
                         <span wire:loading wire:target="save">Guardando…</span>
                     </button>
@@ -106,7 +108,6 @@
         </div>
     @endif
 
-    {{-- Confirm / Info Modal --}}
     @if ($showConfirm)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50">
             <div class="bg-white rounded-lg shadow-xl w-full max-w-sm" @click.stop>
@@ -140,9 +141,7 @@
                         {{ $deleteId ? 'Cancelar' : 'Cerrar' }}
                     </button>
                     @if ($deleteId)
-                        <button wire:click="delete"
-                                wire:loading.attr="disabled"
-                                class="btn-danger">
+                        <button wire:click="delete" wire:loading.attr="disabled" class="btn-danger">
                             <span wire:loading.remove wire:target="delete">Eliminar</span>
                             <span wire:loading wire:target="delete">Eliminando…</span>
                         </button>

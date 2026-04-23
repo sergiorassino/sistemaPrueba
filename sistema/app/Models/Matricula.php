@@ -34,4 +34,9 @@ class Matricula extends Model
     {
         return $this->belongsTo(Curso::class, 'idCursos', 'Id');
     }
+
+    public function condicion()
+    {
+        return $this->belongsTo(Condicion::class, 'idCondiciones');
+    }
 }

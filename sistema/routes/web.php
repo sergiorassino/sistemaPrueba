@@ -4,6 +4,7 @@ use App\Livewire\Auth\Login;
 use App\Livewire\Abm\Terlec\TerlecIndex;
 use App\Livewire\Abm\Niveles\NivelesIndex;
 use App\Livewire\Abm\Legajos\LegajosIndex;
+use App\Livewire\Abm\Legajos\LegajoForm;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -36,4 +37,6 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/abm/terlec',   TerlecIndex::class)->name('abm.terlec');
     Route::get('/abm/niveles',  NivelesIndex::class)->name('abm.niveles');
     Route::get('/abm/legajos',  LegajosIndex::class)->name('abm.legajos');
+    Route::get('/abm/legajos/nuevo', LegajoForm::class)->name('abm.legajos.create');
+    Route::get('/abm/legajos/{id}/editar', LegajoForm::class)->whereNumber('id')->name('abm.legajos.edit');
 });

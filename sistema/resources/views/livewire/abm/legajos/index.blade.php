@@ -14,11 +14,11 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
             <h2 class="text-xl font-semibold text-gray-800">Legajos de Estudiantes</h2>
-            <p class="text-sm text-gray-500 mt-0.5">Nivel: {{ schoolCtx()->nivelNombre() }} · Año: {{ schoolCtx()->terlecAno() }}</p>
+            <p class="text-sm text-gray-500 mt-0.5">Listado completo de legajos · Año de sesión: {{ schoolCtx()->terlecAno() }}</p>
         </div>
-        <button wire:click="openCreate" class="btn-primary btn-sm sm:self-start">
+        <a href="{{ route('abm.legajos.create') }}" class="btn-primary btn-sm sm:self-start">
             + Nuevo legajo
-        </button>
+        </a>
     </div>
 
     {{-- Filters --}}
@@ -32,12 +32,6 @@
                    placeholder="Buscar por apellido, nombre o DNI…"
                    class="form-input pl-9">
         </div>
-        <select wire:model.live="filtroNivel" class="form-input sm:w-48">
-            <option value="">Todos los niveles</option>
-            @foreach ($niveles as $niv)
-                <option value="{{ $niv->id }}">{{ $niv->nivel }}</option>
-            @endforeach
-        </select>
         <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer whitespace-nowrap">
             <input wire:model.live="soloMatricula" type="checkbox" class="rounded border-gray-300 text-primary-600">
             Solo matriculados año activo
@@ -47,32 +41,60 @@
     {{-- Table --}}
     <div class="card overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+            <table class="min-w-full border-collapse border border-gray-300">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="table-header">Apellido y Nombre</th>
-                        <th class="table-header hidden sm:table-cell">DNI</th>
-                        <th class="table-header hidden md:table-cell">Nac.</th>
-                        <th class="table-header hidden lg:table-cell">Legajo</th>
-                        <th class="table-header text-right">Acciones</th>
+                        <th class="table-header w-[min(28%,18rem)]">Estudiante</th>
+                        <th class="table-header w-32">DNI</th>
+                        <th class="table-header">Matriculaciones en la escuela</th>
+                        <th class="table-header text-right w-36 shrink-0">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
+                <tbody class="bg-white">
                     @forelse ($legajos as $l)
-                        <tr class="hover:bg-gray-50 transition-colors">
+                        <tr id="legajo-{{ $l->id }}"
+                            x-data="{ focus: {{ (int) $focusId === (int) $l->id ? 'true' : 'false' }} }"
+                            x-init="if (focus) { $nextTick(() => { const el = document.getElementById('legajo-{{ $l->id }}'); el?.scrollIntoView({ block: 'center' }); el?.classList.add('ring-2','ring-primary-400','bg-primary-50/30'); el?.querySelector('a[data-focus-target]')?.focus(); }); }"
+                            class="align-top hover:bg-gray-50 transition-colors">
                             <td class="table-cell">
                                 <div class="font-medium text-gray-900">{{ $l->apellido }}, {{ $l->nombre }}</div>
-                                <div class="text-xs text-gray-500 sm:hidden">DNI: {{ $l->dni }}</div>
                             </td>
-                            <td class="table-cell hidden sm:table-cell text-gray-600">{{ $l->dni }}</td>
-                            <td class="table-cell hidden md:table-cell text-gray-500 text-xs">
-                                {{ $l->fechnaci ? $l->fechnaci->format('d/m/Y') : '—' }}
+                            <td class="table-cell font-mono text-gray-700">
+                                {{ $l->dni }}
                             </td>
-                            <td class="table-cell hidden lg:table-cell text-gray-500">{{ $l->legajo ?: '—' }}</td>
-                            <td class="table-cell text-right">
-                                <div class="flex items-center justify-end gap-1.5">
-                                    <button wire:click="openEdit({{ $l->id }})"
-                                            class="btn-secondary btn-sm">Editar</button>
+                            <td class="table-cell py-2">
+                                @if ($l->matriculas->isEmpty())
+                                    <span class="text-xs text-gray-400 italic">Sin matrículas</span>
+                                @else
+                                    <div class="gf text-[10px] w-max max-w-full">
+                                        <div class="gf-head">
+                                            <div class="gf-th w-14 px-1">Año</div>
+                                            <div class="gf-th w-44">Curso</div>
+                                            <div class="gf-th w-24 px-1">Cond.</div>
+                                        </div>
+                                        @foreach ($l->matriculas as $mat)
+                                            <div @class([
+                                                'gf-row',
+                                                'bg-amber-50/80' => (int) ($mat->idTerlec ?? 0) === (int) schoolCtx()->idTerlec,
+                                            ])>
+                                                <div class="gf-td w-14 px-1 font-mono font-semibold text-gray-800">
+                                                    {{ $mat->terlec?->ano ?? '—' }}
+                                                </div>
+                                                <div class="gf-td w-44 truncate" title="{{ $mat->curso?->cursec }}">
+                                                    {{ $mat->curso?->cursec ? trim($mat->curso->cursec) : '—' }}
+                                                </div>
+                                                <div class="gf-td w-24 px-1 truncate" title="{{ $mat->condicion?->condicion }}">
+                                                    {{ \Illuminate\Support\Str::limit($mat->condicion?->condicion ?? '—', 12) }}
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="table-cell text-right whitespace-nowrap">
+                                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-1.5">
+                                    <a data-focus-target href="{{ route('abm.legajos.edit', ['id' => $l->id]) }}"
+                                       class="btn-secondary btn-sm">Editar</a>
                                     <button wire:click="confirmDelete({{ $l->id }})"
                                             class="btn-danger btn-sm">Eliminar</button>
                                 </div>
@@ -80,11 +102,11 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="table-cell text-center text-gray-400 py-10">
+                            <td colspan="4" class="table-cell text-center text-gray-400 py-10">
                                 @if ($search)
                                     No se encontraron legajos para "{{ $search }}".
                                 @else
-                                    No hay legajos registrados para este nivel.
+                                    No hay legajos registrados.
                                 @endif
                             </td>
                         </tr>
@@ -105,22 +127,36 @@
         </div>
     </div>
 
-    {{-- ═══════════════════ FORM MODAL ═══════════════════ --}}
+    {{-- ═══════════════════ FORM (EMBEBIDO, NO MODAL) ═══════════════════ --}}
     @if ($showModal)
-    <div class="fixed inset-0 z-50 flex items-start justify-center bg-gray-900/60 overflow-y-auto py-4 px-2"
-         x-data>
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl my-auto" @click.stop>
+        <div class="card overflow-hidden mb-4" x-data>
+            {{-- Header --}}
+            <div class="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white">
+                <div class="min-w-0">
+                    <h3 class="text-base font-semibold text-gray-800">
+                        {{ $editId ? 'Editar legajo' : 'Nuevo legajo' }}
+                    </h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Los campos marcados con * son obligatorios</p>
+                </div>
 
-            {{-- Modal header --}}
-            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg z-10">
-                <h3 class="text-base font-semibold text-gray-800">
-                    {{ $editId ? 'Editar legajo' : 'Nuevo legajo' }}
-                </h3>
-                <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
+                <div class="flex flex-wrap gap-2 sm:justify-end">
+                    @if ($editId)
+                        <button wire:click="openMatriculas" class="btn-secondary btn-sm">
+                            Gestionar matrículas
+                        </button>
+                    @endif
+
+                    <button wire:click="$set('showModal', false)" class="btn-secondary btn-sm">
+                        Cancelar
+                    </button>
+
+                    <button wire:click="save"
+                            wire:loading.attr="disabled"
+                            class="btn-primary btn-sm">
+                        <span wire:loading.remove wire:target="save">Guardar legajo</span>
+                        <span wire:loading wire:target="save">Guardando…</span>
+                    </button>
+                </div>
             </div>
 
             {{-- Tabs --}}
@@ -196,16 +232,6 @@
                                 <option value="1">Oyente</option>
                                 <option value="2">Libre</option>
                             </select>
-                        </div>
-                        <div>
-                            <label class="form-label">Nivel *</label>
-                            <select wire:model="idnivel" class="form-select @error('idnivel') border-red-400 @enderror">
-                                <option value="">— Seleccione —</option>
-                                @foreach ($niveles as $n)
-                                    <option value="{{ $n->id }}">{{ $n->nivel }}</option>
-                                @endforeach
-                            </select>
-                            @error('idnivel') <p class="form-error">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="form-label">Familia</label>
@@ -490,24 +516,144 @@
 
             </div>{{-- end tab contents --}}
 
-            {{-- Modal footer --}}
-            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between rounded-b-lg">
-                <div class="text-xs text-gray-400">
-                    Los campos marcados con * son obligatorios
-                </div>
-                <div class="flex gap-3">
-                    <button wire:click="$set('showModal', false)" class="btn-secondary">Cancelar</button>
-                    <button wire:click="save"
-                            wire:loading.attr="disabled"
-                            class="btn-primary">
-                        <span wire:loading.remove wire:target="save">Guardar legajo</span>
-                        <span wire:loading wire:target="save">Guardando…</span>
-                    </button>
+            {{-- Footer --}}
+            <div class="px-6 py-3 border-t border-gray-100 bg-gray-50">
+                <div class="text-[11px] text-gray-400">
+                    Tip: podés desplazarte por las pestañas para completar el legajo.
                 </div>
             </div>
+    @endif
 
+    {{-- ═══════════════════ MATRICULAS MODAL ═══════════════════ --}}
+    @if ($showMatriculasModal)
+        <div class="fixed inset-0 z-50 flex items-start justify-center bg-gray-900/60 overflow-y-auto py-4 px-2" x-data>
+            <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl my-auto" @click.stop>
+                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg z-10">
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-800">Matrículas del estudiante</h3>
+                    </div>
+                    <button wire:click="closeMatriculas" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="px-6 py-4 flex items-center justify-between gap-3">
+                    <div class="text-sm text-gray-600">
+                        {{ $matriculasAlumno->count() }} registro(s)
+                    </div>
+                    <button wire:click="openNuevaMatricula" class="btn-primary btn-sm">+ NUEVA MATRÍCULA</button>
+                </div>
+
+                <div class="px-6 pb-6">
+                    <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                        <table class="min-w-full border-collapse">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="table-header w-24">Año</th>
+                                    <th class="table-header">Curso y sección</th>
+                                    <th class="table-header w-40">Condición</th>
+                                    <th class="table-header w-32">N°</th>
+                                    <th class="table-header w-36">F. matrícula</th>
+                                    <th class="table-header w-36">F. baja</th>
+                                    <th class="table-header text-right w-36">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white">
+                                @forelse ($matriculasAlumno as $m)
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="table-cell font-mono">{{ $m->terlec?->ano ?? '—' }}</td>
+                                        <td class="table-cell">{{ $m->curso?->cursec ? trim($m->curso->cursec) : '—' }}</td>
+                                        <td class="table-cell">{{ $m->condicion?->condicion ?? '—' }}</td>
+                                        <td class="table-cell font-mono">{{ $m->nroMatricula ?? '—' }}</td>
+                                        <td class="table-cell font-mono">{{ $m->fechaMatricula?->format('d/m/Y') ?? '—' }}</td>
+                                        <td class="table-cell font-mono">{{ $m->fechaBaja?->format('d/m/Y') ?? '—' }}</td>
+                                        <td class="table-cell text-right whitespace-nowrap">
+                                            <div class="flex items-center justify-end gap-2">
+                                                <button wire:click="openEditMatricula({{ $m->id }})" class="btn-secondary btn-sm">Editar</button>
+                                                <button wire:click="confirmDeleteMatricula({{ $m->id }})" class="btn-danger btn-sm">Borrar</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="table-cell text-center text-gray-400 py-10">
+                                            Sin matrículas cargadas.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {{-- Matricula form (create/edit) --}}
+                @if ($showMatriculaForm)
+                    <div class="border-t border-gray-100 bg-gray-50 px-6 py-5">
+                        <h4 class="text-sm font-semibold text-gray-800 mb-3">{{ $matriculaEditId ? 'Editar matrícula' : 'Nueva matrícula' }}</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="lg:col-span-2">
+                                <label class="form-label">Curso y sección *</label>
+                                <select wire:model="m_idCursos" class="form-select @error('m_idCursos') border-red-400 @enderror">
+                                    <option value="">— Seleccione —</option>
+                                    @foreach ($cursos as $c)
+                                        <option value="{{ $c->Id }}">{{ trim($c->cursec) }}</option>
+                                    @endforeach
+                                </select>
+                                @error('m_idCursos') <p class="form-error">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label class="form-label">Condición *</label>
+                                <select wire:model="m_idCondiciones" class="form-select @error('m_idCondiciones') border-red-400 @enderror">
+                                    <option value="">— Seleccione —</option>
+                                    @foreach ($condiciones as $cnd)
+                                        <option value="{{ $cnd->id }}">{{ $cnd->condicion }}</option>
+                                    @endforeach
+                                </select>
+                                @error('m_idCondiciones') <p class="form-error">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label class="form-label">Año lectivo</label>
+                                <input wire:model="m_idTerlec" type="text" class="form-input bg-gray-100" readonly>
+                            </div>
+
+                            <div>
+                                <label class="form-label">Nivel</label>
+                                <input wire:model="m_idNivel" type="text" class="form-input bg-gray-100" readonly>
+                            </div>
+
+                            <div>
+                                <label class="form-label">Número de matrícula</label>
+                                <input wire:model="m_nroMatricula" type="text" maxlength="20" class="form-input">
+                            </div>
+
+                            <div>
+                                <label class="form-label">Fecha de matrícula</label>
+                                <input wire:model="m_fechaMatricula" type="date" class="form-input @error('m_fechaMatricula') border-red-400 @enderror">
+                                @error('m_fechaMatricula') <p class="form-error">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label class="form-label">Fecha de baja</label>
+                                <input wire:model="m_fechaBaja" type="date" class="form-input @error('m_fechaBaja') border-red-400 @enderror">
+                                @error('m_fechaBaja') <p class="form-error">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex justify-end gap-3">
+                            <button wire:click="$set('showMatriculaForm', false)" class="btn-secondary">Cancelar</button>
+                            <button wire:click="saveMatricula" wire:loading.attr="disabled" class="btn-primary">
+                                <span wire:loading.remove wire:target="saveMatricula">Guardar matrícula</span>
+                                <span wire:loading wire:target="saveMatricula">Guardando…</span>
+                            </button>
+                        </div>
+                    </div>
+                @endif
+            </div>
         </div>
-    </div>
     @endif
 
     {{-- ═══════════════════ CONFIRM / INFO MODAL ═══════════════════ --}}
@@ -551,6 +697,35 @@
                             <span wire:loading wire:target="delete">Eliminando…</span>
                         </button>
                     @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════════════ CONFIRM DELETE MATRICULA ═══════════════════ --}}
+    @if ($showMatriculaConfirm)
+        <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-sm" @click.stop>
+                <div class="px-6 py-5">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-800 mb-1">Confirmar eliminación</h3>
+                            <p class="text-sm text-gray-600">{{ $matriculaDeleteInfo }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 pb-5 flex justify-end gap-3">
+                    <button wire:click="$set('showMatriculaConfirm', false)" class="btn-secondary">Cancelar</button>
+                    <button wire:click="deleteMatricula" wire:loading.attr="disabled" class="btn-danger">
+                        <span wire:loading.remove wire:target="deleteMatricula">Eliminar</span>
+                        <span wire:loading wire:target="deleteMatricula">Eliminando…</span>
+                    </button>
                 </div>
             </div>
         </div>

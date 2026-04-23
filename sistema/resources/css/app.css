@@ -18,13 +18,16 @@
 
 @layer components {
     .btn-primary {
-        @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-transparent bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+        @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-transparent bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
     }
     .btn-secondary {
-        @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+        @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+    .btn-info {
+        @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-transparent bg-sky-600 text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
     }
     .btn-danger {
-        @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-transparent bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+        @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-transparent bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
     }
     .btn-sm {
         @apply px-3 py-1.5 text-xs;
@@ -45,9 +48,119 @@
         @apply bg-white rounded-lg shadow-sm border border-gray-200;
     }
     .table-header {
-        @apply px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+        @apply px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider border border-gray-400;
     }
     .table-cell {
-        @apply px-4 py-3 text-sm text-gray-900;
+        @apply px-4 py-3 text-sm text-gray-900 border border-gray-400;
+    }
+
+    /* Asegura que los bordes (border-r, etc.) se rendericen en tablas */
+    td, th {
+        border-style: solid;
+    }
+
+    /*
+     * ══════════════════════════════════════════════════════════════════
+     *  GRILLA COMPACTA  (.gf-*)
+     *  Estilo tipo planilla/Excel para tablas de listado y formularios.
+     *  Uso:
+     *    Listado  → <div class="gf-wrap"> <div class="gf"> … </div> </div>
+     *    Form     → <div class="gf"> filas con .gf-label + .gf-cell </div>
+     * ══════════════════════════════════════════════════════════════════
+     */
+
+    /* Contenedor centrado (para listados que no ocupan todo el ancho) */
+    .gf-wrap {
+        @apply flex justify-center;
+    }
+
+    /* Contenedor principal de la grilla */
+    .gf {
+        @apply border border-gray-400 text-xs inline-block;
+    }
+
+    /* Encabezado de tabla */
+    .gf-head {
+        @apply flex bg-gray-200 border-b border-gray-400 font-semibold text-gray-700 uppercase tracking-wide text-[10px];
+    }
+    .gf-th {
+        @apply px-2 py-1.5 border-r border-gray-400 last:border-r-0 whitespace-nowrap select-none;
+    }
+    .gf-th-right {
+        @apply px-2 py-1.5 text-right whitespace-nowrap select-none;
+    }
+
+    /* Fila de datos (listado o formulario) */
+    .gf-row {
+        @apply flex border-b border-gray-300 last:border-b-0;
+    }
+    .gf-row-hover {
+        @apply hover:bg-blue-50 transition-colors;
+    }
+
+    /* Celda de datos (listado) */
+    .gf-td {
+        @apply px-2 py-1.5 border-r border-gray-300 last:border-r-0 text-gray-900;
+    }
+    .gf-td-muted {
+        @apply px-2 py-1.5 border-r border-gray-300 text-gray-500;
+    }
+    .gf-td-actions {
+        @apply px-2 py-1 flex items-center justify-end gap-2;
+    }
+
+    /* Celda de etiqueta (formularios) */
+    .gf-label {
+        @apply bg-gray-100 border-r border-gray-300 px-2 py-1.5 font-medium text-gray-600
+               whitespace-nowrap flex items-center shrink-0 select-none;
+    }
+    /* Agrega asterisco rojo para campos obligatorios */
+    .gf-label-req::after {
+        content: ' *';
+        color: #ef4444;
+    }
+
+    /* Celda de input (formularios) */
+    .gf-cell {
+        @apply flex-1 flex items-stretch bg-white min-w-0;
+    }
+    .gf-cell-err {
+        @apply bg-red-50;
+    }
+
+    /* Inputs y selects dentro de celdas */
+    .gf-input {
+        @apply w-full px-2 py-1.5 text-xs text-gray-900 bg-transparent border-0 outline-none
+               focus:bg-blue-50 focus:ring-2 focus:ring-inset focus:ring-primary-500;
+    }
+    .gf-input-err {
+        @apply bg-red-50 focus:bg-red-50 focus:ring-red-400;
+    }
+    .gf-select {
+        @apply w-full px-2 py-1.5 text-xs text-gray-900 bg-transparent border-0 outline-none
+               focus:bg-blue-50 focus:ring-2 focus:ring-inset focus:ring-primary-500 cursor-pointer;
+    }
+    .gf-select-err {
+        @apply bg-red-50 focus:bg-red-50 focus:ring-red-400;
+    }
+    .gf-textarea {
+        @apply w-full px-2 py-1.5 text-xs text-gray-900 bg-transparent border-0 outline-none resize-none
+               focus:bg-blue-50 focus:ring-2 focus:ring-inset focus:ring-primary-500;
+    }
+
+    /* Fila de mensaje de error (debajo del campo con error) */
+    .gf-error-row {
+        @apply flex border-b border-gray-200 last:border-b-0 bg-red-50;
+    }
+    .gf-error-spacer {
+        @apply shrink-0 border-r border-gray-200;
+    }
+    .gf-error-msg {
+        @apply flex-1 px-2 py-0.5 text-xs text-red-600 italic;
+    }
+
+    /* Fila vacía / sin registros */
+    .gf-empty {
+        @apply px-4 py-6 text-center text-gray-400 text-xs;
     }
 }

@@ -20,41 +20,33 @@
         </button>
     </div>
 
-    <div class="card overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="table-header">Año</th>
-                    <th class="table-header">Orden (prioridad)</th>
-                    <th class="table-header text-right">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-100">
-                @forelse ($terlecs as $t)
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="table-cell font-medium">{{ $t->ano }}</td>
-                        <td class="table-cell text-gray-500">{{ $t->orden }}</td>
-                        <td class="table-cell text-right">
-                            <div class="flex items-center justify-end gap-2">
-                                <button wire:click="openEdit({{ $t->id }})"
-                                        class="btn-secondary btn-sm">Editar</button>
-                                <button wire:click="confirmDelete({{ $t->id }})"
-                                        class="btn-danger btn-sm">Eliminar</button>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="3" class="table-cell text-center text-gray-400 py-8">
-                            No hay términos lectivos registrados.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+    {{-- ── Listado (.gf-wrap > .gf) ── --}}
+    <div class="gf-wrap">
+        <div class="gf min-w-[420px]">
+
+            <div class="gf-head">
+                <div class="gf-th w-32">Año</div>
+                <div class="gf-th w-40">Orden (prioridad)</div>
+                <div class="gf-th-right flex-1">Acciones</div>
+            </div>
+
+            @forelse ($terlecs as $t)
+                <div class="gf-row gf-row-hover">
+                    <div class="gf-td w-32 font-medium">{{ $t->ano }}</div>
+                    <div class="gf-td-muted w-40">{{ $t->orden }}</div>
+                    <div class="gf-td-actions flex-1">
+                        <button wire:click="openEdit({{ $t->id }})" class="btn-secondary btn-sm">Editar</button>
+                        <button wire:click="confirmDelete({{ $t->id }})" class="btn-danger btn-sm">Eliminar</button>
+                    </div>
+                </div>
+            @empty
+                <div class="gf-empty">No hay términos lectivos registrados.</div>
+            @endforelse
+
+        </div>
     </div>
 
-    {{-- Create / Edit Modal --}}
+    {{-- ── Modal Crear / Editar ── --}}
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50"
              x-data x-init="$el.querySelector('input')?.focus()">
@@ -63,39 +55,55 @@
                     <h3 class="text-base font-semibold text-gray-800">
                         {{ $editId ? 'Editar término lectivo' : 'Nuevo término lectivo' }}
                     </h3>
-                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-600">
+                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-600 cursor-pointer">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
                 </div>
-                <div class="px-6 py-5 space-y-4">
-                    <div>
-                        <label class="form-label" for="terlec-ano">Año</label>
-                        <input wire:model="ano"
-                               id="terlec-ano"
-                               type="number"
-                               min="2000" max="2100"
-                               placeholder="Ej: 2026"
-                               class="form-input @error('ano') border-red-400 @enderror">
-                        @error('ano') <p class="form-error">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="form-label" for="terlec-orden">Orden (1 = más reciente)</label>
-                        <input wire:model="orden"
-                               id="terlec-orden"
-                               type="number"
-                               min="1"
-                               placeholder="Ej: 1"
-                               class="form-input @error('orden') border-red-400 @enderror">
-                        @error('orden') <p class="form-error">{{ $message }}</p> @enderror
+
+                {{-- ── Formulario (.gf) ── --}}
+                <div class="px-6 py-4">
+                    <div class="gf w-full">
+
+                        <div class="gf-row @error('ano') gf-cell-err @enderror">
+                            <div class="gf-label gf-label-req w-40">Año lectivo</div>
+                            <div class="gf-cell @error('ano') gf-cell-err @enderror">
+                                <input wire:model="ano" id="terlec-ano" type="number"
+                                       min="2000" max="2100" placeholder="Ej: 2026"
+                                       class="gf-input @error('ano') gf-input-err @enderror">
+                            </div>
+                        </div>
+                        @error('ano')
+                            <div class="gf-error-row">
+                                <div class="gf-error-spacer w-40"></div>
+                                <div class="gf-error-msg">{{ $message }}</div>
+                            </div>
+                        @enderror
+
+                        <div class="gf-row @error('orden') gf-cell-err @enderror">
+                            <div class="gf-label gf-label-req w-40">
+                                Orden <span class="font-normal text-gray-400">(1&nbsp;=&nbsp;reciente)</span>
+                            </div>
+                            <div class="gf-cell @error('orden') gf-cell-err @enderror">
+                                <input wire:model="orden" id="terlec-orden" type="number"
+                                       min="1" placeholder="Ej: 1"
+                                       class="gf-input @error('orden') gf-input-err @enderror">
+                            </div>
+                        </div>
+                        @error('orden')
+                            <div class="gf-error-row">
+                                <div class="gf-error-spacer w-40"></div>
+                                <div class="gf-error-msg">{{ $message }}</div>
+                            </div>
+                        @enderror
+
                     </div>
                 </div>
+
                 <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
                     <button wire:click="$set('showModal', false)" class="btn-secondary">Cancelar</button>
-                    <button wire:click="save"
-                            wire:loading.attr="disabled"
-                            class="btn-primary">
+                    <button wire:click="save" wire:loading.attr="disabled" class="btn-primary">
                         <span wire:loading.remove wire:target="save">Guardar</span>
                         <span wire:loading wire:target="save">Guardando…</span>
                     </button>
@@ -104,7 +112,7 @@
         </div>
     @endif
 
-    {{-- Confirm / Info Modal --}}
+    {{-- ── Modal Confirmar / Info ── --}}
     @if ($showConfirm)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50">
             <div class="bg-white rounded-lg shadow-xl w-full max-w-sm" @click.stop>
@@ -138,9 +146,7 @@
                         {{ $deleteId ? 'Cancelar' : 'Cerrar' }}
                     </button>
                     @if ($deleteId)
-                        <button wire:click="delete"
-                                wire:loading.attr="disabled"
-                                class="btn-danger">
+                        <button wire:click="delete" wire:loading.attr="disabled" class="btn-danger">
                             <span wire:loading.remove wire:target="delete">Eliminar</span>
                             <span wire:loading wire:target="delete">Eliminando…</span>
                         </button>

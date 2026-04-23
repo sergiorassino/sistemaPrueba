@@ -42,7 +42,11 @@ class Login extends Component
     {
         $this->validate();
 
-        $credentials = ['dni' => $this->dni, 'pwrd' => $this->pwrd];
+        $credentials = [
+            'dni'   => $this->dni,
+            'pwrd'  => $this->pwrd,
+            'nivel' => (int) $this->idNivel,
+        ];
 
         if (Auth::attempt($credentials, false)) {
             /** @var \App\Models\Profesor $profesor */

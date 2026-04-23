@@ -30,7 +30,6 @@ class LegajosIndex extends Component
     {
         return Legajo::query()
             ->whereKey($id)
-            ->where('idnivel', (int) schoolCtx()->idNivel)
             ->firstOrFail();
     }
 
@@ -106,8 +105,6 @@ class LegajosIndex extends Component
                     ->orderByDesc('matricula.id');
             },
         ]);
-
-        $query->where('idnivel', (int) schoolCtx()->idNivel);
 
         if ($this->search !== '') {
             $query->buscar($this->search);

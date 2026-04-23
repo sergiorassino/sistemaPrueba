@@ -1,0 +1,22 @@
+---
+description: Preferencias del usuario/proyecto (persistentes para módulos presentes y futuros)
+alwaysApply: true
+---
+
+# Preferencias del proyecto (a respetar siempre)
+
+## Seguridad
+
+- Prioridad máxima: **medidas de seguridad de sistema profesional** (PHP + MySQL) en todos los módulos.
+- Las medidas aplicadas a módulos actuales deben **replicarse** en módulos futuros.
+
+## Estilo de implementación
+
+- Preferir cambios **seguros y conservadores** (hardening) sin romper compatibilidad.
+- Donde falten roles/permisos, aplicar al menos **control de alcance por contexto** (ej. `schoolCtx()`).
+
+## Documentación
+
+- Mantener un archivo `docs/PREFERENCIAS.md` actualizado con:
+  - Preferencias explícitas del usuario.
+  - Nuevas decisiones/restricciones acordadas en el futuro.

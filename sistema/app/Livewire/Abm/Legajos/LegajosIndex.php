@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Abm\Legajos;
 
-use App\Models\Familia;
 use App\Models\Legajo;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -26,6 +26,14 @@ class LegajosIndex extends Component
         $this->focusId = $focus > 0 ? $focus : null;
     }
 
+    protected function scopedLegajoOrFail(int $id): Legajo
+    {
+        return Legajo::query()
+            ->whereKey($id)
+            ->where('idnivel', (int) schoolCtx()->idNivel)
+            ->firstOrFail();
+    }
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -33,7 +41,7 @@ class LegajosIndex extends Component
 
     public function confirmDelete(int $id): void
     {
-        $l = Legajo::findOrFail($id);
+        $l = $this->scopedLegajoOrFail($id);
 
         $countMatricula      = DB::table('matricula')->where('idLegajos', $id)->count();
         $countCalificaciones = DB::table('calificaciones')->where('idLegajos', $id)->count();
@@ -64,8 +72,17 @@ class LegajosIndex extends Component
 
     public function delete(): void
     {
+        $key = 'legajos:delete:' . (auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            session()->flash('success', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+            $this->showConfirm = false;
+            $this->reset('deleteId', 'deleteInfo');
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
         if ($this->deleteId) {
-            $l = Legajo::findOrFail($this->deleteId);
+            $l = $this->scopedLegajoOrFail($this->deleteId);
             $nombre = "{$l->apellido}, {$l->nombre}";
             $l->delete();
             session()->flash('success', "Legajo de {$nombre} eliminado.");
@@ -89,6 +106,8 @@ class LegajosIndex extends Component
                     ->orderByDesc('matricula.id');
             },
         ]);
+
+        $query->where('idnivel', (int) schoolCtx()->idNivel);
 
         if ($this->search !== '') {
             $query->buscar($this->search);

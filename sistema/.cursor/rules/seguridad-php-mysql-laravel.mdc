@@ -1,0 +1,61 @@
+---
+description: Medidas de seguridad obligatorias (PHP/MySQL/Laravel/Livewire) para este sistema
+alwaysApply: true
+---
+
+# Seguridad (baseline obligatorio)
+
+Estas reglas aplican a **todo módulo nuevo** y a cambios en módulos existentes.
+
+## Autenticación y sesión
+
+- Usar `auth` middleware para todo lo interno.
+- Mantener cookies/sesión seguras (config Laravel): `SESSION_SECURE_COOKIE`, `SESSION_HTTP_ONLY`, `same_site`.
+- Regenerar sesión/token en login/logout (ya implementado en logout).
+
+## Autorización (evitar acceso indebido)
+
+- Todo ABM debe tener **chequeo de alcance por contexto** y/o permisos:
+  - Si el módulo depende de `schoolCtx()`, **filtrar queries** por `schoolCtx()->idNivel` / `idTerlec` según corresponda.
+  - En operaciones por ID (editar/eliminar), **volver a consultar** el registro con el mismo filtro (no confiar en IDs del cliente).
+- Si más adelante se implementan roles/permisos, centralizar en Policies/Gates y llamar desde Livewire (ej: `authorize()`).
+
+## Validación, normalización y seguridad de datos
+
+- Validar **siempre server-side** (`$this->validate()` o FormRequest).
+- Normalizar entradas antes de guardar:
+  - `trim()` en strings.
+  - `strtoupper()` cuando corresponda (abreviaturas/códigos).
+- Evitar mass-assignment peligroso:
+  - Preferir `$fillable` explícito en modelos (no usar `$guarded = []` en modelos nuevos).
+  - En updates/creates, pasar arrays con claves explícitas (no `->update($this->all())`).
+
+## Protección contra XSS
+
+- En Blade, usar `{{ }}` (escape) siempre.
+- Evitar `{!! !!}`; si fuese indispensable, sanitizar en backend.
+- No interpolar HTML/JS con datos de usuario en atributos JS. Si se requiere, castear/escapar.
+
+## SQL Injection
+
+- Usar Eloquent/Query Builder con parámetros (bindings).
+- Evitar `DB::raw()` con entrada de usuario.
+- Si hay que usar `DB::raw()`, que sea **constante** y revisada.
+
+## Rate limiting y abuso
+
+- Rate-limit en acciones sensibles (crear/editar/eliminar) cuando se implementen en Livewire/Controllers.
+- Los límites deben ser por usuario y con ventanas cortas (p.ej. 30/min para save, 10/min para delete).
+
+## Errores y logging
+
+- No exponer trazas/SQL en producción (`APP_DEBUG=false`).
+- Loggear eventos de ABM importantes (crear/editar/eliminar) sin datos sensibles.
+
+## Checklists por PR
+
+- ¿La consulta está filtrada por contexto (`schoolCtx`) cuando corresponde?
+- ¿Acciones por ID revalidan alcance del registro?
+- ¿Hay validación y normalización?
+- ¿No hay `DB::raw()` con input?
+- ¿Blade escapa correctamente?

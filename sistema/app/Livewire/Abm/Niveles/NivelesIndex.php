@@ -4,6 +4,7 @@ namespace App\Livewire\Abm\Niveles;
 
 use App\Models\Nivel;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class NivelesIndex extends Component
@@ -21,7 +22,7 @@ class NivelesIndex extends Component
     {
         return [
             'nivel' => ['required', 'string', 'max:50',
-                        'unique:niveles,nivel' . ($this->editId ? ",{$this->editId}" : '')],
+                        'unique:niveles,nivel' . ($this->editId ? ",{$this->editId},id" : '')],
             'abrev' => ['required', 'string', 'max:5'],
         ];
     }
@@ -56,7 +57,17 @@ class NivelesIndex extends Component
 
     public function save(): void
     {
+        $key = 'niveles:save:' . (auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 30)) {
+            $this->addError('nivel', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
         $this->validate();
+
+        $this->nivel = trim($this->nivel);
+        $this->abrev = trim($this->abrev);
 
         if ($this->editId) {
             Nivel::findOrFail($this->editId)->update([
@@ -107,6 +118,15 @@ class NivelesIndex extends Component
 
     public function delete(): void
     {
+        $key = 'niveles:delete:' . (auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            session()->flash('success', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+            $this->showConfirm = false;
+            $this->reset('deleteId', 'deleteInfo');
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
         if ($this->deleteId) {
             $nivel = Nivel::findOrFail($this->deleteId);
             $nombre = $nivel->nivel;

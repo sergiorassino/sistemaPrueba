@@ -4,6 +4,7 @@ namespace App\Livewire\Abm\Terlec;
 
 use App\Models\Terlec;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class TerlecIndex extends Component
@@ -21,7 +22,7 @@ class TerlecIndex extends Component
     {
         return [
             'ano'   => ['required', 'integer', 'digits:4', 'min:2000', 'max:2100',
-                        'unique:terlec,ano' . ($this->editId ? ",{$this->editId}" : '')],
+                        'unique:terlec,ano' . ($this->editId ? ",{$this->editId},id" : '')],
             'orden' => ['required', 'integer', 'min:1'],
         ];
     }
@@ -57,7 +58,21 @@ class TerlecIndex extends Component
 
     public function save(): void
     {
+        $key = 'terlec:save:' . (auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 30)) {
+            $this->addError('ano', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
         $this->validate();
+
+        if (is_string($this->ano)) {
+            $this->ano = trim($this->ano);
+        }
+        if (is_string($this->orden)) {
+            $this->orden = trim($this->orden);
+        }
 
         if ($this->editId) {
             Terlec::findOrFail($this->editId)->update([
@@ -108,6 +123,15 @@ class TerlecIndex extends Component
 
     public function delete(): void
     {
+        $key = 'terlec:delete:' . (auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            session()->flash('success', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+            $this->showConfirm = false;
+            $this->reset('deleteId', 'deleteInfo');
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
         if ($this->deleteId) {
             $terlec = Terlec::findOrFail($this->deleteId);
             $ano    = $terlec->ano;

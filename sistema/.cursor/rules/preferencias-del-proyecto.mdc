@@ -1,22 +1,52 @@
 ---
-description: Preferencias del usuario/proyecto (persistentes para módulos presentes y futuros)
+description: Contexto del proyecto y reglas para agentes de IA
 alwaysApply: true
 ---
 
-# Preferencias del proyecto (a respetar siempre)
+# Contexto del Proyecto — Sistemas Escolares
 
-## Seguridad
+## Qué es este proyecto
 
-- Prioridad máxima: **medidas de seguridad de sistema profesional** (PHP + MySQL) en todos los módulos.
-- Las medidas aplicadas a módulos actuales deben **replicarse** en módulos futuros.
+Sistema de gestión pedagógica y de cuotas para escuelas (inicial, primario, secundario).
+Laravel 11 + Livewire 4 + Tailwind CSS 4 sobre base de datos MySQL legacy.
 
-## Estilo de implementación
+## Documentación obligatoria
 
-- Preferir cambios **seguros y conservadores** (hardening) sin romper compatibilidad.
-- Donde falten roles/permisos, aplicar al menos **control de alcance por contexto** (ej. `schoolCtx()`).
+Antes de trabajar en cualquier módulo, leer:
 
-## Documentación
+1. `docs/01-descripcion-general.md` — Visión general, stack, estructura
+2. `docs/02-modelo-de-datos.md` — Tablas del núcleo, tabla `ento`, relaciones
+3. `docs/03-autenticacion-y-permisos.md` — Dos logins, passwords híbridos, permisos `0/1`
+4. `docs/04-identidad-visual.md` — Paleta de colores, logos, design system
+5. `docs/05-preferencias-y-convenciones.md` — Convenciones de código y preferencias
+6. `docs/06-reglas-de-seguridad.md` — Baseline de seguridad obligatorio
 
-- Mantener un archivo `docs/PREFERENCIAS.md` actualizado con:
-  - Preferencias explícitas del usuario.
-  - Nuevas decisiones/restricciones acordadas en el futuro.
+## Reglas críticas (siempre)
+
+### Base de datos
+- NO modificar tablas existentes de la BD legacy.
+- Migraciones solo aditivas (nuevas tablas, nuevas columnas).
+- Modelos con `$table` explícito, `$timestamps = false`, `$fillable` explícito.
+
+### Seguridad
+- `auth` middleware en toda ruta interna.
+- Filtrar queries por `schoolCtx()->idNivel` / `idTerlec`.
+- Revalidar alcance en operaciones por ID.
+- Validación server-side obligatoria.
+- `{{ }}` en Blade (nunca `{!! !!}` sin sanitizar).
+- Sin `DB::raw()` con input de usuario.
+
+### Permisos
+- `profesores.permisos` = cadena de 0s y 1s.
+- Posición N corresponde a `permisosusuarios.orden = N`.
+- Verificar en rutas, componentes Livewire y acciones.
+
+### SchoolContext
+- `schoolCtx()` retorna el contexto de sesión (idProfesor, idNivel, idTerlec).
+- Toda consulta de datos se filtra por este contexto.
+- `ento.idTerlecVerNotas` determina el ciclo lectivo de autogestión.
+
+### Identidad visual
+- Paleta en `/SE/PALETA COLORES LOGO.PNG`.
+- Primario: `#40848D` · Oscuro: `#333333` · Suave: `#C1D7DA`.
+- Logo principal: `/SE/4.png` (horizontal).

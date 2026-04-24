@@ -7,6 +7,7 @@ use App\Livewire\Abm\Niveles\NivelesIndex;
 use App\Livewire\Abm\Terlec\TerlecIndex;
 use App\Livewire\Auth\Login;
 use App\Livewire\Listados\ListadoPorCurso;
+use App\Livewire\Parametrizacion\CamposListadoAlumnosIndex;
 use App\Support\SchoolContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,9 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     // ABM routes
     Route::get('/abm/terlec', TerlecIndex::class)->middleware('permiso:1')->name('abm.terlec');
     Route::get('/abm/niveles', NivelesIndex::class)->middleware('permiso:1')->name('abm.niveles');
+    Route::get('/parametrizacion/campos-listado-alumnos', CamposListadoAlumnosIndex::class)
+        ->middleware('permiso:1')
+        ->name('param.campos-listado-alumnos');
     Route::get('/abm/legajos', LegajosIndex::class)->middleware('permiso:2')->name('abm.legajos');
     Route::get('/abm/legajos/nuevo', LegajoForm::class)->middleware('permiso:2')->name('abm.legajos.create');
     Route::get('/abm/legajos/{id}/editar', LegajoForm::class)->middleware('permiso:2')->whereNumber('id')->name('abm.legajos.edit');

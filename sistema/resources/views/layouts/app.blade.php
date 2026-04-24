@@ -33,7 +33,7 @@
     sidebarOpen: false,
     sidebarCollapsed: false,
     groups: {
-        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles')) ? 'true' : 'false' }},
+        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'param.')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.')) ? 'true' : 'false' }},
     },
     init() {
@@ -153,6 +153,19 @@
                               d="M3 7h18M3 12h18M3 17h18"/>
                     </svg>
                     <span class="truncate">Niveles</span>
+                </a>
+
+                <a href="{{ route('param.campos-listado-alumnos') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'param.campos-listado-alumnos'),
+                   ])
+                   title="Campos de legajos en listados PDF">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                    <span class="truncate">Campos listado (legajos)</span>
                 </a>
             </div>
         @endif

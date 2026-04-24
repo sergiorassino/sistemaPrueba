@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CampoListadoAlumno;
 use App\Models\Curso;
 use App\Support\ListadoCursoCondicionFiltro;
 use App\Support\ListadoCursoPdfFieldCatalog;
@@ -83,6 +84,8 @@ class ListadoCursoPdfController extends Controller
             ));
             $campos[] = $claveCondicionCatalogo;
         }
+
+        $campos = CampoListadoAlumno::aplicarVisibilidadListadoPdf($campos);
 
         $select = array_merge(
             ['matricula.idCursos as __id_curso'],

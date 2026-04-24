@@ -213,11 +213,28 @@ final class ListadoCursoPdfFieldCatalog
         return false;
     }
 
-    /** @return array<string, list<array{key: string, label: string}>> */
-    public static function groupedForUi(): array
+    /**
+     * Grupos de campos para la UI del listado PDF.
+     *
+     * @param  list<string>|null  $soloColumnasLegajosVisibles nombres de columna física en `legajos` (p. ej. `apellido`);
+     *                             null = no filtrar por visibilidad (tabla de parametrización vacía o inexistente).
+     * @return array<string, list<array{key: string, label: string}>>
+     */
+    public static function groupedForUi(?array $soloColumnasLegajosVisibles = null): array
     {
+        $visibles = null;
+        if ($soloColumnasLegajosVisibles !== null) {
+            $visibles = array_flip($soloColumnasLegajosVisibles);
+        }
+
         $groups = [];
         foreach (self::DEFINITIONS as $key => $def) {
+            if ($def['table'] === 'legajos' && $visibles !== null) {
+                $col = $def['column'];
+                if (! isset($visibles[$col])) {
+                    continue;
+                }
+            }
             $g = $def['group'];
             if (! isset($groups[$g])) {
                 $groups[$g] = [];

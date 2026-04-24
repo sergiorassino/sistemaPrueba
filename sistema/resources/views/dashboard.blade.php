@@ -24,6 +24,24 @@
             </div>
         </a>
 
+        @if (tienePermiso(1))
+        <a href="{{ route('param.campos-listado-alumnos') }}"
+           class="card p-5 hover:shadow-md transition-shadow group">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                    <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-800">Campos listado (legajos)</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Visibilidad para PDF por curso</p>
+                </div>
+            </div>
+        </a>
+        @endif
+
         <a href="{{ route('abm.niveles') }}"
            class="card p-5 hover:shadow-md transition-shadow group">
             <div class="flex items-center gap-4">

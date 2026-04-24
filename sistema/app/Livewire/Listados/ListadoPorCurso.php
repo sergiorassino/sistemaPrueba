@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Listados;
 
+use App\Models\CampoListadoAlumno;
 use App\Models\Curso;
 use App\Support\ListadoCursoCondicionFiltro;
 use App\Support\ListadoCursoPdfFieldCatalog;
@@ -25,6 +26,11 @@ class ListadoPorCurso extends Component
     /** @var list<string> */
     public array $camposSeleccionados = ListadoCursoPdfFieldCatalog::DEFAULT_KEYS;
 
+    public function mount(): void
+    {
+        $this->camposSeleccionados = CampoListadoAlumno::aplicarVisibilidadListadoPdf($this->camposSeleccionados);
+    }
+
     public function updatedFiltroCondicion(mixed $value): void
     {
         $this->filtroCondicion = ListadoCursoCondicionFiltro::normalize(is_string($value) ? $value : null);
@@ -47,7 +53,8 @@ class ListadoPorCurso extends Component
             ->map(fn (string $sid) => $cursos->firstWhere('Id', (int) $sid))
             ->filter();
 
-        $camposPorGrupo = ListadoCursoPdfFieldCatalog::groupedForUi();
+        $soloLegajosVisibles = CampoListadoAlumno::columnasLegajosVisiblesParaUi();
+        $camposPorGrupo = ListadoCursoPdfFieldCatalog::groupedForUi($soloLegajosVisibles);
 
         return view('livewire.listados.por-curso', compact('cursos', 'cursosIzquierda', 'cursosDerecha', 'camposPorGrupo'))
             ->layout('layouts.app', ['pageTitle' => 'Listado por curso']);
@@ -151,12 +158,25 @@ class ListadoPorCurso extends Component
 
     public function seleccionarSoloDefecto(): void
     {
-        $this->camposSeleccionados = ListadoCursoPdfFieldCatalog::DEFAULT_KEYS;
+        $this->camposSeleccionados = CampoListadoAlumno::aplicarVisibilidadListadoPdf(ListadoCursoPdfFieldCatalog::DEFAULT_KEYS);
     }
 
     public function seleccionarTodos(): void
     {
-        $this->camposSeleccionados = ListadoCursoPdfFieldCatalog::allowedKeys();
+        $soloLegajos = CampoListadoAlumno::columnasLegajosVisiblesParaUi();
+        $this->camposSeleccionados = collect(ListadoCursoPdfFieldCatalog::allowedKeys())
+            ->filter(function (string $k) use ($soloLegajos) {
+                if (! str_starts_with($k, 'legajos.')) {
+                    return true;
+                }
+                if ($soloLegajos === null) {
+                    return true;
+                }
+
+                return in_array(substr($k, strlen('legajos.')), $soloLegajos, true);
+            })
+            ->values()
+            ->all();
     }
 
     /** @return Builder<Curso> */

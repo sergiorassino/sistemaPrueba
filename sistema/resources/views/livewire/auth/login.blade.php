@@ -1,6 +1,6 @@
 <div>
-    <div class="card p-8">
-        <h2 class="text-xl font-semibold text-gray-800 mb-6">Iniciar sesión</h2>
+    <div class="card p-4 sm:p-5">
+        <h2 class="text-base sm:text-lg font-semibold text-gray-800 mb-2.5 sm:mb-3">Iniciar sesión</h2>
 
         @if (session('error'))
             <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
@@ -8,17 +8,17 @@
             </div>
         @endif
 
-        <form wire:submit="login" class="space-y-5">
+        <form wire:submit="login" class="space-y-3">
             {{-- DNI --}}
             <div>
-                <label class="form-label" for="dni">DNI (usuario)</label>
-                <input wire:model="dni"
+                <label class="form-label text-xs" for="dni">DNI (usuario)</label>
+                <input wire:model.live.debounce.400ms="dni"
                        id="dni"
                        type="text"
                        inputmode="numeric"
                        autocomplete="username"
                        placeholder="Ej: 25038868"
-                       class="form-input @error('dni') border-red-400 @enderror">
+                       class="form-input text-sm py-2 @error('dni') border-red-400 @enderror">
                 @error('dni')
                     <p class="form-error">{{ $message }}</p>
                 @enderror
@@ -26,12 +26,12 @@
 
             {{-- Contraseña --}}
             <div>
-                <label class="form-label" for="pwrd">Contraseña</label>
+                <label class="form-label text-xs" for="pwrd">Contraseña</label>
                 <input wire:model="pwrd"
                        id="pwrd"
                        type="password"
                        autocomplete="current-password"
-                       class="form-input @error('pwrd') border-red-400 @enderror">
+                       class="form-input text-sm py-2 @error('pwrd') border-red-400 @enderror">
                 @error('pwrd')
                     <p class="form-error">{{ $message }}</p>
                 @enderror
@@ -39,10 +39,10 @@
 
             {{-- Nivel --}}
             <div>
-                <label class="form-label" for="idNivel">Nivel</label>
+                <label class="form-label text-xs" for="idNivel">Nivel</label>
                 <select wire:model="idNivel"
                         id="idNivel"
-                        class="form-select @error('idNivel') border-red-400 @enderror">
+                        class="form-select text-sm py-2 @error('idNivel') border-red-400 @enderror">
                     <option value="">— Seleccione nivel —</option>
                     @foreach ($niveles as $n)
                         <option value="{{ $n->id }}">{{ $n->nivel }}</option>
@@ -55,10 +55,10 @@
 
             {{-- Año lectivo --}}
             <div>
-                <label class="form-label" for="idTerlec">Año lectivo</label>
+                <label class="form-label text-xs" for="idTerlec">Año lectivo</label>
                 <select wire:model="idTerlec"
                         id="idTerlec"
-                        class="form-select @error('idTerlec') border-red-400 @enderror">
+                        class="form-select text-sm py-2 @error('idTerlec') border-red-400 @enderror">
                     <option value="">— Seleccione año —</option>
                     @foreach ($terlecs as $t)
                         <option value="{{ $t->id }}">{{ $t->ano }}</option>
@@ -69,9 +69,9 @@
                 @enderror
             </div>
 
-            <div class="pt-2">
+            <div class="pt-1">
                 <button type="submit"
-                        class="btn-primary w-full py-2.5 text-base"
+                        class="btn-primary w-full py-2 text-sm"
                         wire:loading.attr="disabled"
                         wire:loading.class="opacity-75"
                         wire:target="login">

@@ -8,15 +8,15 @@
     @livewireStyles
 </head>
 <body class="h-full">
-    <div class="min-h-full flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            <div class="flex justify-center mb-8">
-                <img src="{{ asset('img/3.png') }}" alt="{{ config('app.name') }}" class="h-28 object-contain drop-shadow-md">
-            </div>
-        </div>
+    <div class="min-h-screen flex flex-col justify-center py-2 sm:py-4 px-4 sm:px-6 lg:px-8">
+        <div class="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center gap-1.5 sm:gap-2">
+            <img src="{{ asset('img/3.png') }}"
+                 alt="{{ config('app.name') }}"
+                 class="w-auto h-auto max-h-[150px] sm:max-h-[170px] md:max-h-[190px] object-contain drop-shadow-sm">
 
-        <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-            {{ $slot }}
+            <div class="w-full">
+                {{ $slot }}
+            </div>
         </div>
     </div>
 

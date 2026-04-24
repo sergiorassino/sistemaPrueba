@@ -7,8 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Curso extends Model
 {
     protected $table = 'cursos';
+
     protected $primaryKey = 'Id';
+
     public $timestamps = false;
+
     protected $fillable = [
         'orden', 'idCurPlan', 'idTerlec', 'idNivel', 'cursec', 'c', 's', 'turno',
     ];
@@ -21,6 +24,41 @@ class Curso extends Model
     public function terlec()
     {
         return $this->belongsTo(Terlec::class, 'idTerlec');
+    }
+
+    public function curplan()
+    {
+        return $this->belongsTo(Curplan::class, 'idCurPlan');
+    }
+
+    /**
+     * Texto para listados / PDF: prioriza sección (`cursec`), si no hay datos del plan y turno.
+     */
+    public function nombreParaListado(): string
+    {
+        $sec = trim((string) $this->cursec);
+        if ($sec !== '') {
+            return $sec;
+        }
+
+        $nombrePlan = trim((string) ($this->curplan?->curPlanCurso ?? ''));
+
+        $extras = collect([$this->turno, $this->c, $this->s])
+            ->map(fn ($v) => trim((string) $v))
+            ->filter()
+            ->values();
+
+        if ($nombrePlan !== '') {
+            return $extras->isNotEmpty()
+                ? $nombrePlan.' · '.$extras->implode(' · ')
+                : $nombrePlan;
+        }
+
+        if ($extras->isNotEmpty()) {
+            return $extras->implode(' · ');
+        }
+
+        return 'Curso';
     }
 
     public function matriculas()

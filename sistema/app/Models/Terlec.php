@@ -10,7 +10,10 @@ class Terlec extends Model
     protected $primaryKey = 'id';
     public $incrementing = true;
     public $timestamps = false;
-    protected $guarded = [];
+    protected $fillable = [
+        'ano',
+        'orden',
+    ];
 
     protected $casts = [
         'ano'   => 'integer',

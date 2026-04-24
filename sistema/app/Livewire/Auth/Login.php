@@ -6,6 +6,8 @@ use App\Models\Nivel;
 use App\Models\Terlec;
 use App\Support\SchoolContext;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class Login extends Component
@@ -42,6 +44,14 @@ class Login extends Component
     {
         $this->validate();
 
+        $throttleKey = 'login:' . request()->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            throw ValidationException::withMessages([
+                'dni' => 'Demasiados intentos de acceso. Intente nuevamente en ' . RateLimiter::availableIn($throttleKey) . ' segundos.',
+            ]);
+        }
+
         $credentials = [
             'dni'   => $this->dni,
             'pwrd'  => $this->pwrd,
@@ -68,10 +78,14 @@ class Login extends Component
                 'ult_idTerlec' => (int) $this->idTerlec,
             ]);
 
+            RateLimiter::clear($throttleKey);
+
             // Redirección completa (no SPA wire:navigate) para garantizar
             // que las cookies de sesión se propaguen correctamente
             return redirect()->route('dashboard');
         }
+
+        RateLimiter::hit($throttleKey, 60);
 
         $this->addError('dni', 'DNI o contraseña incorrectos. Verifique sus datos.');
     }

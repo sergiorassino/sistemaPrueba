@@ -22,12 +22,17 @@
      style="display:none"></div>
 
 {{-- Sidebar --}}
-<aside class="fixed inset-y-0 left-0 z-40 w-64 flex flex-col bg-primary-900 transform transition-transform duration-200 ease-in-out
+<aside class="fixed inset-y-0 left-0 z-40 w-64 flex flex-col bg-neutral-800 transform transition-transform duration-200 ease-in-out
               md:translate-x-0"
        :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'">
 
+    {{-- Logo Institucional --}}
+    <div class="h-16 flex items-center justify-center bg-neutral-900 border-b border-neutral-800 p-2">
+        <img src="{{ asset('img/4.png') }}" alt="Sistemas Escolares" class="h-full object-contain filter brightness-0 invert opacity-90">
+    </div>
+
     {{-- Header compacto: Nivel - Año - Usuario --}}
-    <div class="h-12 px-3 bg-primary-950 border-b border-primary-800 flex items-center">
+    <div class="h-12 px-3 bg-neutral-900 border-b border-neutral-700 flex items-center">
         @php
             $sidebarSessionLine = schoolCtx()->nivelNombre()
                 . ' - ' . schoolCtx()->terlecAno()
@@ -42,17 +47,18 @@
     {{-- Navigation --}}
     <nav class="flex-1 px-2.5 py-3 overflow-y-auto space-y-0.5">
 
-        <p class="px-2 mb-2 text-primary-400 text-xs font-semibold uppercase tracking-widest">
+        <p class="px-2 mb-2 text-neutral-400 text-xs font-semibold uppercase tracking-widest">
             Configuración
         </p>
 
         @php $route = request()->route()?->getName(); @endphp
 
+        @if(tienePermiso(1))
         <a href="{{ route('abm.terlec') }}"
            @class([
                'flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-               'bg-primary-700 text-white' => str_starts_with($route ?? '', 'abm.terlec'),
-               'text-primary-200 hover:bg-primary-700 hover:text-white' => !str_starts_with($route ?? '', 'abm.terlec'),
+               'bg-primary-500 text-white' => str_starts_with($route ?? '', 'abm.terlec'),
+               'text-neutral-300 hover:bg-primary-500/20 hover:text-white' => !str_starts_with($route ?? '', 'abm.terlec'),
            ])>
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -64,8 +70,8 @@
         <a href="{{ route('abm.niveles') }}"
            @class([
                'flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-               'bg-primary-700 text-white' => str_starts_with($route ?? '', 'abm.niveles'),
-               'text-primary-200 hover:bg-primary-700 hover:text-white' => !str_starts_with($route ?? '', 'abm.niveles'),
+               'bg-primary-500 text-white' => str_starts_with($route ?? '', 'abm.niveles'),
+               'text-neutral-300 hover:bg-primary-500/20 hover:text-white' => !str_starts_with($route ?? '', 'abm.niveles'),
            ])>
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -73,16 +79,18 @@
             </svg>
             Niveles
         </a>
+        @endif
 
-        <p class="px-2 mt-4 mb-2 text-primary-400 text-xs font-semibold uppercase tracking-widest">
+        @if(tienePermiso(2))
+        <p class="px-2 mt-4 mb-2 text-neutral-400 text-xs font-semibold uppercase tracking-widest">
             Estudiantes
         </p>
 
         <a href="{{ route('abm.legajos') }}"
            @class([
                'flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-               'bg-primary-700 text-white' => str_starts_with($route ?? '', 'abm.legajos'),
-               'text-primary-200 hover:bg-primary-700 hover:text-white' => !str_starts_with($route ?? '', 'abm.legajos'),
+               'bg-primary-500 text-white' => str_starts_with($route ?? '', 'abm.legajos'),
+               'text-neutral-300 hover:bg-primary-500/20 hover:text-white' => !str_starts_with($route ?? '', 'abm.legajos'),
            ])>
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -90,11 +98,12 @@
             </svg>
             Legajos de Estudiantes
         </a>
+        @endif
 
     </nav>
 
     {{-- User footer --}}
-    <div class="px-4 py-3 bg-primary-950 border-t border-primary-800">
+    <div class="px-4 py-3 bg-neutral-900 border-t border-neutral-700">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
                 <span class="text-white text-xs font-bold">
@@ -110,7 +119,7 @@
                 @csrf
                 <button type="submit"
                         title="Cerrar sesión"
-                        class="text-primary-400 hover:text-white transition-colors">
+                        class="text-neutral-400 hover:text-white transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>

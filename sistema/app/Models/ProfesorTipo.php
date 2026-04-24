@@ -8,7 +8,9 @@ class ProfesorTipo extends Model
 {
     protected $table = 'profesortipo';
     public $timestamps = false;
-    protected $guarded = [];
+    protected $fillable = [
+        'tipo', 'accesoMenu',
+    ];
 
     public function profesores()
     {

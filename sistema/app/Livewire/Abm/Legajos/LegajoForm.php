@@ -516,8 +516,10 @@ class LegajoForm extends Component
         if ($this->id) {
             $matriculasAlumno = Matricula::where('idLegajos', $this->id)
                 ->with(['terlec', 'curso', 'condicion'])
-                ->orderByDesc(DB::raw('(SELECT COALESCE(ano, 0) FROM terlec WHERE terlec.id = matricula.idTerlec LIMIT 1)'))
+                ->leftJoin('terlec', 'terlec.id', '=', 'matricula.idTerlec')
+                ->orderByDesc('terlec.ano')
                 ->orderByDesc('matricula.id')
+                ->select('matricula.*')
                 ->get();
         }
 

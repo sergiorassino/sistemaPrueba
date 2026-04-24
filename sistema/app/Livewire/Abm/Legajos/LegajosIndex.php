@@ -99,10 +99,10 @@ class LegajosIndex extends Component
             'familia',
             'matriculas' => function ($q) {
                 $q->with(['terlec', 'curso', 'condicion'])
-                    ->orderByDesc(
-                        DB::raw('(SELECT COALESCE(ano, 0) FROM terlec WHERE terlec.id = matricula.idTerlec LIMIT 1)')
-                    )
-                    ->orderByDesc('matricula.id');
+                    ->leftJoin('terlec', 'terlec.id', '=', 'matricula.idTerlec')
+                    ->orderByDesc('terlec.ano')
+                    ->orderByDesc('matricula.id')
+                    ->select('matricula.*');
             },
         ]);
 

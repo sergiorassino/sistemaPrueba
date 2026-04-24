@@ -8,7 +8,16 @@ class Matricula extends Model
 {
     protected $table = 'matricula';
     public $timestamps = false;
-    protected $guarded = [];
+    protected $fillable = [
+        'idLegajos',
+        'idCursos',
+        'idCondiciones',
+        'idTerlec',
+        'idNivel',
+        'nroMatricula',
+        'fechaMatricula',
+        'fechaBaja',
+    ];
 
     protected $casts = [
         'fechaMatricula' => 'date',

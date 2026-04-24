@@ -8,7 +8,21 @@ class Profesor extends Authenticatable
 {
     protected $table = 'profesores';
     public $timestamps = false;
-    protected $guarded = [];
+    protected $fillable = [
+        'nombre',
+        'apellido',
+        'dni',
+        'pwrd',
+        'nivel',
+        'permisos',
+        'ult_idNivel',
+        'ult_idTerlec',
+        'fechnaci',
+        'apto',
+        'escalafonD',
+        'escalafonE',
+        'IdTipoProf',
+    ];
     protected $hidden = ['pwrd'];
 
     protected $casts = [

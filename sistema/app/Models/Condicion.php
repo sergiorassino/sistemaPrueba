@@ -10,7 +10,11 @@ class Condicion extends Model
 
     public $timestamps = false;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'orden',
+        'condicion',
+        'proteg',
+    ];
 
     public function matriculas()
     {

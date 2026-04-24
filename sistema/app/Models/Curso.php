@@ -9,7 +9,9 @@ class Curso extends Model
     protected $table = 'cursos';
     protected $primaryKey = 'Id';
     public $timestamps = false;
-    protected $guarded = [];
+    protected $fillable = [
+        'orden', 'idCurPlan', 'idTerlec', 'idNivel', 'cursec', 'c', 's', 'turno',
+    ];
 
     public function nivel()
     {

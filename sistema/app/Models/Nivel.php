@@ -8,7 +8,10 @@ class Nivel extends Model
 {
     protected $table = 'niveles';
     public $timestamps = false;
-    protected $guarded = [];
+    protected $fillable = [
+        'nivel',
+        'abrev',
+    ];
 
     public function legajos()
     {

@@ -3,17 +3,34 @@
 @plugin "@tailwindcss/forms";
 
 @theme {
-    --color-primary-50:  #eff6ff;
-    --color-primary-100: #dbeafe;
-    --color-primary-200: #bfdbfe;
-    --color-primary-300: #93c5fd;
-    --color-primary-400: #60a5fa;
-    --color-primary-500: #3b82f6;
-    --color-primary-600: #2563eb;
-    --color-primary-700: #1d4ed8;
-    --color-primary-800: #1e40af;
-    --color-primary-900: #1e3a8a;
-    --color-primary-950: #172554;
+    --color-primary-50:  #edf5f6;
+    --color-primary-100: #d1e6e9;
+    --color-primary-200: #a3cdd3;
+    --color-primary-300: #739fa5;
+    --color-primary-400: #5a9199;
+    --color-primary-500: #40848d;
+    --color-primary-600: #366f76;
+    --color-primary-700: #2c5a60;
+    --color-primary-800: #224549;
+    --color-primary-900: #183033;
+
+    --color-neutral-50:  #f5f5f5;
+    --color-neutral-100: #e5e5e5;
+    --color-neutral-200: #cccccc;
+    --color-neutral-300: #b3b3b3;
+    --color-neutral-400: #999999;
+    --color-neutral-500: #666666;
+    --color-neutral-600: #4d4d4d;
+    --color-neutral-700: #404040;
+    --color-neutral-800: #333333;
+    --color-neutral-900: #1a1a1a;
+
+    --color-accent-50:  #f4f8f9;
+    --color-accent-100: #e5eff0;
+    --color-accent-200: #c1d7da;
+    --color-accent-300: #a8c8cc;
+    --color-accent-400: #8fb9be;
+    --color-accent-500: #76aab0;
 }
 
 @layer components {
@@ -21,7 +38,7 @@
         @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-transparent bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
     }
     .btn-secondary {
-        @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+        @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-primary-600 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
     }
     .btn-info {
         @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-transparent bg-sky-600 text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
@@ -95,7 +112,7 @@
         @apply flex border-b border-gray-300 last:border-b-0;
     }
     .gf-row-hover {
-        @apply hover:bg-blue-50 transition-colors;
+        @apply hover:bg-primary-50 transition-colors;
     }
 
     /* Celda de datos (listado) */
@@ -131,21 +148,21 @@
     /* Inputs y selects dentro de celdas */
     .gf-input {
         @apply w-full px-2 py-1.5 text-xs text-gray-900 bg-transparent border-0 outline-none
-               focus:bg-blue-50 focus:ring-2 focus:ring-inset focus:ring-primary-500;
+               focus:bg-primary-50 focus:ring-2 focus:ring-inset focus:ring-primary-500;
     }
     .gf-input-err {
         @apply bg-red-50 focus:bg-red-50 focus:ring-red-400;
     }
     .gf-select {
         @apply w-full px-2 py-1.5 text-xs text-gray-900 bg-transparent border-0 outline-none
-               focus:bg-blue-50 focus:ring-2 focus:ring-inset focus:ring-primary-500 cursor-pointer;
+               focus:bg-primary-50 focus:ring-2 focus:ring-inset focus:ring-primary-500 cursor-pointer;
     }
     .gf-select-err {
         @apply bg-red-50 focus:bg-red-50 focus:ring-red-400;
     }
     .gf-textarea {
         @apply w-full px-2 py-1.5 text-xs text-gray-900 bg-transparent border-0 outline-none resize-none
-               focus:bg-blue-50 focus:ring-2 focus:ring-inset focus:ring-primary-500;
+               focus:bg-primary-50 focus:ring-2 focus:ring-inset focus:ring-primary-500;
     }
 
     /* Fila de mensaje de error (debajo del campo con error) */

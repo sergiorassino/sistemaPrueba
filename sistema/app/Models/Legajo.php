@@ -8,7 +8,18 @@ class Legajo extends Model
 {
     protected $table = 'legajos';
     public $timestamps = false;
-    protected $guarded = [];
+    protected $fillable = [
+        'apellido', 'nombre', 'dni', 'cuil', 'fechnaci', 'sexo', 'nacion',
+        'idFamilias', 'tipoalumno', 'legajo', 'libro', 'folio',
+        'callenum', 'barrio', 'localidad', 'codpos',
+        'ln_ciudad', 'ln_depto', 'ln_provincia', 'ln_pais',
+        'telefono', 'email',
+        'nombremad', 'dnimad', 'fechnacmad', 'nacionmad', 'estacivimad', 'domimad', 'ocupacmad', 'telemad', 'telecelmad', 'emailmad', 'vivemad',
+        'nombrepad', 'dnipad', 'fechnacpad', 'nacionpad', 'estacivipad', 'domipad', 'ocupacpad', 'telepad', 'telecelpad', 'emailpad', 'vivepad',
+        'nombretut', 'dnitut', 'teletut', 'emailtut', 'respAdmiNom', 'respAdmiDni',
+        'escori', 'destino', 'obs', 'identif', 'vivecon', 'hermanos', 'ec_padres', 'parroquia',
+        'needes', 'needes_detalle', 'certDisc', 'emeravis', 'retira', 'fechhora',
+    ];
 
     protected $casts = [
         'fechnaci'    => 'date',

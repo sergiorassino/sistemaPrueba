@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'school.context' => EnsureSchoolContext::class,
+            'permiso'        => \App\Http\Middleware\CheckPermiso::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

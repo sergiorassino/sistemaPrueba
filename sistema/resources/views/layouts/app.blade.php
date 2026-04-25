@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $pageTitle ?? (isset($title) ? $title . ' — ' : '') }}{{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
@@ -15,8 +16,19 @@
             --se-white-85: rgba(255, 255, 255, 0.85);
             --se-white-05: rgba(255, 255, 255, 0.05);
             --se-white-10: rgba(255, 255, 255, 0.10);
+            --se-sidebar-w: 23.04rem; /* +20% sobre 19.2rem (total +44% vs 16rem) */
+            --se-sidebar-w-collapsed: 5rem; /* md:w-20 */
         }
-        .se-sidebar { background: var(--se-jet); color: #fff; }
+        .se-sidebar {
+            background: var(--se-jet);
+            color: #fff;
+            font-family: "Roboto Condensed", "Arial Narrow", "Helvetica Neue", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+            font-stretch: condensed;
+            width: var(--se-sidebar-w);
+        }
+        @media (min-width: 768px) {
+            .se-sidebar.is-collapsed { width: var(--se-sidebar-w-collapsed); }
+        }
         .se-sidebar-sep { border-color: var(--se-sep); }
         .se-sidebar-iconbtn { color: var(--se-white-85); }
         .se-sidebar-iconbtn:hover { background: var(--se-white-10); color: #fff; }
@@ -26,6 +38,28 @@
         .se-sidebar-link { color: var(--se-white-85); }
         .se-sidebar-link:hover { background: var(--se-hover); color: #fff; }
         .se-sidebar-link.is-active { background: var(--se-primary); color: #fff; }
+        .se-main {
+            width: 100%;
+            min-width: 0;
+            transition: transform 200ms ease-in-out, width 200ms ease-in-out;
+            transform: translateX(0);
+        }
+        @media (min-width: 768px) {
+            .se-main {
+                transform: translateX(var(--se-sidebar-w));
+                width: calc(100% - var(--se-sidebar-w));
+            }
+            .se-main.is-collapsed {
+                transform: translateX(var(--se-sidebar-w-collapsed));
+                width: calc(100% - var(--se-sidebar-w-collapsed));
+            }
+        }
+        @media (max-width: 767px) {
+            .se-main.is-mobile-open {
+                transform: translateX(var(--se-sidebar-w));
+                width: calc(100% - var(--se-sidebar-w));
+            }
+        }
     </style>
 </head>
 @php $route = request()->route()?->getName(); @endphp
@@ -33,7 +67,8 @@
     sidebarOpen: false,
     sidebarCollapsed: false,
     groups: {
-        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'param.')) ? 'true' : 'false' }},
+        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'param.')) ? 'true' : 'false' }},
+        planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.')) ? 'true' : 'false' }},
     },
     init() {
@@ -71,10 +106,10 @@
 
 {{-- Sidebar --}}
 <aside class="se-sidebar fixed inset-y-0 left-0 z-40 flex flex-col transform transition-transform duration-200 ease-in-out
-              w-64 md:translate-x-0 md:transition-[width] md:duration-200 md:ease-in-out md:shadow-lg"
+              md:translate-x-0 md:transition-[width] md:duration-200 md:ease-in-out md:shadow-lg"
        :class="[
            sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-           sidebarCollapsed ? 'md:w-20' : 'md:w-64'
+           sidebarCollapsed ? 'is-collapsed' : ''
        ]">
 
     {{-- Header compacto: Nivel - Año - Usuario + contraer/expandir --}}
@@ -95,11 +130,18 @@
                 class="se-sidebar-iconbtn hidden md:inline-flex items-center justify-center w-9 h-9 rounded-md transition-colors flex-shrink-0"
                 :title="sidebarCollapsed ? 'Expandir menú' : 'Contraer menú'"
                 @click="toggleSidebar()">
-            <svg x-show="!sidebarCollapsed" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            {{-- Ícono "menú hamburguesa" redondo --}}
+            <svg x-show="!sidebarCollapsed" x-cloak class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke-width="2"/>
+                <path stroke-linecap="round" stroke-width="2" d="M8 10h8"/>
+                <path stroke-linecap="round" stroke-width="2" d="M8 12.75h8"/>
+                <path stroke-linecap="round" stroke-width="2" d="M8 15.5h8"/>
             </svg>
-            <svg x-show="sidebarCollapsed" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            <svg x-show="sidebarCollapsed" x-cloak class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke-width="2"/>
+                <path stroke-linecap="round" stroke-width="2" d="M8 10h8"/>
+                <path stroke-linecap="round" stroke-width="2" d="M8 12.75h8"/>
+                <path stroke-linecap="round" stroke-width="2" d="M8 15.5h8"/>
             </svg>
         </button>
     </div>
@@ -107,85 +149,8 @@
     {{-- Navigation --}}
     <nav class="flex-1 px-2.5 py-3 overflow-y-auto space-y-0.5">
 
-        {{-- Configuración --}}
-        @if(tienePermiso(1))
-            <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
-                    :class="(groups.config && !sidebarCollapsed) ? 'is-open' : ''"
-                    @click="toggleGroup('config')"
-                    title="Configuración">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
-                </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">Configuración</span>
-                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
-                     :class="groups.config ? 'rotate-180' : ''"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-
-            <div class="mt-1 space-y-0.5 pl-1"
-                 x-show="groups.config && !sidebarCollapsed"
-                 x-collapse
-                 x-cloak>
-                <a href="{{ route('abm.terlec') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.terlec'),
-                   ])
-                   title="Términos Lectivos">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    <span class="truncate">Términos Lectivos</span>
-                </a>
-
-                <a href="{{ route('abm.niveles') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.niveles'),
-                   ])
-                   title="Niveles">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M3 7h18M3 12h18M3 17h18"/>
-                    </svg>
-                    <span class="truncate">Niveles</span>
-                </a>
-
-                <a href="{{ route('abm.curplan') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.curplan'),
-                   ])
-                   title="Cursos modelo (CurPlan)">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
-                    </svg>
-                    <span class="truncate">Cursos modelo (CurPlan)</span>
-                </a>
-
-                <a href="{{ route('param.campos-listado-alumnos') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'param.campos-listado-alumnos'),
-                   ])
-                   title="Campos de legajos en listados PDF">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                    </svg>
-                    <span class="truncate">Campos listado (legajos)</span>
-                </a>
-            </div>
-        @endif
-
         {{-- Estudiantes --}}
         @if(tienePermiso(2))
-            <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
                     :class="(groups.students && !sidebarCollapsed) ? 'is-open' : ''"
@@ -235,6 +200,134 @@
             </div>
         @endif
 
+        {{-- Configuración --}}
+        @if(tienePermiso(1))
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    :class="(groups.config && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('config')"
+                    title="Configuración">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">Configuración</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.config ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <div class="mt-1 space-y-0.5 pl-1"
+                 x-show="groups.config && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                <a href="{{ route('abm.terlec') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.terlec'),
+                   ])
+                   title="Términos Lectivos">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="truncate">Términos Lectivos</span>
+                </a>
+
+                <a href="{{ route('abm.niveles') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.niveles'),
+                   ])
+                   title="Niveles">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 7h18M3 12h18M3 17h18"/>
+                    </svg>
+                    <span class="truncate">Niveles</span>
+                </a>
+
+                <a href="{{ route('abm.cursos') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.cursos'),
+                   ])
+                   title="Gestión de Cursos / Grados / Salas">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
+                    </svg>
+                    <span class="truncate">Gestión de Cursos / Grados / Salas</span>
+                </a>
+
+                <a href="{{ route('param.campos-listado-alumnos') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'param.campos-listado-alumnos'),
+                   ])
+                   title="Campos Disponibles Listado Alumnos">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                    <span class="truncate">Campos Disponibles Listado Alumnos</span>
+                </a>
+
+                {{-- Planes + Cursos modelo --}}
+                <button type="button"
+                        class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors mt-2"
+                        :class="(groups.planesCursos && !sidebarCollapsed) ? 'is-open' : ''"
+                        @click="toggleGroup('planesCursos')"
+                        title="Gestión de planes y cursos modelo">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
+                    </svg>
+                    <span class="truncate flex-1 text-left">GESTIÓN DE PLANES Y CURSOS MODELO</span>
+                    <svg class="w-4 h-4 transition-transform"
+                         :class="groups.planesCursos ? 'rotate-180' : ''"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+
+                <div class="space-y-0.5 pl-1"
+                     x-show="groups.planesCursos"
+                     x-collapse
+                     x-cloak>
+                    <a href="{{ route('abm.planes') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.planes'),
+                       ])
+                       title="Gestión de Planes de Estudio">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                        </svg>
+                        <span class="truncate">Gestión de Planes de Estudio</span>
+                    </a>
+
+                    <a href="{{ route('abm.curplan') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.curplan'),
+                       ])
+                       title="Gestión de Cursos y Materias del Plan">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Gestión de Cursos y Materias del Plan</span>
+                    </a>
+                </div>
+
+            </div>
+
+        @endif
+
     </nav>
 
     {{-- User footer --}}
@@ -267,8 +360,11 @@
 </aside>
 
 {{-- Main content area --}}
-<div class="flex flex-col min-h-screen transition-[padding] duration-200 ease-in-out md:pl-64"
-     :class="sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'">
+<div class="se-main flex flex-col min-h-screen transition-[padding] duration-200 ease-in-out"
+     :class="[
+        sidebarCollapsed ? 'is-collapsed' : '',
+        sidebarOpen ? 'is-mobile-open' : ''
+     ]">
 
     {{-- Top bar (mobile) --}}
     <header class="sticky top-0 z-20 bg-white border-b border-gray-200 md:hidden">
@@ -296,5 +392,64 @@
 </div>
 
 @livewireScripts
+<script>
+    (() => {
+        const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+        const LOGOUT_URL = @json(route('logout'));
+        const LOGIN_URL = @json(route('login'));
+
+        let timer = null;
+        let hasTriggered = false;
+
+        const getCsrfToken = () =>
+            document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        const logoutAndRedirect = async () => {
+            if (hasTriggered) return;
+            hasTriggered = true;
+
+            try {
+                await fetch(LOGOUT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': getCsrfToken(),
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                });
+            } catch (e) {
+                // Si falla el request, igual redirigimos al login.
+            } finally {
+                window.location.assign(LOGIN_URL);
+            }
+        };
+
+        const resetTimer = () => {
+            if (hasTriggered) return;
+            if (timer) window.clearTimeout(timer);
+            timer = window.setTimeout(logoutAndRedirect, IDLE_TIMEOUT_MS);
+        };
+
+        const activityEvents = [
+            'mousemove',
+            'mousedown',
+            'keydown',
+            'scroll',
+            'touchstart',
+            'pointerdown',
+        ];
+
+        activityEvents.forEach((evt) => {
+            window.addEventListener(evt, resetTimer, { passive: true });
+        });
+
+        window.addEventListener('focus', resetTimer);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) resetTimer();
+        });
+
+        resetTimer();
+    })();
+</script>
 </body>
 </html>

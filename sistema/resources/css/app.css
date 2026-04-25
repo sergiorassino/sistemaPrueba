@@ -126,6 +126,33 @@
         @apply px-2 py-1 flex items-center justify-end gap-2;
     }
 
+    /*
+     * Inline edit en listados (.gf-td)
+     * Debe ocupar exactamente el ancho de la celda sin “mover” columnas.
+     */
+    .gf-inline {
+        @apply w-full bg-transparent border-0 p-0 m-0 text-inherit rounded-none;
+        box-sizing: border-box;
+        outline: none;
+        font: inherit;
+        line-height: inherit;
+        display: block;
+    }
+    .gf-inline:focus {
+        box-shadow: inset 0 -2px 0 rgba(64, 132, 141, 0.65);
+        background: rgba(255, 255, 255, 0.85);
+    }
+
+    .gf-inline-select {
+        @apply w-full bg-transparent border-0 p-0 m-0 text-inherit rounded-none appearance-none;
+        box-sizing: border-box;
+        outline: none;
+        font: inherit;
+        line-height: inherit;
+        display: block;
+        padding-right: 1rem; /* espacio para el caret */
+    }
+
     /* Celda de etiqueta (formularios) */
     .gf-label {
         @apply bg-gray-100 border-r border-gray-300 px-2 py-1.5 font-medium text-gray-600

@@ -17,18 +17,20 @@ class CurplanForm extends Component
     public int|string $idPlan = '';
     public string $curPlanCurso = '';
 
-    // Materias
-    public ?int $matEditId = null;
     public ?int $matDeleteId = null;
     public bool $showMatConfirm = false;
     public string $matDeleteInfo = '';
 
-    public string $matPlanMateria = '';
-    public int|string $ord = 0;
-    public string $abrev = '';
-    public string $codGE = '';
-    public string $codGE2 = '';
-    public string $codGE3 = '';
+    // Materias (inline por fila)
+    public ?int $matEditingId = null; // null = no edita, 0 = crea, >0 = edita
+    public array $matDraft = [
+        'ord' => 0,
+        'matPlanMateria' => '',
+        'abrev' => '',
+        'codGE' => '',
+        'codGE2' => '',
+        'codGE3' => '',
+    ];
 
     public function mount(?int $id = null): void
     {
@@ -36,7 +38,7 @@ class CurplanForm extends Component
         if ($id) {
             $this->loadCurplan($id);
         }
-        $this->resetMateriaForm();
+        $this->resetMateriaDraft();
     }
 
     protected function rules(): array
@@ -57,12 +59,12 @@ class CurplanForm extends Component
     protected function matRules(): array
     {
         return [
-            'matPlanMateria' => ['required', 'string', 'max:70'],
-            'ord' => ['required', 'integer', 'min:0', 'max:99'],
-            'abrev' => ['nullable', 'string', 'max:5'],
-            'codGE' => ['nullable', 'string', 'max:15'],
-            'codGE2' => ['nullable', 'string', 'max:15'],
-            'codGE3' => ['nullable', 'string', 'max:15'],
+            'matDraft.matPlanMateria' => ['required', 'string', 'max:70'],
+            'matDraft.ord' => ['required', 'integer', 'min:0', 'max:99'],
+            'matDraft.abrev' => ['nullable', 'string', 'max:5'],
+            'matDraft.codGE' => ['nullable', 'string', 'max:15'],
+            'matDraft.codGE2' => ['nullable', 'string', 'max:15'],
+            'matDraft.codGE3' => ['nullable', 'string', 'max:15'],
         ];
     }
 
@@ -75,15 +77,15 @@ class CurplanForm extends Component
             'curPlanCurso.max' => 'El nombre no puede superar los 30 caracteres.',
             'curPlanCurso.unique' => 'Ya existe un curso modelo con ese nombre para ese plan.',
 
-            'matPlanMateria.required' => 'La materia es obligatoria.',
-            'matPlanMateria.max' => 'La materia no puede superar los 70 caracteres.',
-            'ord.required' => 'El orden es obligatorio.',
-            'ord.integer' => 'El orden debe ser un número.',
-            'ord.max' => 'El orden no puede ser mayor a 99.',
-            'abrev.max' => 'La abreviatura no puede superar los 5 caracteres.',
-            'codGE.max' => 'El código no puede superar los 15 caracteres.',
-            'codGE2.max' => 'El código no puede superar los 15 caracteres.',
-            'codGE3.max' => 'El código no puede superar los 15 caracteres.',
+            'matDraft.matPlanMateria.required' => 'La materia es obligatoria.',
+            'matDraft.matPlanMateria.max' => 'La materia no puede superar los 70 caracteres.',
+            'matDraft.ord.required' => 'El orden es obligatorio.',
+            'matDraft.ord.integer' => 'El orden debe ser un número.',
+            'matDraft.ord.max' => 'El orden no puede ser mayor a 99.',
+            'matDraft.abrev.max' => 'La abreviatura no puede superar los 5 caracteres.',
+            'matDraft.codGE.max' => 'El código no puede superar los 15 caracteres.',
+            'matDraft.codGE2.max' => 'El código no puede superar los 15 caracteres.',
+            'matDraft.codGE3.max' => 'El código no puede superar los 15 caracteres.',
         ];
     }
 
@@ -126,20 +128,23 @@ class CurplanForm extends Component
     }
 
     // ── Materias ──
-    public function resetMateriaForm(): void
+    public function resetMateriaDraft(): void
     {
-        $this->reset('matEditId', 'matDeleteId', 'showMatConfirm', 'matDeleteInfo');
-        $this->matPlanMateria = '';
-        $this->ord = '0';
-        $this->abrev = '';
-        $this->codGE = '';
-        $this->codGE2 = '';
-        $this->codGE3 = '';
+        $this->reset('matEditingId', 'matDeleteId', 'showMatConfirm', 'matDeleteInfo');
+        $this->matDraft = [
+            'ord' => 0,
+            'matPlanMateria' => '',
+            'abrev' => '',
+            'codGE' => '',
+            'codGE2' => '',
+            'codGE3' => '',
+        ];
     }
 
     public function openMateriaCreate(): void
     {
-        $this->resetMateriaForm();
+        $this->resetMateriaDraft();
+        $this->matEditingId = 0;
         $this->resetValidation();
     }
 
@@ -150,51 +155,60 @@ class CurplanForm extends Component
         }
 
         $m = Matplan::where('idCurPlan', (int) $this->id)->findOrFail($id);
-        $this->matEditId = (int) $m->id;
-        $this->matPlanMateria = (string) $m->matPlanMateria;
-        $this->ord = (int) $m->ord;
-        $this->abrev = (string) ($m->abrev ?? '');
-        $this->codGE = (string) ($m->codGE ?? '');
-        $this->codGE2 = (string) ($m->codGE2 ?? '');
-        $this->codGE3 = (string) ($m->codGE3 ?? '');
+        $this->matEditingId = (int) $m->id;
+        $this->matDraft = [
+            'ord' => (int) $m->ord,
+            'matPlanMateria' => (string) $m->matPlanMateria,
+            'abrev' => (string) ($m->abrev ?? ''),
+            'codGE' => (string) ($m->codGE ?? ''),
+            'codGE2' => (string) ($m->codGE2 ?? ''),
+            'codGE3' => (string) ($m->codGE3 ?? ''),
+        ];
         $this->resetValidation();
     }
 
-    public function saveMateria(): void
+    public function cancelMateriaEdit(): void
+    {
+        $this->resetMateriaDraft();
+        $this->resetValidation();
+    }
+
+    public function saveMateriaRow(): void
     {
         if (! $this->id) {
-            $this->addError('matPlanMateria', 'Primero debe guardar el curso modelo para poder cargar materias.');
+            $this->addError('matDraft.matPlanMateria', 'Primero debe guardar el curso modelo para poder cargar materias.');
             return;
         }
 
-        $key = 'matplan:save:' . (auth()->id() ?? 'guest');
+        $key = 'matplan:save-row:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 60)) {
-            $this->addError('matPlanMateria', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+            $this->addError('matDraft.matPlanMateria', 'Demasiados intentos. Espere un momento e intente nuevamente.');
             return;
         }
         RateLimiter::hit($key, 60);
 
         $this->validate($this->matRules());
 
+        $d = $this->matDraft;
         $payload = [
             'idCurPlan' => (int) $this->id,
-            'matPlanMateria' => trim($this->matPlanMateria),
-            'ord' => (int) $this->ord,
-            'abrev' => trim($this->abrev) !== '' ? trim($this->abrev) : null,
-            'codGE' => trim($this->codGE) !== '' ? trim($this->codGE) : null,
-            'codGE2' => trim($this->codGE2) !== '' ? trim($this->codGE2) : null,
-            'codGE3' => trim($this->codGE3) !== '' ? trim($this->codGE3) : null,
+            'matPlanMateria' => trim((string) ($d['matPlanMateria'] ?? '')),
+            'ord' => (int) ($d['ord'] ?? 0),
+            'abrev' => trim((string) ($d['abrev'] ?? '')) !== '' ? trim((string) $d['abrev']) : null,
+            'codGE' => trim((string) ($d['codGE'] ?? '')) !== '' ? trim((string) $d['codGE']) : null,
+            'codGE2' => trim((string) ($d['codGE2'] ?? '')) !== '' ? trim((string) $d['codGE2']) : null,
+            'codGE3' => trim((string) ($d['codGE3'] ?? '')) !== '' ? trim((string) $d['codGE3']) : null,
         ];
 
-        if ($this->matEditId) {
-            Matplan::where('idCurPlan', (int) $this->id)->findOrFail($this->matEditId)->update($payload);
+        if ($this->matEditingId && $this->matEditingId > 0) {
+            Matplan::where('idCurPlan', (int) $this->id)->findOrFail($this->matEditingId)->update($payload);
             session()->flash('success', "Materia \"{$payload['matPlanMateria']}\" actualizada.");
         } else {
             Matplan::create($payload);
             session()->flash('success', "Materia \"{$payload['matPlanMateria']}\" agregada.");
         }
 
-        $this->resetMateriaForm();
+        $this->resetMateriaDraft();
     }
 
     public function confirmDeleteMateria(int $id): void

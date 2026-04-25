@@ -1,11 +1,14 @@
 <?php
 
 use App\Http\Controllers\ListadoCursoPdfController;
+use App\Livewire\Abm\Cursos\CursosIndex;
 use App\Livewire\Abm\Curplan\CurplanForm;
 use App\Livewire\Abm\Legajos\LegajoForm;
 use App\Livewire\Abm\Legajos\LegajosIndex;
 use App\Livewire\Abm\Curplan\CurplanIndex;
 use App\Livewire\Abm\Niveles\NivelesIndex;
+use App\Livewire\Abm\Planes\PlanesForm;
+use App\Livewire\Abm\Planes\PlanesIndex;
 use App\Livewire\Abm\Terlec\TerlecIndex;
 use App\Livewire\Auth\Login;
 use App\Livewire\Listados\ListadoPorCurso;
@@ -43,6 +46,10 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     // ABM routes
     Route::get('/abm/terlec', TerlecIndex::class)->middleware('permiso:1')->name('abm.terlec');
     Route::get('/abm/niveles', NivelesIndex::class)->middleware('permiso:1')->name('abm.niveles');
+    Route::get('/abm/cursos', CursosIndex::class)->middleware('permiso:1')->name('abm.cursos');
+    Route::get('/abm/planes', PlanesIndex::class)->middleware('permiso:1')->name('abm.planes');
+    Route::get('/abm/planes/nuevo', PlanesForm::class)->middleware('permiso:1')->name('abm.planes.create');
+    Route::get('/abm/planes/{id}/editar', PlanesForm::class)->middleware('permiso:1')->whereNumber('id')->name('abm.planes.edit');
     Route::get('/abm/curplan', CurplanIndex::class)->middleware('permiso:1')->name('abm.curplan');
     Route::get('/abm/curplan/nuevo', CurplanForm::class)->middleware('permiso:1')->name('abm.curplan.create');
     Route::get('/abm/curplan/{id}/editar', CurplanForm::class)->middleware('permiso:1')->whereNumber('id')->name('abm.curplan.edit');

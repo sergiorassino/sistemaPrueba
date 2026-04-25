@@ -59,6 +59,21 @@ a todos los módulos. Ver [06-reglas-de-seguridad.md](06-reglas-de-seguridad.md)
 - Colores del design system (ver [04-identidad-visual.md](04-identidad-visual.md)).
 - Layout responsivo, mobile-first para autogestión.
 
+### Grillas / listados anchos (convención)
+
+- Para listados tipo planilla con muchas columnas (patrón `.gf-*`), **no centrar** el contenedor con `.gf-wrap` si puede haber overflow horizontal: al cambiar el ancho disponible (ej. sidebar), se pueden ocultar columnas.
+- Usar siempre un wrapper con scroll horizontal y alineación a la izquierda:
+
+```blade
+<div class="w-full overflow-x-auto">
+    <div class="flex justify-start">
+        <div class="gf min-w-[1180px]">
+            <!-- gf-head / gf-row -->
+        </div>
+    </div>
+</div>
+```
+
 ---
 
 ## 5. Convenciones de documentación

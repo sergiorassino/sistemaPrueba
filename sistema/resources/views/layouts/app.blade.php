@@ -67,8 +67,9 @@
     sidebarOpen: false,
     sidebarCollapsed: false,
     groups: {
-        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'param.')) ? 'true' : 'false' }},
+        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'param.')) ? 'true' : 'false' }},
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
+        cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.')) ? 'true' : 'false' }},
     },
     init() {
@@ -249,19 +250,6 @@
                     <span class="truncate">Niveles</span>
                 </a>
 
-                <a href="{{ route('abm.cursos') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.cursos'),
-                   ])
-                   title="Gestión de Cursos / Grados / Salas">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
-                    </svg>
-                    <span class="truncate">Gestión de Cursos / Grados / Salas</span>
-                </a>
-
                 <a href="{{ route('param.campos-listado-alumnos') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -321,6 +309,55 @@
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                         <span class="truncate">Gestión de Cursos y Materias del Plan</span>
+                    </a>
+                </div>
+
+                {{-- Cursos + Materias del año --}}
+                <button type="button"
+                        class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors mt-2"
+                        :class="(groups.cursosMateriasAno && !sidebarCollapsed) ? 'is-open' : ''"
+                        @click="toggleGroup('cursosMateriasAno')"
+                        title="Gestión de cursos y materias del año">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
+                    </svg>
+                    <span class="truncate flex-1 text-left">GESTION DE CURSOS Y MATERIAS DEL AÑO</span>
+                    <svg class="w-4 h-4 transition-transform"
+                         :class="groups.cursosMateriasAno ? 'rotate-180' : ''"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+
+                <div class="space-y-0.5 pl-1"
+                     x-show="groups.cursosMateriasAno"
+                     x-collapse
+                     x-cloak>
+                    <a href="{{ route('abm.cursos') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.cursos'),
+                       ])
+                       title="Gestión de Cursos / Grados / Salas">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Gestión de Cursos / Grados / Salas</span>
+                    </a>
+
+                    <a href="{{ route('abm.materias-anio') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.materias-anio'),
+                       ])
+                       title="Gestión de asignaturas del año">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                        </svg>
+                        <span class="truncate">Gestión de asignaturas del año</span>
                     </a>
                 </div>
 

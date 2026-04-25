@@ -5,6 +5,7 @@ use App\Livewire\Abm\Cursos\CursosIndex;
 use App\Livewire\Abm\Curplan\CurplanForm;
 use App\Livewire\Abm\Legajos\LegajoForm;
 use App\Livewire\Abm\Legajos\LegajosIndex;
+use App\Livewire\Abm\MateriasAnio\MateriasAnioIndex;
 use App\Livewire\Abm\Curplan\CurplanIndex;
 use App\Livewire\Abm\Niveles\NivelesIndex;
 use App\Livewire\Abm\Planes\PlanesForm;
@@ -53,6 +54,7 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/abm/curplan', CurplanIndex::class)->middleware('permiso:1')->name('abm.curplan');
     Route::get('/abm/curplan/nuevo', CurplanForm::class)->middleware('permiso:1')->name('abm.curplan.create');
     Route::get('/abm/curplan/{id}/editar', CurplanForm::class)->middleware('permiso:1')->whereNumber('id')->name('abm.curplan.edit');
+    Route::get('/abm/materias-anio', MateriasAnioIndex::class)->middleware('permiso:1')->name('abm.materias-anio');
     Route::get('/parametrizacion/campos-listado-alumnos', CamposListadoAlumnosIndex::class)
         ->middleware('permiso:1')
         ->name('param.campos-listado-alumnos');

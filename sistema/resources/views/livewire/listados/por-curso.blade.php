@@ -1,4 +1,4 @@
-<div class="max-w-5xl">
+<x-form-shell maxWidth="max-w-5xl">
     <div class="card p-6">
         <h1 class="text-lg font-semibold text-gray-800 mb-4">Listado de alumnos por curso</h1>
 
@@ -132,4 +132,4 @@
             </div>
         @endif
     </div>
-</div>
+</x-form-shell>

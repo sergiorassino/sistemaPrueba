@@ -33,7 +33,7 @@
     sidebarOpen: false,
     sidebarCollapsed: false,
     groups: {
-        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'param.')) ? 'true' : 'false' }},
+        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'param.')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.')) ? 'true' : 'false' }},
     },
     init() {
@@ -153,6 +153,19 @@
                               d="M3 7h18M3 12h18M3 17h18"/>
                     </svg>
                     <span class="truncate">Niveles</span>
+                </a>
+
+                <a href="{{ route('abm.curplan') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.curplan'),
+                   ])
+                   title="Cursos modelo (CurPlan)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
+                    </svg>
+                    <span class="truncate">Cursos modelo (CurPlan)</span>
                 </a>
 
                 <a href="{{ route('param.campos-listado-alumnos') }}"

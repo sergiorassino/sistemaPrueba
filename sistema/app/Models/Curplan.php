@@ -15,8 +15,18 @@ class Curplan extends Model
         'curPlanCurso',
     ];
 
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class, 'idPlan');
+    }
+
     public function cursos()
     {
         return $this->hasMany(Curso::class, 'idCurPlan');
+    }
+
+    public function materias()
+    {
+        return $this->hasMany(Matplan::class, 'idCurPlan');
     }
 }

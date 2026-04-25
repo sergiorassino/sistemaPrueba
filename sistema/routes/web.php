@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\ListadoCursoPdfController;
+use App\Livewire\Abm\Curplan\CurplanForm;
 use App\Livewire\Abm\Legajos\LegajoForm;
 use App\Livewire\Abm\Legajos\LegajosIndex;
+use App\Livewire\Abm\Curplan\CurplanIndex;
 use App\Livewire\Abm\Niveles\NivelesIndex;
 use App\Livewire\Abm\Terlec\TerlecIndex;
 use App\Livewire\Auth\Login;
@@ -41,6 +43,9 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     // ABM routes
     Route::get('/abm/terlec', TerlecIndex::class)->middleware('permiso:1')->name('abm.terlec');
     Route::get('/abm/niveles', NivelesIndex::class)->middleware('permiso:1')->name('abm.niveles');
+    Route::get('/abm/curplan', CurplanIndex::class)->middleware('permiso:1')->name('abm.curplan');
+    Route::get('/abm/curplan/nuevo', CurplanForm::class)->middleware('permiso:1')->name('abm.curplan.create');
+    Route::get('/abm/curplan/{id}/editar', CurplanForm::class)->middleware('permiso:1')->whereNumber('id')->name('abm.curplan.edit');
     Route::get('/parametrizacion/campos-listado-alumnos', CamposListadoAlumnosIndex::class)
         ->middleware('permiso:1')
         ->name('param.campos-listado-alumnos');

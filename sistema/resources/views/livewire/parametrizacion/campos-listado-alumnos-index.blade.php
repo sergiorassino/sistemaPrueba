@@ -1,4 +1,4 @@
-<div class="max-w-4xl">
+<x-form-shell maxWidth="max-w-4xl">
     <div class="card p-6">
         <h1 class="text-lg font-semibold text-gray-800 mb-1">Campos de legajos en listados</h1>
         <p class="text-sm text-gray-600 mb-4">
@@ -50,4 +50,4 @@
             </table>
         </div>
     </div>
-</div>
+</x-form-shell>

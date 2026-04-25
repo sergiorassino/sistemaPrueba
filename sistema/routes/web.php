@@ -12,6 +12,7 @@ use App\Livewire\Abm\Planes\PlanesForm;
 use App\Livewire\Abm\Planes\PlanesIndex;
 use App\Livewire\Abm\Terlec\TerlecIndex;
 use App\Livewire\Auth\Login;
+use App\Livewire\Calificaciones\CargaCalificaciones;
 use App\Livewire\Listados\ListadoPorCurso;
 use App\Livewire\Parametrizacion\CamposListadoAlumnosIndex;
 use App\Support\SchoolContext;
@@ -67,4 +68,9 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/listados/por-curso/listado', ListadoCursoPdfController::class)
         ->middleware('permiso:2')
         ->name('listados.por-curso.pdf');
+
+    // Carga de calificaciones
+    Route::get('/calificaciones/carga', CargaCalificaciones::class)
+        ->middleware('permiso:2')
+        ->name('calificaciones.carga');
 });

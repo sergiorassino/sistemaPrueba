@@ -11,14 +11,16 @@
     @endif
 
     {{-- Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div>
+    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="w-full min-w-0 text-center sm:flex-1">
             <h2 class="text-xl font-semibold text-gray-800">Legajos de Estudiantes</h2>
             <p class="text-sm text-gray-500 mt-0.5">Listado completo de legajos · Año de sesión: {{ schoolCtx()->terlecAno() }}</p>
         </div>
-        <a href="{{ route('abm.legajos.create') }}" class="btn-primary btn-sm sm:self-start">
-            + Nuevo legajo
-        </a>
+        <div class="flex justify-center sm:shrink-0 sm:justify-end">
+            <a href="{{ route('abm.legajos.create') }}" class="btn-primary btn-sm">
+                + Nuevo legajo
+            </a>
+        </div>
     </div>
 
     {{-- Filters --}}

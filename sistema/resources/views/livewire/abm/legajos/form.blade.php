@@ -10,13 +10,13 @@
         </div>
     @endif
 
-    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-        <div class="min-w-0">
+    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="min-w-0 w-full text-center sm:flex-1">
             <h2 class="text-xl font-semibold text-gray-800">{{ $id ? 'Editar legajo' : 'Nuevo legajo' }}</h2>
             <p class="text-xs text-gray-400 mt-0.5">Los campos marcados con * son obligatorios</p>
         </div>
 
-        <div class="flex flex-wrap gap-2 sm:justify-end">
+        <div class="flex flex-wrap justify-center gap-2 sm:justify-end">
             @if ($id)
                 <button wire:click="openMatriculas" class="btn-info btn-sm uppercase tracking-wide">Gestionar matrículas</button>
             @endif

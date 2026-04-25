@@ -21,17 +21,19 @@
     @endif
 
     <div class="flex flex-col gap-3 mb-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div class="w-full min-w-0 text-center sm:flex-1">
                 <h2 class="text-xl font-semibold text-gray-800">Gestión de Asignaturas del Año</h2>
                 <p class="text-sm text-gray-500 mt-0.5">
                     Materias del año lectivo actual ({{ schoolCtx()->terlecAno() }}) para el nivel actual
                 </p>
             </div>
             @if (! $creating)
-                <button type="button" wire:click="startCreate" class="btn-primary btn-sm sm:self-start">
-                    + Nueva materia
-                </button>
+                <div class="flex justify-center sm:shrink-0 sm:justify-end">
+                    <button type="button" wire:click="startCreate" class="btn-primary btn-sm">
+                        + Nueva materia
+                    </button>
+                </div>
             @endif
         </div>
 

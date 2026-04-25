@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-5xl mx-auto">
-    <h2 class="text-xl font-semibold text-gray-800 mb-6">Bienvenido,
+    <h2 class="mb-6 w-full text-center text-xl font-semibold text-gray-800">Bienvenido,
         {{ Auth::user()->nombre ?? '' }} {{ Auth::user()->apellido ?? '' }}</h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">

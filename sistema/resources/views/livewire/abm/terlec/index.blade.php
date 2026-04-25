@@ -10,14 +10,16 @@
         </div>
     @endif
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <div>
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="w-full min-w-0 text-center sm:flex-1">
             <h2 class="text-xl font-semibold text-gray-800">Términos Lectivos</h2>
             <p class="text-sm text-gray-500 mt-0.5">Gestión de años lectivos del sistema</p>
         </div>
-        <button wire:click="openCreate" class="btn-primary btn-sm sm:self-start">
-            + Nuevo año lectivo
-        </button>
+        <div class="flex justify-center sm:shrink-0 sm:justify-end">
+            <button wire:click="openCreate" class="btn-primary btn-sm">
+                + Nuevo año lectivo
+            </button>
+        </div>
     </div>
 
     {{-- ── Listado (.gf-wrap > .gf) ── --}}

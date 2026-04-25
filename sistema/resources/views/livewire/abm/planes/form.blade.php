@@ -9,13 +9,13 @@
         </div>
     @endif
 
-    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-        <div class="min-w-0">
+    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="min-w-0 w-full text-center sm:flex-1">
             <h2 class="text-xl font-semibold text-gray-800">{{ $id ? 'Editar plan de estudio' : 'Nuevo plan de estudio' }}</h2>
             <p class="text-xs text-gray-400 mt-0.5">Los campos marcados con * son obligatorios</p>
         </div>
 
-        <div class="flex flex-wrap gap-2 sm:justify-end">
+        <div class="flex flex-wrap justify-center gap-2 sm:justify-end">
             <a href="{{ route('abm.planes') }}" class="btn-secondary btn-sm">Volver</a>
             <button wire:click="save" wire:loading.attr="disabled" class="btn-primary btn-sm">
                 <span wire:loading.remove wire:target="save">Guardar</span>

@@ -25,9 +25,11 @@
             font-family: "Roboto Condensed", "Arial Narrow", "Helvetica Neue", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
             font-stretch: condensed;
             width: var(--se-sidebar-w);
+            overflow-x: hidden;
         }
         @media (min-width: 768px) {
-            .se-sidebar.is-collapsed { width: var(--se-sidebar-w-collapsed); }
+            /* En desktop, al contraer: no dejar barra con íconos, ocultar por completo */
+            .se-sidebar.is-collapsed { width: 0; }
         }
         .se-sidebar-sep { border-color: var(--se-sep); }
         .se-sidebar-iconbtn { color: var(--se-white-85); }
@@ -50,8 +52,8 @@
                 width: calc(100% - var(--se-sidebar-w));
             }
             .se-main.is-collapsed {
-                transform: translateX(var(--se-sidebar-w-collapsed));
-                width: calc(100% - var(--se-sidebar-w-collapsed));
+                transform: translateX(0);
+                width: 100%;
             }
         }
         @media (max-width: 767px) {
@@ -63,7 +65,13 @@
     </style>
 </head>
 @php $route = request()->route()?->getName(); @endphp
-<body class="h-full" x-data="{
+<body class="h-full">
+
+{{-- Livewire puede usar el <body> como raíz; el estado del layout va en un wrapper para evitar choques con Alpine. --}}
+<div id="se-shell"
+     class="h-full"
+     @se-sidebar-post-nav-collapse="applyPostNavCollapse()"
+     x-data="{
     sidebarOpen: false,
     sidebarCollapsed: false,
     groups: {
@@ -71,9 +79,15 @@
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.')) ? 'true' : 'false' }},
+        calificacionesSec: {{ (str_starts_with($route ?? '', 'calificaciones.')) ? 'true' : 'false' }},
     },
     init() {
-        this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === '1';
+        const pendingMenuCollapse = localStorage.getItem('sidebarCollapseNext') === '1';
+        // Llegamos desde un link del menú: mostrar sidebar expandido un instante y colapsar después
+        // (no borrar `sidebarCollapseNext` acá: Alpine/Livewire puede llamar init() más de una vez).
+        this.sidebarCollapsed = pendingMenuCollapse
+            ? false
+            : (localStorage.getItem('sidebarCollapsed') === '1');
 
         const raw = localStorage.getItem('sidebarGroups');
         if (raw) {
@@ -82,6 +96,24 @@
                 if (parsed && typeof parsed === 'object') this.groups = { ...this.groups, ...parsed };
             } catch (e) {}
         }
+
+        if (pendingMenuCollapse) {
+            this.sidebarOpen = false;
+            const collapseAfterPaint = () => {
+                if (localStorage.getItem('sidebarCollapseNext') !== '1') return;
+                this.applyPostNavCollapse();
+            };
+
+            requestAnimationFrame(() => requestAnimationFrame(collapseAfterPaint));
+            window.setTimeout(collapseAfterPaint, 350);
+        }
+    },
+    applyPostNavCollapse() {
+        if (window.matchMedia && window.matchMedia('(min-width: 768px)').matches) {
+            this.sidebarCollapsed = true;
+            localStorage.setItem('sidebarCollapsed', '1');
+        }
+        localStorage.removeItem('sidebarCollapseNext');
     },
     toggleSidebar() {
         this.sidebarCollapsed = !this.sidebarCollapsed;
@@ -109,7 +141,7 @@
 <aside class="se-sidebar fixed inset-y-0 left-0 z-40 flex flex-col transform transition-transform duration-200 ease-in-out
               md:translate-x-0 md:transition-[width] md:duration-200 md:ease-in-out md:shadow-lg"
        :class="[
-           sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+           (sidebarOpen || (!sidebarCollapsed)) ? 'translate-x-0' : '-translate-x-full md:-translate-x-full',
            sidebarCollapsed ? 'is-collapsed' : ''
        ]">
 
@@ -148,7 +180,9 @@
     </div>
 
     {{-- Navigation --}}
-    <nav class="flex-1 px-2.5 py-3 overflow-y-auto space-y-0.5">
+    <nav class="flex-1 px-2.5 py-3 overflow-y-auto space-y-0.5"
+         @pointerdown.capture="$event.target.closest('a[href]') && localStorage.setItem('sidebarCollapseNext', '1')"
+         @click.capture="$event.target.closest('a[href]') && (localStorage.setItem('sidebarCollapseNext', '1'), sidebarOpen = false)">
 
         {{-- Estudiantes --}}
         @if(tienePermiso(2))
@@ -197,6 +231,45 @@
                               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     <span class="truncate">Listado por curso</span>
+                </a>
+            </div>
+        @endif
+
+        {{-- Calificaciones Secundario --}}
+        @if(tienePermiso(2))
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    :class="(groups.calificacionesSec && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('calificacionesSec')"
+                    title="Calificaciones Secundario">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">Calificaciones Secundario</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.calificacionesSec ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <div class="mt-1 space-y-0.5 pl-1"
+                 x-show="groups.calificacionesSec && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                <a href="{{ route('calificaciones.carga') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'calificaciones.'),
+                   ])
+                   title="Carga de calificaciones">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="truncate">Carga de calificaciones</span>
                 </a>
             </div>
         @endif
@@ -403,6 +476,19 @@
         sidebarOpen ? 'is-mobile-open' : ''
      ]">
 
+    {{-- Botón flotante (desktop) cuando el sidebar está contraído --}}
+    <button type="button"
+            x-show="sidebarCollapsed"
+            x-cloak
+            @click="toggleSidebar()"
+            class="hidden md:inline-flex fixed z-50 top-4 left-3 items-center justify-center w-10 h-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition"
+            title="Expandir menú"
+            aria-label="Expandir menú">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+    </button>
+
     {{-- Top bar (mobile) --}}
     <header class="sticky top-0 z-20 bg-white border-b border-gray-200 md:hidden">
         <div class="flex items-center gap-3 h-14 px-4">
@@ -426,6 +512,8 @@
             {{ $slot ?? '' }}
         @endif
     </main>
+</div>
+
 </div>
 
 @livewireScripts

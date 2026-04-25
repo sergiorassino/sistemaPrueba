@@ -10,13 +10,13 @@
         </div>
     @endif
 
-    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-        <div class="min-w-0">
+    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="min-w-0 w-full text-center sm:flex-1">
             <h2 class="text-xl font-semibold text-gray-800">{{ $id ? 'Editar curso modelo' : 'Nuevo curso modelo' }}</h2>
             <p class="text-xs text-gray-400 mt-0.5">Los campos marcados con * son obligatorios</p>
         </div>
 
-        <div class="flex flex-wrap gap-2 sm:justify-end">
+        <div class="flex flex-wrap justify-center gap-2 sm:justify-end">
             <a href="{{ route('abm.curplan') }}" class="btn-secondary btn-sm">Volver</a>
             <button wire:click="save" wire:loading.attr="disabled" class="btn-primary btn-sm">
                 <span wire:loading.remove wire:target="save">Guardar</span>
@@ -26,13 +26,13 @@
     </div>
 
     <div class="card p-5">
-        <div class="flex items-center justify-between mb-4">
-            <div>
+        <div class="mb-4 flex flex-col items-center gap-2 text-center sm:flex-row sm:items-center sm:justify-between">
+            <div class="w-full min-w-0 text-center sm:flex-1">
                 <div class="text-sm font-semibold text-gray-800">Gestión de Cursos y Materias del Plan</div>
                 <div class="text-xs text-gray-500">CurPlan + MatPlan (materias del curso modelo)</div>
             </div>
             @if ($id)
-                <span class="text-xs text-gray-500">ID #{{ $id }}</span>
+                <span class="shrink-0 text-xs text-gray-500">ID #{{ $id }}</span>
             @endif
         </div>
 

@@ -9,14 +9,16 @@
         </div>
     @endif
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <div>
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="w-full min-w-0 text-center sm:flex-1">
             <h2 class="text-xl font-semibold text-gray-800">Gestión de planes de estudio</h2>
             <p class="text-sm text-gray-500 mt-0.5">Planes disponibles para el nivel actual</p>
         </div>
-        <a href="{{ route('abm.planes.create') }}" class="btn-primary btn-sm sm:self-start">
-            + Nuevo plan
-        </a>
+        <div class="flex justify-center sm:shrink-0 sm:justify-end">
+            <a href="{{ route('abm.planes.create') }}" class="btn-primary btn-sm">
+                + Nuevo plan
+            </a>
+        </div>
     </div>
 
     <div class="gf-wrap">

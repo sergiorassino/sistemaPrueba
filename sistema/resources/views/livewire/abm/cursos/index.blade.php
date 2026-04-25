@@ -20,16 +20,18 @@
         </div>
     @endif
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <div>
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="w-full min-w-0 text-center sm:flex-1">
             <h2 class="text-xl font-semibold text-gray-800">Gestión de Cursos / Grados / Salas</h2>
             <p class="text-sm text-gray-500 mt-0.5">
                 Cursos del año lectivo actual ({{ schoolCtx()->terlecAno() }}) para el nivel actual
             </p>
         </div>
-        <button type="button" wire:click="createQuick" class="btn-primary btn-sm sm:self-start">
-            + Nuevo curso
-        </button>
+        <div class="flex justify-center sm:shrink-0 sm:justify-end">
+            <button type="button" wire:click="createQuick" class="btn-primary btn-sm">
+                + Nuevo curso
+            </button>
+        </div>
     </div>
 
     <div class="w-full overflow-x-auto">

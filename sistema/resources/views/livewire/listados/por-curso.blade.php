@@ -1,6 +1,6 @@
 <x-form-shell maxWidth="max-w-5xl">
     <div class="card p-6">
-        <h1 class="text-lg font-semibold text-gray-800 mb-4">Listado de alumnos por curso</h1>
+        <h1 class="mb-4 w-full text-center text-lg font-semibold text-gray-800">Listado de alumnos por curso</h1>
 
         @if ($cursos->isEmpty())
             <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">

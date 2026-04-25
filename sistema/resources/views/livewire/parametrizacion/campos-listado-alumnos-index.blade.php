@@ -1,6 +1,6 @@
 <x-form-shell maxWidth="max-w-4xl">
     <div class="card p-6">
-        <h1 class="text-lg font-semibold text-gray-800 mb-1">Campos de legajos en listados</h1>
+        <h1 class="mb-1 w-full text-center text-lg font-semibold text-gray-800">Campos de legajos en listados</h1>
         <p class="text-sm text-gray-600 mb-4">
             Desmarque los campos que no deben ofrecerse al armar listados (PDF por curso). Use el botón para incorporar columnas nuevas si se agregaron a la tabla <code class="text-xs bg-gray-100 px-1 rounded">legajos</code> en la base de datos.
         </p>

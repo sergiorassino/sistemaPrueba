@@ -275,7 +275,33 @@ class LegajoForm extends Component
                 ->update($data);
             session()->flash('success', 'Matrícula actualizada.');
         } else {
-            Matricula::create($data);
+            DB::transaction(function () use ($data) {
+                $matricula = Matricula::create($data);
+
+                $materias = DB::table('materias')
+                    ->where('idNivel', (int) $data['idNivel'])
+                    ->where('idTerlec', (int) $data['idTerlec'])
+                    ->where('idCursos', (int) $data['idCursos'])
+                    ->orderBy('ord')
+                    ->orderBy('id')
+                    ->get(['id', 'ord', 'idMatPlan']);
+
+                if ($materias->isNotEmpty()) {
+                    $rows = $materias->map(function ($m) use ($matricula, $data) {
+                        return [
+                            'idLegajos' => (int) $data['idLegajos'],
+                            'idMatricula' => (int) $matricula->id,
+                            'ord' => (int) ($m->ord ?? 0),
+                            'idTerlec' => (int) $data['idTerlec'],
+                            'idCursos' => (int) $data['idCursos'],
+                            'idMaterias' => (int) $m->id,
+                            'idMatPlan' => (int) ($m->idMatPlan ?? 0),
+                        ];
+                    })->values()->all();
+
+                    DB::table('calificaciones')->insert($rows);
+                }
+            });
             session()->flash('success', 'Matrícula creada.');
         }
 

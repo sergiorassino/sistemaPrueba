@@ -1,4 +1,4 @@
-{{-- Módulo: Carga de calificaciones (UI). El guardado ocurre en Livewire (`CargaCalificaciones::saveCell`) vía `wire:blur`/`wire:change`. --}}
+{{-- Módulo: Carga de calificaciones (UI). Guardado vía `saveCell`: TEA con `wire:change`; el resto de inputs numéricos con delegación `focusout` en `tbody` (validación de notas permitidas en el navegador, ver `app.js`). --}}
 <x-form-shell maxWidth="max-w-[98rem]">
     <div class="card p-3 space-y-3">
         <div class="flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
@@ -65,7 +65,8 @@
                         <col style="width:3px">
                         <col style="width:20px">
                         <col style="width:20px">
-                        <col style="width:22px">
+                        {{-- Pr.Final: ancho extra (promedio, solo lectura). --}}
+                        <col style="width:26px">
                         <col style="width:18px">
                     </colgroup>
                     {{-- Encabezado en 2 filas: títulos de bloque + subcolumnas (N/R1/R2, etc.). --}}
@@ -87,7 +88,7 @@
                             {{-- Dic/Feb/Pr.Final/TEA: rowspan=2 para “fusionar” con la fila de subencabezado vacía. --}}
                             <th rowspan="2" class="border border-gray-300 px-1 py-2 text-center align-middle">Dic</th>
                             <th rowspan="2" class="border border-gray-300 px-1 py-2 text-center align-middle">Feb</th>
-                            <th rowspan="2" class="border border-gray-300 px-1 py-2 text-center align-middle">Pr.Final</th>
+                            <th rowspan="2" class="border border-gray-300 px-1 py-2 text-center align-middle font-bold">Pr.Final</th>
                             <th rowspan="2" class="border border-gray-300 px-1 py-2 text-center align-middle">TEA</th>
                         </tr>
                         <tr class="text-[9px] bg-white leading-tight">
@@ -110,7 +111,12 @@
                             <th class="border border-gray-300 p-0 bg-white" aria-hidden="true"></th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white">
+                    <tbody
+                        class="bg-white"
+                        data-se-calif-tbody
+                        data-se-calif-activa="{{ $notasPermitidasActiva ? '1' : '0' }}"
+                        data-se-calif-allowed='@json($notasPermitidasLista ?? [])'
+                    >
                         @forelse ($rows as $row)
                             {{-- `wire:key` incluye `materiaId` para forzar recreación de inputs al cambiar de materia (evita valores “pegados” del DOM). --}}
                             <tr class="text-[11px] hover:bg-gray-50" wire:key="row-{{ (int) $materiaId }}-{{ (int) $row['id'] }}">
@@ -142,12 +148,11 @@
                                     @endphp
                                     <td class="border border-gray-300 px-0.5 py-0.5">
                                         <input
+                                            id="se-calif-{{ (int) $row['id'] }}-{{ $field }}"
                                             class="w-full text-center text-[12px] border border-gray-300 rounded px-0 py-0.5 focus:ring-[#40848D] focus:border-[#40848D]"
                                             maxlength="2"
                                             value="{{ $row[$field] ?? '' }}"
                                             wire:key="cell-{{ (int) $materiaId }}-{{ (int) $row['id'] }}-{{ $field }}"
-                                            {{-- Guardado al salir del campo (blur), como pidió el negocio. --}}
-                                            wire:blur="saveCell({{ $row['id'] }}, '{{ $field }}', $event.target.value)"
                                         />
                                     </td>
                                     @if ($isEvalBlockEnd && $idx < 23)
@@ -163,29 +168,33 @@
 
                                 <td class="border border-gray-300 px-0.5 py-0.5">
                                     <input
+                                        id="se-calif-{{ (int) $row['id'] }}-dic"
                                         class="w-full text-center text-[12px] border border-gray-300 rounded px-0 py-0.5 focus:ring-[#40848D] focus:border-[#40848D]"
                                         maxlength="2"
                                         value="{{ $row['dic'] ?? '' }}"
                                         wire:key="cell-{{ (int) $materiaId }}-{{ (int) $row['id'] }}-dic"
-                                        wire:blur="saveCell({{ $row['id'] }}, 'dic', $event.target.value)"
                                     />
                                 </td>
                                 <td class="border border-gray-300 px-0.5 py-0.5">
                                     <input
+                                        id="se-calif-{{ (int) $row['id'] }}-feb"
                                         class="w-full text-center text-[12px] border border-gray-300 rounded px-0 py-0.5 focus:ring-[#40848D] focus:border-[#40848D]"
                                         maxlength="2"
                                         value="{{ $row['feb'] ?? '' }}"
                                         wire:key="cell-{{ (int) $materiaId }}-{{ (int) $row['id'] }}-feb"
-                                        wire:blur="saveCell({{ $row['id'] }}, 'feb', $event.target.value)"
                                     />
                                 </td>
-                                <td class="border border-gray-300 px-0.5 py-0.5">
+                                <td class="border border-gray-300 px-0.5 py-0.5 bg-gray-50/80">
                                     <input
-                                        class="w-full text-center text-[12px] border border-gray-300 rounded px-0 py-0.5 focus:ring-[#40848D] focus:border-[#40848D]"
-                                        maxlength="2"
+                                        id="se-calif-{{ (int) $row['id'] }}-calif"
+                                        type="text"
+                                        readonly
+                                        tabindex="0"
+                                        aria-readonly="true"
+                                        class="w-full cursor-default text-center text-[12px] font-bold text-gray-900 border border-gray-200 rounded px-0 py-0.5 bg-transparent focus:outline-none focus:ring-0"
+                                        maxlength="5"
                                         value="{{ $row['calif'] ?? '' }}"
                                         wire:key="cell-{{ (int) $materiaId }}-{{ (int) $row['id'] }}-calif"
-                                        wire:blur="saveCell({{ $row['id'] }}, 'calif', $event.target.value)"
                                     />
                                 </td>
                                 <td class="border border-gray-300 px-0.5 py-0.5 text-center">

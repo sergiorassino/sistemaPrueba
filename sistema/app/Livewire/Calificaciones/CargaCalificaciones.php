@@ -17,6 +17,11 @@ use Livewire\Component;
  * 1) El usuario elige curso y materia (IDs reales de `materias.id`).
  * 2) Se listan filas de `calificaciones` para ese curso/materia/ciclo lectivo.
  * 3) Cada celda editable guarda con `saveCell()` (disparado desde Blade con `wire:blur` / `wire:change`).
+ *    Las notas ingresadas en módulos (ic**) y coloquios (Dic/Feb) deben existir en `notaspermitidas`
+ *    para el `idNivel` del contexto (si hay al menos una fila configurada para ese nivel).
+ *    Tras guardar: se relee solo la fila tocada desde `calificaciones` (sin JOIN).
+ *    Las notas no permitidas se filtran en el navegador (lista en la vista) para no disparar el servidor;
+ *    el servidor igual valida por seguridad (lectura mínima de la celda si llegara un valor inválido).
  *
  * Seguridad:
  * - Todas las consultas/mutaciones se filtran por `schoolCtx()` (nivel + año lectivo) y por curso/materia elegidos.
@@ -39,12 +44,25 @@ class CargaCalificaciones extends Component
      */
     public array $rows = [];
 
+    /**
+     * Lista de notas permitidas para `schoolCtx()->idNivel` (cargada con la grilla).
+     *
+     * Es un array **secuencial de strings** (no mapa por clave): en PHP, claves numéricas como `"10"`
+     * se convierten a entero y rompen el JSON hacia el navegador (`10` vs `"10"` en `Set.has`).
+     *
+     * Debe ser `public` para que Livewire lo conserve entre requests al guardar por celda.
+     *
+     * @var list<string>
+     */
+    public array $notasPermitidasLista = [];
+
     public function mount(): void
     {
         // Entrada al módulo: forzar selección explícita de curso/materia.
         $this->cursoId = null;
         $this->materiaId = null;
         $this->rows = [];
+        $this->resetNotasPermitidas();
     }
 
     public function updatedCursoId($value): void
@@ -55,6 +73,7 @@ class CargaCalificaciones extends Component
         // Al cambiar de curso, la materia deja de ser válida: reseteamos dependientes.
         $this->materiaId = null;
         $this->rows = [];
+        $this->resetNotasPermitidas();
         $this->resetValidation();
     }
 
@@ -62,6 +81,7 @@ class CargaCalificaciones extends Component
     {
         $this->materiaId = ((int) $value) > 0 ? (int) $value : null;
         $this->rows = [];
+        $this->resetNotasPermitidas();
         $this->resetValidation();
 
         // Cuando ya hay curso+materia, cargamos la grilla (consulta única, orden estable).
@@ -116,6 +136,76 @@ class CargaCalificaciones extends Component
      * - TEA: `tea` (checkbox en UI; en BD es entero 0/1 según migración del proyecto)
      */
     public function loadGrid(): void
+    {
+        $this->rows = $this->fetchRowsSnapshot();
+        $this->cargarNotasPermitidasParaNivelActual();
+    }
+
+    /**
+     * Columnas de `calificaciones` necesarias para sincronizar la grilla sin JOIN a `legajos`.
+     *
+     * @return list<string>
+     */
+    protected function columnasCalificacionSoloTabla(): array
+    {
+        return [
+            'ord',
+            'ic01', 'ic02', 'ic03', 'ic04', 'ic05', 'ic06', 'ic07', 'ic08', 'ic09', 'ic10',
+            'ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16', 'ic17', 'ic18', 'ic19', 'ic20',
+            'ic21', 'ic22', 'ic23', 'ic24', 'ic25', 'ic26', 'ic27', 'ic28',
+            'dic', 'feb', 'calif', 'tea',
+        ];
+    }
+
+    /**
+     * Copia desde un registro `calificaciones` a `$this->rows[$id]` (mantiene `alumno` / `id` ya cargados en `loadGrid`).
+     */
+    protected function mergeCalificacionDbAFila(int $id, object $r): void
+    {
+        if (! isset($this->rows[$id])) {
+            return;
+        }
+
+        $this->rows[$id]['ord'] = $r->ord;
+        foreach ([
+            'ic01', 'ic02', 'ic03', 'ic04', 'ic05', 'ic06', 'ic07', 'ic08', 'ic09', 'ic10',
+            'ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16', 'ic17', 'ic18', 'ic19', 'ic20',
+            'ic21', 'ic22', 'ic23', 'ic24', 'ic25', 'ic26', 'ic27', 'ic28',
+        ] as $c) {
+            $this->rows[$id][$c] = (string) ($r->{$c} ?? '');
+        }
+        $this->rows[$id]['dic'] = (string) ($r->dic ?? '');
+        $this->rows[$id]['feb'] = (string) ($r->feb ?? '');
+        $this->rows[$id]['calif'] = (string) ($r->calif ?? '');
+        $this->rows[$id]['tea'] = ((int) ($r->tea ?? 0)) === 1;
+    }
+
+    /**
+     * Una sola lectura por PK tras guardado válido o TEA (sin JOIN).
+     */
+    protected function refreshCalificacionRowFromDatabase(int $id): void
+    {
+        if (! $this->cursoId || ! $this->materiaId) {
+            return;
+        }
+
+        $ctx = schoolCtx();
+        $r = DB::table('calificaciones')
+            ->where('id', $id)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('idCursos', (int) $this->cursoId)
+            ->where('idMaterias', (int) $this->materiaId)
+            ->first($this->columnasCalificacionSoloTabla());
+
+        if ($r) {
+            $this->mergeCalificacionDbAFila($id, $r);
+        }
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function fetchRowsSnapshot(): array
     {
         $this->ensureScopeOr404();
 
@@ -189,14 +279,71 @@ class CargaCalificaciones extends Component
             ];
         }
 
-        $this->rows = $out;
+        return $out;
+    }
+
+    protected function resetNotasPermitidas(): void
+    {
+        $this->notasPermitidasLista = [];
+    }
+
+    /**
+     * Lee `notaspermitidas` filtrado por el nivel del contexto institucional.
+     */
+    protected function cargarNotasPermitidasParaNivelActual(): void
+    {
+        $this->resetNotasPermitidas();
+
+        $ctx = schoolCtx();
+        $notas = DB::table('notaspermitidas')
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->pluck('nota');
+
+        foreach ($notas as $n) {
+            $clave = trim((string) $n);
+            if ($clave === '') {
+                continue;
+            }
+            if (! in_array($clave, $this->notasPermitidasLista, true)) {
+                $this->notasPermitidasLista[] = $clave;
+            }
+        }
+    }
+
+    /** Si no hay filas en `notaspermitidas` para el nivel, no se aplica lista blanca (compatibilidad). */
+    protected function notasPermitidasActiva(): bool
+    {
+        return $this->notasPermitidasLista !== [];
+    }
+
+    /** Nota vacía se acepta (celda sin dato); el resto debe coincidir con el catálogo (comparación estricta de string). */
+    protected function notaPermitidaParaCatalogoActual(string $nota): bool
+    {
+        if ($nota === '') {
+            return true;
+        }
+
+        return in_array($nota, $this->notasPermitidasLista, true);
+    }
+
+    /**
+     * Campos de nota cuyo valor debe existir en `notaspermitidas` para el nivel actual.
+     *
+     * No incluye `calif`: puede ser un promedio calculado con decimales que no coincide con el catálogo de ingreso.
+     */
+    protected function campoSujetoANotasPermitidas(string $field): bool
+    {
+        if (preg_match('/^ic(0[1-9]|1[0-9]|2[0-8])$/', $field) === 1) {
+            return true;
+        }
+
+        return $field === 'dic' || $field === 'feb';
     }
 
     /**
      * Lista blanca de campos que el cliente puede intentar editar vía Livewire.
      *
-     * Nota: aunque `calif` sea calculado automáticamente en muchos casos, lo dejamos editable
-     * para compatibilidad/ajustes manuales (si el negocio lo requiere).
+     * `calif` (Pr.Final / promedio anual) se calcula y persiste en servidor; la UI es solo lectura.
      *
      * @return list<string>
      */
@@ -206,7 +353,7 @@ class CargaCalificaciones extends Component
             'ic01', 'ic02', 'ic03', 'ic04', 'ic05', 'ic06', 'ic07', 'ic08', 'ic09', 'ic10',
             'ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16', 'ic17', 'ic18', 'ic19', 'ic20',
             'ic21', 'ic22', 'ic23', 'ic24', 'ic25', 'ic26', 'ic27', 'ic28',
-            'dic', 'feb', 'calif', 'tea',
+            'dic', 'feb', 'tea',
         ];
     }
 
@@ -252,9 +399,8 @@ class CargaCalificaciones extends Component
             // TEA: booleano persistido como 0/1 (coherente con checkbox).
             $payload = ['tea' => $value ? 1 : 0];
             DB::table('calificaciones')->where('id', $id)->update($payload);
-            if (isset($this->rows[$id])) {
-                $this->rows[$id]['tea'] = (bool) $value;
-            }
+            $this->refreshCalificacionRowFromDatabase($id);
+
             return;
         }
 
@@ -262,7 +408,6 @@ class CargaCalificaciones extends Component
         $rules = [
             'value' => match ($field) {
                 'dic', 'feb' => ['nullable', 'string', 'max:10'],
-                'calif' => ['nullable', 'string', 'max:5'],
                 default => ['nullable', 'string', 'max:15'],
             },
         ];
@@ -273,16 +418,34 @@ class CargaCalificaciones extends Component
             ['value' => $field],
         )->validate();
 
-        // Persistencia del campo editado (string) + espejo en memoria para re-render inmediato.
-        DB::table('calificaciones')->where('id', $id)->update([$field => (string) ($value ?? '')]);
-        if (isset($this->rows[$id])) {
-            $this->rows[$id][$field] = (string) ($value ?? '');
+        $strVal = (string) ($value ?? '');
+        if ($this->notasPermitidasActiva() && $this->campoSujetoANotasPermitidas($field)) {
+            if ($strVal !== '' && ! $this->notaPermitidaParaCatalogoActual($strVal)) {
+                // No persistir (caso raro: bypass del chequeo en el navegador). Solo alinear la celda desde BD.
+                $guardado = (string) (DB::table('calificaciones')
+                    ->where('id', $id)
+                    ->where('idTerlec', (int) $ctx->idTerlec)
+                    ->where('idCursos', (int) $this->cursoId)
+                    ->where('idMaterias', (int) $this->materiaId)
+                    ->value($field) ?? '');
+                if (isset($this->rows[$id])) {
+                    $this->rows[$id][$field] = $guardado;
+                }
+
+                return;
+            }
         }
+
+        // Persistencia del campo editado (string); luego una lectura por PK (sin JOIN) para devolver estado real.
+        DB::table('calificaciones')->where('id', $id)->update([$field => $strVal]);
 
         // Promedio anual: solo depende de módulos (Eval/JIS). No recalculamos al editar Dic/Feb/TEA.
         if ($this->debeRecalcularPromedioAnual($field)) {
             $this->syncPromedioAnual($id);
         }
+
+        $this->refreshCalificacionRowFromDatabase($id);
+        $this->resetErrorBag('cell.' . $id . '.' . $field);
     }
 
     /**
@@ -391,7 +554,20 @@ class CargaCalificaciones extends Component
             ? optional($materias->firstWhere('id', (int) $this->materiaId))->materia
             : null;
 
-        return view('livewire.calificaciones.carga-calificaciones', compact('cursos', 'materias', 'cursoLabel', 'materiaLabel'))
+        $notasPermitidasLista = $this->notasPermitidasLista;
+        $notasPermitidasActiva = $this->notasPermitidasActiva();
+
+        return view(
+            'livewire.calificaciones.carga-calificaciones',
+            compact(
+                'cursos',
+                'materias',
+                'cursoLabel',
+                'materiaLabel',
+                'notasPermitidasLista',
+                'notasPermitidasActiva',
+            ),
+        )
             ->layout('layouts.app', ['pageTitle' => 'Carga de calificaciones']);
     }
 }

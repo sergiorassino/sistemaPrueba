@@ -12,11 +12,18 @@ return [
             'driver'   => 'session',
             'provider' => 'profesores',
         ],
+        'alumno' => [
+            'driver'   => 'session',
+            'provider' => 'alumnos',
+        ],
     ],
 
     'providers' => [
         'profesores' => [
             'driver' => 'profesor',
+        ],
+        'alumnos' => [
+            'driver' => 'alumno',
         ],
     ],
 

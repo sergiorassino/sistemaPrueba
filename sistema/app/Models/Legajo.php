@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Legajo extends Model
+class Legajo extends Authenticatable
 {
     protected $table = 'legajos';
     public $timestamps = false;
@@ -20,6 +20,8 @@ class Legajo extends Model
         'escori', 'destino', 'obs', 'identif', 'vivecon', 'hermanos', 'ec_padres', 'parroquia',
         'needes', 'needes_detalle', 'certDisc', 'emeravis', 'retira', 'fechhora',
     ];
+
+    protected $hidden = ['pwrd'];
 
     protected $casts = [
         'fechnaci'    => 'date',
@@ -49,6 +51,16 @@ class Legajo extends Model
     public function calificaciones()
     {
         return $this->hasMany(Calificacion::class, 'idLegajos');
+    }
+
+    public function getAuthIdentifierName(): string
+    {
+        return 'id';
+    }
+
+    public function getAuthPassword(): string
+    {
+        return (string) ($this->pwrd ?? '');
     }
 
     public function getNombreCompletoAttribute(): string

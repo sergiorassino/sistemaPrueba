@@ -12,8 +12,10 @@ use App\Livewire\Abm\Planes\PlanesForm;
 use App\Livewire\Abm\Planes\PlanesIndex;
 use App\Livewire\Abm\Terlec\TerlecIndex;
 use App\Livewire\Auth\Login;
+use App\Livewire\Alumnos\Auth\Login as AlumnosLogin;
 use App\Livewire\Calificaciones\CargaCalificaciones;
 use App\Livewire\Listados\ListadoPorCurso;
+use App\Livewire\Push\EnviarPush;
 use App\Livewire\Parametrizacion\CamposListadoAlumnosIndex;
 use App\Livewire\Parametrizacion\ParametrosSistemaForm;
 use App\Livewire\Seguimiento\Disciplinario\DisciplinarioIndex;
@@ -22,12 +24,20 @@ use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
 use App\Http\Controllers\SancionComunicadoPdfController;
 use App\Http\Controllers\AntecedentesDisciplinariosPdfController;
 use App\Support\SchoolContext;
+use App\Support\StudentContext;
+use App\Http\Controllers\Alumnos\PushApiController;
+use App\Http\Controllers\Alumnos\PushController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // Guest routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', Login::class)->name('login');
+});
+
+// Guest routes (alumnos)
+Route::middleware('guest:alumno')->group(function () {
+    Route::get('/alumnos/login', AlumnosLogin::class)->name('alumnos.login');
 });
 
 // Logout
@@ -40,6 +50,38 @@ Route::post('/logout', function () {
     return redirect()->route('login');
 })->middleware('auth')->name('logout');
 
+// Logout alumnos
+Route::post('/alumnos/logout', function () {
+    StudentContext::clear();
+    Auth::guard('alumno')->logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+
+    return redirect()->route('alumnos.login');
+})->middleware('auth:alumno')->name('alumnos.logout');
+
+// Área alumnos (autogestión)
+Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(function () {
+    Route::get('/', function () {
+        return redirect()->route('alumnos.calificaciones');
+    })->name('alumnos.home');
+
+    Route::get('/calificaciones', function () {
+        return view('alumnos.calificaciones');
+    })->name('alumnos.calificaciones');
+
+    Route::get('/notificaciones', [PushController::class, 'index'])->name('alumnos.push.index');
+    Route::get('/notificaciones/mis', [PushController::class, 'misNotificaciones'])->name('alumnos.push.mis');
+    Route::get('/notificaciones/{id}', [PushController::class, 'ver'])->whereNumber('id')->name('alumnos.push.ver');
+});
+
+// API Push (misma sesión del alumno; fuera del prefix /alumnos para que el SW tenga scope simple)
+Route::middleware(['auth:alumno'])->prefix('notificaciones-push/api')->group(function () {
+    Route::post('/subscribe', [PushApiController::class, 'subscribe'])->name('push.api.subscribe');
+    Route::post('/unsubscribe', [PushApiController::class, 'unsubscribe'])->name('push.api.unsubscribe');
+    Route::post('/send', [PushApiController::class, 'send'])->name('push.api.send');
+});
+
 // Authenticated + school context routes
 Route::middleware(['auth', 'school.context'])->group(function () {
 
@@ -50,6 +92,10 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
+
+    Route::get('/notificaciones/push/enviar', EnviarPush::class)
+        ->middleware('permiso:2')
+        ->name('push.enviar');
 
     // ABM routes
     Route::get('/abm/terlec', TerlecIndex::class)->middleware('permiso:1')->name('abm.terlec');

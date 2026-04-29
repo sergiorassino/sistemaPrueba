@@ -143,6 +143,7 @@ class ListadoCursoPdfController extends Controller
             'nivelNombre' => $nivelNombre,
             'ano' => $ano,
             'columnasMeta' => $columnasMeta,
+            'pdfHeader' => schoolPdfHeaderData(),
         ])->setPaper('a4', $orientation);
 
         return $pdf->stream($slug.'.pdf');

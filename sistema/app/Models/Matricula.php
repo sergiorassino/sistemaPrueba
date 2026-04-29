@@ -48,4 +48,14 @@ class Matricula extends Model
     {
         return $this->belongsTo(Condicion::class, 'idCondiciones');
     }
+
+    public function sanciones()
+    {
+        return $this->hasMany(Sancion::class, 'idMatricula');
+    }
+
+    public function inasistencias()
+    {
+        return $this->hasMany(Inasistencia::class, 'idMatricula');
+    }
 }

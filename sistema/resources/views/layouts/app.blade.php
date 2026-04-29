@@ -80,6 +80,7 @@
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.')) ? 'true' : 'false' }},
         calificacionesSec: {{ (str_starts_with($route ?? '', 'calificaciones.')) ? 'true' : 'false' }},
+        disciplinario: {{ (str_starts_with($route ?? '', 'seguimiento.disciplinario')) ? 'true' : 'false' }},
     },
     init() {
         const pendingMenuCollapse = localStorage.getItem('sidebarCollapseNext') === '1';
@@ -138,7 +139,7 @@
      style="display:none"></div>
 
 {{-- Sidebar --}}
-<aside class="se-sidebar fixed inset-y-0 left-0 z-40 flex flex-col transform transition-transform duration-200 ease-in-out
+<aside class="se-sidebar fixed inset-y-0 left-0 z-[1000] flex flex-col transform transition-transform duration-200 ease-in-out
               md:translate-x-0 md:transition-[width] md:duration-200 md:ease-in-out md:shadow-lg"
        :class="[
            (sidebarOpen || (!sidebarCollapsed)) ? 'translate-x-0' : '-translate-x-full md:-translate-x-full',
@@ -147,6 +148,14 @@
 
     {{-- Header compacto: Nivel - Año - Usuario + contraer/expandir --}}
     <div class="h-12 px-2.5 border-b se-sidebar-sep flex items-center justify-between gap-2">
+        @php $logoUrl = schoolLogoUrl(); @endphp
+
+        @if ($logoUrl)
+            <img src="{{ $logoUrl }}" alt="Logo"
+                 class="h-8 w-auto object-contain flex-shrink-0"
+                 x-show="!sidebarCollapsed" x-cloak>
+        @endif
+
         @php
             $sidebarSessionLine = schoolCtx()->nivelNombre()
                 . ' - ' . schoolCtx()->terlecAno()
@@ -158,6 +167,11 @@
            title="{{ $sidebarSessionLine }}">
             {{ $sidebarSessionLine }}
         </p>
+
+        {{-- Cambiar ciclo lectivo (sin logout) --}}
+        <div x-show="!sidebarCollapsed" x-cloak class="flex-shrink-0">
+            <livewire:school.context-switcher />
+        </div>
 
         <button type="button"
                 class="se-sidebar-iconbtn hidden md:inline-flex items-center justify-center w-9 h-9 rounded-md transition-colors flex-shrink-0"
@@ -274,6 +288,45 @@
             </div>
         @endif
 
+        {{-- Seguimiento disciplinario --}}
+        @if(tienePermiso(2))
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    :class="(groups.disciplinario && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('disciplinario')"
+                    title="Seguimiento disciplinario">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">SEGUIMIENTO DISCIPLINARIO</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.disciplinario ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <div class="mt-1 space-y-0.5 pl-1"
+                 x-show="groups.disciplinario && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                <a href="{{ route('seguimiento.disciplinario') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'seguimiento.disciplinario'),
+                   ])
+                   title="Seguimiento Disciplinario">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="truncate">Seguimiento Disciplinario</span>
+                </a>
+            </div>
+        @endif
+
         {{-- Configuración --}}
         @if(tienePermiso(1))
             <div class="mt-4"></div>
@@ -334,6 +387,19 @@
                               d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                     </svg>
                     <span class="truncate">Campos Disponibles Listado Alumnos</span>
+                </a>
+
+                <a href="{{ route('param.parametros-sistema') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'param.parametros-sistema'),
+                   ])
+                   title="Parámetros del sistema">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
+                    </svg>
+                    <span class="truncate">Parámetros del sistema</span>
                 </a>
 
                 {{-- Planes + Cursos modelo --}}

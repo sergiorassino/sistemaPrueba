@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 11pt; color: #333; }
-        h1 { font-size: 15pt; margin: 0 0 2px 0; color: #40848D; }
+        h1 { font-size: 14pt; margin: 0 0 2px 0; color: #111; }
         .modo-estudiantes { font-size: 11pt; font-weight: bold; color: #333; margin: 0 0 10px 0; letter-spacing: 0.02em; }
         h2 { font-size: 12pt; margin: 18px 0 6px 0; color: #333; border-bottom: 1px solid #C1D7DA; padding-bottom: 2px; }
         h2:first-of-type { margin-top: 8px; }
@@ -46,6 +46,8 @@
     </style>
 </head>
 <body>
+    @include('pdf.partials.header', ['header' => $pdfHeader ?? null])
+
     <h1>Listado de Estudiantes</h1>
     <p class="modo-estudiantes">{{ $modoEstudiantesPdf }}</p>
     <div class="meta">

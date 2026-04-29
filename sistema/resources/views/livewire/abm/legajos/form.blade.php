@@ -340,7 +340,7 @@
                     </div>
                     <div class="sm:col-span-2">
                         <label class="form-label">Hermanos</label>
-                        <textarea wire:model="hermanos" rows="2" class="form-input resize-none"></textarea>
+                        <textarea wire:model="hermanos" rows="2" class="form-input resize-y"></textarea>
                     </div>
                     <div>
                         <label class="form-label">¿Necesidades especiales?</label>
@@ -356,7 +356,7 @@
                     @if ($needes === 'si')
                         <div class="sm:col-span-2">
                             <label class="form-label">Detalle necesidades especiales</label>
-                            <textarea wire:model="needes_detalle" rows="2" class="form-input resize-none"></textarea>
+                            <textarea wire:model="needes_detalle" rows="2" class="form-input resize-y"></textarea>
                         </div>
                     @endif
                     <div class="sm:col-span-2">
@@ -365,15 +365,15 @@
                     </div>
                     <div class="sm:col-span-2">
                         <label class="form-label">Personas autorizadas a retirar</label>
-                        <textarea wire:model="retira" rows="2" class="form-input resize-none"></textarea>
+                        <textarea wire:model="retira" rows="2" class="form-input resize-y"></textarea>
                     </div>
                     <div class="sm:col-span-2">
                         <label class="form-label">Contacto de emergencia</label>
-                        <textarea wire:model="emeravis" rows="2" class="form-input resize-none"></textarea>
+                        <textarea wire:model="emeravis" rows="2" class="form-input resize-y"></textarea>
                     </div>
                     <div class="sm:col-span-2">
                         <label class="form-label">Observaciones</label>
-                        <textarea wire:model="obs" rows="3" class="form-input resize-none"></textarea>
+                        <textarea wire:model="obs" rows="3" class="form-input resize-y"></textarea>
                     </div>
                 </div>
             @endif

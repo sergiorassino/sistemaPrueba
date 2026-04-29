@@ -15,6 +15,12 @@ use App\Livewire\Auth\Login;
 use App\Livewire\Calificaciones\CargaCalificaciones;
 use App\Livewire\Listados\ListadoPorCurso;
 use App\Livewire\Parametrizacion\CamposListadoAlumnosIndex;
+use App\Livewire\Parametrizacion\ParametrosSistemaForm;
+use App\Livewire\Seguimiento\Disciplinario\DisciplinarioIndex;
+use App\Livewire\Seguimiento\Disciplinario\SancionForm;
+use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
+use App\Http\Controllers\SancionComunicadoPdfController;
+use App\Http\Controllers\AntecedentesDisciplinariosPdfController;
 use App\Support\SchoolContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -59,6 +65,9 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/parametrizacion/campos-listado-alumnos', CamposListadoAlumnosIndex::class)
         ->middleware('permiso:1')
         ->name('param.campos-listado-alumnos');
+    Route::get('/parametrizacion/parametros-sistema', ParametrosSistemaForm::class)
+        ->middleware('permiso:1')
+        ->name('param.parametros-sistema');
     Route::get('/abm/legajos', LegajosIndex::class)->middleware('permiso:2')->name('abm.legajos');
     Route::get('/abm/legajos/nuevo', LegajoForm::class)->middleware('permiso:2')->name('abm.legajos.create');
     Route::get('/abm/legajos/{id}/editar', LegajoForm::class)->middleware('permiso:2')->whereNumber('id')->name('abm.legajos.edit');
@@ -73,4 +82,31 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/calificaciones/carga', CargaCalificaciones::class)
         ->middleware('permiso:2')
         ->name('calificaciones.carga');
+
+    // Seguimiento disciplinario
+    Route::get('/seguimiento/disciplinario', DisciplinarioIndex::class)
+        ->middleware('permiso:2')
+        ->name('seguimiento.disciplinario');
+    Route::get('/seguimiento/disciplinario/nuevo', SancionForm::class)
+        ->middleware('permiso:2')
+        ->name('seguimiento.disciplinario.create');
+    Route::get('/seguimiento/disciplinario/{id}/editar', SancionForm::class)
+        ->middleware('permiso:2')
+        ->whereNumber('id')
+        ->name('seguimiento.disciplinario.edit');
+
+    Route::get('/seguimiento/disciplinario/{id}/imprimir', SancionComunicadoPdfController::class)
+        ->middleware('permiso:2')
+        ->whereNumber('id')
+        ->name('seguimiento.disciplinario.print');
+
+    Route::get('/seguimiento/disciplinario/{idMatricula}/antecedentes', AntecedentesIndex::class)
+        ->middleware('permiso:2')
+        ->whereNumber('idMatricula')
+        ->name('seguimiento.disciplinario.antecedentes');
+
+    Route::get('/seguimiento/disciplinario/{idMatricula}/antecedentes/pdf', AntecedentesDisciplinariosPdfController::class)
+        ->middleware('permiso:2')
+        ->whereNumber('idMatricula')
+        ->name('seguimiento.disciplinario.antecedentes.pdf');
 });

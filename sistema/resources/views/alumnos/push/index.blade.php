@@ -20,14 +20,16 @@
             <div class="mt-4 flex flex-wrap gap-2">
                 <button type="button"
                         id="btnEnablePush"
-                        class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-teal-700 text-white hover:bg-teal-800 transition">
-                    Activar en este dispositivo
+                        class="inline-flex items-center justify-center px-4 py-2 rounded-md"
+                        style="background:#0f766e;color:#fff;border:1px solid #0f766e;cursor:pointer">
+                    Activar notificaciones
                 </button>
 
                 <button type="button"
                         id="btnDisablePush"
-                        class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-white text-gray-800 hover:bg-gray-50 transition border border-gray-200">
-                    Desactivar en este dispositivo
+                        class="inline-flex items-center justify-center px-4 py-2 rounded-md"
+                        style="display:none;background:#0f766e;color:#fff;border:1px solid #0f766e;cursor:pointer">
+                    Desactivar notificaciones
                 </button>
 
                 <a href="{{ route('alumnos.push.mis') }}"
@@ -59,12 +61,30 @@
             if (p === 'unsupported') window.studentShowPushStatus('Tu navegador no soporta notificaciones push en este contexto.', 'error');
         });
 
+        const setUiSubscribed = (isSubscribed) => {
+            const btnEnable = document.getElementById('btnEnablePush');
+            const btnDisable = document.getElementById('btnDisablePush');
+            if (!btnEnable || !btnDisable) return;
+
+            if (isSubscribed) {
+                btnEnable.style.display = 'none';
+                btnDisable.style.display = 'inline-flex';
+            } else {
+                btnDisable.style.display = 'none';
+                btnEnable.style.display = 'inline-flex';
+            }
+        };
+
+        // Estado inicial: asumimos "no suscripto" hasta chequear con el SW.
+        setUiSubscribed(false);
+
         document.getElementById('btnDisablePush')?.addEventListener('click', async () => {
             try {
                 const reg = await navigator.serviceWorker.ready;
                 const sub = await reg.pushManager.getSubscription();
                 if (!sub) {
                     window.studentShowPushStatus('Este dispositivo no tiene notificaciones activadas.', 'error');
+                    setUiSubscribed(false);
                     return;
                 }
                 const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -77,8 +97,24 @@
                 if (!r.ok) throw new Error(await r.text());
                 await sub.unsubscribe();
                 window.studentShowPushStatus('Notificaciones desactivadas para este dispositivo.', 'success');
+                setUiSubscribed(false);
             } catch (e) {
                 window.studentShowPushStatus('No se pudo desactivar. ' + (e?.message || String(e)), 'error');
+            }
+        });
+
+        window.addEventListener('student-push-subscribed', () => {
+            setUiSubscribed(true);
+        });
+
+        // Estado real del dispositivo: si ya hay suscripción, mostrar "Desactivar notificaciones".
+        window.addEventListener('pwa-sw-registered', async (ev) => {
+            try {
+                const reg = ev?.detail || (await navigator.serviceWorker.ready);
+                const sub = await reg.pushManager.getSubscription();
+                setUiSubscribed(!!sub);
+            } catch (e) {
+                // Si no hay SW/Push, dejamos el UI por defecto.
             }
         });
     </script>

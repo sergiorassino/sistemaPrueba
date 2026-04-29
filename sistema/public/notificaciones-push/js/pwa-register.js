@@ -10,6 +10,30 @@
     var scope = scopeMeta ? scopeMeta.getAttribute('content') : (basePath || './');
     var swUrlMeta = document.querySelector('meta[name="pwa-sw-url"]');
     var swUrl = (swUrlMeta && swUrlMeta.getAttribute('content')) ? swUrlMeta.getAttribute('content') : (basePath || '') + 'sw.js';
+    var vapidMeta = document.querySelector('meta[name="vapid-public-key"]');
+    var vapidKey = vapidMeta ? vapidMeta.getAttribute('content') : null;
+
+    window.studentPushUnsupportedReason = '';
+    window.studentPushDiagnostics = function () {
+        var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform && /iPad|iPhone|iPod/.test(navigator.platform));
+        var isStandalone = false;
+        try {
+            isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || (navigator.standalone === true);
+        } catch (e) {}
+
+        return {
+            secureContext: !!window.isSecureContext,
+            hasServiceWorker: !!(navigator && navigator.serviceWorker),
+            hasPushManager: !!('PushManager' in window),
+            hasNotification: !!('Notification' in window),
+            permission: ('Notification' in window) ? Notification.permission : 'n/a',
+            isIOS: isIOS,
+            isStandalone: isStandalone,
+            swUrl: swUrl,
+            scope: scope,
+            vapidKeyPresent: !!(vapidKey && String(vapidKey).trim() !== ''),
+        };
+    };
 
     window.studentRequestPushPermission = function () {
         return Promise.resolve('unsupported');
@@ -33,6 +57,12 @@
         console.warn('[PWA]', msg);
     }
 
+    function markUnsupported(reason) {
+        window.studentPushUnsupportedReason = reason || '';
+        show(reason || 'Tu navegador no soporta notificaciones push en este contexto.', 'error');
+        return Promise.resolve('unsupported');
+    }
+
     navigator.serviceWorker.register(swUrl, { scope: scope || './' })
         .then(function (reg) {
             window.dispatchEvent(new CustomEvent('pwa-sw-registered', { detail: reg }));
@@ -43,12 +73,25 @@
         });
 
     function checkPushSupport(reg) {
-        if (!('PushManager' in window)) return Promise.resolve();
-        if (!('Notification' in window) || Notification.permission === 'denied') return Promise.resolve();
+        if (!('Notification' in window)) {
+            return markUnsupported('Este navegador/contexto no expone la API Notification (no se puede pedir permiso).');
+        }
+        if (Notification.permission === 'denied') {
+            show('Permiso de notificaciones denegado. Habilitalo desde la configuración del navegador.', 'error');
+            return Promise.resolve();
+        }
+        if (!('PushManager' in window)) {
+            var d = window.studentPushDiagnostics ? window.studentPushDiagnostics() : {};
+            if (d && d.isIOS && !d.isStandalone) {
+                return markUnsupported('En iPhone/iPad las notificaciones push requieren abrir la app desde “Agregar a inicio”.');
+            }
+            return markUnsupported('Este navegador no soporta PushManager (push web) en este contexto.');
+        }
 
-        var vapidMeta = document.querySelector('meta[name="vapid-public-key"]');
-        var vapidKey = vapidMeta ? vapidMeta.getAttribute('content') : null;
-        if (!vapidKey) return Promise.resolve();
+        if (!vapidKey) {
+            show('Falta VAPID_PUBLIC_KEY en la configuración del servidor.', 'error');
+            return Promise.resolve();
+        }
 
         return reg.pushManager.getSubscription().then(function (sub) {
             if (sub) {
@@ -124,18 +167,66 @@
     }
 
     window.studentRequestPushPermission = function () {
-        if (!('Notification' in window)) return Promise.resolve('unsupported');
+        if (!('Notification' in window)) return markUnsupported('Este navegador/contexto no expone la API Notification.');
         if (Notification.permission === 'granted') return Promise.resolve('granted');
         if (Notification.permission === 'denied') return Promise.resolve('denied');
         return Notification.requestPermission().then(function (p) {
             if (p === 'granted' && navigator.serviceWorker.ready) {
                 navigator.serviceWorker.ready.then(function (reg) {
-                    var vapidMeta = document.querySelector('meta[name="vapid-public-key"]');
-                    if (vapidMeta) subscribeUser(reg, vapidMeta.getAttribute('content'), basePath || '');
+                    if (!('PushManager' in window)) {
+                        show('Este navegador no soporta Push (PushManager).', 'error');
+                        return;
+                    }
+                    if (!vapidKey) {
+                        show('Falta VAPID_PUBLIC_KEY en la configuración del servidor.', 'error');
+                        return;
+                    }
+                    subscribeUser(reg, vapidKey, basePath || '');
                 });
             }
             return p;
         });
     };
+
+    // Si el usuario ya otorgó permiso, el click debe intentar suscribirse (sin depender del auto-check).
+    try {
+        window.studentRequestPushPermission = (function (prev) {
+            return function () {
+                if (!('Notification' in window)) return markUnsupported('Este navegador/contexto no expone la API Notification.');
+                if (!('PushManager' in window)) {
+                    var d = window.studentPushDiagnostics ? window.studentPushDiagnostics() : {};
+                    if (d && d.isIOS && !d.isStandalone) {
+                        return markUnsupported('En iPhone/iPad las notificaciones push requieren abrir la app desde “Agregar a inicio”.');
+                    }
+                    return markUnsupported('Este navegador no soporta PushManager (push web) en este contexto.');
+                }
+                if (!navigator.serviceWorker || !navigator.serviceWorker.ready) {
+                    return markUnsupported('Service Worker no disponible. Verificá HTTPS y que el navegador permita Service Workers.');
+                }
+                if (!vapidKey) {
+                    show('Falta VAPID_PUBLIC_KEY en la configuración del servidor.', 'error');
+                    return Promise.resolve('unsupported');
+                }
+
+                if (Notification.permission === 'granted') {
+                    return navigator.serviceWorker.ready.then(function (reg) {
+                        return reg.pushManager.getSubscription().then(function (sub) {
+                            if (sub) {
+                                sendSubscriptionToServer(sub, basePath || '');
+                                show('Este dispositivo ya tiene notificaciones activadas.', 'success');
+                                return 'granted';
+                            }
+                            subscribeUser(reg, vapidKey, basePath || '');
+                            return 'granted';
+                        });
+                    }).catch(function (e) {
+                        return markUnsupported('Service Worker no disponible: ' + (e && e.message ? e.message : String(e)));
+                    });
+                }
+
+                return prev();
+            };
+        })(window.studentRequestPushPermission);
+    } catch (e) {}
 })();
 

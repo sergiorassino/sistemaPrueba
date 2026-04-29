@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureSchoolContext;
 use App\Http\Middleware\EnsureStudentContext;
+use App\Http\Middleware\NoStoreResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'school.context' => EnsureSchoolContext::class,
             'student.context' => EnsureStudentContext::class,
+            'no-store'       => NoStoreResponse::class,
             'permiso'        => \App\Http\Middleware\CheckPermiso::class,
         ]);
     })

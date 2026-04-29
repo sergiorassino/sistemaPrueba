@@ -32,12 +32,12 @@ use Illuminate\Support\Facades\Route;
 
 // Guest routes
 Route::middleware('guest')->group(function () {
-    Route::get('/login', Login::class)->name('login');
+    Route::get('/loginUsuario', Login::class)->middleware('no-store')->name('login');
 });
 
 // Guest routes (alumnos)
 Route::middleware('guest:alumno')->group(function () {
-    Route::get('/alumnos/login', AlumnosLogin::class)->name('alumnos.login');
+    Route::get('/loginEstudiante', AlumnosLogin::class)->middleware('no-store')->name('alumnos.login');
 });
 
 // Logout

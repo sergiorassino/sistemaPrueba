@@ -6,6 +6,19 @@ use Illuminate\Support\Facades\DB;
 
 class PushSubscriptionRepository
 {
+    public static function hasAnyForUserKey(string $userKey): bool
+    {
+        $uk = trim($userKey);
+        if ($uk === '') {
+            return false;
+        }
+
+        return DB::table('push_subscriptions')
+            ->where('user_key', $uk)
+            ->limit(1)
+            ->exists();
+    }
+
     public static function deviceTypeFromUserAgent(?string $userAgent): string
     {
         if ($userAgent === null || $userAgent === '') {

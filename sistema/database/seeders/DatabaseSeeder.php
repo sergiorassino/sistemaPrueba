@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             LegacyDumpTableDataSeeder::class,
             ProfesorAdministradorSeeder::class,
+            ComCanalesSeeder::class,
+            ComPermisosSeeder::class,
         ]);
     }
 }

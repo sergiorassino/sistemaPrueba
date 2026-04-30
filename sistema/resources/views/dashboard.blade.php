@@ -91,6 +91,43 @@
             </div>
         </a>
         @endif
+
+        @if (tienePermiso(51))
+        <a href="{{ route('comunicaciones.index') }}"
+           class="card p-5 hover:shadow-md transition-shadow group">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center group-hover:opacity-90 transition-colors"
+                     style="background: #C1D7DA;">
+                    <svg class="w-6 h-6" style="color: #40848D;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3-3-3z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-800">Comunicaciones con familias</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Bandeja de comunicados y conversaciones</p>
+                </div>
+            </div>
+        </a>
+        @endif
+
+        @if (tienePermiso(53))
+        <a href="{{ route('param.com-canales') }}"
+           class="card p-5 hover:shadow-md transition-shadow group">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                    <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3-3-3z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-800">Canales de comunicación</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Quién puede escribir a quién y por qué medios</p>
+                </div>
+            </div>
+        </a>
+        @endif
     </div>
 </div>
 @endsection

@@ -18,11 +18,19 @@ use App\Livewire\Listados\ListadoPorCurso;
 use App\Livewire\Push\EnviarPush;
 use App\Livewire\Parametrizacion\CamposListadoAlumnosIndex;
 use App\Livewire\Parametrizacion\ParametrosSistemaForm;
+use App\Livewire\Parametrizacion\ComCanalesIndex;
 use App\Livewire\Seguimiento\Disciplinario\DisciplinarioIndex;
 use App\Livewire\Seguimiento\Disciplinario\SancionForm;
 use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
 use App\Http\Controllers\SancionComunicadoPdfController;
 use App\Http\Controllers\AntecedentesDisciplinariosPdfController;
+use App\Livewire\Comunicaciones\BandejaGestion;
+use App\Livewire\Comunicaciones\NuevoComunicado;
+use App\Livewire\Comunicaciones\HiloShow;
+use App\Livewire\Alumnos\Comunicaciones\BandejaFamilia;
+use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
+use App\Livewire\Alumnos\Comunicaciones\HiloShowFamilia;
+use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
 use App\Http\Controllers\Alumnos\PushApiController;
@@ -73,6 +81,12 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/notificaciones', [PushController::class, 'index'])->name('alumnos.push.index');
     Route::get('/notificaciones/mis', [PushController::class, 'misNotificaciones'])->name('alumnos.push.mis');
     Route::get('/notificaciones/{id}', [PushController::class, 'ver'])->whereNumber('id')->name('alumnos.push.ver');
+
+    // Comunicaciones familia ↔ escuela
+    Route::get('/comunicaciones', BandejaFamilia::class)->name('alumnos.comunicaciones.index');
+    Route::get('/comunicaciones/nuevo', NuevoComunicadoFamilia::class)->name('alumnos.comunicaciones.nuevo');
+    Route::get('/comunicaciones/preferencias', PreferenciasMedios::class)->name('alumnos.comunicaciones.preferencias');
+    Route::get('/comunicaciones/{id}', HiloShowFamilia::class)->whereNumber('id')->name('alumnos.comunicaciones.hilo');
 });
 
 // API Push (misma sesión del alumno; fuera del prefix /alumnos para que el SW tenga scope simple)
@@ -96,6 +110,23 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/notificaciones/push/enviar', EnviarPush::class)
         ->middleware('permiso:2')
         ->name('push.enviar');
+
+    // Módulo de Comunicaciones
+    Route::get('/comunicaciones', BandejaGestion::class)
+        ->middleware('permiso:51')
+        ->name('comunicaciones.index');
+    Route::get('/comunicaciones/nuevo', NuevoComunicado::class)
+        ->middleware('permiso:52')
+        ->name('comunicaciones.nuevo');
+    Route::get('/comunicaciones/{id}', HiloShow::class)
+        ->middleware('permiso:51')
+        ->whereNumber('id')
+        ->name('comunicaciones.hilo');
+
+    // Configuración de canales (requiere permiso de configuración)
+    Route::get('/parametrizacion/com-canales', ComCanalesIndex::class)
+        ->middleware('permiso:53')
+        ->name('param.com-canales');
 
     // ABM routes
     Route::get('/abm/terlec', TerlecIndex::class)->middleware('permiso:1')->name('abm.terlec');

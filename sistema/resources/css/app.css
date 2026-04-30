@@ -35,40 +35,41 @@
 
 @layer components {
     .btn-primary {
-        @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-transparent bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+        @apply inline-flex items-center justify-center rounded-xl border border-transparent bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
     }
     .btn-secondary {
-        @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-primary-600 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+        @apply inline-flex items-center justify-center rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-700 shadow-sm transition-colors duration-150 hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
     }
     .btn-info {
-        @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-transparent bg-sky-600 text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+        @apply inline-flex items-center justify-center rounded-xl border border-transparent bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
     }
     .btn-danger {
-        @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border border-transparent bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+        @apply inline-flex items-center justify-center rounded-xl border border-transparent bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
     }
     .btn-sm {
         @apply px-3 py-1.5 text-xs;
     }
     .form-label {
-        @apply block text-sm font-medium text-gray-700 mb-1;
+        @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-600;
     }
     .form-input {
-        @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
+        @apply block w-full rounded-xl border-accent-200 bg-accent-50/50 shadow-sm transition-colors focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
     }
     .form-select {
-        @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
+        @apply block w-full rounded-xl border-accent-200 bg-accent-50/50 shadow-sm transition-colors focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
     }
     .form-error {
         @apply mt-1 text-xs text-red-600;
     }
     .card {
-        @apply bg-white rounded-lg shadow-sm border border-gray-200;
+        @apply rounded-2xl border bg-white shadow-sm shadow-neutral-900/5;
+        border-color: var(--color-accent-200);
     }
     .table-header {
-        @apply px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider border border-gray-400;
+        @apply border-b border-accent-200 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-neutral-500;
     }
     .table-cell {
-        @apply px-4 py-3 text-sm text-gray-900 border border-gray-400;
+        @apply px-4 py-3 text-sm text-neutral-900;
     }
 
     /* Asegura que los bordes (border-r, etc.) se rendericen en tablas */
@@ -206,5 +207,151 @@
     /* Fila vacía / sin registros */
     .gf-empty {
         @apply px-4 py-6 text-center text-gray-400 text-xs;
+    }
+
+    /* Login / auth — paleta SE (ui-front-se) */
+    .se-auth-card {
+        @apply bg-white rounded-3xl border shadow-lg shadow-neutral-900/5;
+        border-color: var(--color-accent-200);
+    }
+    .se-auth-label {
+        @apply block text-[11px] font-semibold uppercase tracking-[0.14em] mb-1.5;
+        color: rgba(51, 51, 51, 0.72);
+    }
+    .se-auth-input,
+    .se-auth-select {
+        @apply block w-full rounded-xl text-sm shadow-sm transition-colors duration-150;
+        background-color: rgba(193, 215, 218, 0.35);
+        border: 1px solid var(--color-accent-200);
+    }
+    .se-auth-input:focus,
+    .se-auth-select:focus {
+        @apply outline-none ring-2 ring-offset-0;
+        border-color: var(--color-primary-500);
+        --tw-ring-color: rgba(64, 132, 141, 0.35);
+    }
+    .se-auth-btn {
+        @apply inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed bg-primary-600 hover:bg-primary-700;
+    }
+    .se-auth-btn:focus-visible {
+        @apply outline-none ring-2 ring-offset-2;
+        --tw-ring-color: rgba(64, 132, 141, 0.45);
+    }
+
+    /* Dashboard — tarjetas de acceso rápido SE */
+    .se-dash-access {
+        @apply flex items-center gap-4 rounded-2xl border bg-white p-5 shadow-sm transition-all duration-200;
+        border-color: var(--color-accent-200);
+    }
+    .se-dash-access:hover {
+        @apply shadow-md -translate-y-0.5;
+        border-color: var(--color-primary-500);
+        box-shadow: 0 10px 25px -12px rgba(51, 51, 51, 0.12);
+    }
+    .se-dash-access-icon {
+        @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl;
+        background-color: rgba(193, 215, 218, 0.45);
+        color: var(--color-primary-600);
+    }
+
+    /* Pantallas operativas SE: ABM, formularios y listados */
+    .se-page {
+        @apply mx-auto max-w-7xl space-y-6;
+    }
+    .se-hero {
+        @apply relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-neutral-800 text-white shadow-lg shadow-neutral-900/10;
+    }
+    .se-hero::before {
+        content: '';
+        @apply pointer-events-none absolute inset-0;
+        background: radial-gradient(ellipse 80% 70% at 100% 0%, rgba(255,255,255,.14), transparent 58%);
+    }
+    .se-hero-inner {
+        @apply relative flex flex-col gap-5 p-6 sm:p-7 lg:flex-row lg:items-center lg:justify-between;
+    }
+    .se-eyebrow {
+        @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60;
+    }
+    .se-card {
+        @apply rounded-2xl border bg-white shadow-sm shadow-neutral-900/5;
+        border-color: var(--color-accent-200);
+    }
+    .se-soft-card {
+        @apply rounded-2xl border shadow-sm;
+        background-color: rgba(255,255,255,.82);
+        border-color: var(--color-accent-200);
+    }
+    .se-toolbar {
+        @apply flex flex-col gap-3 rounded-2xl border bg-white/90 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between;
+        border-color: var(--color-accent-200);
+    }
+    .se-icon-badge {
+        @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl;
+        background-color: rgba(193, 215, 218, 0.45);
+        color: var(--color-primary-600);
+    }
+    .se-pill {
+        @apply inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold;
+        border-color: rgba(193, 215, 218, .75);
+        color: var(--color-primary-700);
+        background-color: rgba(193, 215, 218, .28);
+    }
+    .se-section-title {
+        @apply text-sm font-bold uppercase tracking-[0.12em] text-neutral-500;
+    }
+    .se-form-tabs {
+        @apply flex gap-2 overflow-x-auto p-2;
+    }
+    .se-form-tab {
+        @apply inline-flex shrink-0 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-colors;
+    }
+    .se-form-tab-active {
+        @apply bg-primary-600 text-white shadow-sm;
+    }
+    .se-form-tab-idle {
+        @apply text-neutral-600 hover:bg-accent-100 hover:text-primary-700;
+    }
+
+    .se-legajo-form .se-card {
+        @apply overflow-hidden;
+        background:
+            linear-gradient(180deg, rgba(255,255,255,.98), rgba(244,248,249,.58));
+    }
+    .se-legajo-form .se-card .space-y-5 > .grid {
+        @apply gap-3 sm:gap-4;
+    }
+    .se-legajo-form .se-card .space-y-5 > .grid > div:has(> .form-label) {
+        @apply rounded-2xl border p-3 transition-all duration-150;
+        border-color: rgba(193, 215, 218, .68);
+        background:
+            linear-gradient(180deg, rgba(255,255,255,.94), rgba(244,248,249,.72));
+        box-shadow: 0 8px 24px -22px rgba(51, 51, 51, .42);
+    }
+    .se-legajo-form .se-card .space-y-5 > .grid > div:has(> .form-label):focus-within {
+        border-color: rgba(64, 132, 141, .55);
+        background: #fff;
+        box-shadow: 0 12px 28px -20px rgba(64, 132, 141, .48);
+    }
+    .se-legajo-form .form-label {
+        @apply mb-2 text-[10px];
+        color: rgba(51, 51, 51, .62);
+    }
+    .se-legajo-form .form-input,
+    .se-legajo-form .form-select {
+        @apply rounded-2xl border-0 bg-white/80 px-3 py-2.5 text-neutral-800 shadow-none ring-1 ring-inset ring-accent-200/80 transition-all;
+    }
+    .se-legajo-form .form-input::placeholder {
+        color: rgba(102, 102, 102, .58);
+    }
+    .se-legajo-form .form-input:focus,
+    .se-legajo-form .form-select:focus {
+        @apply bg-white ring-2 ring-primary-500/35;
+        box-shadow: inset 0 0 0 1px rgba(64, 132, 141, .18);
+    }
+    .se-legajo-form textarea.form-input {
+        @apply min-h-24 leading-relaxed;
+    }
+    .se-legajo-form input[readonly] {
+        @apply bg-accent-100/70 text-neutral-500;
     }
 }

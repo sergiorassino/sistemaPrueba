@@ -1,40 +1,47 @@
-<x-form-shell maxWidth="max-w-6xl">
-    <div class="card p-6 space-y-4">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div class="min-w-0 w-full text-center sm:flex-1">
-                <h2 class="text-xl font-semibold text-gray-800">Antecedentes disciplinarios</h2>
-                <p class="text-sm text-gray-500 mt-0.5">
+<div class="se-page max-w-6xl">
+    <section class="se-hero">
+        <div class="se-hero-inner">
+            <div class="min-w-0 space-y-2">
+                <p class="se-eyebrow">Seguimiento</p>
+                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Antecedentes disciplinarios</h2>
+                <p class="text-sm text-white/85">
                     {{ $base->legajo?->apellido }}, {{ $base->legajo?->nombre }}
-                    · Nivel: {{ schoolCtx()->nivelNombre() }}
                 </p>
+                <p class="text-xs text-white/65">{{ schoolCtx()->nivelNombre() }}</p>
             </div>
-
-            <div class="flex flex-wrap justify-center gap-2 sm:justify-end">
-                <a class="btn-secondary btn-sm"
+            <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+                <a class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20"
                    target="_blank"
                    rel="noopener noreferrer"
                    href="{{ route('seguimiento.disciplinario.antecedentes.pdf', ['idMatricula' => $base->id]) }}">
                     Imprimir PDF
                 </a>
                 <a href="{{ route('seguimiento.disciplinario', ['curso' => $base->idCursos, 'matricula' => $base->id]) }}"
-                   class="btn-secondary btn-sm">Volver</a>
+                   class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100">
+                    Volver
+                </a>
             </div>
         </div>
+    </section>
 
-        @if ($porAno->isEmpty())
-            <p class="text-sm text-gray-500 text-center py-10">Sin antecedentes disciplinarios.</p>
-        @else
-            <div class="space-y-5">
-                @foreach ($porAno as $ano => $items)
-                    <div class="border border-gray-200 rounded-lg overflow-hidden">
-                        <div class="bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-800">
+    @if ($porAno->isEmpty())
+        <div class="se-card p-10">
+            <p class="text-center text-sm text-neutral-600">Sin antecedentes disciplinarios.</p>
+        </div>
+    @else
+        <div class="space-y-5">
+            @foreach ($porAno as $ano => $items)
+                <div class="se-card overflow-hidden">
+                    <div class="border-b border-accent-200 bg-accent-50/80 px-5 py-3">
+                        <p class="text-sm font-semibold text-neutral-800">
                             Año lectivo: {{ $ano > 0 ? $ano : '—' }}
-                            <span class="text-xs font-normal text-gray-500">({{ $items->count() }} evento/s)</span>
-                        </div>
-
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full border-collapse">
-                                <thead class="bg-white">
+                            <span class="ml-2 text-xs font-normal text-neutral-500">({{ $items->count() }} evento/s)</span>
+                        </p>
+                    </div>
+                    <div class="w-full overflow-x-auto">
+                        <div class="flex justify-start">
+                            <table class="min-w-[640px] border-collapse sm:min-w-full">
+                                <thead class="bg-accent-50">
                                     <tr>
                                         <th class="table-header w-28">Fecha</th>
                                         <th class="table-header w-40">Curso</th>
@@ -44,9 +51,9 @@
                                         <th class="table-header w-40">Solicitada por</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white">
+                                <tbody class="divide-y divide-accent-200 bg-white">
                                     @foreach ($items as $s)
-                                        <tr class="hover:bg-gray-50 transition-colors">
+                                        <tr class="hover:bg-accent-50/50">
                                             <td class="table-cell font-mono">{{ $s->fecha?->format('d/m/Y') ?? '—' }}</td>
                                             <td class="table-cell">{{ $s->matricula?->curso?->nombreParaListado() ?? '—' }}</td>
                                             <td class="table-cell">{{ $s->tipo?->tipo ?? ('#'.$s->idTipoSancion) }}</td>
@@ -59,9 +66,8 @@
                             </table>
                         </div>
                     </div>
-                @endforeach
-            </div>
-        @endif
-    </div>
-</x-form-shell>
-
+                </div>
+            @endforeach
+        </div>
+    @endif
+</div>

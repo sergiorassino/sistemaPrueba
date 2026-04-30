@@ -322,20 +322,8 @@ function bindCalifCargaTablas() {
 }
 
 document.addEventListener('DOMContentLoaded', () => queueMicrotask(bindCalifCargaTablas));
-document.addEventListener('livewire:navigated', () => queueMicrotask(bindCalifCargaTablas));
 
-document.addEventListener('livewire:init', () => {
-    const L = window.Livewire;
-    if (L && typeof L.hook === 'function') {
-        L.hook('morph.updated', () => queueMicrotask(bindCalifCargaTablas));
-    }
-});
-
-function tryCollapseSidebarAfterNavigation() {
-    if (localStorage.getItem('sidebarCollapseNext') !== '1') {
-        return;
-    }
-
+function triggerSeSidebarOverflowSync() {
     const shell = document.getElementById('se-shell');
     if (!shell) {
         return;
@@ -345,8 +333,8 @@ function tryCollapseSidebarAfterNavigation() {
     if (Alpine && typeof Alpine.$data === 'function') {
         try {
             const data = Alpine.$data(shell);
-            if (data && typeof data.applyPostNavCollapse === 'function') {
-                data.applyPostNavCollapse();
+            if (data && typeof data.syncSidebarCollapse === 'function') {
+                data.syncSidebarCollapse();
                 return;
             }
         } catch (e) {
@@ -354,13 +342,23 @@ function tryCollapseSidebarAfterNavigation() {
         }
     }
 
-    shell.dispatchEvent(new CustomEvent('se-sidebar-post-nav-collapse', { bubbles: false }));
+    shell.dispatchEvent(new CustomEvent('se-sidebar-sync-overflow', { bubbles: false }));
 }
 
-// Livewire 4: también en la primera carga; no duplicar listeners (este bundle se carga una vez).
 document.addEventListener('livewire:navigated', () => {
-    queueMicrotask(tryCollapseSidebarAfterNavigation);
-    window.setTimeout(tryCollapseSidebarAfterNavigation, 200);
+    queueMicrotask(bindCalifCargaTablas);
+    queueMicrotask(triggerSeSidebarOverflowSync);
+    window.setTimeout(triggerSeSidebarOverflowSync, 200);
+});
+
+document.addEventListener('livewire:init', () => {
+    const L = window.Livewire;
+    if (L && typeof L.hook === 'function') {
+        L.hook('morph.updated', () => {
+            queueMicrotask(bindCalifCargaTablas);
+            queueMicrotask(triggerSeSidebarOverflowSync);
+        });
+    }
 });
 
 // Alpine.js es inyectado y gestionado por Livewire 4.

@@ -1,24 +1,25 @@
 <div>
-    <div class="card p-4 sm:p-5">
-        <h2 class="text-base sm:text-lg font-semibold text-gray-800 mb-2.5 sm:mb-3">Iniciar sesión</h2>
+    <div class="se-auth-card p-6 sm:p-8">
+        <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-neutral-800">Iniciar sesión</h2>
+        <p class="mt-1.5 text-sm text-neutral-600">Ingrese sus datos y seleccione nivel y año lectivo.</p>
 
         @if (session('error'))
-            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
+            <div class="mt-5 p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
                 {{ session('error') }}
             </div>
         @endif
 
-        <form wire:submit="login" class="space-y-3" autocomplete="new-password">
+        <form wire:submit="login" class="mt-6 space-y-4" autocomplete="new-password">
             {{-- DNI --}}
             <div>
-                <label class="form-label text-xs" for="dni">DNI (usuario)</label>
+                <label class="se-auth-label" for="dni">DNI (usuario)</label>
                 <input wire:model.live.debounce.400ms="dni"
                        id="dni"
                        type="text"
                        inputmode="numeric"
                        autocomplete="off"
                        placeholder="Ej: 25038868"
-                       class="form-input text-sm py-2 @error('dni') border-red-400 @enderror">
+                       class="se-auth-input py-2.5 px-3 @error('dni') !border-red-400 ring-2 ring-red-200/80 @enderror">
                 @error('dni')
                     <p class="form-error">{{ $message }}</p>
                 @enderror
@@ -26,12 +27,12 @@
 
             {{-- Contraseña --}}
             <div>
-                <label class="form-label text-xs" for="pwrd">Contraseña</label>
+                <label class="se-auth-label" for="pwrd">Contraseña</label>
                 <input wire:model="pwrd"
                        id="pwrd"
                        type="password"
                        autocomplete="new-password"
-                       class="form-input text-sm py-2 @error('pwrd') border-red-400 @enderror">
+                       class="se-auth-input py-2.5 px-3 @error('pwrd') !border-red-400 ring-2 ring-red-200/80 @enderror">
                 @error('pwrd')
                     <p class="form-error">{{ $message }}</p>
                 @enderror
@@ -39,10 +40,10 @@
 
             {{-- Nivel --}}
             <div>
-                <label class="form-label text-xs" for="idNivel">Nivel</label>
+                <label class="se-auth-label" for="idNivel">Nivel</label>
                 <select wire:model="idNivel"
                         id="idNivel"
-                        class="form-select text-sm py-2 @error('idNivel') border-red-400 @enderror">
+                        class="se-auth-select py-2.5 px-3 @error('idNivel') !border-red-400 ring-2 ring-red-200/80 @enderror">
                     <option value="">— Seleccione nivel —</option>
                     @foreach ($niveles as $n)
                         <option value="{{ $n->id }}">{{ $n->nivel }}</option>
@@ -55,10 +56,10 @@
 
             {{-- Año lectivo --}}
             <div>
-                <label class="form-label text-xs" for="idTerlec">Año lectivo</label>
+                <label class="se-auth-label" for="idTerlec">Año lectivo</label>
                 <select wire:model="idTerlec"
                         id="idTerlec"
-                        class="form-select text-sm py-2 @error('idTerlec') border-red-400 @enderror">
+                        class="se-auth-select py-2.5 px-3 @error('idTerlec') !border-red-400 ring-2 ring-red-200/80 @enderror">
                     <option value="">— Seleccione año —</option>
                     @foreach ($terlecs as $t)
                         <option value="{{ $t->id }}">{{ $t->ano }}</option>
@@ -71,13 +72,12 @@
 
             <div class="pt-1">
                 <button type="submit"
-                        class="btn-primary w-full py-2 text-sm"
+                        class="se-auth-btn"
                         wire:loading.attr="disabled"
-                        wire:loading.class="opacity-75"
                         wire:target="login">
                     <span wire:loading.remove wire:target="login">Ingresar al sistema</span>
                     <span wire:loading wire:target="login" class="flex items-center justify-center gap-2">
-                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <svg class="animate-spin h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                         </svg>

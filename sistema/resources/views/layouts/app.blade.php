@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-gray-100">
+<html lang="es" class="h-full bg-[#F4F8F9]">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,35 +11,49 @@
         :root {
             --se-jet: #333333;
             --se-primary: #40848D;
-            --se-hover: rgba(64, 132, 141, 0.2);
-            --se-sep: rgba(255, 255, 255, 0.10);
+            --se-light-blue: #C1D7DA;
+            --se-hover-bg: rgba(193, 215, 218, 0.18);
+            --se-sep: rgba(193, 215, 218, 0.22);
             --se-white-85: rgba(255, 255, 255, 0.85);
             --se-white-05: rgba(255, 255, 255, 0.05);
             --se-white-10: rgba(255, 255, 255, 0.10);
-            --se-sidebar-w: 23.04rem; /* +20% sobre 19.2rem (total +44% vs 16rem) */
-            --se-sidebar-w-collapsed: 5rem; /* md:w-20 */
+            --se-sidebar-w: 23.04rem;
+            --se-sidebar-w-collapsed: 5rem;
         }
+        /* Sin position:relative aquí: pisaría Tailwind `fixed` y el sidebar pasaría al flujo (contenido debajo). */
         .se-sidebar {
-            background: var(--se-jet);
+            background-color: var(--se-jet);
             color: #fff;
             font-family: "Roboto Condensed", "Arial Narrow", "Helvetica Neue", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
             font-stretch: condensed;
             width: var(--se-sidebar-w);
             overflow-x: hidden;
         }
+        .se-sidebar::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse 142% 86% at 0% 0%, rgba(64, 132, 141, 0.60), transparent 65%),
+                radial-gradient(ellipse 78% 52% at 100% 6%, rgba(64, 132, 141, 0.14), transparent 58%);
+        }
         @media (min-width: 768px) {
-            /* En desktop, al contraer: no dejar barra con íconos, ocultar por completo */
-            .se-sidebar.is-collapsed { width: 0; }
+            .se-sidebar.is-collapsed { width: var(--se-sidebar-w-collapsed); }
         }
         .se-sidebar-sep { border-color: var(--se-sep); }
         .se-sidebar-iconbtn { color: var(--se-white-85); }
-        .se-sidebar-iconbtn:hover { background: var(--se-white-10); color: #fff; }
+        .se-sidebar-iconbtn:hover { background: var(--se-hover-bg); color: #fff; }
         .se-sidebar-groupbtn { color: var(--se-white-85); background: var(--se-white-05); border: 1px solid var(--se-sep); }
-        .se-sidebar-groupbtn:hover { background: var(--se-white-10); }
+        .se-sidebar-groupbtn:hover { background: var(--se-hover-bg); }
         .se-sidebar-groupbtn.is-open { background: var(--se-white-10); }
         .se-sidebar-link { color: var(--se-white-85); }
-        .se-sidebar-link:hover { background: var(--se-hover); color: #fff; }
-        .se-sidebar-link.is-active { background: var(--se-primary); color: #fff; }
+        .se-sidebar-link:hover { background: var(--se-hover-bg); color: #fff; }
+        .se-sidebar-link.is-active {
+            background: var(--se-primary);
+            color: #fff;
+            box-shadow: inset 3px 0 0 var(--se-light-blue);
+        }
         .se-main {
             width: 100%;
             min-width: 0;
@@ -52,28 +66,35 @@
                 width: calc(100% - var(--se-sidebar-w));
             }
             .se-main.is-collapsed {
-                transform: translateX(0);
-                width: 100%;
+                transform: translateX(var(--se-sidebar-w-collapsed));
+                width: calc(100% - var(--se-sidebar-w-collapsed));
             }
         }
-        @media (max-width: 767px) {
-            .se-main.is-mobile-open {
-                transform: translateX(var(--se-sidebar-w));
-                width: calc(100% - var(--se-sidebar-w));
+        @media (min-width: 768px) {
+            .se-sidebar.is-collapsed .se-sidebar-groupbtn {
+                justify-content: center;
+                gap: 0;
+                padding-left: 0.35rem;
+                padding-right: 0.35rem;
             }
         }
     </style>
 </head>
-@php $route = request()->route()?->getName(); @endphp
+@php
+    $route = request()->route()?->getName();
+    /** En desktop el menú usa rail colapsado salvo dashboard; hover/focus lo expanden. */
+    $isSidebarPeekMode = (($route ?? '') !== 'dashboard');
+@endphp
 <body class="h-full">
 
 {{-- Livewire puede usar el <body> como raíz; el estado del layout va en un wrapper para evitar choques con Alpine. --}}
 <div id="se-shell"
      class="h-full"
-     @se-sidebar-post-nav-collapse="applyPostNavCollapse()"
      x-data="{
     sidebarOpen: false,
+    peekMenuMode: @json($isSidebarPeekMode),
     sidebarCollapsed: false,
+    _sidebarPeekTimer: null,
     groups: {
         config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'param.')) ? 'true' : 'false' }},
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
@@ -83,14 +104,33 @@
         disciplinario: {{ (str_starts_with($route ?? '', 'seguimiento.disciplinario')) ? 'true' : 'false' }},
         comunicaciones: {{ (tienePermiso(51) && !tienePermiso(2) && (str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales')) ? 'true' : 'false' }},
     },
+    isDesktopPeekLayout() {
+        return window.matchMedia && window.matchMedia('(min-width: 768px)').matches;
+    },
+    peekSidebarExpandNow() {
+        if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
+        clearTimeout(this._sidebarPeekTimer);
+        this.sidebarCollapsed = false;
+    },
+    peekSidebarMaybeCollapseLater() {
+        if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
+        clearTimeout(this._sidebarPeekTimer);
+        this._sidebarPeekTimer = window.setTimeout(() => {
+            const el = this.$refs.seSidebar;
+            if (!el) return;
+            if (el.matches(':hover')) return;
+            if (el.contains(document.activeElement)) return;
+            this.sidebarCollapsed = true;
+        }, 200);
+    },
+    peekSidebarFocusOut(ev) {
+        if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
+        const sidebar = this.$refs.seSidebar;
+        const rt = ev.relatedTarget;
+        if (sidebar && rt && sidebar.contains(rt)) return;
+        this.peekSidebarMaybeCollapseLater();
+    },
     init() {
-        const pendingMenuCollapse = localStorage.getItem('sidebarCollapseNext') === '1';
-        // Llegamos desde un link del menú: mostrar sidebar expandido un instante y colapsar después
-        // (no borrar `sidebarCollapseNext` acá: Alpine/Livewire puede llamar init() más de una vez).
-        this.sidebarCollapsed = pendingMenuCollapse
-            ? false
-            : (localStorage.getItem('sidebarCollapsed') === '1');
-
         const raw = localStorage.getItem('sidebarGroups');
         if (raw) {
             try {
@@ -98,28 +138,28 @@
                 if (parsed && typeof parsed === 'object') this.groups = { ...this.groups, ...parsed };
             } catch (e) {}
         }
-
-        if (pendingMenuCollapse) {
-            this.sidebarOpen = false;
-            const collapseAfterPaint = () => {
-                if (localStorage.getItem('sidebarCollapseNext') !== '1') return;
-                this.applyPostNavCollapse();
-            };
-
-            requestAnimationFrame(() => requestAnimationFrame(collapseAfterPaint));
-            window.setTimeout(collapseAfterPaint, 350);
-        }
-    },
-    applyPostNavCollapse() {
-        if (window.matchMedia && window.matchMedia('(min-width: 768px)').matches) {
+        // Desktop dashboard: sidebar ancho siempre; resto de rutas: rail hasta hover/focus.
+        if (this.isDesktopPeekLayout() && this.peekMenuMode) {
             this.sidebarCollapsed = true;
-            localStorage.setItem('sidebarCollapsed', '1');
+        } else {
+            this.sidebarCollapsed = false;
         }
-        localStorage.removeItem('sidebarCollapseNext');
-    },
-    toggleSidebar() {
-        this.sidebarCollapsed = !this.sidebarCollapsed;
-        localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed ? '1' : '0');
+        if (!this._sePeekResizeBound) {
+            this._sePeekResizeBound = true;
+            window.addEventListener('resize', () => {
+                if (!this.peekMenuMode) {
+                    this.sidebarCollapsed = false;
+                    return;
+                }
+                if (this.isDesktopPeekLayout()) {
+                    const el = this.$refs.seSidebar;
+                    if (el && (el.matches(':hover') || el.contains(document.activeElement))) return;
+                    this.sidebarCollapsed = true;
+                } else {
+                    this.sidebarCollapsed = false;
+                }
+            });
+        }
     },
     toggleGroup(key) {
         this.groups[key] = !this.groups[key];
@@ -140,64 +180,61 @@
      style="display:none"></div>
 
 {{-- Sidebar --}}
-<aside class="se-sidebar fixed inset-y-0 left-0 z-[1000] flex flex-col transform transition-transform duration-200 ease-in-out
+<aside x-ref="seSidebar"
+       @mouseenter="peekSidebarExpandNow()"
+       @mouseleave="peekSidebarMaybeCollapseLater()"
+       @focusin="peekSidebarExpandNow()"
+       @focusout="peekSidebarFocusOut($event)"
+       class="se-sidebar fixed inset-y-0 left-0 z-[1000] flex flex-col transform transition-transform duration-200 ease-in-out
               md:translate-x-0 md:transition-[width] md:duration-200 md:ease-in-out md:shadow-lg"
        :class="[
-           (sidebarOpen || (!sidebarCollapsed)) ? 'translate-x-0' : '-translate-x-full md:-translate-x-full',
+           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+           'md:translate-x-0',
            sidebarCollapsed ? 'is-collapsed' : ''
        ]">
 
-    {{-- Header compacto: Nivel - Año - Usuario + contraer/expandir --}}
-    <div class="h-12 px-2.5 border-b se-sidebar-sep flex items-center justify-between gap-2">
-        @php $logoUrl = schoolLogoUrl(); @endphp
+    {{-- Header: logo y contexto; en desktop fuera del dashboard el menú se expande con hover sobre el lateral --}}
+    @php
+        $sidebarLogoUrl = schoolLogoUrl() ?: asset('img/3.png');
+        $sidebarSessionLine = schoolCtx()->nivelNombre()
+            . ' · ' . schoolCtx()->terlecAno()
+            . ' · ' . trim((Auth::user()->nombre ?? '') . ' ' . (Auth::user()->apellido ?? ''));
+    @endphp
+    <div class="border-b se-sidebar-sep relative z-[1] flex-shrink-0"
+         :class="sidebarCollapsed ? 'flex flex-col items-center gap-2 py-3 px-1' : 'min-h-12 px-2.5 py-2 flex flex-row items-center gap-2'">
 
-        @if ($logoUrl)
-            <img src="{{ $logoUrl }}" alt="Logo"
-                 class="h-8 w-auto object-contain flex-shrink-0"
-                 x-show="!sidebarCollapsed" x-cloak>
-        @endif
+        <a href="{{ route('dashboard') }}"
+           @click="sidebarOpen = false"
+           class="flex min-w-0 items-center gap-2 rounded-lg text-left no-underline text-inherit transition-colors hover:bg-[var(--se-hover-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--se-light-blue)]"
+           :class="sidebarCollapsed ? 'flex-col justify-center' : 'flex-1'"
+           title="Ir al panel principal">
+            <span class="rounded-lg bg-white px-2 py-1.5 shadow-sm flex-shrink-0">
+                <img src="{{ $sidebarLogoUrl }}" alt=""
+                     class="object-contain flex-shrink-0 block"
+                     :class="sidebarCollapsed ? 'h-8 w-8' : 'h-9 w-auto max-w-[9.5rem]'">
+            </span>
 
-        @php
-            $sidebarSessionLine = schoolCtx()->nivelNombre()
-                . ' - ' . schoolCtx()->terlecAno()
-                . ' - ' . trim((Auth::user()->nombre ?? '') . ' ' . (Auth::user()->apellido ?? ''));
-        @endphp
+            <p class="text-white text-[11px] font-semibold truncate min-w-0 leading-snug"
+               x-show="!sidebarCollapsed" x-cloak
+               title="{{ $sidebarSessionLine }}">
+                <span class="text-white/90">{{ schoolCtx()->nivelNombre() }}</span>
+                <span class="text-white/50"> · </span>
+                <span class="text-white/90">{{ schoolCtx()->terlecAno() }}</span>
+                <span class="block text-[10px] font-medium text-white/70 truncate mt-0.5">
+                    {{ Auth::user()->nombre ?? '' }} {{ Auth::user()->apellido ?? '' }}
+                </span>
+            </p>
+        </a>
 
-        <p class="text-white text-[12px] font-semibold truncate min-w-0 flex-1 leading-tight"
-           x-show="!sidebarCollapsed" x-cloak
-           title="{{ $sidebarSessionLine }}">
-            {{ $sidebarSessionLine }}
-        </p>
-
-        {{-- Cambiar ciclo lectivo (sin logout) --}}
-        <div x-show="!sidebarCollapsed" x-cloak class="flex-shrink-0">
+        <div x-show="!sidebarCollapsed" x-cloak class="min-w-0 flex-shrink-0">
             <livewire:school.context-switcher />
         </div>
-
-        <button type="button"
-                class="se-sidebar-iconbtn hidden md:inline-flex items-center justify-center w-9 h-9 rounded-md transition-colors flex-shrink-0"
-                :title="sidebarCollapsed ? 'Expandir menú' : 'Contraer menú'"
-                @click="toggleSidebar()">
-            {{-- Ícono "menú hamburguesa" redondo --}}
-            <svg x-show="!sidebarCollapsed" x-cloak class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="9" stroke-width="2"/>
-                <path stroke-linecap="round" stroke-width="2" d="M8 10h8"/>
-                <path stroke-linecap="round" stroke-width="2" d="M8 12.75h8"/>
-                <path stroke-linecap="round" stroke-width="2" d="M8 15.5h8"/>
-            </svg>
-            <svg x-show="sidebarCollapsed" x-cloak class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="9" stroke-width="2"/>
-                <path stroke-linecap="round" stroke-width="2" d="M8 10h8"/>
-                <path stroke-linecap="round" stroke-width="2" d="M8 12.75h8"/>
-                <path stroke-linecap="round" stroke-width="2" d="M8 15.5h8"/>
-            </svg>
-        </button>
     </div>
 
     {{-- Navigation --}}
-    <nav class="flex-1 px-2.5 py-3 overflow-y-auto space-y-0.5"
-         @pointerdown.capture="$event.target.closest('a[href]') && localStorage.setItem('sidebarCollapseNext', '1')"
-         @click.capture="$event.target.closest('a[href]') && (localStorage.setItem('sidebarCollapseNext', '1'), sidebarOpen = false)">
+    <nav class="flex-1 relative z-[1] px-2.5 py-3 overflow-y-auto space-y-0.5"
+         :class="sidebarCollapsed ? '!px-1 !py-2' : ''"
+         @click.capture="$event.target.closest('a[href]') && (sidebarOpen = false)">
 
         {{-- Estudiantes --}}
         @if(tienePermiso(2))
@@ -539,8 +576,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
                     </svg>
-                    <span class="truncate flex-1 text-left">GESTIÓN DE PLANES Y CURSOS MODELO</span>
-                    <svg class="w-4 h-4 transition-transform"
+                    <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">GESTIÓN DE PLANES Y CURSOS MODELO</span>
+                    <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                          :class="groups.planesCursos ? 'rotate-180' : ''"
                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -548,7 +585,7 @@
                 </button>
 
                 <div class="space-y-0.5 pl-1"
-                     x-show="groups.planesCursos"
+                     x-show="groups.planesCursos && !sidebarCollapsed"
                      x-collapse
                      x-cloak>
                     <a href="{{ route('abm.planes') }}"
@@ -588,8 +625,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
                     </svg>
-                    <span class="truncate flex-1 text-left">GESTION DE CURSOS Y MATERIAS DEL AÑO</span>
-                    <svg class="w-4 h-4 transition-transform"
+                    <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">GESTION DE CURSOS Y MATERIAS DEL AÑO</span>
+                    <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                          :class="groups.cursosMateriasAno ? 'rotate-180' : ''"
                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -597,7 +634,7 @@
                 </button>
 
                 <div class="space-y-0.5 pl-1"
-                     x-show="groups.cursosMateriasAno"
+                     x-show="groups.cursosMateriasAno && !sidebarCollapsed"
                      x-collapse
                      x-cloak>
                     <a href="{{ route('abm.cursos') }}"
@@ -634,8 +671,10 @@
     </nav>
 
     {{-- User footer --}}
-    <div class="px-4 py-3 border-t se-sidebar-sep">
-        <div class="flex items-center gap-3">
+    <div class="px-4 py-3 border-t se-sidebar-sep relative z-[1]"
+         :class="sidebarCollapsed ? 'px-1.5 py-2.5' : ''">
+        <div class="flex items-center gap-3"
+             :class="sidebarCollapsed ? 'flex-col gap-2' : ''">
             <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                  style="background: var(--se-primary);">
                 <span class="text-white text-xs font-bold">
@@ -669,21 +708,9 @@
         sidebarOpen ? 'is-mobile-open' : ''
      ]">
 
-    {{-- Botón flotante (desktop) cuando el sidebar está contraído --}}
-    <button type="button"
-            x-show="sidebarCollapsed"
-            x-cloak
-            @click="toggleSidebar()"
-            class="hidden md:inline-flex fixed z-50 top-4 left-3 items-center justify-center w-10 h-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition"
-            title="Expandir menú"
-            aria-label="Expandir menú">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-    </button>
-
-    {{-- Top bar (mobile) --}}
-    <header class="sticky top-0 z-20 bg-white border-b border-gray-200 md:hidden">
+    {{-- Barra estrecha visible al colapsar: el toggle vive en el sidebar --}}
+    {{-- Top bar (mobile): translúcida y borde marca --}}
+    <header class="sticky top-0 z-20 md:hidden border-b border-[#C1D7DA] bg-white/95 backdrop-blur-sm supports-[backdrop-filter]:bg-white/85">
         <div class="flex items-center gap-3 h-14 px-4">
             <button @click="sidebarOpen = true"
                     class="text-gray-500 hover:text-gray-700 focus:outline-none">
@@ -697,8 +724,8 @@
         </div>
     </header>
 
-    {{-- Page content --}}
-    <main class="flex-1 p-4 md:p-6">
+    {{-- Contenido principal: padding generoso en desktop --}}
+    <main class="flex-1 p-4 md:p-8">
         @hasSection('content')
             @yield('content')
         @else

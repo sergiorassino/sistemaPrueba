@@ -1,147 +1,179 @@
-<div class="max-w-3xl space-y-4">
-
-    <div class="flex items-center gap-3">
-        <a href="{{ route('comunicaciones.index') }}" class="text-gray-400 hover:text-gray-600 transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-        </a>
-        <h1 class="text-lg font-semibold text-gray-900">Nuevo Comunicado</h1>
-    </div>
-
-    @if(session('success'))
-    <div class="bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm flex items-center justify-between gap-3">
-        <span>{{ session('success') }}</span>
-        @if($enviado)
-        <a href="{{ route('comunicaciones.hilo', $enviado) }}" class="underline font-medium">Ver comunicado</a>
-        @endif
-    </div>
-    @endif
-
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-5">
-
-        {{-- Tipo de destino --}}
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Destinatarios</label>
-            <div class="flex flex-wrap gap-2">
-                @foreach(['alumno' => 'Un alumno', 'varios_alumnos' => 'Varios alumnos', 'curso' => 'Un curso', 'colegio' => 'Todo el colegio'] as $val => $label)
-                <button type="button" wire:click="$set('tipoDestino', '{{ $val }}')"
-                        @class([
-                            'px-3 py-1.5 rounded-lg text-sm font-medium border transition',
-                            'text-white border-transparent' => $tipoDestino === $val,
-                            'text-gray-600 border-gray-300 hover:border-gray-400' => $tipoDestino !== $val,
-                        ])
-                        @style(['background:#40848D' => $tipoDestino === $val])>
-                    {{ $label }}
-                </button>
-                @endforeach
-            </div>
-            @error('tipoDestino') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-        </div>
-
-        {{-- Búsqueda de alumnos --}}
-        @if(in_array($tipoDestino, ['alumno', 'varios_alumnos']))
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-                Buscar alumno {{ $tipoDestino === 'varios_alumnos' ? '(podés agregar varios)' : '' }}
-            </label>
-            <div class="relative">
-                <input type="text" wire:model.live.debounce.300ms="alumnoSearch"
-                       placeholder="Apellido, nombre o DNI..."
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
-                       style="focus:ring-color:#40848D">
-                @if(!empty($alumnoResults))
-                <div class="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    @foreach($alumnoResults as $al)
-                    <button type="button"
-                            wire:click="selectAlumno({{ $al['id'] }}, '{{ addslashes($al['label']) }}')"
-                            class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 border-b border-gray-100 last:border-0">
-                        <span class="font-medium">{{ $al['label'] }}</span>
-                        @if($al['dni']) <span class="text-gray-400 text-xs ml-1">DNI {{ $al['dni'] }}</span> @endif
-                    </button>
-                    @endforeach
+<div class="se-page">
+    <section class="se-hero">
+        <div class="se-hero-inner">
+            <div class="min-w-0 space-y-3">
+                <p class="se-eyebrow">Comunicaciones</p>
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Nuevo comunicado</h2>
+                    <p class="mt-2 max-w-2xl text-sm text-white/80">
+                        {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
+                    </p>
                 </div>
-                @endif
             </div>
 
-            @if(!empty($alumnosSeleccionados))
-            <div class="mt-2 flex flex-wrap gap-2">
-                @foreach($alumnosSeleccionados as $al)
-                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium text-white"
-                      style="background:#40848D">
-                    {{ $al['label'] }}
-                    <button type="button" wire:click="removeAlumno({{ $al['id'] }})"
-                            class="ml-0.5 text-white/80 hover:text-white">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </span>
-                @endforeach
+            <a href="{{ route('comunicaciones.index') }}"
+               class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Volver a la bandeja
+            </a>
+        </div>
+    </section>
+
+    @if (session('success'))
+        <div class="se-soft-card flex flex-col gap-3 border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-3">
+                <svg class="h-5 w-5 shrink-0 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>{{ session('success') }}</span>
             </div>
+            @if ($enviado)
+                <a href="{{ route('comunicaciones.hilo', $enviado) }}" class="font-semibold text-primary-700 underline decoration-primary-300 underline-offset-2 hover:text-primary-800">
+                    Ver comunicado
+                </a>
             @endif
         </div>
-        @endif
+    @endif
 
-        {{-- Selector de curso --}}
-        @if($tipoDestino === 'curso')
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Curso</label>
-            <select wire:model="cursoId" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">Seleccionar curso...</option>
-                @foreach($cursos as $c)
-                <option value="{{ $c['id'] }}">{{ $c['label'] }}</option>
-                @endforeach
-            </select>
-        </div>
-        @endif
-
-        {{-- Asunto --}}
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Asunto</label>
-            <input type="text" wire:model="asunto" maxlength="{{ $maxAsunto }}"
-                   placeholder="Asunto del comunicado"
-                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-            @error('asunto') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+    <div class="se-card overflow-hidden">
+        <div class="border-b border-accent-200 bg-white px-5 py-4">
+            <p class="se-section-title">Destinatarios y mensaje</p>
+            <p class="mt-1 text-sm text-neutral-600">El envío respeta canales y preferencias de cada familia.</p>
         </div>
 
-        {{-- Contenido --}}
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Mensaje</label>
-            <textarea wire:model="contenido" rows="5" maxlength="{{ $maxContenido }}"
-                      placeholder="Escriba el comunicado aquí..."
-                      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"></textarea>
-            <p class="text-xs text-gray-400 text-right mt-0.5">
-                {{ mb_strlen($contenido) }} / {{ $maxContenido }}
-            </p>
-            @error('contenido') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-        </div>
+        <div class="space-y-6 border-t border-accent-100 bg-accent-50/30 p-5 sm:p-6">
+            <div>
+                <span class="form-label">Destinatarios</span>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    @foreach (['alumno' => 'Un alumno', 'varios_alumnos' => 'Varios alumnos', 'curso' => 'Un curso', 'colegio' => 'Todo el colegio'] as $val => $label)
+                        <button type="button"
+                                wire:click="$set('tipoDestino', '{{ $val }}')"
+                                @class([
+                                    'inline-flex cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+                                    'border-primary-500 bg-primary-600 text-white' => $tipoDestino === $val,
+                                    'border-accent-200 bg-white text-neutral-700 hover:bg-accent-50' => $tipoDestino !== $val,
+                                ])>
+                            {{ $label }}
+                        </button>
+                    @endforeach
+                </div>
+                @error('tipoDestino') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
 
-        <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 space-y-2">
-            <label class="flex items-start gap-3 cursor-pointer select-none">
-                <input type="checkbox" wire:model="familiaPuedeResponder"
-                       class="mt-0.5 rounded border-gray-300 text-teal-700 focus:ring-teal-600">
-                <span class="text-sm text-gray-800">
-                    <span class="font-medium">Permitir que la familia responda</span>
-                    <span class="block text-xs text-gray-500 mt-0.5">
-                        Si lo desactivás, el comunicado queda <strong class="font-medium">solo informativo</strong>: la familia podrá leerlo en el cuaderno pero no enviar respuestas.
+            @if (in_array($tipoDestino, ['alumno', 'varios_alumnos'], true))
+                <div>
+                    <label for="buscar-alumno-com" class="form-label">
+                        Buscar alumno @if ($tipoDestino === 'varios_alumnos') (podés agregar varios) @endif
+                    </label>
+                    <div class="relative mt-1.5">
+                        <input id="buscar-alumno-com"
+                               type="text"
+                               wire:model.live.debounce.300ms="alumnoSearch"
+                               placeholder="Apellido, nombre o DNI…"
+                               class="form-input" />
+                        @if (! empty($alumnoResults))
+                            <div class="absolute z-20 mt-2 max-h-48 w-full overflow-y-auto rounded-2xl border border-accent-200 bg-white shadow-lg">
+                                @foreach ($alumnoResults as $al)
+                                    <button type="button"
+                                            wire:click="selectAlumno({{ $al['id'] }}, @js($al['label']))"
+                                            class="block w-full border-b border-accent-100 px-3 py-2.5 text-left text-sm transition last:border-b-0 hover:bg-accent-50">
+                                        <span class="font-semibold text-neutral-900">{{ $al['label'] }}</span>
+                                        @if ($al['dni'])
+                                            <span class="ml-1 text-xs text-neutral-400">DNI {{ $al['dni'] }}</span>
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    @if (! empty($alumnosSeleccionados))
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach ($alumnosSeleccionados as $al)
+                                <span class="inline-flex items-center gap-1.5 rounded-full border border-primary-400 bg-primary-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                                    {{ $al['label'] }}
+                                    <button type="button"
+                                            wire:click="removeAlumno({{ $al['id'] }})"
+                                            class="rounded-full text-white/85 transition hover:bg-white/20 hover:text-white"
+                                            title="Quitar">
+                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </span>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            @if ($tipoDestino === 'curso')
+                <div>
+                    <label for="curso-com" class="form-label">Curso</label>
+                    <select id="curso-com" wire:model="cursoId" class="form-select">
+                        <option value="">Seleccionar curso…</option>
+                        @foreach ($cursos as $c)
+                            <option value="{{ $c['id'] }}">{{ $c['label'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
+
+            <div>
+                <label for="asunto-com" class="form-label">Asunto</label>
+                <input id="asunto-com"
+                       type="text"
+                       wire:model="asunto"
+                       maxlength="{{ $maxAsunto }}"
+                       placeholder="Asunto del comunicado"
+                       class="form-input" />
+                @error('asunto') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label for="contenido-com" class="form-label">Mensaje</label>
+                <textarea id="contenido-com"
+                          wire:model="contenido"
+                          rows="5"
+                          maxlength="{{ $maxContenido }}"
+                          placeholder="Escriba el comunicado aquí…"
+                          class="form-input resize-none leading-relaxed"></textarea>
+                <p class="mt-1 text-right text-xs text-neutral-500 tabular-nums">
+                    {{ mb_strlen($contenido) }} / {{ $maxContenido }}
+                </p>
+                @error('contenido') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div class="rounded-2xl border border-accent-200 bg-white p-4 shadow-sm">
+                <label class="flex cursor-pointer select-none items-start gap-3">
+                    <input type="checkbox"
+                           wire:model="familiaPuedeResponder"
+                           class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
+                    <span class="text-sm text-neutral-800">
+                        <span class="font-semibold text-neutral-900">Permitir que la familia responda</span>
+                        <span class="mt-1 block text-xs leading-relaxed text-neutral-500">
+                            Si lo desactivás, el comunicado queda <strong class="font-medium text-neutral-700">solo informativo</strong>: podrán leerlo en el cuaderno pero no enviar respuestas.
+                        </span>
                     </span>
-                </span>
-            </label>
-        </div>
+                </label>
+            </div>
 
-        <div class="flex justify-end">
-            <button type="button" wire:click="enviar" wire:loading.attr="disabled"
-                    class="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-white text-sm font-medium transition disabled:opacity-60"
-                    style="background:#40848D">
-                <span wire:loading wire:target="enviar">
-                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                    </svg>
-                </span>
-                Enviar comunicado
-            </button>
+            <div class="flex justify-end border-t border-accent-200 pt-2">
+                <button type="button"
+                        wire:click="enviar"
+                        wire:loading.attr="disabled"
+                        class="btn-primary disabled:opacity-60">
+                    <span wire:loading wire:target="enviar" class="mr-2 inline-flex">
+                        <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                    </span>
+                    Enviar comunicado
+                </button>
+            </div>
         </div>
     </div>
 </div>

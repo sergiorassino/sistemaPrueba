@@ -1,41 +1,48 @@
-<div>
-    {{-- Flash --}}
+<div class="se-page max-w-6xl">
     @if (session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-             class="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700 flex items-center gap-2">
-            <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             class="se-soft-card flex items-center gap-3 border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            <svg class="h-5 w-5 shrink-0 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
             {{ session('success') }}
         </div>
     @endif
 
-    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div class="min-w-0 w-full text-center sm:flex-1">
-            <h2 class="text-xl font-semibold text-gray-800">{{ $id ? 'Editar curso modelo' : 'Nuevo curso modelo' }}</h2>
-            <p class="text-xs text-gray-400 mt-0.5">Los campos marcados con * son obligatorios</p>
-        </div>
-
-        <div class="flex flex-wrap justify-center gap-2 sm:justify-end">
-            <a href="{{ route('abm.curplan') }}" class="btn-secondary btn-sm">Volver</a>
-            <button wire:click="save" wire:loading.attr="disabled" class="btn-primary btn-sm">
-                <span wire:loading.remove wire:target="save">Guardar</span>
-                <span wire:loading wire:target="save">Guardando…</span>
-            </button>
-        </div>
-    </div>
-
-    <div class="card p-5">
-        <div class="mb-4 flex flex-col items-center gap-2 text-center sm:flex-row sm:items-center sm:justify-between">
-            <div class="w-full min-w-0 text-center sm:flex-1">
-                <div class="text-sm font-semibold text-gray-800">Gestión de Cursos y Materias del Plan</div>
-                <div class="text-xs text-gray-500">CurPlan + MatPlan (materias del curso modelo)</div>
+    <section class="se-hero">
+        <div class="se-hero-inner">
+            <div class="min-w-0 space-y-1">
+                <p class="se-eyebrow">Planes y cursos modelo</p>
+                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">{{ $id ? 'Editar curso modelo' : 'Nuevo curso modelo' }}</h2>
+                <p class="text-sm text-white/80">{{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}</p>
+                <p class="text-xs text-white/65">Campos marcados como obligatorios deben completarse antes de guardar.</p>
             </div>
-            @if ($id)
-                <span class="shrink-0 text-xs text-gray-500">ID #{{ $id }}</span>
-            @endif
+            <div class="flex shrink-0 flex-wrap gap-2">
+                <a href="{{ route('abm.curplan') }}"
+                   class="inline-flex items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
+                    Volver
+                </a>
+                <button type="button" wire:click="save" wire:loading.attr="disabled"
+                        class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 disabled:opacity-60">
+                    <span wire:loading.remove wire:target="save">Guardar</span>
+                    <span wire:loading wire:target="save">Guardando…</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <div class="se-card overflow-hidden p-5 sm:p-6">
+        <div class="mb-5 flex flex-col gap-1 border-b border-accent-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p class="se-section-title">Curso y materias del plan</p>
+                @if ($id)
+                    <p class="mt-1 text-xs text-neutral-500">ID #{{ $id }}</p>
+                @endif
+            </div>
         </div>
 
+        <div class="rounded-2xl border border-accent-200 bg-accent-50/40 p-4 sm:p-5">
+        <p class="mb-4 text-[11px] font-bold uppercase tracking-[0.12em] text-neutral-500">Datos del curso modelo (CurPlan)</p>
         {{-- Datos del curso modelo --}}
         <div class="gf w-full">
             <div class="gf-row @error('idPlan') gf-cell-err @enderror">
@@ -73,13 +80,14 @@
                 </div>
             @enderror
         </div>
+        </div>
 
-        {{-- Materias --}}
-        <div class="mt-6">
-            <div class="flex items-center justify-between mb-3">
+        {{-- Materias del plan (MatPlan) --}}
+        <div class="mt-6 border-t border-accent-100 pt-6">
+            <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <div class="text-sm font-semibold text-gray-800">Materias asociadas</div>
-                    <div class="text-xs text-gray-500">Tabla <span class="font-mono">matplan</span></div>
+                    <p class="se-section-title">Materias asociadas</p>
+                    <p class="mt-1 text-xs text-neutral-500">Tabla <span class="font-mono text-neutral-600">matplan</span></p>
                 </div>
                 <button type="button" wire:click="openMateriaCreate" class="btn-secondary btn-sm" @disabled(! $id)>
                     + Agregar
@@ -87,12 +95,12 @@
             </div>
 
             @if (! $id)
-                <div class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                <div class="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
                     Primero guardá el curso modelo para poder cargar materias.
                 </div>
             @else
-                <div class="border border-gray-200 rounded-md overflow-hidden">
-                    <div class="max-h-[340px] overflow-auto">
+                <div class="w-full overflow-x-auto rounded-xl border border-accent-200">
+                    <div class="flex justify-start">
                         <div class="gf min-w-[900px] w-full">
                             <div class="gf-head">
                                 <div class="gf-th w-20">Ord</div>
@@ -106,55 +114,55 @@
 
                             @forelse ($materias as $m)
                                 <div class="gf-row gf-row-hover">
-                                    <div class="gf-td w-20 font-mono text-gray-700">
+                                    <div class="gf-td w-20 font-mono text-neutral-700">
                                         @if ($matEditingId === $m->id)
                                             <input wire:model.defer="matDraft.ord" type="text" inputmode="numeric" maxlength="3"
-                                                   class="gf-inline font-mono text-gray-700 @error('matDraft.ord') ring-2 ring-red-400 @enderror">
+                                                   class="gf-inline font-mono text-neutral-700 @error('matDraft.ord') ring-2 ring-red-400 @enderror">
                                             @error('matDraft.ord') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                                         @else
                                             {{ $m->ord }}
                                         @endif
                                     </div>
-                                    <div class="gf-td flex-1 min-w-[18rem] text-gray-800">
+                                    <div class="gf-td flex-1 min-w-[18rem] text-neutral-800">
                                         @if ($matEditingId === $m->id)
                                             <input wire:model.defer="matDraft.matPlanMateria" type="text" maxlength="70"
-                                                   class="gf-inline text-gray-800 @error('matDraft.matPlanMateria') ring-2 ring-red-400 @enderror">
+                                                   class="gf-inline text-neutral-800 @error('matDraft.matPlanMateria') ring-2 ring-red-400 @enderror">
                                             @error('matDraft.matPlanMateria') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                                         @else
                                             <div class="font-medium">{{ $m->matPlanMateria }}</div>
                                         @endif
                                     </div>
-                                    <div class="gf-td w-24 font-mono text-xs text-gray-700">
+                                    <div class="gf-td w-24 font-mono text-xs text-neutral-700">
                                         @if ($matEditingId === $m->id)
                                             <input wire:model.defer="matDraft.abrev" type="text" maxlength="5"
-                                                   class="gf-inline font-mono text-gray-700 @error('matDraft.abrev') ring-2 ring-red-400 @enderror">
+                                                   class="gf-inline font-mono text-neutral-700 @error('matDraft.abrev') ring-2 ring-red-400 @enderror">
                                             @error('matDraft.abrev') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                                         @else
                                             {{ $m->abrev }}
                                         @endif
                                     </div>
-                                    <div class="gf-td w-28 font-mono text-xs text-gray-700">
+                                    <div class="gf-td w-28 font-mono text-xs text-neutral-700">
                                         @if ($matEditingId === $m->id)
                                             <input wire:model.defer="matDraft.codGE" type="text" maxlength="15"
-                                                   class="gf-inline font-mono text-gray-700 @error('matDraft.codGE') ring-2 ring-red-400 @enderror">
+                                                   class="gf-inline font-mono text-neutral-700 @error('matDraft.codGE') ring-2 ring-red-400 @enderror">
                                             @error('matDraft.codGE') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                                         @else
                                             {{ $m->codGE }}
                                         @endif
                                     </div>
-                                    <div class="gf-td w-28 font-mono text-xs text-gray-700">
+                                    <div class="gf-td w-28 font-mono text-xs text-neutral-700">
                                         @if ($matEditingId === $m->id)
                                             <input wire:model.defer="matDraft.codGE2" type="text" maxlength="15"
-                                                   class="gf-inline font-mono text-gray-700 @error('matDraft.codGE2') ring-2 ring-red-400 @enderror">
+                                                   class="gf-inline font-mono text-neutral-700 @error('matDraft.codGE2') ring-2 ring-red-400 @enderror">
                                             @error('matDraft.codGE2') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                                         @else
                                             {{ $m->codGE2 }}
                                         @endif
                                     </div>
-                                    <div class="gf-td w-28 font-mono text-xs text-gray-700">
+                                    <div class="gf-td w-28 font-mono text-xs text-neutral-700">
                                         @if ($matEditingId === $m->id)
                                             <input wire:model.defer="matDraft.codGE3" type="text" maxlength="15"
-                                                   class="gf-inline font-mono text-gray-700 @error('matDraft.codGE3') ring-2 ring-red-400 @enderror">
+                                                   class="gf-inline font-mono text-neutral-700 @error('matDraft.codGE3') ring-2 ring-red-400 @enderror">
                                             @error('matDraft.codGE3') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                                         @else
                                             {{ $m->codGE3 }}
@@ -180,40 +188,40 @@
 
                             {{-- Fila de creación --}}
                             @if ($matEditingId === 0)
-                                <div class="gf-row bg-gray-50" wire:key="matplan-create-row-{{ $id }}">
-                                    <div class="gf-td w-20 font-mono text-gray-700">
+                                <div class="gf-row bg-accent-50/70" wire:key="matplan-create-row-{{ $id }}">
+                                    <div class="gf-td w-20 font-mono text-neutral-700">
                                         <input wire:model.defer="matDraft.ord" type="text" inputmode="numeric" maxlength="3"
-                                               class="gf-inline font-mono text-gray-700 @error('matDraft.ord') ring-2 ring-red-400 @enderror"
+                                               class="gf-inline font-mono text-neutral-700 @error('matDraft.ord') ring-2 ring-red-400 @enderror"
                                                placeholder="0">
                                         @error('matDraft.ord') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                                     </div>
-                                    <div class="gf-td flex-1 min-w-[18rem] text-gray-800">
+                                    <div class="gf-td flex-1 min-w-[18rem] text-neutral-800">
                                         <input wire:model.defer="matDraft.matPlanMateria" type="text" maxlength="70"
-                                               class="gf-inline text-gray-800 @error('matDraft.matPlanMateria') ring-2 ring-red-400 @enderror"
+                                               class="gf-inline text-neutral-800 @error('matDraft.matPlanMateria') ring-2 ring-red-400 @enderror"
                                                placeholder="Nueva materia…">
                                         @error('matDraft.matPlanMateria') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                                     </div>
-                                    <div class="gf-td w-24 font-mono text-xs text-gray-700">
+                                    <div class="gf-td w-24 font-mono text-xs text-neutral-700">
                                         <input wire:model.defer="matDraft.abrev" type="text" maxlength="5"
-                                               class="gf-inline font-mono text-gray-700 @error('matDraft.abrev') ring-2 ring-red-400 @enderror"
+                                               class="gf-inline font-mono text-neutral-700 @error('matDraft.abrev') ring-2 ring-red-400 @enderror"
                                                placeholder="Abrev">
                                         @error('matDraft.abrev') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                                     </div>
-                                    <div class="gf-td w-28 font-mono text-xs text-gray-700">
+                                    <div class="gf-td w-28 font-mono text-xs text-neutral-700">
                                         <input wire:model.defer="matDraft.codGE" type="text" maxlength="15"
-                                               class="gf-inline font-mono text-gray-700 @error('matDraft.codGE') ring-2 ring-red-400 @enderror"
+                                               class="gf-inline font-mono text-neutral-700 @error('matDraft.codGE') ring-2 ring-red-400 @enderror"
                                                placeholder="CodGE">
                                         @error('matDraft.codGE') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                                     </div>
-                                    <div class="gf-td w-28 font-mono text-xs text-gray-700">
+                                    <div class="gf-td w-28 font-mono text-xs text-neutral-700">
                                         <input wire:model.defer="matDraft.codGE2" type="text" maxlength="15"
-                                               class="gf-inline font-mono text-gray-700 @error('matDraft.codGE2') ring-2 ring-red-400 @enderror"
+                                               class="gf-inline font-mono text-neutral-700 @error('matDraft.codGE2') ring-2 ring-red-400 @enderror"
                                                placeholder="CodGE2">
                                         @error('matDraft.codGE2') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                                     </div>
-                                    <div class="gf-td w-28 font-mono text-xs text-gray-700">
+                                    <div class="gf-td w-28 font-mono text-xs text-neutral-700">
                                         <input wire:model.defer="matDraft.codGE3" type="text" maxlength="15"
-                                               class="gf-inline font-mono text-gray-700 @error('matDraft.codGE3') ring-2 ring-red-400 @enderror"
+                                               class="gf-inline font-mono text-neutral-700 @error('matDraft.codGE3') ring-2 ring-red-400 @enderror"
                                                placeholder="CodGE3">
                                         @error('matDraft.codGE3') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                                     </div>
@@ -235,25 +243,25 @@
 
     {{-- Confirm delete materia --}}
     @if ($showMatConfirm)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-sm" @click.stop>
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 p-4 backdrop-blur-sm">
+            <div class="w-full max-w-sm rounded-2xl border border-accent-200 bg-white shadow-xl" @click.stop>
                 <div class="px-6 py-5">
                     <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+                            <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-base font-semibold text-gray-800 mb-1">Confirmar eliminación</h3>
-                            <p class="text-sm text-gray-600">{{ $matDeleteInfo }}</p>
+                            <h3 class="mb-1 text-base font-semibold text-neutral-900">Confirmar eliminación</h3>
+                            <p class="text-sm text-neutral-600">{{ $matDeleteInfo }}</p>
                         </div>
                     </div>
                 </div>
-                <div class="px-6 pb-5 flex justify-end gap-3">
-                    <button wire:click="$set('showMatConfirm', false)" class="btn-secondary">Cancelar</button>
-                    <button wire:click="deleteMateria" wire:loading.attr="disabled" class="btn-danger">
+                <div class="flex justify-end gap-3 border-t border-accent-200 bg-accent-50/60 px-6 py-4">
+                    <button type="button" wire:click="$set('showMatConfirm', false)" class="btn-secondary">Cancelar</button>
+                    <button type="button" wire:click="deleteMateria" wire:loading.attr="disabled" class="btn-danger">
                         <span wire:loading.remove wire:target="deleteMateria">Eliminar</span>
                         <span wire:loading wire:target="deleteMateria">Eliminando…</span>
                     </button>

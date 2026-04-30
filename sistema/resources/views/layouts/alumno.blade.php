@@ -11,8 +11,9 @@
         :root {
             --se-jet: #333333;
             --se-primary: #40848D;
-            --se-hover: rgba(64, 132, 141, 0.2);
-            --se-sep: rgba(255, 255, 255, 0.10);
+            --se-light-blue: #C1D7DA;
+            --se-hover-bg: rgba(193, 215, 218, 0.18);
+            --se-sep: rgba(193, 215, 218, 0.22);
             --se-white-85: rgba(255, 255, 255, 0.85);
             --se-white-05: rgba(255, 255, 255, 0.05);
             --se-white-10: rgba(255, 255, 255, 0.10);
@@ -20,22 +21,35 @@
             --se-sidebar-w-collapsed: 5rem;
         }
         .se-sidebar {
-            background: var(--se-jet);
+            background-color: var(--se-jet);
             color: #fff;
             font-family: "Roboto Condensed", "Arial Narrow", "Helvetica Neue", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
             font-stretch: condensed;
             width: var(--se-sidebar-w);
             overflow-x: hidden;
         }
+        .se-sidebar::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse 142% 86% at 0% 0%, rgba(64, 132, 141, 0.60), transparent 65%),
+                radial-gradient(ellipse 78% 52% at 100% 6%, rgba(64, 132, 141, 0.14), transparent 58%);
+        }
         @media (min-width: 768px) {
             .se-sidebar.is-collapsed { width: 0; }
         }
         .se-sidebar-sep { border-color: var(--se-sep); }
         .se-sidebar-iconbtn { color: var(--se-white-85); }
-        .se-sidebar-iconbtn:hover { background: var(--se-white-10); color: #fff; }
+        .se-sidebar-iconbtn:hover { background: var(--se-hover-bg); color: #fff; }
         .se-sidebar-link { color: var(--se-white-85); }
-        .se-sidebar-link:hover { background: var(--se-hover); color: #fff; }
-        .se-sidebar-link.is-active { background: var(--se-primary); color: #fff; }
+        .se-sidebar-link:hover { background: var(--se-hover-bg); color: #fff; }
+        .se-sidebar-link.is-active {
+            background: var(--se-primary);
+            color: #fff;
+            box-shadow: inset 3px 0 0 var(--se-light-blue);
+        }
         .se-main {
             width: 100%;
             min-width: 0;
@@ -115,7 +129,7 @@
            sidebarCollapsed ? 'is-collapsed' : ''
        ]">
 
-    <div class="h-12 px-2.5 border-b se-sidebar-sep flex items-center justify-between gap-2">
+    <div class="h-12 px-2.5 border-b se-sidebar-sep relative z-[1] flex items-center justify-between gap-2">
         @php $logoUrl = studentLogoUrl(); @endphp
 
         @if ($logoUrl)
@@ -155,7 +169,7 @@
         $alumnoComCuadernoActivo = str_starts_with($alumnoRuta, 'alumnos.comunicaciones')
             && $alumnoRuta !== 'alumnos.comunicaciones.preferencias';
     @endphp
-    <nav class="flex-1 px-2.5 py-3 overflow-y-auto space-y-0.5"
+    <nav class="flex-1 relative z-[1] px-2.5 py-3 overflow-y-auto space-y-0.5"
          @pointerdown.capture="$event.target.closest('a[href]') && localStorage.setItem('sidebarCollapseNext', '1')"
          @click.capture="$event.target.closest('a[href]') && (localStorage.setItem('sidebarCollapseNext', '1'), sidebarOpen = false)">
 

@@ -1,53 +1,71 @@
-<x-form-shell maxWidth="max-w-4xl">
-    <div class="card p-6">
-        <h1 class="mb-1 w-full text-center text-lg font-semibold text-gray-800">Campos de legajos en listados</h1>
-        <p class="text-sm text-gray-600 mb-4">
-            Desmarque los campos que no deben ofrecerse al armar listados (PDF por curso). Use el botón para incorporar columnas nuevas si se agregaron a la tabla <code class="text-xs bg-gray-100 px-1 rounded">legajos</code> en la base de datos.
-        </p>
+<div class="se-page max-w-4xl">
+    <section class="se-hero">
+        <div class="se-hero-inner">
+            <div class="min-w-0 space-y-2">
+                <p class="se-eyebrow">Configuración</p>
+                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Campos en listados</h2>
+                <p class="max-w-2xl text-sm text-white/80">
+                    Visibilidad de columnas de <span class="font-mono text-white/90">legajos</span> al armar listados PDF por curso.
+                </p>
+            </div>
+        </div>
+    </section>
 
-        @if (session('status'))
-            <p class="text-sm text-green-800 bg-green-50 border border-green-200 rounded-lg px-4 py-2 mb-4">{{ session('status') }}</p>
-        @endif
+    @if (session('status'))
+        <div class="se-soft-card border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {{ session('status') }}
+        </div>
+    @endif
 
-        <div class="flex flex-wrap gap-2 mb-4">
-            <button type="button" wire:click="sincronizarDesdeLegajos" wire:loading.attr="disabled"
-                    class="btn-primary text-sm inline-flex items-center gap-2">
-                <span wire:loading.remove wire:target="sincronizarDesdeLegajos">Actualizar columnas desde esquema</span>
-                <span wire:loading wire:target="sincronizarDesdeLegajos">Comparando…</span>
-            </button>
+    <div class="se-card overflow-hidden">
+        <div class="border-b border-accent-200 bg-white px-5 py-4">
+            <p class="se-section-title">Columnas</p>
+            <p class="mt-1 text-sm text-neutral-600">
+                Desmarcá lo que no deba ofrecerse. Si agregaste columnas en la base, sincronizá desde el esquema.
+            </p>
+            <div class="mt-4">
+                <button type="button" wire:click="sincronizarDesdeLegajos" wire:loading.attr="disabled" class="btn-primary btn-sm">
+                    <span wire:loading.remove wire:target="sincronizarDesdeLegajos">Actualizar columnas desde esquema</span>
+                    <span wire:loading wire:target="sincronizarDesdeLegajos">Comparando…</span>
+                </button>
+            </div>
         </div>
 
-        <div class="overflow-x-auto border border-gray-200 rounded-lg">
-            <table class="min-w-full text-sm">
-                <thead class="bg-gray-50 text-left text-gray-700">
-                    <tr>
-                        <th class="px-3 py-2 font-medium">Orden</th>
-                        <th class="px-3 py-2 font-medium">Columna (legajos)</th>
-                        <th class="px-3 py-2 font-medium">Visible en listados</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @forelse ($campos as $c)
-                        {{-- La clave incluye visible_listado para que Livewire reemplace la fila y el checked no quede desincronizado con wire:click.prevent --}}
-                        <tr wire:key="campo-listado-{{ $c->id }}-{{ $c->visible_listado ? 1 : 0 }}">
-                            <td class="px-3 py-2 text-gray-600 font-mono">{{ $c->orden }}</td>
-                            <td class="px-3 py-2 font-mono text-gray-900">{{ $c->columna }}</td>
-                            <td class="px-3 py-2">
-                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" class="rounded border-gray-300 text-[#40848D] focus:ring-[#40848D]"
-                                           wire:click.prevent="toggleVisible({{ $c->id }})"
-                                           @checked((bool) $c->visible_listado)>
-                                    <span class="text-gray-600 text-xs">Visible en listados</span>
-                                </label>
-                            </td>
-                        </tr>
-                    @empty
+        <div class="w-full overflow-x-auto">
+            <div class="flex justify-start">
+                <table class="min-w-full border-collapse text-sm">
+                    <thead class="bg-accent-50">
                         <tr>
-                            <td colspan="3" class="px-3 py-6 text-center text-gray-500">No hay registros. Ejecute migraciones o pulse «Actualizar columnas desde esquema».</td>
+                            <th class="table-header">Orden</th>
+                            <th class="table-header">Columna (legajos)</th>
+                            <th class="table-header">Visible en listados</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-accent-200 bg-white">
+                        @forelse ($campos as $c)
+                            <tr wire:key="campo-listado-{{ $c->id }}-{{ $c->visible_listado ? 1 : 0 }}">
+                                <td class="table-cell font-mono text-neutral-600">{{ $c->orden }}</td>
+                                <td class="table-cell font-mono text-neutral-900">{{ $c->columna }}</td>
+                                <td class="table-cell">
+                                    <label class="inline-flex cursor-pointer items-center gap-2">
+                                        <input type="checkbox"
+                                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
+                                               wire:click.prevent="toggleVisible({{ $c->id }})"
+                                               @checked((bool) $c->visible_listado)>
+                                        <span class="text-xs text-neutral-600">Visible</span>
+                                    </label>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="table-cell py-10 text-center text-neutral-500">
+                                    No hay registros. Ejecutá migraciones o «Actualizar columnas desde esquema».
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</x-form-shell>
+</div>

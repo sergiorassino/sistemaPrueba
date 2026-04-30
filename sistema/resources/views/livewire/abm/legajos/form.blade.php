@@ -1,8 +1,8 @@
-<div>
+<div class="se-page se-legajo-form">
     {{-- Flash --}}
     @if (session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-             class="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700 flex items-center gap-2">
+             class="se-soft-card flex items-center gap-3 border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
             <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
@@ -10,30 +10,40 @@
         </div>
     @endif
 
-    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div class="min-w-0 w-full text-center sm:flex-1">
-            <h2 class="text-xl font-semibold text-gray-800">{{ $id ? 'Editar legajo' : 'Nuevo legajo' }}</h2>
-            <p class="text-xs text-gray-400 mt-0.5">Los campos marcados con * son obligatorios</p>
+    <section class="se-hero">
+        <div class="se-hero-inner">
+        <div class="min-w-0 space-y-3">
+            <p class="se-eyebrow">Legajos de estudiantes</p>
+            <div>
+                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">{{ $id ? 'Editar legajo' : 'Nuevo legajo' }}</h2>
+                <p class="mt-2 text-sm text-white/80">
+                    {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
+                    @if ($id)
+                        <span class="text-white/45"> · </span> ID {{ $id }}
+                    @endif
+                </p>
+            </div>
         </div>
 
-        <div class="flex flex-wrap justify-center gap-2 sm:justify-end">
+        <div class="flex flex-wrap justify-start gap-2 sm:justify-end">
             @if ($id)
-                <button wire:click="openMatriculas" class="btn-info btn-sm uppercase tracking-wide">Gestionar matrículas</button>
+                <button wire:click="openMatriculas" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15">Gestionar matrículas</button>
             @endif
 
-            <a href="{{ route('abm.legajos', ['focus' => $id]) }}" class="btn-secondary btn-sm">Cancelar</a>
+            <a href="{{ route('abm.legajos', ['focus' => $id]) }}" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15">Cancelar</a>
 
-            <button wire:click="save" wire:loading.attr="disabled" class="btn-primary btn-sm">
+            <button wire:click="save" wire:loading.attr="disabled" class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 disabled:opacity-60">
                 <span wire:loading.remove wire:target="save">Guardar legajo</span>
-                <span wire:loading wire:target="save">Guardando…</span>
+                <span wire:loading wire:target="save">Guardando...</span>
             </button>
         </div>
-    </div>
+        </div>
+    </section>
 
-    <div class="card overflow-hidden" x-data>
+    <div class="se-card overflow-hidden" x-data>
         {{-- Tabs --}}
-        <div class="border-b border-gray-200 overflow-x-auto">
-            <nav class="flex whitespace-nowrap px-4 gap-0">
+        <div class="border-b border-accent-200 bg-white">
+            <nav class="se-form-tabs">
                 @foreach ([
                     'alumno'    => 'Alumno',
                     'domicilio' => 'Domicilio',
@@ -44,9 +54,9 @@
                 ] as $tab => $label)
                     <button wire:click="setTab('{{ $tab }}')"
                             @class([
-                                'px-4 py-3 text-sm font-medium border-b-2 transition-colors',
-                                'border-primary-600 text-primary-700' => $activeTab === $tab,
-                                'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' => $activeTab !== $tab,
+                                'se-form-tab',
+                                'se-form-tab-active' => $activeTab === $tab,
+                                'se-form-tab-idle' => $activeTab !== $tab,
                             ])>
                         {{ $label }}
                     </button>
@@ -55,7 +65,7 @@
         </div>
 
         {{-- Tab contents --}}
-        <div class="px-6 py-5 space-y-4">
+        <div class="space-y-5 px-5 py-5 sm:px-6">
 
             {{-- ── TAB ALUMNO ── --}}
             @if ($activeTab === 'alumno')
@@ -381,21 +391,23 @@
         </div>
 
         {{-- Footer --}}
-        <div class="px-6 py-3 border-t border-gray-100 bg-gray-50">
-            <div class="text-[11px] text-gray-400">
-                Tip: completá las pestañas para cargar todos los datos del legajo.
+        <div class="border-t border-accent-200 bg-accent-50/70 px-5 py-3 sm:px-6">
+            <div class="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+                <span>Datos del estudiante</span>
+                <span class="text-accent-300">/</span>
+                <span>Campos obligatorios marcados con *</span>
             </div>
         </div>
     </div>
 
     {{-- ═══════════════════ MATRICULAS MODAL ═══════════════════ --}}
     @if ($showMatriculasModal)
-        <div class="fixed inset-0 z-50 flex items-start justify-center bg-gray-900/60 overflow-y-auto py-4 px-2" x-data>
-            <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl my-auto" @click.stop>
-                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg z-10">
+        <div class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-neutral-900/60 px-2 py-4 backdrop-blur-sm" x-data>
+            <div class="my-auto w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl" @click.stop>
+                <div class="sticky top-0 z-10 flex items-center justify-between border-b border-accent-200 bg-white px-6 py-4">
                     <div>
-                        <h3 class="text-base font-semibold text-gray-800">Matrículas del estudiante</h3>
-                        <p class="text-xs text-gray-500 mt-0.5">Nivel: {{ schoolCtx()->nivelNombre() }} · Año activo: {{ schoolCtx()->terlecAno() }}</p>
+                        <h3 class="text-base font-bold text-neutral-900">Matrículas del estudiante</h3>
+                        <p class="mt-0.5 text-xs font-medium text-neutral-500">Nivel: {{ schoolCtx()->nivelNombre() }} · Año activo: {{ schoolCtx()->terlecAno() }}</p>
                     </div>
                     <button wire:click="closeMatriculas" class="text-gray-400 hover:text-gray-600">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -404,15 +416,15 @@
                     </button>
                 </div>
 
-                <div class="px-6 py-4 flex items-center justify-between gap-3">
-                    <div class="text-sm text-gray-600">{{ $matriculasAlumno->count() }} registro(s)</div>
-                    <button wire:click="openNuevaMatricula" class="btn-primary btn-sm">+ NUEVA MATRÍCULA</button>
+                <div class="flex items-center justify-between gap-3 px-6 py-4">
+                    <div class="se-pill">{{ $matriculasAlumno->count() }} registro(s)</div>
+                    <button wire:click="openNuevaMatricula" class="btn-primary btn-sm">Nueva matrícula</button>
                 </div>
 
                 <div class="px-6 pb-6">
-                    <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                    <div class="overflow-x-auto rounded-2xl border border-accent-200">
                         <table class="min-w-full border-collapse">
-                            <thead class="bg-gray-50">
+                            <thead class="bg-accent-50">
                                 <tr>
                                     <th class="table-header w-24">Año</th>
                                     <th class="table-header">Curso y sección</th>
@@ -451,8 +463,8 @@
 
                 {{-- Matricula form (create/edit) --}}
                 @if ($showMatriculaForm)
-                    <div class="border-t border-gray-100 bg-gray-50 px-6 py-5">
-                        <h4 class="text-sm font-semibold text-gray-800 mb-3">{{ $matriculaEditId ? 'Editar matrícula' : 'Nueva matrícula' }}</h4>
+                    <div class="border-t border-accent-200 bg-accent-50/70 px-6 py-5">
+                        <h4 class="mb-3 text-sm font-bold text-neutral-900">{{ $matriculaEditId ? 'Editar matrícula' : 'Nueva matrícula' }}</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div class="lg:col-span-2">
                                 <label class="form-label">Curso y sección *</label>
@@ -521,8 +533,8 @@
 
     {{-- ═══════════════════ CONFIRM DELETE MATRICULA ═══════════════════ --}}
     @if ($showMatriculaConfirm)
-        <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-sm" @click.stop>
+        <div class="fixed inset-0 z-[60] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm">
+            <div class="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl" @click.stop>
                 <div class="px-6 py-5">
                     <div class="flex items-start gap-3">
                         <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -548,4 +560,3 @@
         </div>
     @endif
 </div>
-

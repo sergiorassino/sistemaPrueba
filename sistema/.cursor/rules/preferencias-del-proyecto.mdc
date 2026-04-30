@@ -49,4 +49,6 @@ Antes de trabajar en cualquier módulo, leer:
 ### Identidad visual
 - Paleta en `/SE/PALETA COLORES LOGO.PNG`.
 - Primario: `#40848D` · Oscuro: `#333333` · Suave: `#C1D7DA`.
-- Logo principal: `/SE/4.png` (horizontal).
+- Regla global obligatoria: `.cursor/rules/ui-front-se.mdc`.
+- Logos disponibles en `public/img/1.png` a `public/img/5.png`.
+- Usar `schoolLogoUrl()` cuando exista logo institucional dinámico; fallback recomendado: `asset('img/3.png')`.

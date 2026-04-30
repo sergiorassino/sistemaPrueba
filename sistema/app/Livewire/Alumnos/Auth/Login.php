@@ -98,7 +98,7 @@ class Login extends Component
     public function render()
     {
         return view('livewire.alumnos.auth.login')
-            ->layout('layouts.guest');
+            ->layout('layouts.guest', ['guestPortal' => 'alumno']);
     }
 }
 

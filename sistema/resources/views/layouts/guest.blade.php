@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ config('app.name') }} - Acceso</title>
+    <title>{{ config('app.name') }} — {{ ($guestPortal ?? 'staff') === 'alumno' ? 'Estudiantes' : 'Acceso' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
@@ -27,12 +27,27 @@
 
             <div class="max-w-lg">
                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-white/65">{{ config('app.name') }}</p>
-                <h1 class="mt-3 text-3xl xl:text-[2rem] font-bold leading-tight tracking-tight">
-                    Portal docentes
-                </h1>
-                <p class="mt-4 text-base leading-relaxed text-white/80">
-                    Ingrese para gestionar el nivel y el ciclo lectivo activos.
-                </p>
+                @if (($guestPortal ?? 'staff') === 'alumno')
+                    <h1 class="mt-3 text-3xl xl:text-[2rem] font-bold leading-tight tracking-tight">
+                        Portal de estudiantes
+                    </h1>
+                    <p class="mt-4 text-base leading-relaxed text-white/80">
+                        Consultá calificaciones, comunicaciones y avisos de la institución.
+                    </p>
+                    <p class="mt-3 text-sm leading-relaxed text-white/70">
+                        Ingresá con tu DNI y la contraseña que te indicó secretaría.
+                    </p>
+                @else
+                    <h1 class="mt-3 text-3xl xl:text-[2rem] font-bold leading-tight tracking-tight">
+                        Portal del personal
+                    </h1>
+                    <p class="mt-4 text-base leading-relaxed text-white/80">
+                        Acceso para docentes, secretarios, directivos y demás personal de la institución.
+                    </p>
+                    <p class="mt-3 text-sm leading-relaxed text-white/70">
+                        Ingrese para gestionar el nivel y el ciclo lectivo activos.
+                    </p>
+                @endif
             </div>
         </div>
 

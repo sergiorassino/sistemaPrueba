@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Matricula extends Model
 {
     protected $table = 'matricula';
+
     public $timestamps = false;
+
     protected $fillable = [
         'idLegajos',
         'idCursos',
@@ -21,7 +23,8 @@ class Matricula extends Model
 
     protected $casts = [
         'fechaMatricula' => 'date',
-        'inscripto'      => 'boolean',
+        'fechaBaja' => 'date',
+        'inscripto' => 'boolean',
     ];
 
     public function legajo()

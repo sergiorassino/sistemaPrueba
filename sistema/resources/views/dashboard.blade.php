@@ -88,8 +88,14 @@
         $dashboardLinks[] = [
             'title' => 'Carga de calificaciones',
             'hint' => 'Secundario',
-            'href' => route('calificaciones.carga'),
+            'href' => route('calificacionesSecundario.carga'),
             'icon' => 'clipboard',
+        ];
+        $dashboardLinks[] = [
+            'title' => 'Consulta de calificaciones',
+            'hint' => 'Secundario · PDF',
+            'href' => route('calificacionesSecundario.consulta'),
+            'icon' => 'doc',
         ];
         $dashboardLinks[] = [
             'title' => 'Seguimiento disciplinario',

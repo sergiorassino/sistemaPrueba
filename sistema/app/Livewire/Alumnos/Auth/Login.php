@@ -3,6 +3,7 @@
 namespace App\Livewire\Alumnos\Auth;
 
 use App\Models\Ento;
+use App\Models\Legajo;
 use App\Models\Matricula;
 use App\Models\Terlec;
 use App\Support\StudentContext;
@@ -14,6 +15,7 @@ use Livewire\Component;
 class Login extends Component
 {
     public string $dni = '';
+
     public string $pwrd = '';
 
     public function rules(): array
@@ -51,7 +53,7 @@ class Login extends Component
         ];
 
         if (Auth::guard('alumno')->attempt($credentials, false)) {
-            /** @var \App\Models\Legajo $alumno */
+            /** @var Legajo $alumno */
             $alumno = Auth::guard('alumno')->user();
 
             session()->regenerate();
@@ -87,7 +89,7 @@ class Login extends Component
 
             RateLimiter::clear($throttleKey);
 
-            return redirect()->route('alumnos.calificaciones');
+            return redirect()->route('alumnos.comunicaciones.index');
         }
 
         RateLimiter::hit($throttleKey, 60);
@@ -101,4 +103,3 @@ class Login extends Component
             ->layout('layouts.guest', ['guestPortal' => 'alumno']);
     }
 }
-

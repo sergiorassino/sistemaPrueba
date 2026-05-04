@@ -3,7 +3,7 @@
 namespace App\Support;
 
 /**
- * Cálculo reutilizable del promedio anual según módulos (Eval 1..8 y JIS 1..2).
+ * Cálculo del promedio anual para nivel secundario según módulos (Eval 1..8 y JIS 1..2).
  *
  * Regla (pedida):
  * - Por cada módulo se toma la MAYOR nota entre sus instancias (Eval: N/R1/R2, JIS: N/R).
@@ -15,7 +15,7 @@ namespace App\Support;
  * Nota: el umbral de aprobación por defecto es 7. Si en el futuro depende del nivel/institución,
  * centralizar la configuración aquí o inyectarla desde el caller.
  */
-final class PromedioAnualCalificaciones
+final class PromedioAnualCalificacionesSecundario
 {
     public const DEFAULT_NOTA_MINIMA_APROBACION = 7.0;
 

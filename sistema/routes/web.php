@@ -1,40 +1,43 @@
 <?php
 
+use App\Http\Controllers\Alumnos\CalificacionesController;
+use App\Http\Controllers\Alumnos\PushApiController;
+use App\Http\Controllers\Alumnos\PushController;
+use App\Http\Controllers\AntecedentesDisciplinariosPdfController;
+use App\Http\Controllers\CalificacionesSecundario\ConsultaCalificacionesSecundarioPdfController;
 use App\Http\Controllers\ListadoCursoPdfController;
-use App\Livewire\Abm\Cursos\CursosIndex;
+use App\Http\Controllers\SancionComunicadoPdfController;
 use App\Livewire\Abm\Curplan\CurplanForm;
+use App\Livewire\Abm\Curplan\CurplanIndex;
+use App\Livewire\Abm\Cursos\CursosIndex;
 use App\Livewire\Abm\Legajos\LegajoForm;
 use App\Livewire\Abm\Legajos\LegajosIndex;
 use App\Livewire\Abm\MateriasAnio\MateriasAnioIndex;
-use App\Livewire\Abm\Curplan\CurplanIndex;
 use App\Livewire\Abm\Niveles\NivelesIndex;
 use App\Livewire\Abm\Planes\PlanesForm;
 use App\Livewire\Abm\Planes\PlanesIndex;
 use App\Livewire\Abm\Terlec\TerlecIndex;
-use App\Livewire\Auth\Login;
 use App\Livewire\Alumnos\Auth\Login as AlumnosLogin;
-use App\Livewire\Calificaciones\CargaCalificaciones;
+use App\Livewire\Alumnos\Comunicaciones\BandejaFamilia;
+use App\Livewire\Alumnos\Comunicaciones\HiloShowFamilia;
+use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
+use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
+use App\Livewire\Auth\Login;
+use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
+use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
+use App\Livewire\Comunicaciones\BandejaGestion;
+use App\Livewire\Comunicaciones\HiloShow;
+use App\Livewire\Comunicaciones\NuevoComunicado;
 use App\Livewire\Listados\ListadoPorCurso;
-use App\Livewire\Push\EnviarPush;
 use App\Livewire\Parametrizacion\CamposListadoAlumnosIndex;
-use App\Livewire\Parametrizacion\ParametrosSistemaForm;
 use App\Livewire\Parametrizacion\ComCanalesIndex;
+use App\Livewire\Parametrizacion\ParametrosSistemaForm;
+use App\Livewire\Push\EnviarPush;
+use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
 use App\Livewire\Seguimiento\Disciplinario\DisciplinarioIndex;
 use App\Livewire\Seguimiento\Disciplinario\SancionForm;
-use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
-use App\Http\Controllers\SancionComunicadoPdfController;
-use App\Http\Controllers\AntecedentesDisciplinariosPdfController;
-use App\Livewire\Comunicaciones\BandejaGestion;
-use App\Livewire\Comunicaciones\NuevoComunicado;
-use App\Livewire\Comunicaciones\HiloShow;
-use App\Livewire\Alumnos\Comunicaciones\BandejaFamilia;
-use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
-use App\Livewire\Alumnos\Comunicaciones\HiloShowFamilia;
-use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
-use App\Http\Controllers\Alumnos\PushApiController;
-use App\Http\Controllers\Alumnos\PushController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -71,12 +74,10 @@ Route::post('/alumnos/logout', function () {
 // Área alumnos (autogestión)
 Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(function () {
     Route::get('/', function () {
-        return redirect()->route('alumnos.calificaciones');
+        return redirect()->route('alumnos.comunicaciones.index');
     })->name('alumnos.home');
 
-    Route::get('/calificaciones', function () {
-        return view('alumnos.calificaciones');
-    })->name('alumnos.calificaciones');
+    Route::get('/calificaciones', CalificacionesController::class)->name('alumnos.calificaciones');
 
     Route::get('/notificaciones', [PushController::class, 'index'])->name('alumnos.push.index');
     Route::get('/notificaciones/mis', [PushController::class, 'misNotificaciones'])->name('alumnos.push.mis');
@@ -155,10 +156,16 @@ Route::middleware(['auth', 'school.context'])->group(function () {
         ->middleware('permiso:2')
         ->name('listados.por-curso.pdf');
 
-    // Carga de calificaciones
-    Route::get('/calificaciones/carga', CargaCalificaciones::class)
+    // Calificaciones (nivel secundario): carga y consulta institucional (mismo PDF que autogestión)
+    Route::get('/calificaciones-secundario/carga', CargaCalificacionesSecundario::class)
         ->middleware('permiso:2')
-        ->name('calificaciones.carga');
+        ->name('calificacionesSecundario.carga');
+    Route::get('/calificaciones-secundario/consulta', ConsultaCalificacionesSecundario::class)
+        ->middleware('permiso:2')
+        ->name('calificacionesSecundario.consulta');
+    Route::get('/calificaciones-secundario/consulta/pdf', ConsultaCalificacionesSecundarioPdfController::class)
+        ->middleware('permiso:2')
+        ->name('calificacionesSecundario.consulta.pdf');
 
     // Seguimiento disciplinario
     Route::get('/seguimiento/disciplinario', DisciplinarioIndex::class)

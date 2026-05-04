@@ -1,7 +1,7 @@
 import './bootstrap';
 
 /**
- * Carga de calificaciones: validación de notas permitidas en el cliente (sin request si es inválida).
+ * Carga de calificaciones (secundario / calificacionesSecundario): validación de notas permitidas en el cliente (sin request si es inválida).
  * Delegación `focusout` en `tbody[data-se-calif-tbody]` + toast liviano (sin SweetAlert).
  * Navegación con flechas entre celdas; Enter baja una fila (misma columna) o salta a la columna siguiente en la primera fila al llegar al final.
  */

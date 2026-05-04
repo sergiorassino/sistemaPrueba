@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-gray-100">
+<html lang="es" class="h-full bg-[#F4F8F9]">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,6 +20,7 @@
             --se-sidebar-w: 23.04rem;
             --se-sidebar-w-collapsed: 5rem;
         }
+        /* Sin position:relative aquí: pisaría Tailwind `fixed` y el sidebar pasaría al flujo (contenido debajo). */
         .se-sidebar {
             background-color: var(--se-jet);
             color: #fff;
@@ -38,11 +39,14 @@
                 radial-gradient(ellipse 78% 52% at 100% 6%, rgba(64, 132, 141, 0.14), transparent 58%);
         }
         @media (min-width: 768px) {
-            .se-sidebar.is-collapsed { width: 0; }
+            .se-sidebar.is-collapsed { width: var(--se-sidebar-w-collapsed); }
         }
         .se-sidebar-sep { border-color: var(--se-sep); }
         .se-sidebar-iconbtn { color: var(--se-white-85); }
         .se-sidebar-iconbtn:hover { background: var(--se-hover-bg); color: #fff; }
+        .se-sidebar-groupbtn { color: var(--se-white-85); background: var(--se-white-05); border: 1px solid var(--se-sep); }
+        .se-sidebar-groupbtn:hover { background: var(--se-hover-bg); }
+        .se-sidebar-groupbtn.is-open { background: var(--se-white-10); }
         .se-sidebar-link { color: var(--se-white-85); }
         .se-sidebar-link:hover { background: var(--se-hover-bg); color: #fff; }
         .se-sidebar-link.is-active {
@@ -62,8 +66,20 @@
                 width: calc(100% - var(--se-sidebar-w));
             }
             .se-main.is-collapsed {
-                transform: translateX(0);
-                width: 100%;
+                transform: translateX(var(--se-sidebar-w-collapsed));
+                width: calc(100% - var(--se-sidebar-w-collapsed));
+            }
+            .se-sidebar.is-collapsed .se-sidebar-groupbtn {
+                justify-content: center;
+                gap: 0;
+                padding-left: 0.35rem;
+                padding-right: 0.35rem;
+            }
+            .se-sidebar.is-collapsed .se-sidebar-link {
+                justify-content: center;
+                gap: 0;
+                padding-left: 0.35rem;
+                padding-right: 0.35rem;
             }
         }
         @media (max-width: 767px) {
@@ -125,31 +141,41 @@
 <aside class="se-sidebar fixed inset-y-0 left-0 z-[1000] flex flex-col transform transition-transform duration-200 ease-in-out
               md:translate-x-0 md:transition-[width] md:duration-200 md:ease-in-out md:shadow-lg"
        :class="[
-           (sidebarOpen || (!sidebarCollapsed)) ? 'translate-x-0' : '-translate-x-full md:-translate-x-full',
+           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+           'md:translate-x-0',
            sidebarCollapsed ? 'is-collapsed' : ''
        ]">
 
-    <div class="h-12 px-2.5 border-b se-sidebar-sep relative z-[1] flex items-center justify-between gap-2">
-        @php $logoUrl = studentLogoUrl(); @endphp
+    @php
+        $logoUrl = studentLogoUrl() ?: asset('img/3.png');
+        $alumno = auth('alumno')->user();
+        $sidebarSessionLine = studentCtx()->nivelNombre()
+            . ' · ' . studentCtx()->terlecAno()
+            . ' · ' . trim((string) ($alumno?->apellido ?? '') . ', ' . (string) ($alumno?->nombre ?? ''));
+    @endphp
 
-        @if ($logoUrl)
-            <img src="{{ $logoUrl }}" alt="Logo"
-                 class="h-8 w-auto object-contain flex-shrink-0"
-                 x-show="!sidebarCollapsed" x-cloak>
-        @endif
+    <div class="border-b se-sidebar-sep relative z-[1] flex-shrink-0"
+         :class="sidebarCollapsed ? 'flex flex-col items-center gap-2 py-3 px-1' : 'min-h-12 px-2.5 py-2 flex flex-row items-center gap-2'">
 
-        @php
-            $alumno = auth('alumno')->user();
-            $sidebarSessionLine = studentCtx()->nivelNombre()
-                . ' - ' . studentCtx()->terlecAno()
-                . ' - ' . trim((string) ($alumno?->apellido ?? '') . ', ' . (string) ($alumno?->nombre ?? ''));
-        @endphp
+        <div class="flex min-w-0 items-center gap-2"
+             :class="sidebarCollapsed ? 'flex-col justify-center' : 'flex-1'">
+            <span class="rounded-lg bg-white px-2 py-1.5 shadow-sm flex-shrink-0">
+                <img src="{{ $logoUrl }}" alt=""
+                     class="object-contain flex-shrink-0 block"
+                     :class="sidebarCollapsed ? 'h-8 w-8' : 'h-9 w-auto max-w-[9.5rem]'">
+            </span>
 
-        <p class="text-white text-[12px] font-semibold truncate min-w-0 flex-1 leading-tight"
-           x-show="!sidebarCollapsed" x-cloak
-           title="{{ $sidebarSessionLine }}">
-            {{ $sidebarSessionLine }}
-        </p>
+            <p class="text-white text-[11px] font-semibold truncate min-w-0 leading-snug"
+               x-show="!sidebarCollapsed" x-cloak
+               title="{{ $sidebarSessionLine }}">
+                <span class="text-white/90">{{ studentCtx()->nivelNombre() }}</span>
+                <span class="text-white/50"> · </span>
+                <span class="text-white/90">{{ studentCtx()->terlecAno() }}</span>
+                <span class="block text-[10px] font-medium text-white/70 truncate mt-0.5">
+                    {{ $alumno?->apellido ?? '' }}{{ ($alumno?->apellido && $alumno?->nombre) ? ', ' : '' }}{{ $alumno?->nombre ?? '' }}
+                </span>
+            </p>
+        </div>
 
         <button type="button"
                 class="se-sidebar-iconbtn hidden md:inline-flex items-center justify-center w-9 h-9 rounded-md transition-colors flex-shrink-0"
@@ -170,15 +196,15 @@
             && $alumnoRuta !== 'alumnos.comunicaciones.preferencias';
     @endphp
     <nav class="flex-1 relative z-[1] px-2.5 py-3 overflow-y-auto space-y-0.5"
+         :class="sidebarCollapsed ? '!px-1 !py-2' : ''"
          @pointerdown.capture="$event.target.closest('a[href]') && localStorage.setItem('sidebarCollapseNext', '1')"
          @click.capture="$event.target.closest('a[href]') && (localStorage.setItem('sidebarCollapseNext', '1'), sidebarOpen = false)">
 
         <a href="{{ route('alumnos.calificaciones') }}"
-           @class([
-               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md font-semibold transition-colors',
-               'is-active shadow-sm' => str_starts_with($route ?? '', 'alumnos.calificaciones'),
-           ])
-           title="Consulta de Calificaciones">
+           target="_blank"
+           rel="noopener noreferrer"
+           class="se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors"
+           title="Consulta de Calificaciones (se abre en una nueva pestaña)">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -188,7 +214,7 @@
 
         <a href="{{ route('alumnos.push.index') }}"
            @class([
-               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md font-semibold transition-colors',
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                'is-active shadow-sm' => str_starts_with($route ?? '', 'alumnos.push'),
            ])
            title="Notificaciones Push">
@@ -205,7 +231,7 @@
 
         <a href="{{ route('alumnos.comunicaciones.index') }}"
            @class([
-               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md font-semibold transition-colors',
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                'is-active shadow-sm' => $alumnoComCuadernoActivo,
            ])
            title="Bandeja de comunicados con la escuela">
@@ -218,7 +244,7 @@
 
         <a href="{{ route('alumnos.comunicaciones.nuevo') }}"
            @class([
-               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md font-semibold transition-colors',
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                'is-active shadow-sm' => $alumnoRuta === 'alumnos.comunicaciones.nuevo',
            ])
            title="Escribir un nuevo comunicado a la escuela">
@@ -230,7 +256,7 @@
 
         <a href="{{ route('alumnos.comunicaciones.preferencias') }}"
            @class([
-               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md font-semibold transition-colors',
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                'is-active shadow-sm' => $alumnoRuta === 'alumnos.comunicaciones.preferencias',
            ])
            title="Medios de contacto (push, email, WhatsApp)">
@@ -243,8 +269,10 @@
         </a>
     </nav>
 
-    <div class="px-4 py-3 border-t se-sidebar-sep">
-        <div class="flex items-center gap-3">
+    <div class="px-4 py-3 border-t se-sidebar-sep relative z-[1]"
+         :class="sidebarCollapsed ? 'px-1.5 py-2.5' : ''">
+        <div class="flex items-center gap-3"
+             :class="sidebarCollapsed ? 'flex-col gap-2' : ''">
             <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                  style="background: var(--se-primary);">
                 <span class="text-white text-xs font-bold">
@@ -277,19 +305,7 @@
         sidebarOpen ? 'is-mobile-open' : ''
      ]">
 
-    <button type="button"
-            x-show="sidebarCollapsed"
-            x-cloak
-            @click="toggleSidebar()"
-            class="hidden md:inline-flex fixed z-50 top-4 left-3 items-center justify-center w-10 h-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition"
-            title="Expandir menú"
-            aria-label="Expandir menú">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-    </button>
-
-    <header class="sticky top-0 z-20 bg-white border-b border-gray-200 md:hidden">
+    <header class="sticky top-0 z-20 md:hidden border-b border-[#C1D7DA] bg-white/95 backdrop-blur-sm supports-[backdrop-filter]:bg-white/85">
         <div class="flex items-center gap-3 h-14 px-4">
             <button @click="sidebarOpen = true"
                     class="text-gray-500 hover:text-gray-700 focus:outline-none">
@@ -303,7 +319,7 @@
         </div>
     </header>
 
-    <main class="flex-1 p-4 md:p-6">
+    <main class="flex-1 p-4 md:p-8">
         @hasSection('content')
             @yield('content')
         @else

@@ -1,9 +1,33 @@
-{{-- Módulo: Carga de calificaciones (UI). Guardado vía `saveCell`: TEA con `wire:change`; el resto de inputs numéricos con delegación `focusout` en `tbody` (validación de notas permitidas en el navegador, ver `app.js`). --}}
+{{-- Módulo calificacionesSecundario: carga de calificaciones (UI). Guardado vía `saveCell`: TEA con `wire:change`; el resto de inputs numéricos con delegación `focusout` en `tbody` (validación de notas permitidas en el navegador, ver `app.js`). --}}
 <div class="mx-auto w-full max-w-[98rem] space-y-6">
+    <style>
+        /* Override inline para evitar “celdas enormes” por estilos globales/caché.
+           Importante: va dentro del root del componente (Livewire requiere un solo root). */
+        table.se-calif-grid { table-layout: fixed !important; font-size: 10px !important; }
+        table.se-calif-grid th, table.se-calif-grid td { line-height: 1 !important; }
+        /* Permite que la tabla ocupe el ancho disponible, pero mantenga scroll si no entra */
+        table.se-calif-grid { width: 100% !important; min-width: 980px; }
+        /* Header: aumentar altura de filas de etiquetas (Estudiante/Eval) y sub-etiquetas (N/R1/R2). */
+        table.se-calif-grid thead th { line-height: 1.15 !important; }
+        table.se-calif-grid thead tr:first-child { height: 34px !important; }
+        table.se-calif-grid thead tr:nth-child(2) { height: 28px !important; }
+        table.se-calif-grid thead tr:first-child th { padding-top: 7px !important; padding-bottom: 7px !important; min-height: 34px !important; }
+        table.se-calif-grid thead tr:nth-child(2) th { padding-top: 6px !important; padding-bottom: 6px !important; min-height: 28px !important; }
+        table.se-calif-grid input[type="text"]{
+            height: 18px !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+            font-size: 10px !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        table.se-calif-grid input[type="checkbox"]{ height: 14px !important; width: 14px !important; }
+    </style>
     <section class="se-hero">
         <div class="se-hero-inner">
             <div class="min-w-0 space-y-2">
-                <p class="se-eyebrow">Calificaciones</p>
+                <p class="se-eyebrow">Calificaciones · Secundario</p>
                 <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Carga de calificaciones</h2>
                 <p class="max-w-2xl text-sm text-white/80">
                     {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
@@ -59,48 +83,50 @@
         <div class="se-card overflow-hidden p-2 sm:p-3">
             <div class="w-full overflow-x-auto">
                 <div class="flex justify-start">
-                    <div class="min-w-max rounded-xl border border-accent-200 bg-white shadow-sm">
-                <table class="w-full border-collapse table-fixed text-[10px] leading-none">
+                    <div class="w-full rounded-xl border border-accent-200 bg-white shadow-sm">
+                <table class="se-calif-grid w-full border-collapse table-fixed text-[10px] leading-none">
                     <colgroup>
-                        <col style="width:36px">
-                        <col style="width:120px">
+                        {{-- Fijas: para que la grilla “anclada” siga siendo usable --}}
+                        <col style="width:20px">
+                        <col style="width:208px">
                         @for ($e = 1; $e <= 8; $e++)
-                            <col style="width:18px">
-                            <col style="width:18px">
-                            <col style="width:18px">
+                            {{-- Notas: sin ancho fijo -> se reparten el ancho disponible (responsive) --}}
+                            <col>
+                            <col>
+                            <col>
                             @if ($e < 8)
                                 {{-- Separación visual entre bloques (columna vacía muy angosta). --}}
-                                <col style="width:3px">
+                                <col style="width:6px">
                             @endif
                         @endfor
-                        <col style="width:3px">
-                        <col style="width:18px">
-                        <col style="width:18px">
-                        <col style="width:3px">
-                        <col style="width:18px">
-                        <col style="width:18px">
-                        <col style="width:3px">
-                        <col style="width:20px">
-                        <col style="width:20px">
-                        {{-- Pr.Final: ancho extra (promedio, solo lectura). --}}
-                        <col style="width:26px">
-                        <col style="width:18px">
+                        <col style="width:6px">
+                        <col>
+                        <col>
+                        <col style="width:6px">
+                        <col>
+                        <col>
+                        <col style="width:6px">
+                        <col>
+                        <col>
+                        {{-- Pr.Final: doble de ancho (promedio, solo lectura). --}}
+                        <col style="width:50px">
+                        <col style="width:32px">
                     </colgroup>
                     {{-- Encabezado en 2 filas: títulos de bloque + subcolumnas (N/R1/R2, etc.). --}}
                     <thead class="sticky top-0 z-[1] bg-accent-50 text-neutral-900 shadow-sm shadow-neutral-900/5">
                         <tr class="text-[10px] leading-tight">
-                            <th class="border border-accent-200 px-1 py-1 text-center w-[36px]">Ord</th>
-                            <th class="border border-accent-200 px-1 py-1 text-left w-[120px]">Estudiante</th>
+                            <th class="border border-accent-200 px-0.5 py-1 text-center text-[7px] w-[20px]">Ord</th>
+                            <th class="border border-accent-200 px-1 py-1 text-left">Estudiante</th>
                             @for ($e = 1; $e <= 8; $e++)
-                                <th colspan="3" class="border border-accent-200 px-1 py-1.5 text-center">Eval. {{ $e }}</th>
+                                <th colspan="3" class="border border-accent-200 px-1 py-2 text-center">Eval. {{ $e }}</th>
                                 @if ($e < 8)
                                     <th class="border border-accent-200 p-0" aria-hidden="true"></th>
                                 @endif
                             @endfor
                             <th class="border border-accent-200 p-0" aria-hidden="true"></th>
-                            <th colspan="2" class="border border-accent-200 px-1 py-1.5 text-center">JIS 1</th>
+                            <th colspan="2" class="border border-accent-200 px-1 py-2 text-center">JIS 1</th>
                             <th class="border border-accent-200 p-0" aria-hidden="true"></th>
-                            <th colspan="2" class="border border-accent-200 px-1 py-1.5 text-center">JIS 2</th>
+                            <th colspan="2" class="border border-accent-200 px-1 py-2 text-center">JIS 2</th>
                             <th class="border border-accent-200 p-0" aria-hidden="true"></th>
                             {{-- Dic/Feb/Pr.Final/TEA: rowspan=2 para “fusionar” con la fila de subencabezado vacía. --}}
                             <th rowspan="2" class="border border-accent-200 px-1 py-2 text-center align-middle">Dic</th>
@@ -112,19 +138,19 @@
                             <th class="border border-accent-200 px-1 py-1"></th>
                             <th class="border border-accent-200 px-1 py-1"></th>
                             @for ($e = 1; $e <= 8; $e++)
-                                <th class="border border-accent-200 px-0 py-1 text-center">N</th>
-                                <th class="border border-accent-200 px-0 py-1 text-center">R1</th>
-                                <th class="border border-accent-200 px-0 py-1 text-center">R2</th>
+                                <th class="border border-accent-200 px-0 py-1.5 text-center text-[7px]">N</th>
+                                <th class="border border-accent-200 px-0 py-1.5 text-center text-[7px]">R1</th>
+                                <th class="border border-accent-200 px-0 py-1.5 text-center text-[7px]">R2</th>
                                 @if ($e < 8)
                                     <th class="border border-accent-200 p-0 bg-white" aria-hidden="true"></th>
                                 @endif
                             @endfor
                             <th class="border border-accent-200 p-0 bg-white" aria-hidden="true"></th>
-                            <th class="border border-accent-200 px-0 py-1 text-center">N</th>
-                            <th class="border border-accent-200 px-0 py-1 text-center">R</th>
+                            <th class="border border-accent-200 px-0 py-1.5 text-center text-[7px]">N</th>
+                            <th class="border border-accent-200 px-0 py-1.5 text-center text-[7px]">R</th>
                             <th class="border border-accent-200 p-0 bg-white" aria-hidden="true"></th>
-                            <th class="border border-accent-200 px-0 py-1 text-center">N</th>
-                            <th class="border border-accent-200 px-0 py-1 text-center">R</th>
+                            <th class="border border-accent-200 px-0 py-1.5 text-center text-[7px]">N</th>
+                            <th class="border border-accent-200 px-0 py-1.5 text-center text-[7px]">R</th>
                             <th class="border border-accent-200 p-0 bg-white" aria-hidden="true"></th>
                         </tr>
                     </thead>
@@ -140,8 +166,16 @@
                                 <td class="border border-accent-200 px-1 py-0.5 text-center text-neutral-700 bg-accent-50/80">
                                     {{ $row['ord'] ?? '' }}
                                 </td>
-                                <td class="border border-accent-200 px-1.5 py-0.5 text-neutral-800 bg-accent-50/80 truncate" title="{{ $row['alumno'] ?? '—' }}">
-                                    {{ $row['alumno'] ?? '—' }}
+                                <td class="border border-accent-200 px-1 py-0.5 text-neutral-800 bg-accent-50/80">
+                                    <input
+                                        type="text"
+                                        readonly
+                                        aria-readonly="true"
+                                        tabindex="-1"
+                                        class="w-full bg-transparent border-0 p-0 m-0 text-[10px] leading-tight text-neutral-800 truncate focus:outline-none focus:ring-0"
+                                        value="{{ $row['alumno'] ?? '—' }}"
+                                        title="{{ $row['alumno'] ?? '—' }}"
+                                    />
                                 </td>
 
                                 @php
@@ -166,7 +200,7 @@
                                     <td class="border border-accent-200 px-0.5 py-0.5">
                                         <input
                                             id="se-calif-{{ (int) $row['id'] }}-{{ $field }}"
-                                            class="w-full text-center text-[12px] border border-accent-200 rounded px-0 py-0.5 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                                            class="w-full h-[18px] text-center text-[10px] leading-none border border-accent-200 rounded !px-0 !py-0 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                                             maxlength="2"
                                             value="{{ $row[$field] ?? '' }}"
                                             wire:key="cell-{{ (int) $materiaId }}-{{ (int) $row['id'] }}-{{ $field }}"
@@ -186,7 +220,7 @@
                                 <td class="border border-accent-200 px-0.5 py-0.5">
                                     <input
                                         id="se-calif-{{ (int) $row['id'] }}-dic"
-                                        class="w-full text-center text-[12px] border border-accent-200 rounded px-0 py-0.5 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                                        class="w-full h-[18px] text-center text-[10px] leading-none border border-accent-200 rounded !px-0 !py-0 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                                         maxlength="2"
                                         value="{{ $row['dic'] ?? '' }}"
                                         wire:key="cell-{{ (int) $materiaId }}-{{ (int) $row['id'] }}-dic"
@@ -195,7 +229,7 @@
                                 <td class="border border-accent-200 px-0.5 py-0.5">
                                     <input
                                         id="se-calif-{{ (int) $row['id'] }}-feb"
-                                        class="w-full text-center text-[12px] border border-accent-200 rounded px-0 py-0.5 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                                        class="w-full h-[18px] text-center text-[10px] leading-none border border-accent-200 rounded !px-0 !py-0 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                                         maxlength="2"
                                         value="{{ $row['feb'] ?? '' }}"
                                         wire:key="cell-{{ (int) $materiaId }}-{{ (int) $row['id'] }}-feb"
@@ -208,7 +242,7 @@
                                         readonly
                                         tabindex="0"
                                         aria-readonly="true"
-                                        class="w-full cursor-default text-center text-[12px] font-bold text-neutral-900 border border-accent-200 rounded px-0 py-0.5 bg-transparent focus:outline-none focus:ring-0"
+                                        class="w-full h-[18px] cursor-default text-center text-[10px] leading-none font-bold text-neutral-900 border border-accent-200 rounded !px-0 !py-0 bg-transparent focus:outline-none focus:ring-0"
                                         maxlength="5"
                                         value="{{ $row['calif'] ?? '' }}"
                                         wire:key="cell-{{ (int) $materiaId }}-{{ (int) $row['id'] }}-calif"
@@ -247,4 +281,3 @@
         </div>
     @endif
 </div>
-

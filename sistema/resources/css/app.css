@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Alpine: evita parpadeo de nodos con x-cloak antes de hidratar */
+[x-cloak] {
+    display: none !important;
+}
+
 @plugin "@tailwindcss/forms";
 
 @theme {
@@ -353,5 +358,33 @@
     }
     .se-legajo-form input[readonly] {
         @apply bg-accent-100/70 text-neutral-500;
+    }
+
+    /*
+     * Carga de calificaciones (secundario) — grilla compacta
+     * Objetivo: que todas las columnas entren en monitor 17" sin que el plugin
+     * de forms o estilos globales agranden inputs.
+     */
+    .se-calif-grid input[type="text"] {
+        height: 18px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        line-height: 1 !important;
+        font-size: 10px !important;
+        box-sizing: border-box;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+    .se-calif-grid td,
+    .se-calif-grid th {
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
+        line-height: 1 !important;
+    }
+    .se-calif-grid {
+        table-layout: fixed !important;
+        font-size: 10px !important;
     }
 }

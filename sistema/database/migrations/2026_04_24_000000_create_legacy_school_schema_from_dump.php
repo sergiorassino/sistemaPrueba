@@ -7,38 +7,49 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $dumpPath = base_path('../bd_con_datos.sql');
+        // La BD legacy debe respetar la estructura original del dump (`schema.sql`),
+        // incluyendo índices y claves foráneas (p.ej. cascades).
+        $dumpPath = base_path('../schema.sql');
 
         if (! is_file($dumpPath)) {
-            throw new \RuntimeException("No se encontro el dump en: {$dumpPath}");
+            // Compatibilidad: si el repo viejo no trae `schema.sql`, se usa el dump anterior.
+            $fallback = base_path('../bd_con_datos.sql');
+            if (! is_file($fallback)) {
+                throw new RuntimeException("No se encontro el dump en: {$dumpPath} (ni fallback: {$fallback})");
+            }
+            $dumpPath = $fallback;
         }
 
         $sql = file_get_contents($dumpPath);
 
         if ($sql === false) {
-            throw new \RuntimeException("No se pudo leer el dump en: {$dumpPath}");
+            throw new RuntimeException("No se pudo leer el dump en: {$dumpPath}");
         }
 
         preg_match_all('/CREATE TABLE IF NOT EXISTS `[^`]+`.*?;/si', $sql, $matches);
         $createStatements = $matches[0] ?? [];
 
         if ($createStatements === []) {
-            throw new \RuntimeException('No se encontraron sentencias CREATE TABLE en el dump.');
+            throw new RuntimeException('No se encontraron sentencias CREATE TABLE en el dump.');
         }
 
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
         foreach ($createStatements as $statement) {
-            DB::unprepared($this->sanitizeLegacyCreateTable($statement));
+            // Ejecutar el statement original (sin "sanitizar" FK/constraints).
+            DB::unprepared($this->cleanupTrailingCommas($statement));
         }
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
     }
 
     public function down(): void
     {
-        $dumpPath = base_path('../bd_con_datos.sql');
+        $dumpPath = base_path('../schema.sql');
 
         if (! is_file($dumpPath)) {
-            return;
+            $dumpPath = base_path('../bd_con_datos.sql');
+            if (! is_file($dumpPath)) {
+                return;
+            }
         }
 
         $sql = file_get_contents($dumpPath);
@@ -57,16 +68,12 @@ return new class extends Migration
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
     }
 
-    private function sanitizeLegacyCreateTable(string $statement): string
+    private function cleanupTrailingCommas(string $statement): string
     {
-        // MySQL 8+ exige que columnas referenciadas por FK sean UNIQUE/PK.
-        // El dump legacy tiene algunas FKs invalidas para motores actuales.
-        $withoutFks = preg_replace('/^\s*CONSTRAINT\s+`[^`]+`\s+FOREIGN KEY.*$/mi', '', $statement);
-        $withoutFks = $withoutFks ?? $statement;
+        // Algunos dumps legacy pueden quedar con coma colgante antes de `)`.
+        // Esto no modifica la estructura lógica, solo evita SQL inválido.
+        $clean = preg_replace('/,\s*\)/m', "\n)", $statement);
 
-        // Limpia comas colgantes antes del cierre.
-        $withoutFks = preg_replace('/,\s*\)/m', "\n)", $withoutFks);
-
-        return $withoutFks ?? $statement;
+        return $clean ?? $statement;
     }
 };

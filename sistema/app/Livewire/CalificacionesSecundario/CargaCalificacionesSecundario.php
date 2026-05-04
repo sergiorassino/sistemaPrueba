@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Livewire\Calificaciones;
+namespace App\Livewire\CalificacionesSecundario;
 
 use App\Models\Curso;
-use App\Support\PromedioAnualCalificaciones;
+use App\Support\PromedioAnualCalificacionesSecundario;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 
 /**
- * Módulo UI: carga/edición masiva de calificaciones por curso + materia.
+ * Módulo UI (nivel secundario): carga/edición masiva de calificaciones por curso + materia.
  *
  * Flujo:
  * 1) El usuario elige curso y materia (IDs reales de `materias.id`).
@@ -27,7 +27,7 @@ use Livewire\Component;
  * - Todas las consultas/mutaciones se filtran por `schoolCtx()` (nivel + año lectivo) y por curso/materia elegidos.
  * - Antes de actualizar por `id`, se revalida que el registro pertenezca al alcance actual (anti-ID guessing).
  */
-class CargaCalificaciones extends Component
+class CargaCalificacionesSecundario extends Component
 {
     /** Curso seleccionado (`cursos.Id`) dentro del contexto de sesión. */
     public ?int $cursoId = null;
@@ -243,7 +243,7 @@ class CargaCalificaciones extends Component
             $out[$id] = [
                 'id' => $id,
                 'ord' => $r->ord,
-                'alumno' => trim(((string) $r->apellido) . ', ' . ((string) $r->nombre)),
+                'alumno' => trim(((string) $r->apellido).', '.((string) $r->nombre)),
                 'ic01' => (string) ($r->ic01 ?? ''),
                 'ic02' => (string) ($r->ic02 ?? ''),
                 'ic03' => (string) ($r->ic03 ?? ''),
@@ -366,7 +366,7 @@ class CargaCalificaciones extends Component
     public function saveCell(int $id, string $field, mixed $value): void
     {
         // Rate limit suave: evita bursts si el usuario navega rápido con teclado.
-        $key = 'calificaciones:carga:cell:' . (auth()->id() ?? 'guest');
+        $key = 'calificacionesSecundario:carga:cell:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 240)) {
             return;
         }
@@ -445,7 +445,7 @@ class CargaCalificaciones extends Component
         }
 
         $this->refreshCalificacionRowFromDatabase($id);
-        $this->resetErrorBag('cell.' . $id . '.' . $field);
+        $this->resetErrorBag('cell.'.$id.'.'.$field);
     }
 
     /**
@@ -491,7 +491,7 @@ class CargaCalificaciones extends Component
             $arr[$k] = (string) ($row->{$k} ?? '');
         }
 
-        $prom = PromedioAnualCalificaciones::calcular($arr);
+        $prom = PromedioAnualCalificacionesSecundario::calcular($arr);
         $calif = (string) ($prom['promedio'] ?? '');
 
         DB::table('calificaciones')->where('id', $id)->update(['calif' => $calif]);
@@ -558,7 +558,7 @@ class CargaCalificaciones extends Component
         $notasPermitidasActiva = $this->notasPermitidasActiva();
 
         return view(
-            'livewire.calificaciones.carga-calificaciones',
+            'livewire.calificaciones-secundario.carga-calificaciones-secundario',
             compact(
                 'cursos',
                 'materias',
@@ -568,7 +568,6 @@ class CargaCalificaciones extends Component
                 'notasPermitidasActiva',
             ),
         )
-            ->layout('layouts.app', ['pageTitle' => 'Carga de calificaciones']);
+            ->layout('layouts.app', ['pageTitle' => 'Carga de calificaciones (secundario)']);
     }
 }
-

@@ -1,8 +1,9 @@
 <?php
 
+use App\Models\Ento;
+use App\Push\WebPushService;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
-use App\Models\Ento;
 use Illuminate\Support\Facades\Storage;
 
 if (! function_exists('schoolCtx')) {
@@ -23,6 +24,7 @@ if (! function_exists('tienePermiso')) {
     function tienePermiso(int $orden): bool
     {
         $permisos = schoolCtx()->profesor()?->permisos ?? '';
+
         return isset($permisos[$orden]) && $permisos[$orden] === '1';
     }
 }
@@ -52,6 +54,7 @@ if (! function_exists('schoolLogoUrl')) {
         }
 
         $memo = Storage::disk('public')->url($path);
+
         return $memo;
     }
 }
@@ -81,6 +84,7 @@ if (! function_exists('studentLogoUrl')) {
         }
 
         $memo = Storage::disk('public')->url($path);
+
         return $memo;
     }
 }
@@ -112,6 +116,70 @@ if (! function_exists('schoolPdfHeaderData')) {
                 'ee' => '',
                 'logo_file' => null,
             ];
+
+            return $memo;
+        }
+
+        $ento = Ento::query()
+            ->where('idNivel', $idNivel)
+            ->first(['insti', 'direccion', 'localidad', 'cue', 'ee', 'logo_path']);
+
+        $insti = trim((string) ($ento?->insti ?? ''));
+        $direccion = trim((string) ($ento?->direccion ?? ''));
+        $localidad = trim((string) ($ento?->localidad ?? ''));
+        $cue = trim((string) ($ento?->cue ?? ''));
+        $ee = trim((string) ($ento?->ee ?? ''));
+
+        $logoFile = null;
+        $logoPath = trim((string) ($ento?->logo_path ?? ''));
+        if ($logoPath !== '') {
+            $abs = Storage::disk('public')->path($logoPath);
+            if (is_string($abs) && $abs !== '' && file_exists($abs)) {
+                $logoFile = $abs;
+            }
+        }
+
+        $memo = [
+            'insti' => $insti,
+            'direccion' => $direccion,
+            'localidad' => $localidad,
+            'cue' => $cue,
+            'ee' => $ee,
+            'logo_file' => $logoFile,
+        ];
+
+        return $memo;
+    }
+}
+
+if (! function_exists('studentPdfHeaderData')) {
+    /**
+     * Encabezado institucional para PDFs del portal alumno (Dompdf), según `studentCtx()->idNivel`.
+     *
+     * @return array{insti:string,direccion:string,localidad:string,cue:string,ee:string,logo_file:?string}
+     */
+    function studentPdfHeaderData(): array
+    {
+        static $memo = null;
+        static $done = false;
+
+        if ($done) {
+            /** @var array $memo */
+            return $memo;
+        }
+        $done = true;
+
+        $idNivel = (int) (studentCtx()->idNivel ?? 0);
+        if ($idNivel <= 0) {
+            $memo = [
+                'insti' => '',
+                'direccion' => '',
+                'localidad' => '',
+                'cue' => '',
+                'ee' => '',
+                'logo_file' => null,
+            ];
+
             return $memo;
         }
 
@@ -151,7 +219,7 @@ if (! function_exists('notificaciones_push_enviar')) {
     /**
      * Enviar notificación push a uno o más legajos (user_key).
      *
-     * @param list<string|int>|null $userKeys null = no enviar (requiere lista explícita)
+     * @param  list<string|int>|null  $userKeys  null = no enviar (requiere lista explícita)
      * @return array{ok:bool,sent:int,failed:int,errors:list<string>,sent_user_keys?:list<string>,failed_user_keys?:array<string,string>}
      */
     function notificaciones_push_enviar(string $title, string $body, ?string $url = null, ?array $userKeys = null, ?string $nombreColegio = null): array
@@ -163,7 +231,7 @@ if (! function_exists('notificaciones_push_enviar')) {
         }
 
         $keys = array_values(array_filter(array_map(fn ($v) => trim((string) $v), $userKeys), fn ($v) => $v !== ''));
-        $result = \App\Push\WebPushService::sendToUsers($keys, $title, $body, $url, $nombreColegio);
+        $result = WebPushService::sendToUsers($keys, $title, $body, $url, $nombreColegio);
 
         return [
             'ok' => true,

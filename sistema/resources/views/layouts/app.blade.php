@@ -100,7 +100,7 @@
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.') || str_starts_with($route ?? '', 'push.') || (str_starts_with($route ?? '', 'comunicaciones.') && tienePermiso(51) && tienePermiso(2))) ? 'true' : 'false' }},
-        calificacionesSec: {{ (str_starts_with($route ?? '', 'calificaciones.')) ? 'true' : 'false' }},
+        calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.')) ? 'true' : 'false' }},
         disciplinario: {{ (str_starts_with($route ?? '', 'seguimiento.disciplinario')) ? 'true' : 'false' }},
         comunicaciones: {{ (tienePermiso(51) && !tienePermiso(2) && (str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales')) ? 'true' : 'false' }},
     },
@@ -338,12 +338,12 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
                     :class="(groups.calificacionesSec && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('calificacionesSec')"
-                    title="Calificaciones Secundario">
+                    title="Calificaciones (secundario)">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">Calificaciones Secundario</span>
+                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">CALIFICACIONES</span>
                 <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                      :class="groups.calificacionesSec ? 'rotate-180' : ''"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -355,17 +355,29 @@
                  x-show="groups.calificacionesSec && !sidebarCollapsed"
                  x-collapse
                  x-cloak>
-                <a href="{{ route('calificaciones.carga') }}"
+                <a href="{{ route('calificacionesSecundario.carga') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'calificaciones.'),
+                       'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.carga',
                    ])
-                   title="Carga de calificaciones">
+                   title="Carga de calificaciones (secundario)">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     <span class="truncate">Carga de calificaciones</span>
+                </a>
+                <a href="{{ route('calificacionesSecundario.consulta') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.consulta',
+                   ])
+                   title="Consulta de calificaciones (secundario)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    <span class="truncate">Consulta de calificaciones</span>
                 </a>
             </div>
         @endif

@@ -11,12 +11,13 @@ class ComHilo extends Model
 
     protected $fillable = [
         'asunto', 'cuerpo_inicial_id', 'scope',
-        'id_legajo', 'id_curso', 'id_nivel', 'id_terlec',
+        'id_legajo', 'id_curso', 'cursos_envio', 'id_nivel', 'id_terlec',
         'creado_por_tipo', 'creado_por_id', 'creado_por_rol',
         'estado', 'familia_puede_responder', 'ultimo_mensaje_at',
     ];
 
     protected $casts = [
+        'cursos_envio'            => 'array',
         'familia_puede_responder' => 'boolean',
         'ultimo_mensaje_at'       => 'datetime',
         'created_at'              => 'datetime',
@@ -55,6 +56,7 @@ class ComHilo extends Model
             'alumno'         => 'Un alumno',
             'varios_alumnos' => 'Varios alumnos',
             'curso'          => 'Un curso',
+            'varios_cursos'  => 'Varios cursos',
             'colegio'        => 'Todo el colegio',
             default          => ucfirst((string) $this->scope),
         };

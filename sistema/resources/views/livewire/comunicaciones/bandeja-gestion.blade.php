@@ -38,20 +38,22 @@
         </div>
     @endif
 
-    <div class="se-toolbar">
-        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">Filtrar</p>
-        <div class="flex flex-wrap gap-2">
-            @foreach (['todos' => 'Todos', 'no_leidos' => 'No leídos', 'respondidos' => 'Respondidos'] as $val => $label)
-                <button type="button"
-                        wire:click="$set('filtro', '{{ $val }}')"
-                        @class([
-                            'inline-flex cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                            'border-primary-500 bg-primary-600 text-white' => $filtro === $val,
-                            'border-accent-200 bg-white text-neutral-700 hover:bg-accent-50' => $filtro !== $val,
-                        ])>
-                    {{ $label }}
-                </button>
-            @endforeach
+    <div class="se-toolbar space-y-5">
+        <div>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">Estado</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+                @foreach (['todos' => 'Todos', 'no_leidos' => 'No leídos', 'respondidos' => 'Respondidos'] as $val => $label)
+                    <button type="button"
+                            wire:click="$set('filtro', '{{ $val }}')"
+                            @class([
+                                'inline-flex cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+                                'border-primary-500 bg-primary-600 text-white' => $filtro === $val,
+                                'border-accent-200 bg-white text-neutral-700 hover:bg-accent-50' => $filtro !== $val,
+                            ])>
+                        {{ $label }}
+                    </button>
+                @endforeach
+            </div>
         </div>
     </div>
 
@@ -61,43 +63,122 @@
                 $noLeidos = (int) $hilo->no_leidos;
                 $respondidos = (int) $hilo->respondidos;
                 $estado = $respondidos > 0 ? 'respondido' : ($noLeidos > 0 ? 'no_leido' : 'leido');
+                $esEnviados = ((string) ($hilo->direccion ?? '')) === 'enviado';
+                $tieneConversacion = ((int) ($hilo->mensajes_count ?? 0)) > 1;
+                $cuerpoInicial = '';
+                if ($esEnviados) {
+                    $cuerpoInicialRaw = (string) ($hilo->cuerpo_inicial_contenido ?? '');
+                    $cuerpoInicial = preg_replace('/\A[\p{Z}\s]+/u', '', $cuerpoInicialRaw) ?? '';
+                    $cuerpoInicial = preg_replace('/[\p{Z}\s]+\z/u', '', $cuerpoInicial) ?? '';
+                }
+                $nombresDest = $esEnviados
+                    ? array_values(array_filter(explode('||', (string) ($hilo->destinatarios_nombres_concat ?? ''))))
+                    : [];
+                $cursoEnvioLabel = $esEnviados ? trim((string) ($hilo->curso_envio_label ?? '')) : '';
+                $cntFamilias = $esEnviados ? (int) ($hilo->destinatarios_familia_count ?? 0) : 0;
+                $maxNombresLista = 24;
+                $cursosDest = [];
+                if ($esEnviados && in_array($hilo->scope, ['curso', 'varios_cursos'], true)) {
+                    $rawCursos = $hilo->cursos_envio ?? null;
+                    if ($rawCursos !== null && $rawCursos !== '' && $rawCursos !== 'null') {
+                        $decoded = is_string($rawCursos) ? json_decode($rawCursos, true) : $rawCursos;
+                        if (is_array($decoded)) {
+                            foreach ($decoded as $row) {
+                                if (is_array($row) && isset($row['label']) && trim((string) $row['label']) !== '') {
+                                    $cursosDest[] = ['label' => trim((string) $row['label'])];
+                                }
+                            }
+                        }
+                    }
+                    if (count($cursosDest) === 0 && $cursoEnvioLabel !== '') {
+                        $cursosDest[] = ['label' => $cursoEnvioLabel];
+                    }
+                }
+
+                $deNombre = trim((string) ($hilo->cuerpo_inicial_nombre ?? ''));
+                $deVinculo = trim((string) ($hilo->cuerpo_inicial_vinculo ?? ''));
+                $deLabel = $deNombre !== '' ? $deNombre : ((string) ($hilo->cuerpo_inicial_tipo ?? '') === 'profesor' ? 'Personal escolar' : 'Familia');
+                if ($deVinculo !== '' && $deNombre !== '') {
+                    $deLabel .= ' ('.$deVinculo.')';
+                }
+
+                $paraLabel = '';
+                if ($esEnviados) {
+                    if (in_array($hilo->scope, ['curso', 'varios_cursos'], true)) {
+                        $labelsCursos = array_values(array_filter(array_map(fn ($c) => trim((string) ($c['label'] ?? '')), $cursosDest)));
+                        $paraLabel = count($labelsCursos) > 0 ? implode(' · ', $labelsCursos) : 'Cursos';
+                    } elseif ($hilo->scope === 'colegio') {
+                        $paraLabel = 'Todo el colegio';
+                    } else {
+                        $paraLabel = count($nombresDest) > 0 ? implode(' · ', array_slice($nombresDest, 0, $maxNombresLista)) : ($cntFamilias > 0 ? ($cntFamilias.' '.($cntFamilias === 1 ? 'familia' : 'familias')) : '—');
+                        if (count($nombresDest) > $maxNombresLista) {
+                            $paraLabel .= ' · …';
+                        }
+                    }
+                }
             @endphp
             <a href="{{ route('comunicaciones.hilo', $hilo->id) }}"
                @class([
                    'se-card block p-4 transition hover:shadow-md sm:p-5',
-                   'border-l-4 border-l-primary-600 bg-primary-50/35' => $estado === 'no_leido',
-                   'border-l-4 border-l-primary-400 bg-accent-50/80' => $estado === 'respondido',
+                   'border-l-4 border-l-primary-600 bg-primary-50/20' => $esEnviados,
+                   'border-r-4 border-r-accent-300 bg-white' => ! $esEnviados,
+                   'ring-1 ring-primary-200/60' => ! $esEnviados && $estado === 'no_leido',
                ])>
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0 flex-1">
-                        <div class="flex flex-wrap items-center gap-2">
-                            @if ($estado === 'no_leido')
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="shrink-0 text-xs text-neutral-400 tabular-nums">
+                                {{ $hilo->ultimo_mensaje_at ? \Carbon\Carbon::parse($hilo->ultimo_mensaje_at)->format('d/m/Y H:i') : '' }}
+                            </span>
+                            <div class="flex flex-wrap items-center justify-end gap-2 text-right">
+                            @if (! $esEnviados && $estado === 'no_leido')
                                 <span class="inline-flex shrink-0 items-center rounded-full border border-primary-300 bg-primary-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-800">
                                     {{ $noLeidos }} no leído{{ $noLeidos > 1 ? 's' : '' }}
                                 </span>
-                            @elseif ($estado === 'respondido')
-                                <span class="se-pill border-primary-200 bg-primary-50 text-primary-800">
-                                    Respondido
-                                </span>
                             @endif
+                            <span @class([
+                                'inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
+                                'border-primary-200 bg-primary-50 text-primary-800' => $esEnviados,
+                                'border-accent-200 bg-accent-50 text-neutral-700' => ! $esEnviados,
+                            ])>
+                                {{ $esEnviados ? 'Enviado' : 'Recibido' }}
+                            </span>
                             @if ($hilo->creado_por_tipo === 'profesor' && ! ($hilo->familia_puede_responder ?? true))
                                 <span class="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">
                                     Solo informativo
                                 </span>
                             @endif
-                            <span class="text-sm font-semibold text-neutral-900">{{ $hilo->asunto }}</span>
-                        </div>
-                        <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-neutral-500">
-                            <span>{{ \App\Models\ComHilo::make(['scope' => $hilo->scope])->scopeLabel() }}</span>
-                            @if ($hilo->estado === 'cerrado')
-                                <span>· Cerrado</span>
+                            @if ($tieneConversacion)
+                                <span class="inline-flex shrink-0 items-center rounded-full border border-primary-200 bg-primary-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-800">
+                                    Ver conversación
+                                </span>
                             @endif
+                            </div>
                         </div>
-                    </div>
-                    <div class="shrink-0 text-right">
-                        <p class="text-xs text-neutral-400">
-                            {{ $hilo->ultimo_mensaje_at ? \Carbon\Carbon::parse($hilo->ultimo_mensaje_at)->diffForHumans() : '' }}
-                        </p>
+                        <div class="mt-1 grid min-w-0 grid-cols-[16rem,1fr] items-center gap-x-3 gap-y-1 text-sm">
+                            <div @class([
+                                'flex min-w-0 items-center gap-2',
+                                'justify-end text-right' => ! $esEnviados,
+                            ])>
+                                @if ($esEnviados)
+                                    <span class="shrink-0 text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">Para:</span>
+                                    <span class="min-w-0 truncate text-neutral-700">{{ $paraLabel }}</span>
+                                @else
+                                    <span class="shrink-0 text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">De:</span>
+                                    <span class="min-w-0 truncate text-neutral-700">{{ $deLabel }}</span>
+                                @endif
+                            </div>
+                            <div @class([
+                                'flex min-w-0 items-center gap-2',
+                                'justify-end text-right' => ! $esEnviados,
+                            ])>
+                                <span class="shrink-0 text-neutral-400">·</span>
+                                <span class="min-w-0 flex-1 truncate font-semibold text-neutral-900">{{ $hilo->asunto }}</span>
+                                @if ($hilo->estado === 'cerrado')
+                                    <span class="shrink-0 text-xs text-neutral-400">· Cerrado</span>
+                                @endif
+                            </div>
+                        </div>
                     </div>
                 </div>
             </a>
@@ -112,7 +193,9 @@
                     </div>
                     <div>
                         <p class="text-sm font-semibold text-neutral-800">Bandeja vacía</p>
-                        <p class="mt-1 text-sm text-neutral-600">No hay comunicados con este filtro.</p>
+                        <p class="mt-1 text-sm text-neutral-600">
+                            No hay comunicados con este filtro.
+                        </p>
                     </div>
                 </div>
             </div>

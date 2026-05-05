@@ -8,6 +8,12 @@ alwaysApply: true
 Detalle completo en `docs/06-reglas-de-seguridad.md`.
 Estas reglas aplican a **todo módulo nuevo** y a cambios en módulos existentes.
 
+## Base de datos (agente)
+
+- Ver sección **9** de `docs/06-reglas-de-seguridad.md`: sin operaciones destructivas sin backup y aprobación.
+- **No ejecutar** nada que escriba en la BD, **ni si el usuario pide borrar o actualizar tablas**: ni `migrate*`, `db:*`, `mysql`, seeds, ni **`tinker`**, ni **`php -r`** / scripts que usen Eloquent o `DB::` para `delete`/`update`/`insert`.
+- Entregar **SQL explícito** (DML/DDL) en el chat para revisión humana, y migraciones/código solo como archivos; Artisan como texto para copiar, no invocado desde aquí.
+
 ## Checklist rápido (verificar siempre)
 
 1. ¿Ruta protegida con `auth` middleware?

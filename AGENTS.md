@@ -1,0 +1,13 @@
+# Agente / IA — políticas del repositorio
+
+El código de la aplicación está en **`sistema/`**.
+
+**Toda herramienta de asistencia (Cursor, etc.) debe seguir las políticas allí definidas**, en particular sobre **no ejecutar escrituras en la base de datos desde la terminal del agente**.
+
+Leer en este orden:
+
+1. **`sistema/AGENTS.md`** — resumen operativo para IAs
+2. **`sistema/docs/06-reglas-de-seguridad.md`** — sección 9 (BD y ejecución)
+3. **`sistema/.cursor/rules/`** — reglas del proyecto (`alwaysApply` donde corresponda)
+
+Así la restricción **viaja con el clone del repo** y no depende de que cada colaborador configure reglas globales en Cursor.

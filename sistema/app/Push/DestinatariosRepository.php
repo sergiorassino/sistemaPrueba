@@ -24,25 +24,32 @@ class DestinatariosRepository
     }
 
     /**
-     * Busca alumnos por apellido/nombre/dni dentro del nivel actual.
+     * Busca alumnos por prefijo de apellido o nombre entre los matriculados en el nivel y ciclo lectivo actuales.
+     *
+     * Se usa `matricula` (como el resto del módulo) porque `legajos.idnivel` suele estar en 0 o desactualizado en BD legacy.
      *
      * @return list<array{id:int,label:string,dni:?string}>
      */
-    public static function buscarAlumnos(int $idNivel, string $termino, int $limit = 20): array
+    public static function buscarAlumnos(int $idNivel, int $idTerlec, string $termino, int $limit = 20): array
     {
         $t = trim($termino);
         if ($t === '') {
             return [];
         }
 
+        $prefix = addcslashes($t, '%_\\') . '%';
+
         $q = DB::table('legajos as l')
-            ->select(['l.id', 'l.apellido', 'l.nombre', 'l.dni'])
-            ->where('l.idnivel', $idNivel)
-            ->where(function ($w) use ($t) {
-                $w->where('l.apellido', 'like', "%{$t}%")
-                    ->orWhere('l.nombre', 'like', "%{$t}%")
-                    ->orWhere('l.dni', 'like', "%{$t}%");
+            ->join('matricula as m', 'm.idLegajos', '=', 'l.id')
+            ->where('m.idNivel', $idNivel)
+            ->where('m.idTerlec', $idTerlec)
+            ->whereNotNull('m.idLegajos')
+            ->where(function ($w) use ($prefix) {
+                $w->where('l.apellido', 'like', $prefix)
+                    ->orWhere('l.nombre', 'like', $prefix);
             })
+            ->select(['l.id', 'l.apellido', 'l.nombre', 'l.dni'])
+            ->distinct()
             ->orderBy('l.apellido')
             ->orderBy('l.nombre')
             ->limit(max(1, min(50, $limit)));

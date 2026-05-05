@@ -41,23 +41,25 @@
 
             <div class="space-y-3">
                 @foreach($mensajes as $msg)
-                @php $esFamilia = $msg->tipo_remitente === 'familia'; @endphp
-                <div @class(['flex', 'justify-end' => $esFamilia, 'justify-start' => !$esFamilia])>
+                @php $esPlataforma = $msg->tipo_remitente === 'familia'; @endphp
+                <div @class(['flex', 'justify-start' => $esPlataforma, 'justify-end' => !$esPlataforma])>
                     <div @class([
                         'max-w-[85%] rounded-2xl px-4 py-3 shadow-sm',
-                        'rounded-tr-sm text-white' => $esFamilia,
-                        'rounded-tl-sm bg-white border border-gray-200' => !$esFamilia,
-                    ]) @style(['background:#40848D' => $esFamilia])>
+                        // Plataforma (familia/alumno) a la izquierda: "enviado"
+                        'rounded-tl-sm bg-gray-50 border border-gray-200 text-gray-900' => $esPlataforma,
+                        // Otro lado (escuela) a la derecha: "recibido"
+                        'rounded-tr-sm text-white' => ! $esPlataforma,
+                    ]) @style(['background:#40848D' => ! $esPlataforma])>
 
                         <div @class([
                             'text-xs font-semibold mb-1',
-                            'text-white/80' => $esFamilia,
-                            'text-gray-500' => !$esFamilia,
+                            'text-gray-600' => $esPlataforma,
+                            'text-white/80' => ! $esPlataforma,
                         ])>
-                            @if($esFamilia)
+                            @if($esPlataforma)
                                 {{ $msg->nombre_remitente_snapshot ?? 'Familiar' }}
                                 @if($msg->vinculo_familiar)
-                                <span class="font-normal text-white/60"> ({{ $msg->vinculoLabel() }})</span>
+                                <span class="font-normal text-gray-500"> ({{ $msg->vinculoLabel() }})</span>
                                 @endif
                             @else
                                 Escuela
@@ -68,15 +70,15 @@
                         </div>
 
                         <p @class([
-                            'text-sm whitespace-pre-wrap leading-relaxed',
-                            'text-white' => $esFamilia,
-                            'text-gray-800' => !$esFamilia,
-                        ])>{{ $msg->contenido }}</p>
+                            'text-sm whitespace-pre-wrap text-left leading-relaxed',
+                            'text-gray-900' => $esPlataforma,
+                            'text-white' => ! $esPlataforma,
+                        ])>{{ preg_replace('/\A[\p{Z}\s]+/u', '', (string) $msg->contenido) }}</p>
 
                         <p @class([
                             'text-[10px] mt-1.5',
-                            'text-white/60' => $esFamilia,
-                            'text-gray-400' => !$esFamilia,
+                            'text-gray-500' => $esPlataforma,
+                            'text-white/60' => ! $esPlataforma,
                         ])>
                             {{ $msg->hora ? substr($msg->hora, 0, 5) : '' }}
                         </p>

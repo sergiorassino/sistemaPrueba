@@ -47,7 +47,7 @@
             <div>
                 <span class="form-label">Destinatarios</span>
                 <div class="mt-2 flex flex-wrap gap-2">
-                    @foreach (['alumno' => 'Un alumno', 'varios_alumnos' => 'Varios alumnos', 'curso' => 'Un curso', 'colegio' => 'Todo el colegio'] as $val => $label)
+                    @foreach (['alumnos' => 'Uno o varios alumnos', 'cursos' => 'Uno o varios cursos', 'colegio' => 'Todo el colegio'] as $val => $label)
                         <button type="button"
                                 wire:click="$set('tipoDestino', '{{ $val }}')"
                                 @class([
@@ -62,16 +62,17 @@
                 @error('tipoDestino') <p class="form-error">{{ $message }}</p> @enderror
             </div>
 
-            @if (in_array($tipoDestino, ['alumno', 'varios_alumnos'], true))
+            @if ($tipoDestino === 'alumnos')
                 <div>
-                    <label for="buscar-alumno-com" class="form-label">
-                        Buscar alumno @if ($tipoDestino === 'varios_alumnos') (podés agregar varios) @endif
-                    </label>
+                    <label for="buscar-alumno-com" class="form-label">Buscar alumno</label>
+                    <p class="mt-1 text-xs text-neutral-500">
+                        Coincidencia por los primeros caracteres del <strong class="font-medium text-neutral-700">apellido</strong> o del <strong class="font-medium text-neutral-700">nombre</strong>. Podés agregar varios.
+                    </p>
                     <div class="relative mt-1.5">
                         <input id="buscar-alumno-com"
                                type="text"
                                wire:model.live.debounce.300ms="alumnoSearch"
-                               placeholder="Apellido, nombre o DNI…"
+                               placeholder="Ej.: García o María…"
                                class="form-input" />
                         @if (! empty($alumnoResults))
                             <div class="absolute z-20 mt-2 max-h-48 w-full overflow-y-auto rounded-2xl border border-accent-200 bg-white shadow-lg">
@@ -109,15 +110,36 @@
                 </div>
             @endif
 
-            @if ($tipoDestino === 'curso')
+            @if ($tipoDestino === 'cursos')
                 <div>
-                    <label for="curso-com" class="form-label">Curso</label>
-                    <select id="curso-com" wire:model="cursoId" class="form-select">
-                        <option value="">Seleccionar curso…</option>
+                    <label for="curso-com" class="form-label">Agregar curso (uno o varios)</label>
+                    <select id="curso-com"
+                            wire:model.live="cursoPick"
+                            class="form-select mt-1.5">
+                        <option value="">Elegir curso para agregar…</option>
                         @foreach ($cursos as $c)
-                            <option value="{{ $c['id'] }}">{{ $c['label'] }}</option>
+                            @unless (collect($cursosSeleccionados)->contains('id', $c['id']))
+                                <option value="{{ $c['id'] }}">{{ $c['label'] }}</option>
+                            @endunless
                         @endforeach
                     </select>
+                    @if (! empty($cursosSeleccionados))
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach ($cursosSeleccionados as $c)
+                                <span class="inline-flex items-center gap-1.5 rounded-full border border-primary-400 bg-primary-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                                    {{ $c['label'] }}
+                                    <button type="button"
+                                            wire:click="removeCurso({{ $c['id'] }})"
+                                            class="rounded-full text-white/85 transition hover:bg-white/20 hover:text-white"
+                                            title="Quitar">
+                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </span>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
             @endif
 

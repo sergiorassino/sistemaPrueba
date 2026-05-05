@@ -18,14 +18,18 @@ class ComunicacionesRepository
      * Bandeja del profesor: hilos donde es creador o destinatario,
      * con contadores de no_leidos y respondidos.
      *
+     * @param  string  $direccion  recibidos|enviados — hilos no iniciados por el profesor vs iniciados por él
      * @return \Illuminate\Support\Collection
      */
     public static function bandejaProfesor(
         int $idProfesor,
         int $idNivel,
         int $idTerlec,
-        string $filtro = 'todos'
+        string $filtro = 'todos',
+        string $direccion = 'recibidos'
     ) {
+        $direccion = in_array($direccion, ['recibidos', 'enviados'], true) ? $direccion : 'todos';
+
         $query = DB::table('com_hilos as h')
             ->where(function ($q) use ($idProfesor) {
                 $q->where(function ($q2) use ($idProfesor) {
@@ -39,25 +43,53 @@ class ComunicacionesRepository
                         ->where('d2.id_profesor', $idProfesor);
                 });
             })
+            ->when($direccion === 'recibidos', function ($q) use ($idProfesor) {
+                $q->where(function ($w) use ($idProfesor) {
+                    $w->where('h.creado_por_tipo', '!=', 'profesor')
+                        ->orWhere('h.creado_por_id', '!=', $idProfesor);
+                });
+            })
+            ->when($direccion === 'enviados', function ($q) use ($idProfesor) {
+                $q->where('h.creado_por_tipo', 'profesor')
+                    ->where('h.creado_por_id', $idProfesor);
+            })
             ->where('h.id_nivel', $idNivel)
             ->where('h.id_terlec', $idTerlec)
             ->leftJoin('com_mensajes_destinatarios as d', function ($j) use ($idProfesor) {
                 $j->on('d.id_hilo', '=', 'h.id')
                   ->where('d.tipo_destinatario', 'profesor')
                   ->where('d.id_profesor', $idProfesor);
-            })
-            ->select([
-                'h.id', 'h.asunto', 'h.scope', 'h.estado',
-                'h.creado_por_tipo', 'h.creado_por_id', 'h.creado_por_rol',
-                'h.familia_puede_responder',
-                'h.ultimo_mensaje_at', 'h.created_at',
-                DB::raw('SUM(CASE WHEN d.leido_at IS NULL AND d.id IS NOT NULL THEN 1 ELSE 0 END) as no_leidos'),
-                DB::raw('SUM(CASE WHEN d.respondido_at IS NOT NULL THEN 1 ELSE 0 END) as respondidos'),
-                DB::raw('COUNT(d.id) as total_dest'),
-            ])
+            });
+
+        $select = [
+            'h.id', 'h.asunto', 'h.scope', 'h.estado',
+            'h.creado_por_tipo', 'h.creado_por_id', 'h.creado_por_rol',
+            'h.familia_puede_responder',
+            'h.id_curso', 'h.cursos_envio',
+            'h.ultimo_mensaje_at', 'h.created_at',
+            DB::raw('SUM(CASE WHEN d.leido_at IS NULL AND d.id IS NOT NULL THEN 1 ELSE 0 END) as no_leidos'),
+            DB::raw('SUM(CASE WHEN d.respondido_at IS NOT NULL THEN 1 ELSE 0 END) as respondidos'),
+            DB::raw('COUNT(d.id) as total_dest'),
+            DB::raw("CASE WHEN h.creado_por_tipo = 'profesor' AND h.creado_por_id = {$idProfesor} THEN 'enviado' ELSE 'recibido' END as direccion"),
+            DB::raw('(SELECT COUNT(*) FROM com_mensajes mx WHERE mx.id_hilo = h.id) as mensajes_count'),
+        ];
+
+        // Para "Para:" (enviados) necesitamos destinatarios del mensaje inicial.
+        // Se seleccionan siempre para permitir una bandeja unificada (todos).
+        $select[] = DB::raw('(SELECT m.contenido FROM com_mensajes m WHERE m.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_contenido');
+        $select[] = DB::raw("(SELECT COUNT(DISTINCT d0.id_legajo) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia' AND d0.id_legajo IS NOT NULL) as destinatarios_familia_count");
+        $select[] = DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_legajo SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia') as destinatarios_nombres_concat");
+        $select[] = DB::raw("(SELECT CASE WHEN TRIM(COALESCE(c.cursec, '')) <> '' THEN TRIM(c.cursec) ELSE TRIM(COALESCE(cp.curPlanCurso, 'Curso')) END FROM cursos c LEFT JOIN curplan cp ON cp.id = c.idCurPlan WHERE c.Id = h.id_curso LIMIT 1) as curso_envio_label");
+
+        // Datos del remitente del primer mensaje (útil para "Recibidos")
+        $select[] = DB::raw('(SELECT m0.tipo_remitente FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_tipo');
+        $select[] = DB::raw('(SELECT m0.nombre_remitente_snapshot FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_nombre');
+        $select[] = DB::raw('(SELECT m0.vinculo_familiar FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_vinculo');
+
+        $query->select($select)
             ->groupBy('h.id', 'h.asunto', 'h.scope', 'h.estado', 'h.creado_por_tipo',
                       'h.creado_por_id', 'h.creado_por_rol', 'h.familia_puede_responder',
-                      'h.ultimo_mensaje_at', 'h.created_at')
+                      'h.ultimo_mensaje_at', 'h.created_at', 'h.cuerpo_inicial_id', 'h.id_curso', 'h.cursos_envio')
             ->orderByDesc('h.ultimo_mensaje_at');
 
         if ($filtro === 'no_leidos') {
@@ -72,10 +104,18 @@ class ComunicacionesRepository
     /**
      * Bandeja de la familia: hilos donde el legajo es creador o destinatario.
      *
+     * @param  string  $direccion  recibidos|enviados — de la escuela vs iniciados por la familia
      * @return \Illuminate\Support\Collection
      */
-    public static function bandejaFamilia(int $idLegajo, int $idNivel, int $idTerlec, string $filtro = 'todos')
-    {
+    public static function bandejaFamilia(
+        int $idLegajo,
+        int $idNivel,
+        int $idTerlec,
+        string $filtro = 'todos',
+        string $direccion = 'recibidos'
+    ) {
+        $direccion = $direccion === 'enviados' ? 'enviados' : 'recibidos';
+
         $query = DB::table('com_hilos as h')
             ->where(function ($q) use ($idLegajo) {
                 $q->where(function ($q2) use ($idLegajo) {
@@ -88,6 +128,16 @@ class ComunicacionesRepository
                         ->where('d2.tipo_destinatario', 'familia')
                         ->where('d2.id_legajo', $idLegajo);
                 });
+            })
+            ->when($direccion === 'recibidos', function ($q) use ($idLegajo) {
+                $q->where(function ($w) use ($idLegajo) {
+                    $w->where('h.creado_por_tipo', '!=', 'familia')
+                        ->orWhere('h.creado_por_id', '!=', $idLegajo);
+                });
+            })
+            ->when($direccion === 'enviados', function ($q) use ($idLegajo) {
+                $q->where('h.creado_por_tipo', 'familia')
+                    ->where('h.creado_por_id', $idLegajo);
             })
             ->where('h.id_nivel', $idNivel)
             ->where('h.id_terlec', $idTerlec)
@@ -150,6 +200,7 @@ class ComunicacionesRepository
      *   scope: string,
      *   id_legajos: list<int>,
      *   id_curso: ?int,
+     *   cursos_envio: ?list<array{id:int,label:string}>,
      *   id_nivel: int,
      *   id_terlec: int,
      *   creado_por_tipo: string,
@@ -173,6 +224,7 @@ class ComunicacionesRepository
                 'scope'                   => $datos['scope'],
                 'id_legajo'               => $datos['id_legajos'][0] ?? null,
                 'id_curso'                => $datos['id_curso'] ?? null,
+                'cursos_envio'            => $datos['cursos_envio'] ?? null,
                 'id_nivel'                => $datos['id_nivel'],
                 'id_terlec'               => $datos['id_terlec'],
                 'creado_por_tipo'         => $datos['creado_por_tipo'],

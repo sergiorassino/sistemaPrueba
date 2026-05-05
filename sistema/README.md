@@ -37,6 +37,10 @@ Toda la documentación del proyecto está en `sistema/docs/`:
 | 05 | `05-preferencias-y-convenciones.md`  | Convenciones de código, preferencias       |
 | 06 | `06-reglas-de-seguridad.md`          | Baseline de seguridad obligatorio          |
 
+## Asistentes de código (Cursor, Copilot, etc.)
+
+Políticas **versionadas** en el repo (incluye no ejecutar escrituras en la BD desde el agente): ver **`AGENTS.md`** en esta carpeta y en la raíz del repositorio padre.
+
 ## Setup local
 
 ```bash

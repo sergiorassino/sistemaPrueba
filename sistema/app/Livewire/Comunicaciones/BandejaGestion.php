@@ -27,7 +27,7 @@ class BandejaGestion extends Component
         $idTerlec  = (int) $ctx->idTerlec;
 
         $hilos = ComunicacionesRepository::bandejaProfesor(
-            $idProf, $idNivel, $idTerlec, $this->filtro
+            $idProf, $idNivel, $idTerlec, $this->filtro, 'todos'
         );
 
         return view('livewire.comunicaciones.bandeja-gestion', [

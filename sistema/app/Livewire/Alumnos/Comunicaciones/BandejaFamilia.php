@@ -7,7 +7,20 @@ use Livewire\Component;
 
 class BandejaFamilia extends Component
 {
+    /** recibidos|enviados — primer filtro de bandeja */
+    public string $direccion = 'recibidos';
+
     public string $filtro = 'todos'; // todos|no_leidos|respondidos
+
+    public function updatedDireccion(): void
+    {
+        $this->direccion = $this->direccion === 'enviados' ? 'enviados' : 'recibidos';
+    }
+
+    public function mount(): void
+    {
+        $this->direccion = $this->direccion === 'enviados' ? 'enviados' : 'recibidos';
+    }
 
     public function render()
     {
@@ -17,7 +30,7 @@ class BandejaFamilia extends Component
         $idTerlec = (int) $ctx->idTerlec;
 
         $hilos = ComunicacionesRepository::bandejaFamilia(
-            $idLegajo, $idNivel, $idTerlec, $this->filtro
+            $idLegajo, $idNivel, $idTerlec, $this->filtro, $this->direccion
         );
 
         return view('livewire.alumnos.comunicaciones.bandeja-familia', [

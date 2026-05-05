@@ -21,19 +21,40 @@
     </div>
     @endif
 
-    {{-- Filtros --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 flex flex-wrap gap-2">
-        @foreach(['todos' => 'Todos', 'no_leidos' => 'No leídos', 'respondidos' => 'Respondidos'] as $val => $label)
-        <button type="button" wire:click="$set('filtro', '{{ $val }}')"
-                @class([
-                    'px-3 py-1 rounded-full text-xs font-medium border transition',
-                    'text-white border-transparent' => $filtro === $val,
-                    'text-gray-600 border-gray-300 hover:border-gray-400' => $filtro !== $val,
-                ])
-                @style(['background:#40848D' => $filtro === $val])>
-            {{ $label }}
-        </button>
-        @endforeach
+    {{-- Bandeja: recibidos / enviados --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 space-y-3">
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-2">Bandeja</p>
+            <div class="flex flex-wrap gap-2">
+                @foreach (['recibidos' => 'Recibidos', 'enviados' => 'Enviados'] as $val => $label)
+                    <button type="button" wire:click="$set('direccion', '{{ $val }}')"
+                            @class([
+                                'px-3 py-1.5 rounded-full text-xs font-semibold border transition',
+                                'text-white border-transparent' => $direccion === $val,
+                                'text-gray-600 border-gray-300 hover:border-gray-400' => $direccion !== $val,
+                            ])
+                            @style(['background:#40848D' => $direccion === $val])>
+                        {{ $label }}
+                    </button>
+                @endforeach
+            </div>
+        </div>
+        <div class="border-t border-gray-100 pt-3">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-2">Estado</p>
+            <div class="flex flex-wrap gap-2">
+                @foreach(['todos' => 'Todos', 'no_leidos' => 'No leídos', 'respondidos' => 'Respondidos'] as $val => $label)
+                <button type="button" wire:click="$set('filtro', '{{ $val }}')"
+                        @class([
+                            'px-3 py-1 rounded-full text-xs font-medium border transition',
+                            'text-white border-transparent' => $filtro === $val,
+                            'text-gray-600 border-gray-300 hover:border-gray-400' => $filtro !== $val,
+                        ])
+                        @style(['background:#40848D' => $filtro === $val])>
+                    {{ $label }}
+                </button>
+                @endforeach
+            </div>
+        </div>
     </div>
 
     {{-- Hilos --}}
@@ -75,15 +96,19 @@
                     </p>
                 </div>
                 <div class="text-right flex-shrink-0">
-                    <p class="text-xs text-gray-400">
-                        {{ $hilo->ultimo_mensaje_at ? \Carbon\Carbon::parse($hilo->ultimo_mensaje_at)->diffForHumans() : '' }}
+                    <p class="text-xs text-gray-400 tabular-nums">
+                        {{ $hilo->ultimo_mensaje_at ? \Carbon\Carbon::parse($hilo->ultimo_mensaje_at)->format('d/m/Y H:i') : '' }}
                     </p>
                 </div>
             </div>
         </a>
         @empty
         <div class="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 text-sm">
-            No hay comunicados todavía.
+            @if ($direccion === 'enviados')
+                No hay comunicados enviados con este filtro.
+            @else
+                No hay comunicados recibidos con este filtro.
+            @endif
         </div>
         @endforelse
     </div>

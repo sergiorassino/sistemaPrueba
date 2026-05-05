@@ -38,8 +38,8 @@ class EnviarPush extends Component
     public function updatedAlumnoSearch(): void
     {
         $ctx = schoolCtx();
-        $this->alumnoResults = ($ctx->idNivel && trim($this->alumnoSearch) !== '')
-            ? DestinatariosRepository::buscarAlumnos((int) $ctx->idNivel, $this->alumnoSearch, 20)
+        $this->alumnoResults = ($ctx->idNivel && $ctx->idTerlec && trim($this->alumnoSearch) !== '')
+            ? DestinatariosRepository::buscarAlumnos((int) $ctx->idNivel, (int) $ctx->idTerlec, $this->alumnoSearch, 20)
             : [];
     }
 

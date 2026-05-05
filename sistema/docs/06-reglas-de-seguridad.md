@@ -84,3 +84,17 @@ Antes de considerar completo un módulo o PR:
 - [ ] ¿Blade escapa correctamente (sin `{!! !!}`)?
 - [ ] ¿Rate limiting configurado en acciones sensibles?
 - [ ] ¿Permisos verificados según modelo de cadena `0/1`?
+- [ ] ¿Se evitó cualquier operación destructiva o recreación masiva de BD sin backup y aprobación explícita?
+- [ ] Si hubo cambios de esquema o datos vía SQL o migraciones, ¿se ejecutaron solo bajo revisión humana (no automatizada por herramientas)?
+
+---
+
+## 9. Base de datos: operaciones destructivas y control de ejecución
+
+**Prohibido** salvo entorno 100% desechable, **backup verificado** y **aprobación explícita por escrito** de quien opera el sistema: `php artisan migrate:fresh`, `migrate:refresh`, `db:wipe`, recreación total del esquema, importar dumps o scripts SQL que **reemplacen** la base o tablas enteras, `DROP DATABASE`, `DROP TABLE` / `TRUNCATE` masivos sin plan de contingencia, y borrar volúmenes o directorios de datos del motor sin backup previo. Estas acciones pueden borrar datos de producción o dejar el esquema sin integridad referencial (por ejemplo, perdiendo claves foráneas si el artefacto aplicado no las incluye).
+
+**Política de desarrollo asistido (por el momento):** ningún agente de IA ni automatización debe **ejecutar** nada que altere esquema o datos en la base configurada del proyecto, **aunque quien desarrolle pida explícitamente borrar, vaciar o actualizar tablas**. Eso incluye no solo SQL y `php artisan migrate*`, `migrate:rollback`, `db:*`, `db:seed`, cliente `mysql` e imports, sino también **cualquier vía indirecta**: `php artisan tinker` (o ejecución interactiva), `php -r` / scripts PHP de una sola corrida que llamen a Eloquent, `DB::`, `Model::query()->delete()`, factories en ejecución, rutas o comandos Artisan invocados desde terminal con efecto inmediato sobre la BD, etc. Si hace falta vaciar o borrar filas (por ejemplo cuaderno de comunicados), el agente entrega **únicamente** las sentencias `DELETE`/`UPDATE`/`INSERT` (o `TRUNCATE` si aplica) en el chat, con **advertencia de alcance** y orden sugerido por FKs, para que el humano las revise y ejecute en su cliente SQL o consola; si corresponde además archivos de migración o de código de aplicación, van como **archivos guardados en el repo**, sin ejecutarlos desde la herramienta para producir el cambio en la BD. Si la única vía es un comando Artisan concreto, debe entregarse como **texto para copiar**, no invocarse desde la herramienta. Las migraciones del proyecto siguen siendo **solo aditivas** respecto del modelo legacy salvo decisión documentada fuera de este flujo.
+
+**Nota:** las reglas del proyecto orientan al modelo, pero **no lo garantizan al 100%**; conviene revisar en el chat si el agente propone ejecutar algo contra la BD antes de aceptar herramientas de terminal.
+
+**Colaboradores:** no hace falta replicar políticas en “User rules” de Cursor. Con clonar el repo alcanza para tener en el contexto del agente: **`AGENTS.md`** en la raíz del repositorio, **`sistema/AGENTS.md`**, esta sección y los archivos en **`sistema/.cursor/rules/`** (versionados). Quien use otra herramienta debe igualmente respetar lo documentado aquí en revisiones de PR.

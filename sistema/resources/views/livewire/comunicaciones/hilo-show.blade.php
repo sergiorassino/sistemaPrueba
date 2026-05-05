@@ -15,6 +15,12 @@
                         </span>
                     @endif
                 </div>
+                @if (! empty($paraCompleto))
+                    <p class="text-sm text-white/85">
+                        <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">Para:</span>
+                        <span class="ml-2">{{ $paraCompleto }}</span>
+                    </p>
+                @endif
             </div>
             <a href="{{ route('comunicaciones.index') }}"
                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
@@ -48,24 +54,26 @@
 
                 <div class="space-y-3">
                     @foreach ($mensajes as $msg)
-                        @php $esMio = $msg->tipo_remitente === 'profesor'; @endphp
-                        <div @class(['flex', 'justify-end' => $esMio, 'justify-start' => ! $esMio])>
+                        @php $esPlataforma = $msg->tipo_remitente === 'profesor'; @endphp
+                        <div @class(['flex', 'justify-start' => $esPlataforma, 'justify-end' => ! $esPlataforma])>
                             <div @class([
                                 'max-w-[85%] rounded-3xl px-4 py-3 shadow-sm sm:max-w-[80%]',
-                                'rounded-tr-md bg-gradient-to-br from-primary-600 to-primary-700 text-white' => $esMio,
-                                'rounded-tl-md border border-accent-200 bg-white' => ! $esMio,
+                                // Plataforma (profesor) a la izquierda: "enviado"
+                                'rounded-tl-md border border-accent-200 bg-accent-50/70 text-neutral-900' => $esPlataforma,
+                                // Otro lado (familia) a la derecha: "recibido"
+                                'rounded-tr-md bg-gradient-to-br from-primary-600 to-primary-700 text-white' => ! $esPlataforma,
                             ])>
                                 <div @class([
                                     'mb-1 text-xs font-semibold',
-                                    'text-white/85' => $esMio,
-                                    'text-neutral-500' => ! $esMio,
+                                    'text-neutral-600' => $esPlataforma,
+                                    'text-white/85' => ! $esPlataforma,
                                 ])>
-                                    {{ $msg->nombre_remitente_snapshot ?? ($esMio ? 'Personal escolar' : 'Familia') }}
+                                    {{ $msg->nombre_remitente_snapshot ?? ($esPlataforma ? 'Personal escolar' : 'Familia') }}
                                     @if ($msg->vinculo_familiar)
                                         <span @class([
                                             'ml-1 font-normal',
-                                            'text-white/65' => $esMio,
-                                            'text-neutral-400' => ! $esMio,
+                                            'text-neutral-500' => $esPlataforma,
+                                            'text-white/65' => ! $esPlataforma,
                                         ])>
                                             ({{ $msg->vinculoLabel() }})
                                         </span>
@@ -73,15 +81,15 @@
                                 </div>
 
                                 <p @class([
-                                    'whitespace-pre-wrap text-sm leading-relaxed',
-                                    'text-white' => $esMio,
-                                    'text-neutral-800' => ! $esMio,
-                                ])>{{ $msg->contenido }}</p>
+                                    'whitespace-pre-wrap text-left text-sm leading-relaxed',
+                                    'text-neutral-900' => $esPlataforma,
+                                    'text-white' => ! $esPlataforma,
+                                ])>{{ preg_replace('/\A[\p{Z}\s]+/u', '', (string) $msg->contenido) }}</p>
 
                                 <div @class([
                                     'mt-2 flex items-center justify-between gap-3',
-                                    'text-white/65' => $esMio,
-                                    'text-neutral-400' => ! $esMio,
+                                    'text-neutral-500' => $esPlataforma,
+                                    'text-white/65' => ! $esPlataforma,
                                 ])>
                                     <span class="text-[10px] tabular-nums">
                                         {{ $msg->hora ? substr($msg->hora, 0, 5) : '' }}
@@ -92,11 +100,11 @@
                                                 <span title="{{ $envio->medio }}: {{ $envio->estadoLabel() }}{{ $envio->motivo ? ' — '.$envio->motivo : '' }}"
                                                       @class([
                                                           'text-[10px]',
-                                                          'text-white/90' => $esMio && $envio->estado === 'enviado',
-                                                          'text-amber-100' => $esMio && $envio->estado === 'pendiente',
-                                                          'text-red-200' => $esMio && $envio->estado === 'fallido',
-                                                          'text-neutral-300' => $esMio && $envio->estado === 'no_aplicable',
-                                                          'text-neutral-400' => ! $esMio,
+                                                          'text-neutral-700' => $esPlataforma && $envio->estado === 'enviado',
+                                                          'text-amber-700' => $esPlataforma && $envio->estado === 'pendiente',
+                                                          'text-red-700' => $esPlataforma && $envio->estado === 'fallido',
+                                                          'text-neutral-500' => $esPlataforma && $envio->estado === 'no_aplicable',
+                                                          'text-white/90' => ! $esPlataforma,
                                                       ])>
                                                     {{ $envio->iconoMedio() }}
                                                 </span>

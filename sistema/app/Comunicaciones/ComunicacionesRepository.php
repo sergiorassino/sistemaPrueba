@@ -104,7 +104,7 @@ class ComunicacionesRepository
     /**
      * Bandeja de la familia: hilos donde el legajo es creador o destinatario.
      *
-     * @param  string  $direccion  recibidos|enviados — de la escuela vs iniciados por la familia
+     * @param  string  $direccion  todos|recibidos|enviados — unificar bandeja o filtrar por origen
      * @return \Illuminate\Support\Collection
      */
     public static function bandejaFamilia(
@@ -112,9 +112,11 @@ class ComunicacionesRepository
         int $idNivel,
         int $idTerlec,
         string $filtro = 'todos',
-        string $direccion = 'recibidos'
+        string $direccion = 'todos'
     ) {
-        $direccion = $direccion === 'enviados' ? 'enviados' : 'recibidos';
+        $direccion = in_array($direccion, ['todos', 'recibidos', 'enviados'], true)
+            ? $direccion
+            : 'todos';
 
         $query = DB::table('com_hilos as h')
             ->where(function ($q) use ($idLegajo) {
@@ -153,10 +155,18 @@ class ComunicacionesRepository
                 'h.ultimo_mensaje_at', 'h.created_at',
                 DB::raw('SUM(CASE WHEN d.leido_at IS NULL AND d.id IS NOT NULL THEN 1 ELSE 0 END) as no_leidos'),
                 DB::raw('SUM(CASE WHEN d.respondido_at IS NOT NULL THEN 1 ELSE 0 END) as respondidos'),
+                DB::raw("CASE WHEN h.creado_por_tipo = 'familia' AND h.creado_por_id = {$idLegajo} THEN 'enviado' ELSE 'recibido' END as direccion"),
+                DB::raw('(SELECT COUNT(*) FROM com_mensajes mx WHERE mx.id_hilo = h.id) as mensajes_count'),
+                DB::raw('(SELECT m.contenido FROM com_mensajes m WHERE m.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_contenido'),
+                DB::raw("(SELECT COUNT(DISTINCT d0.id_profesor) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor' AND d0.id_profesor IS NOT NULL) as destinatarios_prof_count"),
+                DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_profesor SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor') as destinatarios_prof_nombres_concat"),
+                DB::raw('(SELECT m0.tipo_remitente FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_tipo'),
+                DB::raw('(SELECT m0.nombre_remitente_snapshot FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_nombre'),
+                DB::raw('(SELECT m0.vinculo_familiar FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_vinculo'),
             ])
             ->groupBy('h.id', 'h.asunto', 'h.scope', 'h.estado', 'h.creado_por_tipo',
                       'h.creado_por_id', 'h.creado_por_rol', 'h.familia_puede_responder',
-                      'h.ultimo_mensaje_at', 'h.created_at')
+                      'h.ultimo_mensaje_at', 'h.created_at', 'h.cuerpo_inicial_id')
             ->orderByDesc('h.ultimo_mensaje_at');
 
         if ($filtro === 'no_leidos') {
@@ -189,6 +199,84 @@ class ComunicacionesRepository
             ->where('id_legajo', $idLegajo)
             ->whereNull('leido_at')
             ->update(['leido_at' => now()]);
+    }
+
+    /**
+     * Marca un mensaje concreto como no leído para el profesor (solo mensajes recibidos desde familia).
+     */
+    public static function marcarNoLeidoMensajeProfesor(
+        int $idMensaje,
+        int $idHilo,
+        int $idProfesor,
+        int $idNivel,
+        int $idTerlec
+    ): bool {
+        if (! ComHilo::query()
+            ->where('id', $idHilo)
+            ->where('id_nivel', $idNivel)
+            ->where('id_terlec', $idTerlec)
+            ->exists()) {
+            return false;
+        }
+
+        $msg = ComMensaje::query()
+            ->where('id', $idMensaje)
+            ->where('id_hilo', $idHilo)
+            ->where('tipo_remitente', 'familia')
+            ->first();
+
+        if ($msg === null) {
+            return false;
+        }
+
+        $affected = ComMensajeDestinatario::query()
+            ->where('id_mensaje', $idMensaje)
+            ->where('id_hilo', $idHilo)
+            ->where('tipo_destinatario', 'profesor')
+            ->where('id_profesor', $idProfesor)
+            ->whereNotNull('leido_at')
+            ->update(['leido_at' => null]);
+
+        return $affected > 0;
+    }
+
+    /**
+     * Marca un mensaje concreto como no leído para la familia (solo mensajes recibidos desde la escuela).
+     */
+    public static function marcarNoLeidoMensajeFamilia(
+        int $idMensaje,
+        int $idHilo,
+        int $idLegajo,
+        int $idNivel,
+        int $idTerlec
+    ): bool {
+        if (! ComHilo::query()
+            ->where('id', $idHilo)
+            ->where('id_nivel', $idNivel)
+            ->where('id_terlec', $idTerlec)
+            ->exists()) {
+            return false;
+        }
+
+        $msg = ComMensaje::query()
+            ->where('id', $idMensaje)
+            ->where('id_hilo', $idHilo)
+            ->where('tipo_remitente', 'profesor')
+            ->first();
+
+        if ($msg === null) {
+            return false;
+        }
+
+        $affected = ComMensajeDestinatario::query()
+            ->where('id_mensaje', $idMensaje)
+            ->where('id_hilo', $idHilo)
+            ->where('tipo_destinatario', 'familia')
+            ->where('id_legajo', $idLegajo)
+            ->whereNotNull('leido_at')
+            ->update(['leido_at' => null]);
+
+        return $affected > 0;
     }
 
     /**

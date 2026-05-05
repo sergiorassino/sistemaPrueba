@@ -28,8 +28,6 @@ class NuevoComunicado extends Component
     public array $cursosSeleccionados = []; // [{id, label}]
     public string $cursoPick = '';
 
-    public ?int $enviado = null; // id del hilo creado
-
     public function mount(): void
     {
         abort_unless(tienePermiso(51) && tienePermiso(52), 403, 'Sin permiso para iniciar comunicados.');
@@ -192,7 +190,7 @@ class NuevoComunicado extends Component
 
         $nombreProfesor = trim("{$profesor->apellido}, {$profesor->nombre}");
 
-        $hilo = ComunicacionesRepository::crearHiloConMensaje([
+        ComunicacionesRepository::crearHiloConMensaje([
             'asunto'                   => $this->asunto,
             'contenido'                => $this->contenido,
             'scope'                    => $scopePersistido,
@@ -212,10 +210,8 @@ class NuevoComunicado extends Component
             'familia_puede_responder'  => $this->familiaPuedeResponder,
         ], $mediosCanal);
 
-        $this->enviado = $hilo->id;
-        $this->reset('asunto', 'contenido', 'alumnosSeleccionados', 'alumnoSearch', 'cursosSeleccionados', 'cursoPick');
-        $this->familiaPuedeResponder = true;
         session()->flash('success', 'Comunicado enviado correctamente.');
+        $this->redirectRoute('comunicaciones.index');
     }
 
     private function variasAlumnoIds(): array

@@ -1,93 +1,115 @@
-<div class="max-w-xl space-y-4">
-
-    <div class="flex items-center gap-3">
-        <a href="{{ route('alumnos.comunicaciones.index') }}" class="text-gray-400 hover:text-gray-600 transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-        </a>
-        <div>
-            <h1 class="text-lg font-semibold text-gray-900">Preferencias de Comunicación</h1>
-            <p class="text-sm text-gray-500">Elegí cómo y quién prefiere recibir comunicados de la escuela</p>
+<div class="se-page">
+    <section class="se-hero">
+        <div class="se-hero-inner">
+            <div class="min-w-0 space-y-2">
+                <p class="se-eyebrow">Comunicaciones</p>
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Preferencias de comunicación</h2>
+                    <p class="mt-2 max-w-2xl text-sm text-white/80">
+                        {{ studentCtx()->nivelNombre() }} · Ciclo lectivo {{ studentCtx()->terlecAno() }}
+                    </p>
+                </div>
+            </div>
+            <a href="{{ route('alumnos.comunicaciones.index') }}"
+               class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Bandeja
+            </a>
         </div>
-    </div>
+    </section>
 
-    @if(session('success'))
-    <div class="bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm">{{ session('success') }}</div>
+    @if (session('success'))
+        <div class="se-soft-card flex items-center gap-3 border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            <svg class="h-5 w-5 shrink-0 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            {{ session('success') }}
+        </div>
     @endif
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-6">
-
-        {{-- Vínculo de contacto --}}
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">¿Quién es el/la responsable de recibir comunicados?</label>
-            <p class="text-xs text-gray-500 mb-3">
-                Esto determina cuál email y teléfono se usa cuando la escuela les escribe.
-            </p>
-            <select wire:model="vinculoContacto"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">Sin preferencia (usa el primer dato disponible)</option>
-                @foreach($vinculos as $val => $label)
-                <option value="{{ $val }}">{{ $label }}</option>
-                @endforeach
-            </select>
+    <div class="se-card overflow-hidden">
+        <div class="border-b border-accent-200 bg-white px-5 py-4">
+            <p class="se-section-title">Contacto y medios</p>
+            <p class="mt-1 text-sm text-neutral-600">Elegí cómo y a qué responsable le llegan los comunicados de la escuela.</p>
         </div>
 
-        {{-- Medios de contacto --}}
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">¿Por qué medios querés recibir comunicados?</label>
-            <p class="text-xs text-gray-500 mb-3">
-                Activá los que preferís. Siempre estará disponible la bandeja del portal.
-            </p>
-
-            <div class="space-y-3">
-                {{-- Push --}}
-                <label class="flex items-start gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition select-none">
-                    <div class="flex-shrink-0 pt-0.5">
-                        <input type="checkbox" wire:model="push" class="rounded border-gray-300 w-4 h-4">
-                    </div>
-                    <div class="min-w-0">
-                        <p class="text-sm font-medium text-gray-800">🔔 Notificaciones push</p>
-                        <p class="text-xs text-gray-500 mt-0.5">En el navegador o en la app instalada en tu dispositivo. Requiere activarlas previamente.</p>
-                    </div>
-                </label>
-
-                {{-- Email --}}
-                <label class="flex items-start gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition select-none">
-                    <div class="flex-shrink-0 pt-0.5">
-                        <input type="checkbox" wire:model="email" class="rounded border-gray-300 w-4 h-4">
-                    </div>
-                    <div class="min-w-0">
-                        <p class="text-sm font-medium text-gray-800">✉ Correo electrónico</p>
-                        <p class="text-xs text-gray-500 mt-0.5">Se envía al email registrado en el legajo, según el responsable seleccionado arriba.</p>
-                    </div>
-                </label>
-
-                {{-- WhatsApp --}}
-                <label class="flex items-start gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition select-none">
-                    <div class="flex-shrink-0 pt-0.5">
-                        <input type="checkbox" wire:model="whatsapp" class="rounded border-gray-300 w-4 h-4">
-                    </div>
-                    <div class="min-w-0">
-                        <p class="text-sm font-medium text-gray-800">💬 WhatsApp</p>
-                        <p class="text-xs text-gray-500 mt-0.5">Al número celular registrado en el legajo. El envío puede ser manual por parte de la institución.</p>
-                    </div>
-                </label>
+        <div class="space-y-6 border-t border-accent-100 bg-accent-50/30 p-5 sm:p-6">
+            <div>
+                <label for="pref-vinculo-contacto" class="form-label">Responsable de recibir comunicados</label>
+                <p class="mt-1 text-xs text-neutral-500">
+                    Determina qué email y teléfono se usan cuando la institución escribe a la familia.
+                </p>
+                <select id="pref-vinculo-contacto"
+                        wire:model="vinculoContacto"
+                        class="form-select mt-2">
+                    <option value="">Sin preferencia (primer dato disponible)</option>
+                    @foreach ($vinculos as $val => $label)
+                        <option value="{{ $val }}">{{ $label }}</option>
+                    @endforeach
+                </select>
             </div>
-        </div>
 
-        <div class="flex justify-end">
-            <button type="button" wire:click="guardar" wire:loading.attr="disabled"
-                    class="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-white text-sm font-medium transition disabled:opacity-60"
-                    style="background:#40848D">
-                <span wire:loading wire:target="guardar">
-                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                    </svg>
-                </span>
-                Guardar preferencias
-            </button>
+            <div>
+                <p class="form-label">Medios de aviso</p>
+                <p class="mt-1 text-xs text-neutral-500">
+                    Elegí los medios que querés usar. La bandeja del portal siempre está disponible.
+                </p>
+
+                <div class="mt-3 space-y-3">
+                    <label class="flex cursor-pointer select-none items-start gap-3 rounded-2xl border border-accent-200 bg-white p-4 shadow-sm transition hover:bg-accent-50/60">
+                        <input type="checkbox"
+                               wire:model="push"
+                               class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500"/>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-neutral-900">Notificaciones push</p>
+                            <p class="mt-1 text-xs leading-relaxed text-neutral-500">
+                                En el navegador o en la aplicación instalada. Requiere activarlas en el dispositivo.
+                            </p>
+                        </div>
+                    </label>
+
+                    <label class="flex cursor-pointer select-none items-start gap-3 rounded-2xl border border-accent-200 bg-white p-4 shadow-sm transition hover:bg-accent-50/60">
+                        <input type="checkbox"
+                               wire:model="email"
+                               class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500"/>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-neutral-900">Correo electrónico</p>
+                            <p class="mt-1 text-xs leading-relaxed text-neutral-500">
+                                Se envía al email del legajo según el responsable seleccionado arriba.
+                            </p>
+                        </div>
+                    </label>
+
+                    <label class="flex cursor-pointer select-none items-start gap-3 rounded-2xl border border-accent-200 bg-white p-4 shadow-sm transition hover:bg-accent-50/60">
+                        <input type="checkbox"
+                               wire:model="whatsapp"
+                               class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500"/>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-neutral-900">WhatsApp</p>
+                            <p class="mt-1 text-xs leading-relaxed text-neutral-500">
+                                Al celular registrado en el legajo. El envío puede ser manual por la institución.
+                            </p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex justify-end border-t border-accent-200 pt-2">
+                <button type="button"
+                        wire:click="guardar"
+                        wire:loading.attr="disabled"
+                        class="btn-primary disabled:opacity-60">
+                    <span wire:loading wire:target="guardar" class="mr-2 inline-flex">
+                        <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                    </span>
+                    Guardar preferencias
+                </button>
+            </div>
         </div>
     </div>
 </div>

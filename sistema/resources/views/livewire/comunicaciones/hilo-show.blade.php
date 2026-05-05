@@ -41,6 +41,24 @@
         </div>
     @endif
 
+    @error('modalBorrar')
+        <div class="se-soft-card flex items-center gap-3 border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <svg class="h-5 w-5 shrink-0 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14M12 3a9 9 0 100 18 9 9 0 000-18z"/>
+            </svg>
+            {{ $message }}
+        </div>
+    @enderror
+
+    @error('marcarNoLeido')
+        <div class="se-soft-card flex items-center gap-3 border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <svg class="h-5 w-5 shrink-0 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14M12 3a9 9 0 100 18 9 9 0 000-18z"/>
+            </svg>
+            {{ $message }}
+        </div>
+    @enderror
+
     <div class="space-y-8">
         @forelse ($mensajesPorDia as $fecha => $mensajes)
             <div>
@@ -54,7 +72,16 @@
 
                 <div class="space-y-3">
                     @foreach ($mensajes as $msg)
-                        @php $esPlataforma = $msg->tipo_remitente === 'profesor'; @endphp
+                        @php
+                            $esPlataforma = $msg->tipo_remitente === 'profesor';
+                            $miDestMarcar = null;
+                            if (! $esPlataforma) {
+                                $miDestMarcar = $msg->destinatarios->first(function ($d) use ($idProfesorSesion) {
+                                    return $d->tipo_destinatario === 'profesor'
+                                        && (int) $d->id_profesor === (int) $idProfesorSesion;
+                                });
+                            }
+                        @endphp
                         <div @class(['flex', 'justify-start' => $esPlataforma, 'justify-end' => ! $esPlataforma])>
                             <div @class([
                                 'max-w-[85%] rounded-3xl px-4 py-3 shadow-sm sm:max-w-[80%]',
@@ -94,23 +121,51 @@
                                     <span class="text-[10px] tabular-nums">
                                         {{ $msg->hora ? substr($msg->hora, 0, 5) : '' }}
                                     </span>
-                                    @if ($msg->destinatarios->count())
-                                        <div class="flex items-center gap-1">
-                                            @foreach ($msg->destinatarios->take(1)->first()?->envios ?? [] as $envio)
-                                                <span title="{{ $envio->medio }}: {{ $envio->estadoLabel() }}{{ $envio->motivo ? ' — '.$envio->motivo : '' }}"
-                                                      @class([
-                                                          'text-[10px]',
-                                                          'text-neutral-700' => $esPlataforma && $envio->estado === 'enviado',
-                                                          'text-amber-700' => $esPlataforma && $envio->estado === 'pendiente',
-                                                          'text-red-700' => $esPlataforma && $envio->estado === 'fallido',
-                                                          'text-neutral-500' => $esPlataforma && $envio->estado === 'no_aplicable',
-                                                          'text-white/90' => ! $esPlataforma,
-                                                      ])>
-                                                    {{ $envio->iconoMedio() }}
-                                                </span>
-                                            @endforeach
-                                        </div>
-                                    @endif
+                                    <div class="flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
+                                        @if ($miDestMarcar && $miDestMarcar->leido_at)
+                                            <button type="button"
+                                                    wire:click="marcarMensajeNoLeido({{ (int) $msg->id }})"
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="marcarMensajeNoLeido"
+                                                    class="text-[10px] font-semibold uppercase tracking-wide text-white/90 opacity-90 transition hover:opacity-100">
+                                                <span wire:loading.remove wire:target="marcarMensajeNoLeido">Marcar como no leído</span>
+                                                <span wire:loading wire:target="marcarMensajeNoLeido">…</span>
+                                            </button>
+                                        @endif
+                                        @php($borrado = $this->infoBorradoMensaje($msg, (int) $hilo->cuerpo_inicial_id, $hilo->mensajes->count()))
+                                        <button type="button"
+                                                @if ($borrado['puede'])
+                                                    wire:click="abrirModalBorrar({{ (int) $msg->id }})"
+                                                @else
+                                                    disabled
+                                                    title="{{ $borrado['motivo'] }}"
+                                                @endif
+                                                @class([
+                                                    'text-[10px] font-semibold uppercase tracking-wide transition',
+                                                    'opacity-80 hover:opacity-100' => $borrado['puede'],
+                                                    'cursor-not-allowed opacity-40' => ! $borrado['puede'],
+                                                ])>
+                                            Borrar
+                                        </button>
+
+                                        @if ($msg->destinatarios->count())
+                                            <div class="flex items-center gap-1">
+                                                @foreach ($msg->destinatarios->take(1)->first()?->envios ?? [] as $envio)
+                                                    <span title="{{ $envio->medio }}: {{ $envio->estadoLabel() }}{{ $envio->motivo ? ' — '.$envio->motivo : '' }}"
+                                                          @class([
+                                                              'text-[10px]',
+                                                              'text-neutral-700' => $esPlataforma && $envio->estado === 'enviado',
+                                                              'text-amber-700' => $esPlataforma && $envio->estado === 'pendiente',
+                                                              'text-red-700' => $esPlataforma && $envio->estado === 'fallido',
+                                                              'text-neutral-500' => $esPlataforma && $envio->estado === 'no_aplicable',
+                                                              'text-white/90' => ! $esPlataforma,
+                                                          ])>
+                                                        {{ $envio->iconoMedio() }}
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -138,7 +193,7 @@
     @if ($puedeResponder && $hilo->estado === 'abierto')
         <div class="se-card overflow-hidden">
             <div class="border-b border-accent-200 bg-accent-50/50 px-5 py-3">
-                <p class="se-section-title">Responder</p>
+                <p class="se-section-title">Mensaje</p>
             </div>
             <div class="p-5">
                 @if (! $mostrarFormRespuesta)
@@ -173,6 +228,47 @@
                         </div>
                     </div>
                 @endif
+            </div>
+        </div>
+    @endif
+
+    @if ($modalBorrarAbierto)
+        <div class="fixed inset-0 z-[90] flex items-center justify-center px-4 py-8 sm:px-6" role="dialog" aria-modal="true"
+             aria-labelledby="com-borrar-titulo">
+            <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarModalBorrar"></div>
+
+            <div class="relative z-10 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
+                <div class="border-b border-accent-200 bg-accent-50/60 px-5 py-4">
+                    <p id="com-borrar-titulo" class="text-sm font-bold text-neutral-900">
+                        {{ $modalBorrarEliminaHiloCompleto ? 'Eliminar comunicado' : 'Eliminar mensaje' }}
+                    </p>
+                    <p class="mt-1 text-xs leading-relaxed text-neutral-600">
+                        @if ($modalBorrarEliminaHiloCompleto)
+                            Va a eliminar el comunicado completo (no hay otros mensajes en el hilo).
+                        @else
+                            Va a eliminar solo este mensaje del hilo.
+                        @endif
+                        Esta acción no se puede deshacer.
+                    </p>
+                    @error('modalBorrar')
+                        <p class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="flex flex-col gap-2 border-t border-accent-200 bg-accent-50/40 px-5 py-4 sm:flex-row sm:justify-end">
+                    <button type="button"
+                            wire:click="cerrarModalBorrar"
+                            class="inline-flex w-full items-center justify-center rounded-xl border border-accent-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-800 shadow-sm transition hover:bg-accent-50 sm:w-auto">
+                        Cancelar
+                    </button>
+                    <button type="button"
+                            wire:click="confirmarModalBorrar"
+                            wire:loading.attr="disabled"
+                            class="inline-flex w-full items-center justify-center rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-60 sm:w-auto">
+                        <span wire:loading.remove wire:target="confirmarModalBorrar">Eliminar</span>
+                        <span wire:loading wire:target="confirmarModalBorrar">Eliminando…</span>
+                    </button>
+                </div>
             </div>
         </div>
     @endif

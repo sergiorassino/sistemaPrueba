@@ -4,7 +4,6 @@ namespace App\Livewire\Alumnos\Comunicaciones;
 
 use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComunicacionesRepository;
-use App\Models\ComMensaje;
 use App\Models\Legajo;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
@@ -19,8 +18,6 @@ class NuevoComunicadoFamilia extends Component
     // Destinatarios escolares disponibles según rol seleccionado
     public array $destinatariosDisponibles = [];
     public ?int $idDestinatario = null;
-
-    public ?int $enviado = null;
 
     public array $vinculos = [
         'madre'      => 'Madre',
@@ -93,7 +90,7 @@ class NuevoComunicadoFamilia extends Component
 
         $mediosCanal = CanalesPolicy::mediosPermitidos('familia', $this->rolReceptor);
 
-        $hilo = ComunicacionesRepository::crearHiloConMensaje([
+        ComunicacionesRepository::crearHiloConMensaje([
             'asunto'                   => $this->asunto,
             'contenido'                => $this->contenido,
             'scope'                    => 'alumno',
@@ -112,9 +109,8 @@ class NuevoComunicadoFamilia extends Component
             'familia_puede_responder'  => true,
         ], $mediosCanal);
 
-        $this->enviado = $hilo->id;
-        $this->reset('asunto', 'contenido', 'vinculo', 'rolReceptor', 'idDestinatario');
         session()->flash('success', 'Comunicado enviado.');
+        $this->redirectRoute('alumnos.comunicaciones.index');
     }
 
     private function snapshotDatosFamiliares(?Legajo $legajo, string $vinculo): array
@@ -136,6 +132,6 @@ class NuevoComunicadoFamilia extends Component
         return view('livewire.alumnos.comunicaciones.nuevo-comunicado-familia', [
             'maxContenido' => config('comunicaciones.max_contenido', 2000),
             'maxAsunto'    => config('comunicaciones.max_asunto', 200),
-        ])->layout('layouts.alumno', ['pageTitle' => 'Nuevo Comunicado']);
+        ])->layout('layouts.alumno', ['pageTitle' => 'Nuevo comunicado']);
     }
 }

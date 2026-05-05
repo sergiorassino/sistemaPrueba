@@ -61,6 +61,6 @@ class PreferenciasMedios extends Component
     public function render()
     {
         return view('livewire.alumnos.comunicaciones.preferencias-medios')
-            ->layout('layouts.alumno', ['pageTitle' => 'Preferencias de Comunicación']);
+            ->layout('layouts.alumno', ['pageTitle' => 'Preferencias de comunicación']);
     }
 }

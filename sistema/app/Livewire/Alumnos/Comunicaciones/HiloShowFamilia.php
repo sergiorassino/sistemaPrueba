@@ -5,16 +5,28 @@ namespace App\Livewire\Alumnos\Comunicaciones;
 use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Models\ComHilo;
+use App\Models\ComMensaje;
+use App\Models\ComMensajeDestinatario;
+use App\Models\ComMensajeEnvio;
 use App\Models\Legajo;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class HiloShowFamilia extends Component
 {
     public int $idHilo;
+
     public string $vinculo   = '';
     public string $respuesta = '';
     public bool $mostrarFormRespuesta = false;
+
+    public bool $modalBorrarAbierto = false;
+
+    /** @var int|null */
+    public ?int $modalBorrarMensajeId = null;
+
+    public bool $modalBorrarEliminaHiloCompleto = false;
 
     public function mount(int $id): void
     {
@@ -28,6 +40,224 @@ class HiloShowFamilia extends Component
 
         $this->idHilo = $id;
         ComunicacionesRepository::marcarLeidoHiloFamilia($id, (int) $ctx->idLegajo);
+    }
+
+    public function marcarMensajeNoLeido(int $idMensaje): void
+    {
+        $key = 'com:unread:fam:' . (auth('alumno')->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 40)) {
+            $this->addError('marcarNoLeido', 'Demasiadas acciones. Espere un momento.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $ctx = studentCtx();
+        $ok  = ComunicacionesRepository::marcarNoLeidoMensajeFamilia(
+            $idMensaje,
+            $this->idHilo,
+            (int) $ctx->idLegajo,
+            (int) $ctx->idNivel,
+            (int) $ctx->idTerlec
+        );
+
+        if (! $ok) {
+            $this->addError('marcarNoLeido', 'No se pudo marcar como no leído.');
+
+            return;
+        }
+
+        $this->resetErrorBag('marcarNoLeido');
+        session()->now('success', 'Mensaje marcado como no leído.');
+    }
+
+    /**
+     * @return array{puede:bool,motivo:string}
+     */
+    public function infoBorradoMensaje(ComMensaje $msg, ?int $cuerpoInicialId = null, ?int $mensajesEnHilo = null): array
+    {
+        $ctx       = studentCtx();
+        $idLegajo  = (int) $ctx->idLegajo;
+
+        if ((int) $msg->id_hilo !== (int) $this->idHilo) {
+            return ['puede' => false, 'motivo' => 'Mensaje fuera del hilo.'];
+        }
+
+        if ($msg->tipo_remitente !== 'familia' || (int) ($msg->id_legajo ?? 0) !== $idLegajo) {
+            return ['puede' => false, 'motivo' => 'Solo puede borrar sus propios mensajes.'];
+        }
+
+        if ($cuerpoInicialId === null) {
+            $cuerpoInicialId = (int) (ComHilo::query()
+                ->where('id', (int) $this->idHilo)
+                ->where('id_nivel', (int) $ctx->idNivel)
+                ->where('id_terlec', (int) $ctx->idTerlec)
+                ->value('cuerpo_inicial_id') ?? 0);
+        }
+
+        if ($mensajesEnHilo === null) {
+            $mensajesEnHilo = (int) ComMensaje::query()
+                ->where('id_hilo', (int) $this->idHilo)
+                ->count();
+        }
+
+        if ($cuerpoInicialId === (int) $msg->id && $mensajesEnHilo > 1) {
+            return ['puede' => false, 'motivo' => 'No se puede borrar el mensaje inicial si ya hay mensajes posteriores.'];
+        }
+
+        if (property_exists($msg, 'respuestas_count') && (int) $msg->respuestas_count > 0) {
+            return ['puede' => false, 'motivo' => 'No se puede borrar un mensaje que tiene respuestas.'];
+        }
+
+        return ['puede' => true, 'motivo' => ''];
+    }
+
+    public function abrirModalBorrar(int $idMensaje): void
+    {
+        $ctx = studentCtx();
+
+        $hilo = ComHilo::query()
+            ->where('id', (int) $this->idHilo)
+            ->where('id_nivel', (int) $ctx->idNivel)
+            ->where('id_terlec', (int) $ctx->idTerlec)
+            ->first();
+
+        abort_if($hilo === null, 404);
+
+        $msg = ComMensaje::query()
+            ->where('id', (int) $idMensaje)
+            ->where('id_hilo', (int) $hilo->id)
+            ->withCount('respuestas')
+            ->first();
+
+        if ($msg === null) {
+            $this->addError('modalBorrar', 'No se encontró el mensaje.');
+            return;
+        }
+
+        $cant = (int) ComMensaje::query()->where('id_hilo', (int) $hilo->id)->count();
+        $info = $this->infoBorradoMensaje($msg, (int) ($hilo->cuerpo_inicial_id ?? 0), $cant);
+        if (! $info['puede']) {
+            $this->addError('modalBorrar', $info['motivo']);
+            return;
+        }
+
+        $this->resetErrorBag('modalBorrar');
+
+        $this->modalBorrarMensajeId           = (int) $msg->id;
+        $this->modalBorrarEliminaHiloCompleto = ((int) ($hilo->cuerpo_inicial_id ?? 0) === (int) $msg->id) && $cant === 1;
+        $this->modalBorrarAbierto             = true;
+    }
+
+    public function cerrarModalBorrar(): void
+    {
+        $this->modalBorrarAbierto = false;
+        $this->modalBorrarMensajeId = null;
+        $this->modalBorrarEliminaHiloCompleto = false;
+        $this->resetErrorBag('modalBorrar');
+    }
+
+    public function confirmarModalBorrar(): void
+    {
+        $id = $this->modalBorrarMensajeId;
+        $this->cerrarModalBorrar();
+
+        if ($id === null) {
+            return;
+        }
+
+        $this->borrarMensaje($id);
+    }
+
+    public function borrarMensaje(int $idMensaje): void
+    {
+        $key = 'com:del:fam:' . (auth('alumno')->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            session()->flash('success', 'Demasiadas acciones. Espere un momento.');
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $ctx       = studentCtx();
+        $idLegajo  = (int) $ctx->idLegajo;
+
+        $hilo = ComHilo::query()
+            ->where('id', (int) $this->idHilo)
+            ->where('id_nivel', (int) $ctx->idNivel)
+            ->where('id_terlec', (int) $ctx->idTerlec)
+            ->first();
+
+        abort_if($hilo === null, 404);
+
+        $msg = ComMensaje::query()
+            ->where('id', (int) $idMensaje)
+            ->where('id_hilo', (int) $hilo->id)
+            ->withCount('respuestas')
+            ->first();
+
+        abort_if($msg === null, 404);
+
+        abort_unless(
+            $msg->tipo_remitente === 'familia' && (int) ($msg->id_legajo ?? 0) === $idLegajo,
+            403,
+            'No autorizado.'
+        );
+
+        $borrarHilo = false;
+        if ((int) $hilo->cuerpo_inicial_id === (int) $msg->id) {
+            $cant = ComMensaje::query()
+                ->where('id_hilo', (int) $hilo->id)
+                ->count();
+            abort_if($cant > 1, 403, 'No se puede borrar el mensaje inicial si ya hay mensajes posteriores.');
+            $borrarHilo = true;
+        }
+
+        abort_if((int) $msg->respuestas_count > 0, 403, 'No se puede borrar un mensaje que tiene respuestas.');
+
+        DB::transaction(function () use ($msg, $hilo, $borrarHilo) {
+            if ($borrarHilo) {
+                ComHilo::query()
+                    ->where('id', (int) $hilo->id)
+                    ->delete();
+                return;
+            }
+
+            $destIds = ComMensajeDestinatario::query()
+                ->where('id_mensaje', (int) $msg->id)
+                ->pluck('id')
+                ->map(fn ($v) => (int) $v)
+                ->all();
+
+            if (count($destIds)) {
+                ComMensajeEnvio::query()
+                    ->whereIn('id_mensaje_destinatario', $destIds)
+                    ->delete();
+            }
+
+            ComMensajeDestinatario::query()
+                ->where('id_mensaje', (int) $msg->id)
+                ->delete();
+
+            ComMensaje::query()
+                ->where('id', (int) $msg->id)
+                ->delete();
+
+            $ultimo = ComMensaje::query()
+                ->where('id_hilo', (int) $hilo->id)
+                ->max('created_at');
+
+            $hilo->update([
+                'ultimo_mensaje_at' => $ultimo ?? $hilo->created_at ?? now(),
+            ]);
+        });
+
+        if ($borrarHilo) {
+            session()->flash('success', 'Comunicado eliminado.');
+            $this->redirectRoute('alumnos.comunicaciones.index');
+            return;
+        }
+
+        session()->flash('success', 'Mensaje borrado.');
     }
 
     public function responder(): void
@@ -48,7 +278,6 @@ class HiloShowFamilia extends Component
         $idLegajo = (int) $ctx->idLegajo;
         $legajo   = Legajo::find($idLegajo);
 
-        // Determinar el rol receptor del hilo (el que creó el hilo desde la escuela)
         $hilo        = ComHilo::findOrFail($this->idHilo);
         $rolReceptor = (string) ($hilo->creado_por_rol ?? 'preceptor');
 
@@ -100,7 +329,13 @@ class HiloShowFamilia extends Component
     public function render()
     {
         $ctx  = studentCtx();
-        $hilo = ComHilo::with(['mensajes.destinatarios.envios'])->findOrFail($this->idHilo);
+        $hilo = ComHilo::with([
+            'mensajes' => function ($q) {
+                $q->withCount('respuestas')
+                    ->with(['destinatarios.envios', 'hilo'])
+                    ->orderBy('created_at');
+            },
+        ])->findOrFail($this->idHilo);
 
         abort_if(
             $hilo->id_nivel !== (int) $ctx->idNivel || $hilo->id_terlec !== (int) $ctx->idTerlec,
@@ -110,13 +345,32 @@ class HiloShowFamilia extends Component
         $rolHilo   = (string) ($hilo->creado_por_rol ?? 'preceptor');
         $puedeResp = $hilo->familiaPuedeEnviarRespuestas()
             && CanalesPolicy::puedeResponder('familia', $rolHilo);
+
         $mensajesPorDia = $hilo->mensajes->groupBy(fn ($m) => $m->created_at?->toDateString());
 
+        $paraCompleto = null;
+        if ($hilo->creado_por_tipo === 'familia') {
+            $nombres = ComMensajeDestinatario::query()
+                ->where('id_mensaje', (int) $hilo->cuerpo_inicial_id)
+                ->where('tipo_destinatario', 'profesor')
+                ->whereNotNull('nombre_snapshot')
+                ->orderBy('id_profesor')
+                ->pluck('nombre_snapshot')
+                ->map(fn ($s) => trim((string) $s))
+                ->filter(fn ($s) => $s !== '')
+                ->unique()
+                ->values()
+                ->all();
+            $paraCompleto = count($nombres) ? implode(' · ', $nombres) : '—';
+        }
+
         return view('livewire.alumnos.comunicaciones.hilo-show-familia', [
-            'hilo'           => $hilo,
-            'mensajesPorDia' => $mensajesPorDia,
-            'puedeResponder' => $puedeResp,
-            'maxContenido'   => config('comunicaciones.max_contenido', 2000),
+            'hilo'             => $hilo,
+            'mensajesPorDia'   => $mensajesPorDia,
+            'puedeResponder'   => $puedeResp,
+            'maxContenido'     => config('comunicaciones.max_contenido', 2000),
+            'paraCompleto'     => $paraCompleto,
+            'idLegajoSesion'   => (int) $ctx->idLegajo,
         ])->layout('layouts.alumno', ['pageTitle' => $hilo->asunto]);
     }
 }

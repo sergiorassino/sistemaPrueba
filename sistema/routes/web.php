@@ -28,6 +28,7 @@ use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
 use App\Livewire\Comunicaciones\BandejaGestion;
 use App\Livewire\Comunicaciones\HiloShow;
 use App\Livewire\Comunicaciones\NuevoComunicado;
+use App\Livewire\Administracion\Permisos\PermisosUsuariosIndex;
 use App\Livewire\Listados\ListadoPorCurso;
 use App\Livewire\Parametrizacion\CamposListadoAlumnosIndex;
 use App\Livewire\Parametrizacion\ComCanalesIndex;
@@ -128,6 +129,11 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/parametrizacion/com-canales', ComCanalesIndex::class)
         ->middleware('permiso:53')
         ->name('param.com-canales');
+
+    // Administración: permisos de usuarios (orden 0)
+    Route::get('/administracion/permisos', PermisosUsuariosIndex::class)
+        ->middleware('permiso:0')
+        ->name('admin.permisos');
 
     // ABM routes
     Route::get('/abm/terlec', TerlecIndex::class)->middleware('permiso:1')->name('abm.terlec');

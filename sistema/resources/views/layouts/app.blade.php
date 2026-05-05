@@ -563,6 +563,25 @@
                     <span class="truncate">Parámetros del sistema</span>
                 </a>
 
+                @if(tienePermiso(0))
+                <a href="{{ route('admin.permisos') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'admin.permisos',
+                   ])
+                   title="Administración de permisos de usuarios">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 8.49 1.65 1.65 0 004.27 6.67l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 008.91 4.2 1.65 1.65 0 009.92 2.7V2a2 2 0 014 0v.09c0 .69.4 1.31 1.02 1.6.62.29 1.34.19 1.82-.28l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06c-.47.47-.57 1.19-.28 1.82.29.62.91 1.02 1.6 1.02H21a2 2 0 010 4h-.09c-.69 0-1.31.4-1.6 1.02z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 15a3 3 0 100-6 3 3 0 000 6z"/>
+                    </svg>
+                    <span class="truncate">Permisos de usuarios</span>
+                </a>
+                @endif
+
                 @if(tienePermiso(53))
                 <a href="{{ route('param.com-canales') }}"
                    @class([

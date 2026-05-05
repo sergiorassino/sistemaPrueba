@@ -61,8 +61,7 @@
         @forelse ($hilos as $hilo)
             @php
                 $noLeidos = (int) $hilo->no_leidos;
-                $respondidos = (int) $hilo->respondidos;
-                $estado = $respondidos > 0 ? 'respondido' : ($noLeidos > 0 ? 'no_leido' : 'leido');
+                $tieneNoLeidos = $noLeidos > 0;
                 $esEnviados = ((string) ($hilo->direccion ?? '')) === 'enviado';
                 $tieneConversacion = ((int) ($hilo->mensajes_count ?? 0)) > 1;
                 $cuerpoInicial = '';
@@ -120,22 +119,20 @@
             <a href="{{ route('comunicaciones.hilo', $hilo->id) }}"
                @class([
                    'se-card block p-4 transition hover:shadow-md sm:p-5',
-                   'border-l-4 border-l-primary-600 bg-primary-50/20' => $esEnviados,
-                   'border-r-4 border-r-accent-300 bg-white' => ! $esEnviados,
-                   'ring-1 ring-primary-200/60' => ! $esEnviados && $estado === 'no_leido',
+                   'border-l-4 border-l-primary-600 bg-primary-50/20' => $esEnviados && ! $tieneNoLeidos,
+                   'border-l-4 border-l-primary-600 bg-pink-100' => $esEnviados && $tieneNoLeidos,
+                   'border-r-4 border-r-accent-300 bg-white' => ! $esEnviados && ! $tieneNoLeidos,
+                   'border-r-4 border-r-pink-400 bg-pink-100' => ! $esEnviados && $tieneNoLeidos,
                ])>
-                <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center justify-between gap-3">
+                <div class="block w-full min-w-0">
+                        <div @class([
+                            'flex w-full min-w-0 flex-wrap items-center gap-2',
+                            'justify-start' => $esEnviados,
+                            'justify-end text-right' => ! $esEnviados,
+                        ])>
                             <span class="shrink-0 text-xs text-neutral-400 tabular-nums">
                                 {{ $hilo->ultimo_mensaje_at ? \Carbon\Carbon::parse($hilo->ultimo_mensaje_at)->format('d/m/Y H:i') : '' }}
                             </span>
-                            <div class="flex flex-wrap items-center justify-end gap-2 text-right">
-                            @if (! $esEnviados && $estado === 'no_leido')
-                                <span class="inline-flex shrink-0 items-center rounded-full border border-primary-300 bg-primary-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-800">
-                                    {{ $noLeidos }} no leído{{ $noLeidos > 1 ? 's' : '' }}
-                                </span>
-                            @endif
                             <span @class([
                                 'inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
                                 'border-primary-200 bg-primary-50 text-primary-800' => $esEnviados,
@@ -143,17 +140,21 @@
                             ])>
                                 {{ $esEnviados ? 'Enviado' : 'Recibido' }}
                             </span>
-                            @if ($hilo->creado_por_tipo === 'profesor' && ! ($hilo->familia_puede_responder ?? true))
-                                <span class="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">
-                                    Solo informativo
-                                </span>
-                            @endif
                             @if ($tieneConversacion)
                                 <span class="inline-flex shrink-0 items-center rounded-full border border-primary-200 bg-primary-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-800">
                                     Ver conversación
                                 </span>
                             @endif
-                            </div>
+                            @if ($tieneNoLeidos)
+                                <span class="inline-flex shrink-0 items-center rounded-full border border-pink-400 bg-pink-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-pink-950">
+                                    {{ $noLeidos }} no leído{{ $noLeidos > 1 ? 's' : '' }}
+                                </span>
+                            @endif
+                            @if ($hilo->creado_por_tipo === 'profesor' && ! ($hilo->familia_puede_responder ?? true))
+                                <span class="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">
+                                    Solo informativo
+                                </span>
+                            @endif
                         </div>
                         <div class="mt-1 grid min-w-0 grid-cols-[16rem,1fr] items-center gap-x-3 gap-y-1 text-sm">
                             <div @class([
@@ -179,7 +180,6 @@
                                 @endif
                             </div>
                         </div>
-                    </div>
                 </div>
             </a>
         @empty

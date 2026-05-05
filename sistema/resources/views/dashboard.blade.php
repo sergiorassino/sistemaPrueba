@@ -57,6 +57,15 @@
         ];
     }
 
+    if (tienePermiso(0)) {
+        $dashboardLinks[] = [
+            'title' => 'Permisos de usuarios',
+            'hint' => 'Administración de accesos',
+            'href' => route('admin.permisos'),
+            'icon' => 'shield',
+        ];
+    }
+
     if (tienePermiso(53)) {
         $dashboardLinks[] = [
             'title' => 'Canales de comunicación',

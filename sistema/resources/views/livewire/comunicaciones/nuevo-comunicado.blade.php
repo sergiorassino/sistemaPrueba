@@ -21,22 +21,6 @@
         </div>
     </section>
 
-    @if (session('success'))
-        <div class="se-soft-card flex flex-col gap-3 border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center gap-3">
-                <svg class="h-5 w-5 shrink-0 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                <span>{{ session('success') }}</span>
-            </div>
-            @if ($enviado)
-                <a href="{{ route('comunicaciones.hilo', $enviado) }}" class="font-semibold text-primary-700 underline decoration-primary-300 underline-offset-2 hover:text-primary-800">
-                    Ver comunicado
-                </a>
-            @endif
-        </div>
-    @endif
-
     <div class="se-card overflow-hidden">
         <div class="border-b border-accent-200 bg-white px-5 py-4">
             <p class="se-section-title">Destinatarios y mensaje</p>

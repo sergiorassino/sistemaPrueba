@@ -40,6 +40,13 @@
 
     <div class="se-toolbar space-y-5">
         <div>
+            <label for="periodo" class="form-label">Año lectivo</label>
+            <select id="periodo" wire:model.live="periodo" class="form-select mt-1.5">
+                <option value="actual">Actual</option>
+                <option value="historico">Toda la historia</option>
+            </select>
+        </div>
+        <div>
             <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">Estado</p>
             <div class="mt-2 flex flex-wrap gap-2">
                 @foreach (['todos' => 'Todos', 'no_leidos' => 'No leídos', 'respondidos' => 'Respondidos'] as $val => $label)

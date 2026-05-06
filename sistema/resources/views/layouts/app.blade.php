@@ -100,6 +100,7 @@
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.') || str_starts_with($route ?? '', 'push.') || (str_starts_with($route ?? '', 'comunicaciones.') && tienePermiso(51) && tienePermiso(2))) ? 'true' : 'false' }},
+        cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales') && tienePermiso(51) && tienePermiso(2)) ? 'true' : 'false' }},
         calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.')) ? 'true' : 'false' }},
         disciplinario: {{ (str_starts_with($route ?? '', 'seguimiento.disciplinario')) ? 'true' : 'false' }},
         comunicaciones: {{ (tienePermiso(51) && !tienePermiso(2) && (str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales')) ? 'true' : 'false' }},
@@ -297,36 +298,89 @@
                     </svg>
                     <span class="truncate">Enviar notificación push</span>
                 </a>
+            </div>
+        @endif
 
-                @if(tienePermiso(51))
-                    <p x-show="!sidebarCollapsed" x-cloak class="mt-2 mb-0.5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-white/50">
-                        Comunicaciones con familias
-                    </p>
-                    <a href="{{ route('comunicaciones.index') }}"
-                       @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                           'is-active shadow-sm' => str_starts_with($route ?? '', 'comunicaciones.') && ($route ?? '') !== 'comunicaciones.nuevo',
-                       ])
-                       title="Bandeja de comunicados">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                        <span class="truncate">Bandeja de comunicados</span>
-                    </a>
-                    @if(tienePermiso(52))
-                    <a href="{{ route('comunicaciones.nuevo') }}"
-                       @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                           'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.nuevo',
-                       ])
-                       title="Nuevo comunicado a familias">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        <span class="truncate">Nuevo comunicado</span>
-                    </a>
-                    @endif
+        {{-- Cuaderno de Comunicados (para usuarios con Estudiantes + Comunicaciones) --}}
+        @if(tienePermiso(51) && tienePermiso(2))
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    :class="(groups.cuadernoComunicados && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('cuadernoComunicados')"
+                    title="Cuaderno de Comunicados">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">CUADERNO DE COMUNICADOS</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.cuadernoComunicados ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <div class="mt-1 space-y-0.5 pl-1"
+                 x-show="groups.cuadernoComunicados && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                <a href="{{ route('comunicaciones.index') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'comunicaciones.') && ! in_array(($route ?? ''), ['comunicaciones.nuevo', 'comunicaciones.revision'], true),
+                   ])
+                   title="Bandeja de comunicados">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="truncate">Bandeja de comunicados</span>
+                </a>
+
+                @if(tienePermiso(52))
+                <a href="{{ route('comunicaciones.nuevo') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.nuevo',
+                   ])
+                   title="Nuevo comunicado a familias">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span class="truncate">Nuevo comunicado</span>
+                </a>
+                @endif
+
+                @if(tienePermiso(56))
+                <a href="{{ route('comunicaciones.revision') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.revision',
+                   ])
+                   title="Control Cuaderno de Comunicados">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    <span class="truncate">Control Cuaderno de Comunicados</span>
+                </a>
+                @endif
+
+                @if(tienePermiso(53))
+                <a href="{{ route('param.com-canales') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'param.com-canales',
+                   ])
+                   title="Config. de canales">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="truncate">Config. canales</span>
+                </a>
                 @endif
             </div>
         @endif
@@ -409,7 +463,7 @@
                 <a href="{{ route('comunicaciones.index') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'comunicaciones.') && ($route ?? '') !== 'comunicaciones.nuevo',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'comunicaciones.') && ! in_array(($route ?? ''), ['comunicaciones.nuevo', 'comunicaciones.revision'], true),
                    ])
                    title="Bandeja de comunicados">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -429,6 +483,20 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
                     <span class="truncate">Nuevo comunicado</span>
+                </a>
+                @endif
+                @if(tienePermiso(56))
+                <a href="{{ route('comunicaciones.revision') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.revision',
+                   ])
+                   title="Control Cuaderno de Comunicados">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    <span class="truncate">Control Cuaderno de Comunicados</span>
                 </a>
                 @endif
                 @if(tienePermiso(53))

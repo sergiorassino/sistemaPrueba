@@ -127,7 +127,7 @@
                                                     wire:click="marcarMensajeNoLeido({{ (int) $msg->id }})"
                                                     wire:loading.attr="disabled"
                                                     wire:target="marcarMensajeNoLeido"
-                                                    class="text-[10px] font-semibold uppercase tracking-wide text-white/90 opacity-90 transition hover:opacity-100">
+                                                    class="cursor-pointer text-[10px] font-semibold uppercase tracking-wide text-white/90 opacity-90 transition hover:opacity-100">
                                                 <span wire:loading.remove wire:target="marcarMensajeNoLeido">Marcar como no leído</span>
                                                 <span wire:loading wire:target="marcarMensajeNoLeido">…</span>
                                             </button>
@@ -142,7 +142,7 @@
                                                 @endif
                                                 @class([
                                                     'text-[10px] font-semibold uppercase tracking-wide transition',
-                                                    'opacity-80 hover:opacity-100' => $borrado['puede'],
+                                                    'cursor-pointer opacity-80 hover:opacity-100' => $borrado['puede'],
                                                     'cursor-not-allowed opacity-40' => ! $borrado['puede'],
                                                 ])>
                                             Borrar

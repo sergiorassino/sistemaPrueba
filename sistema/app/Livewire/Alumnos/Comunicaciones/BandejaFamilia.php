@@ -17,7 +17,12 @@ class BandejaFamilia extends Component
         $idTerlec = (int) $ctx->idTerlec;
 
         $hilos = ComunicacionesRepository::bandejaFamilia(
-            $idLegajo, $idNivel, $idTerlec, $this->filtro, 'todos'
+            $idLegajo,
+            $idNivel,
+            $idTerlec,
+            $this->filtro,
+            'todos',
+            true
         );
 
         return view('livewire.alumnos.comunicaciones.bandeja-familia', [

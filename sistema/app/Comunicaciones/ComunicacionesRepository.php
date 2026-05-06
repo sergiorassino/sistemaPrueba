@@ -15,6 +15,68 @@ use Illuminate\Support\Facades\DB;
 class ComunicacionesRepository
 {
     /**
+     * Verifica si un profesor puede ver un hilo (por ser creador o destinatario),
+     * siempre acotado al nivel/terlec del contexto.
+     */
+    public static function profesorPuedeVerHilo(
+        int $idHilo,
+        int $idProfesor,
+        int $idNivel,
+        int $idTerlec
+    ): bool {
+        return DB::table('com_hilos as h')
+            ->where('h.id', $idHilo)
+            ->where('h.id_nivel', $idNivel)
+            ->where('h.id_terlec', $idTerlec)
+            ->where(function ($q) use ($idProfesor) {
+                $q->where(function ($q2) use ($idProfesor) {
+                    $q2->where('h.creado_por_tipo', 'profesor')
+                        ->where('h.creado_por_id', $idProfesor);
+                })->orWhereExists(function ($sub) use ($idProfesor) {
+                    $sub->select(DB::raw(1))
+                        ->from('com_mensajes_destinatarios as d')
+                        ->whereColumn('d.id_hilo', 'h.id')
+                        ->where('d.tipo_destinatario', 'profesor')
+                        ->where('d.id_profesor', $idProfesor);
+                });
+            })
+            ->exists();
+    }
+
+    /**
+     * Buscar profesores del nivel actual (para pantalla de revisión).
+     *
+     * @return list<array{id:int,label:string,dni:?string}>
+     */
+    public static function buscarProfesores(int $idNivel, string $q, int $limit = 15): array
+    {
+        $q = trim($q);
+        if ($q === '') {
+            return [];
+        }
+
+        $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $q) . '%';
+
+        return DB::table('profesores as p')
+            ->where('p.nivel', $idNivel)
+            ->where(function ($w) use ($like) {
+                $w->where('p.apellido', 'like', $like)
+                    ->orWhere('p.nombre', 'like', $like)
+                    ->orWhere('p.dni', 'like', $like);
+            })
+            ->orderBy('p.apellido')
+            ->orderBy('p.nombre')
+            ->limit($limit)
+            ->get(['p.id', 'p.apellido', 'p.nombre', 'p.dni'])
+            ->map(fn ($r) => [
+                'id' => (int) $r->id,
+                'label' => trim((string) $r->apellido . ', ' . (string) $r->nombre),
+                'dni' => $r->dni !== null ? (string) $r->dni : null,
+            ])
+            ->all();
+    }
+
+    /**
      * Bandeja del profesor: hilos donde es creador o destinatario,
      * con contadores de no_leidos y respondidos.
      *
@@ -26,7 +88,8 @@ class ComunicacionesRepository
         int $idNivel,
         int $idTerlec,
         string $filtro = 'todos',
-        string $direccion = 'recibidos'
+        string $direccion = 'recibidos',
+        bool $soloTerlecActual = true
     ) {
         $direccion = in_array($direccion, ['recibidos', 'enviados'], true) ? $direccion : 'todos';
 
@@ -54,7 +117,7 @@ class ComunicacionesRepository
                     ->where('h.creado_por_id', $idProfesor);
             })
             ->where('h.id_nivel', $idNivel)
-            ->where('h.id_terlec', $idTerlec)
+            ->when($soloTerlecActual, fn ($q) => $q->where('h.id_terlec', $idTerlec))
             ->leftJoin('com_mensajes_destinatarios as d', function ($j) use ($idProfesor) {
                 $j->on('d.id_hilo', '=', 'h.id')
                   ->where('d.tipo_destinatario', 'profesor')
@@ -112,7 +175,8 @@ class ComunicacionesRepository
         int $idNivel,
         int $idTerlec,
         string $filtro = 'todos',
-        string $direccion = 'todos'
+        string $direccion = 'todos',
+        bool $soloTerlecActual = true
     ) {
         $direccion = in_array($direccion, ['todos', 'recibidos', 'enviados'], true)
             ? $direccion
@@ -142,7 +206,7 @@ class ComunicacionesRepository
                     ->where('h.creado_por_id', $idLegajo);
             })
             ->where('h.id_nivel', $idNivel)
-            ->where('h.id_terlec', $idTerlec)
+            ->when($soloTerlecActual, fn ($q) => $q->where('h.id_terlec', $idTerlec))
             ->leftJoin('com_mensajes_destinatarios as d', function ($j) use ($idLegajo) {
                 $j->on('d.id_hilo', '=', 'h.id')
                   ->where('d.tipo_destinatario', 'familia')

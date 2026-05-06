@@ -29,12 +29,26 @@ class HiloShow extends Component
     {
         abort_unless(tienePermiso(51), 403, 'Sin permiso para ver comunicaciones.');
 
+        $ctx = schoolCtx();
+
         $hilo = ComHilo::where('id', $id)
-            ->where('id_nivel', (int) schoolCtx()->idNivel)
-            ->where('id_terlec', (int) schoolCtx()->idTerlec)
+            ->where('id_nivel', (int) $ctx->idNivel)
+            ->where('id_terlec', (int) $ctx->idTerlec)
             ->first();
 
         abort_if($hilo === null, 404);
+
+        // Seguridad: sin permiso de revisión, solo puede abrir hilos donde participa
+        // (creador o destinatario en el nivel/terlec del contexto).
+        if (! tienePermiso(56)) {
+            $puede = ComunicacionesRepository::profesorPuedeVerHilo(
+                (int) $hilo->id,
+                (int) $ctx->idProfesor,
+                (int) $ctx->idNivel,
+                (int) $ctx->idTerlec
+            );
+            abort_unless($puede, 403, 'Sin permiso para ver este hilo.');
+        }
 
         $this->idHilo = $id;
         $this->marcarLeido();

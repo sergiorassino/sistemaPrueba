@@ -26,6 +26,7 @@ use App\Livewire\Auth\Login;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
 use App\Livewire\Comunicaciones\BandejaGestion;
+use App\Livewire\Comunicaciones\BandejaRevision;
 use App\Livewire\Comunicaciones\HiloShow;
 use App\Livewire\Comunicaciones\NuevoComunicado;
 use App\Livewire\Administracion\Permisos\PermisosUsuariosIndex;
@@ -117,6 +118,9 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/comunicaciones', BandejaGestion::class)
         ->middleware('permiso:51')
         ->name('comunicaciones.index');
+    Route::get('/comunicaciones/revision', BandejaRevision::class)
+        ->middleware(['permiso:51', 'permiso:56'])
+        ->name('comunicaciones.revision');
     Route::get('/comunicaciones/nuevo', NuevoComunicado::class)
         ->middleware('permiso:52')
         ->name('comunicaciones.nuevo');

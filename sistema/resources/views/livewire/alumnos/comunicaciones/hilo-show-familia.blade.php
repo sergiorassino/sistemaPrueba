@@ -126,7 +126,7 @@
                                                     wire:loading.attr="disabled"
                                                     wire:target="marcarMensajeNoLeido"
                                                     @class([
-                                                        'text-[10px] font-semibold uppercase tracking-wide transition opacity-80 hover:opacity-100',
+                                                        'cursor-pointer text-[10px] font-semibold uppercase tracking-wide transition opacity-80 hover:opacity-100',
                                                         'text-neutral-600' => $esPlataforma,
                                                         'text-white/90' => ! $esPlataforma,
                                                     ])>
@@ -144,7 +144,7 @@
                                                 @endif
                                                 @class([
                                                     'text-[10px] font-semibold uppercase tracking-wide transition',
-                                                    'opacity-80 hover:opacity-100' => $borrado['puede'],
+                                                    'cursor-pointer opacity-80 hover:opacity-100' => $borrado['puede'],
                                                     'cursor-not-allowed opacity-40' => ! $borrado['puede'],
                                                 ])>
                                             Borrar

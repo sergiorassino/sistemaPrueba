@@ -8,6 +8,7 @@ use Livewire\Component;
 class BandejaGestion extends Component
 {
     public string $filtro = 'todos'; // todos|no_leidos|respondidos
+    public string $periodo = 'actual'; // actual|historico
 
     public function mount(): void
     {
@@ -27,7 +28,12 @@ class BandejaGestion extends Component
         $idTerlec  = (int) $ctx->idTerlec;
 
         $hilos = ComunicacionesRepository::bandejaProfesor(
-            $idProf, $idNivel, $idTerlec, $this->filtro, 'todos'
+            $idProf,
+            $idNivel,
+            $idTerlec,
+            $this->filtro,
+            'todos',
+            $this->periodo !== 'historico'
         );
 
         return view('livewire.comunicaciones.bandeja-gestion', [

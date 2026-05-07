@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('pageTitle', 'Panel principal')
+@section('pageTitle', schoolNombre())
 
 @section('content')
 @php
@@ -135,6 +135,7 @@
     $accesosDisponibles = count($dashboardLinks);
     $nombreUsuario = trim((Auth::user()->nombre ?? '') . ' ' . (Auth::user()->apellido ?? ''));
     $heroLogo = schoolLogoUrl() ?: asset('img/3.png');
+    $tenantNombre = schoolNombre();
 @endphp
 
 <div class="max-w-6xl mx-auto space-y-8">
@@ -147,9 +148,11 @@
             <div class="min-w-0 flex-1 space-y-3">
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Panel de inicio</p>
                 <h1 class="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
-                    Hola, {{ $nombreUsuario !== '' ? $nombreUsuario : 'usuario' }}
+                    {{ $tenantNombre }}
                 </h1>
                 <p class="text-sm sm:text-base text-white/85 max-w-xl">
+                    Hola, <span class="font-medium text-white">{{ $nombreUsuario !== '' ? $nombreUsuario : 'usuario' }}</span>
+                    <span class="text-white/45"> · </span>
                     <span class="font-medium text-white">{{ schoolCtx()->nivelNombre() }}</span>
                     <span class="text-white/45"> · </span>
                     Ciclo lectivo

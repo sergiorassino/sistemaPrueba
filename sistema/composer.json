@@ -1,17 +1,28 @@
 {
-    "name": "laravel/laravel",
+    "name": "colegio/sistemaprueba",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
-    "license": "MIT",
+    "description": "Instalación del sistema SE para el colegio Sistema Prueba (desarrollo/demo).",
+    "license": "proprietary",
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
         "laravel/framework": "^11.0",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^4.2",
-        "minishlink/web-push": "^10.0"
+        "minishlink/web-push": "^10.0",
+        "se/modulo-comunicaciones": "^0.1",
+        "se/modulo-listados": "^0.1"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/sergiorassino/modulo-comunicaciones.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/sergiorassino/modulo-listados.git"
+        }
+    ],
     "require-dev": {
         "fakerphp/faker": "^1.23",
         "laravel/pint": "^1.13",

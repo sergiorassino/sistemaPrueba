@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6f1bc74aa7245e46536e44273a1a63f7",
+    "content-hash": "c04371a263bed7cbf8895b75d0c9adb9",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -3812,6 +3812,91 @@
                 "source": "https://github.com/MyIntervals/PHP-CSS-Parser/tree/v9.3.0"
             },
             "time": "2026-03-03T17:31:43+00:00"
+        },
+        {
+            "name": "se/modulo-comunicaciones",
+            "version": "0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sergiorassino/modulo-comunicaciones.git",
+                "reference": "69dcd6f7bee96e0428898d9c368199dac47289dc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sergiorassino/modulo-comunicaciones/zipball/69dcd6f7bee96e0428898d9c368199dac47289dc",
+                "reference": "69dcd6f7bee96e0428898d9c368199dac47289dc",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/framework": "^11.0",
+                "livewire/livewire": "^4.2",
+                "php": "^8.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Se\\ModuloComunicaciones\\ComunicacionesServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Se\\ModuloComunicaciones\\": "src/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "Módulo Cuaderno de Comunicados escuela-familia — paquete del sistema SE.",
+            "support": {
+                "source": "https://github.com/sergiorassino/modulo-comunicaciones/tree/v0.1.0",
+                "issues": "https://github.com/sergiorassino/modulo-comunicaciones/issues"
+            },
+            "time": "2026-05-07T12:46:49+00:00"
+        },
+        {
+            "name": "se/modulo-listados",
+            "version": "0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sergiorassino/modulo-listados.git",
+                "reference": "3dca4d3989a795c1e0f821a5df4bfd9149ee012e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sergiorassino/modulo-listados/zipball/3dca4d3989a795c1e0f821a5df4bfd9149ee012e",
+                "reference": "3dca4d3989a795c1e0f821a5df4bfd9149ee012e",
+                "shasum": ""
+            },
+            "require": {
+                "barryvdh/laravel-dompdf": "^3.1",
+                "laravel/framework": "^11.0",
+                "livewire/livewire": "^4.2",
+                "php": "^8.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Se\\ModuloListados\\ListadosServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Se\\ModuloListados\\": "src/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "Módulo de listados de alumnos por curso — paquete del sistema SE.",
+            "support": {
+                "source": "https://github.com/sergiorassino/modulo-listados/tree/v0.1.0",
+                "issues": "https://github.com/sergiorassino/modulo-listados/issues"
+            },
+            "time": "2026-05-07T12:24:26+00:00"
         },
         {
             "name": "spomky-labs/base64url",

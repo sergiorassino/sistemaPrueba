@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('push_subscriptions')) {
+            return;
+        }
+
         Schema::create('push_subscriptions', function (Blueprint $table) {
             $table->string('endpoint_hash', 64);
             $table->text('endpoint');

@@ -6,6 +6,23 @@ use App\Support\SchoolContext;
 use App\Support\StudentContext;
 use Illuminate\Support\Facades\Storage;
 
+if (! function_exists('tenantConfig')) {
+    /**
+     * Devuelve un valor de la configuración del cliente activo.
+     *
+     * Equivalente a config('tenant.{key}', $default).
+     * Usar esta función en lugar de config() directamente para que sea fácil
+     * localizar todos los puntos donde se consulta el tenant.
+     *
+     * @param  string  $key     Clave relativa a 'tenant.' (ej: 'listados.titulo')
+     * @param  mixed   $default Valor por defecto si la clave no existe
+     */
+    function tenantConfig(string $key, mixed $default = null): mixed
+    {
+        return config("tenant.{$key}", $default);
+    }
+}
+
 if (! function_exists('schoolCtx')) {
     function schoolCtx(): SchoolContext
     {
@@ -30,10 +47,15 @@ if (! function_exists('tienePermiso')) {
 }
 
 if (! function_exists('schoolLogoUrl')) {
-    function schoolLogoUrl(): ?string
+    function schoolLogoUrl(bool $refresh = false): ?string
     {
         static $memo = null;
         static $done = false;
+
+        if ($refresh) {
+            $done = false;
+            $memo = null;
+        }
 
         if ($done) {
             return $memo;
@@ -212,6 +234,36 @@ if (! function_exists('studentPdfHeaderData')) {
         ];
 
         return $memo;
+    }
+}
+
+if (! function_exists('schoolNombre')) {
+    /**
+     * Nombre institucional del colegio para el nivel activo en sesión.
+     * Lee `ento.insti` filtrado por `schoolCtx()->idNivel`.
+     * Fallback: `tenantConfig('nombre')` y luego 'Colegio'.
+     */
+    function schoolNombre(): string
+    {
+        static $memo = null;
+
+        if ($memo !== null) {
+            return $memo;
+        }
+
+        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
+
+        if ($idNivel > 0) {
+            $insti = trim((string) (Ento::query()
+                ->where('idNivel', $idNivel)
+                ->value('insti') ?? ''));
+
+            if ($insti !== '') {
+                return $memo = $insti;
+            }
+        }
+
+        return $memo = (string) tenantConfig('nombre', 'Colegio');
     }
 }
 

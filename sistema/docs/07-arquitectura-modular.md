@@ -401,14 +401,14 @@ echo "--- Deploy completado: $(date) ---"
 |---|---|---|
 | F1 | Documentar la arquitectura (este archivo) | Completo |
 | F2 | Templates de paquete y de colegio (`08` y `09`) | Completo |
-| F3 | Extraer Listados a paquete piloto (path local) | Pendiente |
-| F4 | Convertir el repo actual en colegio piloto | Pendiente |
-| F5 | Probar flujo de override real en el piloto | Pendiente |
-| F6 | Subir paquete a GitHub privado y configurar auth | Pendiente |
-| F7 | Repetir con Comunicaciones (segundo módulo) | Pendiente |
-| F8 | Inventario de drift de los 15 colegios | Pendiente |
-| F9 | Template de repo de colegio + `deploy.sh` | Pendiente |
-| F10 | Migrar primer colegio real (convivencia con ScriptCase) | Pendiente |
+| F3 | Extraer Listados a paquete piloto (path local) | **Completo** — `modulo-listados/` en `../modulo-listados`, instalado vía `"type":"path"` |
+| F4 | Convertir el repo actual en colegio piloto | **Completo** — `composer.json` renombrado a `colegio/sistemaprueba`, `TenantOverridesServiceProvider` actualizado, rutas limpias |
+| F5 | Probar flujo de override real en el piloto | **Completo** — verificado en navegador con montecristo: título y filtro de condición respetan `config/tenants/montecristo.php` |
+| F6 | Subir paquete a GitHub privado y configurar auth | **Completo** — repo `sergiorassino/modulo-listados` en GitHub, tag `v0.1.0`, `"type":"vcs"`, `"se/modulo-listados": "^0.1"` |
+| F7 | Repetir con Comunicaciones (segundo módulo) | **Completo** — repo `sergiorassino/modulo-comunicaciones` en GitHub, tag `v0.1.0`, `"type":"vcs"`, `"se/modulo-comunicaciones": "^0.1"` |
+| F8 | Inventario de drift de los 15 colegios | **Completo** — comando `se:drift-report`, `docs/10-inventario-drift.md`; 138 diffs relevados en ia_demo↔ia_montecristo; 13 colegios restantes pendientes de relevar |
+| F9 | Template de repo de colegio + `deploy.sh` | **Completo** — `colegio-template/` con `composer.json`, `.env.example`, `config/tenant.php`, `TenantOverridesServiceProvider`, `deploy.sh`, `deploy-all.sh`, overrides de Nivel 2/3 y `migrations/tenant` |
+| F10 | Migrar primer colegio real (convivencia con ScriptCase) | **Completo** — repo `sergiorassino/colegio-montecristo` en GitHub; `config/tenant.php`, `TenantOverridesServiceProvider`, vistas custom, 3 migraciones tenant; reglas de convivencia ScriptCase documentadas |
 | F11 | Migrar el resto en lotes | Pendiente |
 
 ---

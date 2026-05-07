@@ -333,6 +333,8 @@
         <p><span class="disc-lbl">Apercibimientos Orales:</span> @if ($ao > 0){{ $ao }}@else{{ $blank }}@endif</p>
         <p><span class="disc-lbl">Apercibimientos Escritos:</span> @if ($ae > 0){{ $ae }}@else{{ $blank }}@endif</p>
     </div>
+
+    @includeIf('custom.'.tenantConfig('slug', 'default').'.pdf.leyenda-boletin-calificaciones')
 </div>
 </body>
 </html>

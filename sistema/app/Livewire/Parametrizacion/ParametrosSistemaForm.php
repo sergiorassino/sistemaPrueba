@@ -140,7 +140,8 @@ class ParametrosSistemaForm extends Component
         if ($this->logo instanceof TemporaryUploadedFile) {
             $old = (string) ($ento->logo_path ?? '');
 
-            $dir = 'ento/logos/nivel-' . $idNivel;
+            $slug = tenantConfig('slug', 'default');
+            $dir = 'ento/logos/' . $slug . '/nivel-' . $idNivel;
             $ext = strtolower((string) $this->logo->getClientOriginalExtension());
             if (! in_array($ext, ['jpg', 'jpeg', 'png'], true)) {
                 $ext = 'jpg';
@@ -159,7 +160,7 @@ class ParametrosSistemaForm extends Component
         $ento->fill($payload);
         $ento->save();
 
-        $this->currentLogoUrl = schoolLogoUrl();
+        $this->currentLogoUrl = schoolLogoUrl(refresh: true);
         $this->logo = null;
 
         session()->flash('success', 'Parámetros del sistema actualizados.');

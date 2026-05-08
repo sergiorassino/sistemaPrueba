@@ -36,6 +36,14 @@ class TenantOverridesServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Permite apagar todo el sistema de overrides por tenant sin eliminar la lógica.
+        // Útil para dejar el sistema "baseline" (v1) aunque existan archivos de tenant o vistas custom.
+        $enabled = filter_var(env('ENABLE_TENANT_OVERRIDES', false), FILTER_VALIDATE_BOOL);
+        if (! $enabled) {
+            config(['tenant.slug' => 'default']);
+            return;
+        }
+
         $slug = env('TENANT_SLUG', 'default');
         $tenantFile = config_path("tenants/{$slug}.php");
 
@@ -73,6 +81,11 @@ class TenantOverridesServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $enabled = filter_var(env('ENABLE_TENANT_OVERRIDES', false), FILTER_VALIDATE_BOOL);
+        if (! $enabled) {
+            return;
+        }
+
         $slug = config('tenant.slug', 'default');
 
         /*

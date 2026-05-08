@@ -4,6 +4,26 @@ export default {
         './resources/**/*.blade.php',
         './resources/**/*.js',
         './app/Livewire/**/*.php',
+        './vendor/se/modulo-listados/resources/views/**/*.blade.php',
+    ],
+    safelist: [
+        // Módulo listados: segmentos del filtro "Condición de matrícula en el PDF"
+        'sr-only',
+        'border-primary-500',
+        'bg-primary-600',
+        'text-white',
+        'border-accent-200',
+        'bg-white',
+        'text-neutral-700',
+        'hover:bg-accent-50',
+        'focus-within:ring-2',
+        'focus-within:ring-primary-500',
+        'focus-within:ring-offset-2',
+
+        // Checkbox selección de campos
+        'border-accent-300',
+        'text-primary-600',
+        'focus:ring-primary-500',
     ],
     theme: {
         extend: {

@@ -38,6 +38,18 @@
     --color-accent-500: #76aab0;
 }
 
+@layer base {
+    /*
+     * Inputs nativos (radio/checkbox): color de marca.
+     * Esto evita que el plugin de forms o el UA use azul por defecto,
+     * especialmente visible en controles dentro de filtros/segmentos.
+     */
+    input[type="radio"],
+    input[type="checkbox"] {
+        accent-color: var(--color-primary-600);
+    }
+}
+
 @layer components {
     .btn-primary {
         @apply inline-flex items-center justify-center rounded-xl border border-transparent bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
@@ -386,5 +398,26 @@
     .se-calif-grid {
         table-layout: fixed !important;
         font-size: 10px !important;
+    }
+
+    /* Módulo Listados (por curso): checkbox sin borde (UI más limpia) */
+    .se-page fieldset input[type="checkbox"] {
+        border-width: 0 !important;
+        border-color: transparent !important;
+        box-shadow: none !important;
+        --tw-ring-shadow: 0 0 #0000 !important;
+        --tw-shadow: 0 0 #0000 !important;
+    }
+
+    /* Listados: el item NO debe verse como "campo" con borde */
+    .se-page fieldset label.flex.cursor-pointer.items-start {
+        border-width: 0 !important;
+        background: transparent !important;
+        padding: 0.25rem 0.25rem !important;
+        gap: 0.6rem !important;
+    }
+    .se-page fieldset label.flex.cursor-pointer.items-start:hover {
+        border-width: 0 !important;
+        background: transparent !important;
     }
 }

@@ -125,6 +125,7 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/abm/legajos/{id}/editar', LegajoForm::class)->middleware('permiso:2')->whereNumber('id')->name('abm.legajos.edit');
 
     // Módulo Listados: rutas registradas por Se\ModuloListados\ListadosServiceProvider (se/modulo-listados)
+    // listadoPorCurso_v1.2: rutas registradas por Se\ModuloListadoPorCursoV12\ListadoPorCursoV12ServiceProvider
 
     // Calificaciones (nivel secundario): carga y consulta institucional (mismo PDF que autogestión)
     Route::get('/calificaciones-secundario/carga', CargaCalificacionesSecundario::class)

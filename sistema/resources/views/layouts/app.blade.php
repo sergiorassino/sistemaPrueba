@@ -99,10 +99,10 @@
         config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'param.')) ? 'true' : 'false' }},
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
-        students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.') || str_starts_with($route ?? '', 'push.') || (str_starts_with($route ?? '', 'comunicaciones.') && tienePermiso(51) && tienePermiso(2))) ? 'true' : 'false' }},
+        students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.') || str_starts_with($route ?? '', 'listadoPorCurso.') || str_starts_with($route ?? '', 'push.') || (str_starts_with($route ?? '', 'comunicaciones.') && tienePermiso(51) && tienePermiso(2))) ? 'true' : 'false' }},
         cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales') && tienePermiso(51) && tienePermiso(2)) ? 'true' : 'false' }},
         calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.')) ? 'true' : 'false' }},
-        disciplinario: {{ (str_starts_with($route ?? '', 'seguimiento.disciplinario')) ? 'true' : 'false' }},
+        disciplinario: {{ (str_starts_with($route ?? '', 'seguimiento.disciplinario') || str_starts_with($route ?? '', 'disciplinarioV2.')) ? 'true' : 'false' }},
         comunicaciones: {{ (tienePermiso(51) && !tienePermiso(2) && (str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales')) ? 'true' : 'false' }},
     },
     isDesktopPeekLayout() {
@@ -200,6 +200,12 @@
         $sidebarSessionLine = schoolCtx()->nivelNombre()
             . ' · ' . schoolCtx()->terlecAno()
             . ' · ' . trim((Auth::user()->nombre ?? '') . ' ' . (Auth::user()->apellido ?? ''));
+        $sidebarModuleVersion = function (string $key): string {
+            $v = tenantConfig("sidebar.modulos.{$key}");
+            if ($v) return $v;
+            // compat: proyectos que todavía tengan el sufijo global
+            return tenantConfig('sidebar.ui_version', 'v1.0');
+        };
     @endphp
     <div class="border-b se-sidebar-sep relative z-[1] flex-shrink-0"
          :class="sidebarCollapsed ? 'flex flex-col items-center gap-2 py-3 px-1' : 'min-h-12 px-2.5 py-2 flex flex-row items-center gap-2'">
@@ -208,7 +214,7 @@
            @click="sidebarOpen = false"
            class="flex min-w-0 items-center gap-2 rounded-lg text-left no-underline text-inherit transition-colors hover:bg-[var(--se-hover-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--se-light-blue)]"
            :class="sidebarCollapsed ? 'flex-col justify-center' : 'flex-1'"
-           title="Ir al panel principal">
+           title="Ir al panel principal {{ $sidebarModuleVersion('core') }}">
             <span class="rounded-lg bg-white px-2 py-1.5 shadow-sm flex-shrink-0">
                 <img src="{{ $sidebarLogoUrl }}" alt=""
                      class="object-contain flex-shrink-0 block"
@@ -243,7 +249,7 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
                     :class="(groups.students && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('students')"
-                    title="Estudiantes">
+                    title="Estudiantes {{ $sidebarModuleVersion('estudiantes') }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -265,7 +271,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.legajos'),
                    ])
-                   title="Legajos de Estudiantes">
+                   title="Legajos de Estudiantes {{ $sidebarModuleVersion('estudiantes') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -273,25 +279,76 @@
                     <span class="truncate">Legajos de Estudiantes</span>
                 </a>
 
-                <a href="{{ route('listados.por-curso') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'listados.'),
-                   ])
-                   title="Listado por curso (PDF)">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <span class="truncate">Listado por curso</span>
-                </a>
+                @php
+                    /**
+                     * Decisión de "qué versión abre el sidebar" para este módulo, por tenant.
+                     * Backwards-compat: si existe el flag viejo usar_listado_por_curso_v12, lo respetamos.
+                     */
+                    $listadosPorCursoVersion = tenantConfig('listados.por_curso_version');
+                    if (! $listadosPorCursoVersion) {
+                        $listadosPorCursoVersion = tenantConfig('listados.usar_listado_por_curso_v12') ? 'v1.2' : 'v1.0';
+                    }
+                @endphp
+
+                @php
+                    if ($listadosPorCursoVersion === 'v2.0' && ! \Illuminate\Support\Facades\Route::has('listadosV2.por-curso')) {
+                        throw new \RuntimeException("Sidebar: el tenant solicita Listados por curso v2.0 pero no existe la ruta 'listadosV2.por-curso'.");
+                    }
+                    if ($listadosPorCursoVersion === 'v1.2' && ! \Illuminate\Support\Facades\Route::has('listadoPorCurso.v1_2')) {
+                        throw new \RuntimeException("Sidebar: el tenant solicita Listados por curso v1.2 pero no existe la ruta 'listadoPorCurso.v1_2'.");
+                    }
+                    if ($listadosPorCursoVersion === 'v1.0' && ! \Illuminate\Support\Facades\Route::has('listados.por-curso')) {
+                        throw new \RuntimeException("Sidebar: el tenant solicita Listados por curso v1.0 pero no existe la ruta 'listados.por-curso'.");
+                    }
+                @endphp
+
+                @if($listadosPorCursoVersion === 'v2.0')
+                    <a href="{{ route('listadosV2.por-curso') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => str_starts_with($route ?? '', 'listadosV2.'),
+                       ])
+                       title="Listado por curso v2.0">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Listado por curso</span>
+                    </a>
+                @elseif($listadosPorCursoVersion === 'v1.2')
+                    <a href="{{ route('listadoPorCurso.v1_2') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => str_starts_with($route ?? '', 'listadoPorCurso.'),
+                       ])
+                       title="{{ tenantConfig('listados.titulo_listado_por_curso_v12', 'Listado por curso') }} v1.2">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">{{ tenantConfig('listados.titulo_listado_por_curso_v12', 'Listado por curso') }}</span>
+                    </a>
+                @else
+                    <a href="{{ route('listados.por-curso') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => str_starts_with($route ?? '', 'listados.'),
+                       ])
+                       title="Listado por curso v1.0">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Listado por curso</span>
+                    </a>
+                @endif
 
                 <a href="{{ route('push.enviar') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'push.'),
                    ])
-                   title="Enviar notificación push">
+                   title="Enviar notificación push {{ $sidebarModuleVersion('push') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
@@ -308,7 +365,7 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
                     :class="(groups.cuadernoComunicados && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('cuadernoComunicados')"
-                    title="Cuaderno de Comunicados">
+                    title="Cuaderno de Comunicados {{ $sidebarModuleVersion('cuaderno_comunicados') }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -330,7 +387,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'comunicaciones.') && ! in_array(($route ?? ''), ['comunicaciones.nuevo', 'comunicaciones.revision'], true),
                    ])
-                   title="Bandeja de comunicados">
+                   title="Bandeja de comunicados {{ $sidebarModuleVersion('comunicaciones') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -344,7 +401,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.nuevo',
                    ])
-                   title="Nuevo comunicado a familias">
+                   title="Nuevo comunicado a familias {{ $sidebarModuleVersion('comunicaciones') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -358,7 +415,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.revision',
                    ])
-                   title="Control Cuaderno de Comunicados">
+                   title="Control Cuaderno de Comunicados {{ $sidebarModuleVersion('comunicaciones') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -373,7 +430,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'param.com-canales',
                    ])
-                   title="Config. de canales">
+                   title="Config. de canales {{ $sidebarModuleVersion('comunicaciones') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -392,7 +449,7 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
                     :class="(groups.calificacionesSec && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('calificacionesSec')"
-                    title="Calificaciones (secundario)">
+                    title="Calificaciones (secundario) {{ $sidebarModuleVersion('calificaciones') }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -414,7 +471,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.carga',
                    ])
-                   title="Carga de calificaciones (secundario)">
+                   title="Carga de calificaciones (secundario) {{ $sidebarModuleVersion('calificaciones') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -426,7 +483,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.consulta',
                    ])
-                   title="Consulta de calificaciones (secundario)">
+                   title="Consulta de calificaciones (secundario) {{ $sidebarModuleVersion('calificaciones') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -443,7 +500,7 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
                     :class="(groups.comunicaciones && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('comunicaciones')"
-                    title="Comunicaciones">
+                    title="Comunicaciones {{ $sidebarModuleVersion('comunicaciones') }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3-3-3z"/>
@@ -465,7 +522,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'comunicaciones.') && ! in_array(($route ?? ''), ['comunicaciones.nuevo', 'comunicaciones.revision'], true),
                    ])
-                   title="Bandeja de comunicados">
+                   title="Bandeja de comunicados {{ $sidebarModuleVersion('comunicaciones') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -491,7 +548,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.revision',
                    ])
-                   title="Control Cuaderno de Comunicados">
+                   title="Control Cuaderno de Comunicados {{ $sidebarModuleVersion('comunicaciones') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -505,7 +562,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'param.com-canales',
                    ])
-                   title="Config. de canales">
+                   title="Config. de canales {{ $sidebarModuleVersion('comunicaciones') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -524,7 +581,7 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
                     :class="(groups.disciplinario && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('disciplinario')"
-                    title="Seguimiento disciplinario">
+                    title="Seguimiento disciplinario {{ $sidebarModuleVersion('disciplinario') }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -537,22 +594,43 @@
                 </svg>
             </button>
 
+            @php
+                $disciplinarioVersion = tenantConfig('disciplinario.version', 'v1.0');
+                if ($disciplinarioVersion === 'v2.0' && ! \Illuminate\Support\Facades\Route::has('disciplinarioV2.index')) {
+                    throw new \RuntimeException("Sidebar: el tenant solicita Disciplinario v2.0 pero no existe la ruta 'disciplinarioV2.index'.");
+                }
+            @endphp
             <div class="mt-1 space-y-0.5 pl-1"
                  x-show="groups.disciplinario && !sidebarCollapsed"
                  x-collapse
                  x-cloak>
-                <a href="{{ route('seguimiento.disciplinario') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'seguimiento.disciplinario'),
-                   ])
-                   title="Seguimiento Disciplinario">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <span class="truncate">Seguimiento Disciplinario</span>
-                </a>
+                @if ($disciplinarioVersion === 'v2.0')
+                    <a href="{{ route('disciplinarioV2.index') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => str_starts_with($route ?? '', 'disciplinarioV2.'),
+                       ])
+                       title="Seguimiento Disciplinario {{ $sidebarModuleVersion('disciplinario') }}">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Seguimiento Disciplinario</span>
+                    </a>
+                @else
+                    <a href="{{ route('seguimiento.disciplinario') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => str_starts_with($route ?? '', 'seguimiento.disciplinario'),
+                       ])
+                       title="Seguimiento Disciplinario {{ $sidebarModuleVersion('disciplinario') }}">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Seguimiento Disciplinario</span>
+                    </a>
+                @endif
             </div>
         @endif
 
@@ -563,7 +641,7 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
                     :class="(groups.config && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('config')"
-                    title="Configuración">
+                    title="Configuración {{ $sidebarModuleVersion('configuracion') }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
                 </svg>
@@ -584,7 +662,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.terlec'),
                    ])
-                   title="Términos Lectivos">
+                   title="Términos Lectivos {{ $sidebarModuleVersion('configuracion') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -597,7 +675,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.niveles'),
                    ])
-                   title="Niveles">
+                   title="Niveles {{ $sidebarModuleVersion('configuracion') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 7h18M3 12h18M3 17h18"/>
@@ -610,7 +688,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'param.campos-listado-alumnos'),
                    ])
-                   title="Campos Disponibles Listado Alumnos">
+                   title="Campos Disponibles Listado Alumnos {{ $sidebarModuleVersion('configuracion') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
@@ -623,7 +701,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'param.parametros-sistema'),
                    ])
-                   title="Parámetros del sistema">
+                   title="Parámetros del sistema {{ $sidebarModuleVersion('configuracion') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
@@ -637,7 +715,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'admin.permisos',
                    ])
-                   title="Administración de permisos de usuarios">
+                   title="Administración de permisos de usuarios {{ $sidebarModuleVersion('configuracion') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3z"/>
@@ -656,7 +734,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'param.com-canales',
                    ])
-                   title="Canales de comunicación escuela–familia">
+                   title="Canales de comunicación escuela–familia {{ $sidebarModuleVersion('comunicaciones') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3-3-3z"/>
@@ -670,7 +748,7 @@
                         class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors mt-2"
                         :class="(groups.planesCursos && !sidebarCollapsed) ? 'is-open' : ''"
                         @click="toggleGroup('planesCursos')"
-                        title="Gestión de planes y cursos modelo">
+                        title="Gestión de planes y cursos modelo {{ $sidebarModuleVersion('configuracion') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
@@ -692,7 +770,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.planes'),
                        ])
-                       title="Gestión de Planes de Estudio">
+                       title="Gestión de Planes de Estudio {{ $sidebarModuleVersion('configuracion') }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
@@ -705,7 +783,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.curplan'),
                        ])
-                       title="Gestión de Cursos y Materias del Plan">
+                       title="Gestión de Cursos y Materias del Plan {{ $sidebarModuleVersion('configuracion') }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -719,7 +797,7 @@
                         class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors mt-2"
                         :class="(groups.cursosMateriasAno && !sidebarCollapsed) ? 'is-open' : ''"
                         @click="toggleGroup('cursosMateriasAno')"
-                        title="Gestión de cursos y materias del año">
+                        title="Gestión de cursos y materias del año {{ $sidebarModuleVersion('configuracion') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
@@ -741,7 +819,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.cursos'),
                        ])
-                       title="Gestión de Cursos / Grados / Salas">
+                       title="Gestión de Cursos / Grados / Salas {{ $sidebarModuleVersion('configuracion') }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -754,7 +832,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.materias-anio'),
                        ])
-                       title="Gestión de asignaturas del año">
+                       title="Gestión de asignaturas del año {{ $sidebarModuleVersion('configuracion') }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M4 6h16M4 10h16M4 14h16M4 18h16"/>

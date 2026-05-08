@@ -82,12 +82,42 @@
             'href' => route('abm.legajos'),
             'icon' => 'users',
         ];
-        $dashboardLinks[] = [
-            'title' => 'Listado por curso',
-            'hint' => 'PDF de alumnos',
-            'href' => route('listados.por-curso'),
-            'icon' => 'doc',
-        ];
+
+        // Versión del módulo de listados determinada declarativamente por tenant.
+        // Backwards-compat: si no está definido por_curso_version, leer el flag viejo.
+        $listadosPorCursoVersion = tenantConfig('listados.por_curso_version');
+        if (! $listadosPorCursoVersion) {
+            $listadosPorCursoVersion = tenantConfig('listados.usar_listado_por_curso_v12') ? 'v1.2' : 'v1.0';
+        }
+
+        if ($listadosPorCursoVersion === 'v2.0') {
+            if (! \Illuminate\Support\Facades\Route::has('listadosV2.por-curso')) {
+                throw new \RuntimeException("Dashboard: el tenant solicita Listados v2.0 pero no existe la ruta 'listadosV2.por-curso'.");
+            }
+            $dashboardLinks[] = [
+                'title' => tenantConfig('listados.titulo', 'Listado por curso'),
+                'hint'  => 'Listado con búsqueda',
+                'href'  => route('listadosV2.por-curso'),
+                'icon'  => 'doc',
+            ];
+        } elseif ($listadosPorCursoVersion === 'v1.2') {
+            if (! \Illuminate\Support\Facades\Route::has('listadoPorCurso.v1_2')) {
+                throw new \RuntimeException("Dashboard: el tenant solicita Listados v1.2 pero no existe la ruta 'listadoPorCurso.v1_2'.");
+            }
+            $dashboardLinks[] = [
+                'title' => tenantConfig('listados.titulo_listado_por_curso_v12', 'Listado por curso'),
+                'hint'  => 'Apellido, nombre y DNI',
+                'href'  => route('listadoPorCurso.v1_2'),
+                'icon'  => 'doc',
+            ];
+        } else {
+            $dashboardLinks[] = [
+                'title' => 'Listado por curso',
+                'hint'  => 'PDF de alumnos',
+                'href'  => route('listados.por-curso'),
+                'icon'  => 'doc',
+            ];
+        }
         $dashboardLinks[] = [
             'title' => 'Notificación push',
             'hint' => 'Envío a familias',
@@ -106,11 +136,14 @@
             'href' => route('calificacionesSecundario.consulta'),
             'icon' => 'doc',
         ];
+        $disciplinarioVersion = tenantConfig('disciplinario.version', 'v1.0');
         $dashboardLinks[] = [
             'title' => 'Seguimiento disciplinario',
-            'hint' => 'Sanciones y antecedentes',
-            'href' => route('seguimiento.disciplinario'),
-            'icon' => 'shield',
+            'hint'  => 'Sanciones y antecedentes',
+            'href'  => $disciplinarioVersion === 'v2.0'
+                ? route('disciplinarioV2.index')
+                : route('seguimiento.disciplinario'),
+            'icon'  => 'shield',
         ];
     }
 

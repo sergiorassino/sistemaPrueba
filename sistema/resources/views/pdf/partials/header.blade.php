@@ -16,7 +16,16 @@
 <style>
     /* Header sobrio, compatible con impresión monocromo */
     .pdf-header { width: 100%; border-bottom: 1px solid #111; padding-bottom: 6px; margin-bottom: 10px; }
-    .pdf-header table { width: 100%; border-collapse: collapse; }
+    .pdf-header table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 0 !important;
+    }
+    .pdf-header tr,
+    .pdf-header td {
+        border: 0 !important;
+        border-style: none !important;
+    }
     .pdf-header td { vertical-align: middle; padding: 0; }
     .pdf-header .logo-cell { width: 64px; }
     .pdf-header .spacer-cell { width: 64px; }
@@ -29,7 +38,7 @@
 </style>
 
 <div class="pdf-header">
-    <table cellspacing="0" cellpadding="0">
+    <table cellspacing="0" cellpadding="0" border="0">
         <tr>
             <td class="logo-cell">
                 @if ($logoFile !== '')

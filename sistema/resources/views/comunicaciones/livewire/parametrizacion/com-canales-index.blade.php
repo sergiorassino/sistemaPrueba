@@ -118,12 +118,12 @@
                             <th class="table-header text-center">Responde</th>
                             <th class="table-header">Medios</th>
                             <th class="table-header text-center">Activo</th>
-                            <th class="table-header w-40"></th>
+                            <th class="table-header w-52 text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-accent-200 bg-white">
                         @foreach ($canales as $canal)
-                            <tr @class([
+                            <tr wire:key="com-canal-{{ $canal->id }}" @class([
                                 'bg-amber-50/50' => $editandoId === $canal->id,
                                 'hover:bg-accent-50/50' => $editandoId !== $canal->id,
                             ])>
@@ -196,11 +196,17 @@
                                             <span class="inline-block h-2 w-2 rounded-full bg-neutral-300"></span>
                                         @endif
                                     </td>
-                                    <td class="table-cell">
-                                        <button type="button" wire:click="iniciarEdicion({{ $canal->id }})"
-                                                class="text-xs font-semibold text-primary-700 underline decoration-primary-300 underline-offset-2 hover:text-primary-900">
-                                            Editar
-                                        </button>
+                                    <td class="table-cell text-right">
+                                        <div class="flex flex-wrap items-center justify-end gap-2">
+                                            <button type="button" wire:click="iniciarEdicion({{ $canal->id }})"
+                                                    class="btn-secondary btn-sm shrink-0">
+                                                Editar
+                                            </button>
+                                            <button type="button" wire:click="confirmarEliminar({{ $canal->id }})"
+                                                    class="btn-danger btn-sm shrink-0">
+                                                Eliminar
+                                            </button>
+                                        </div>
                                     </td>
                                 @endif
                             </tr>
@@ -212,6 +218,37 @@
     </div>
 
     <p class="text-xs text-neutral-500">
-        Los cambios se aplican al guardar. El caché de cada canal se invalida al guardar.
+        Los cambios se aplican al guardar. El caché de cada canal se invalida al guardar o al eliminar un canal.
     </p>
+
+    @if ($showConfirmEliminar)
+        <div class="fixed inset-0 z-[60] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm">
+            <div class="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl" @click.stop>
+                <div class="px-6 py-5">
+                    <div class="flex items-start gap-3">
+                        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
+                            <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="mb-1 text-base font-semibold text-neutral-800">Eliminar canal</h3>
+                            <p class="text-sm text-neutral-600">
+                                ¿Eliminar el canal <span class="font-semibold text-neutral-800">{{ $eliminarEtiqueta }}</span>?
+                                No podrá usarse para nuevos comunicados; los hilos ya existentes no se borran.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 border-t border-accent-200 bg-accent-50/70 px-6 py-4">
+                    <button type="button" wire:click="cerrarConfirmEliminar" class="btn-secondary">Cancelar</button>
+                    <button type="button" wire:click="eliminarCanal" wire:loading.attr="disabled" class="btn-danger">
+                        <span wire:loading.remove wire:target="eliminarCanal">Eliminar</span>
+                        <span wire:loading wire:target="eliminarCanal">Eliminando…</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

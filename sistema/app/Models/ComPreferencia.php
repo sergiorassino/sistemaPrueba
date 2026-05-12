@@ -13,15 +13,16 @@ class ComPreferencia extends Model
 
     protected $fillable = [
         'tipo_usuario', 'id_legajo', 'id_profesor',
-        'vinculo_contacto', 'push', 'email', 'whatsapp',
+        'vinculo_contacto', 'vinculos_contacto', 'push', 'email', 'whatsapp',
     ];
 
     protected $casts = [
-        'push'       => 'boolean',
-        'email'      => 'boolean',
-        'whatsapp'   => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'push'               => 'boolean',
+        'email'              => 'boolean',
+        'whatsapp'           => 'boolean',
+        'vinculos_contacto'  => 'array',
+        'created_at'         => 'datetime',
+        'updated_at'         => 'datetime',
     ];
 
     public function legajo()
@@ -59,6 +60,36 @@ class ComPreferencia extends Model
         if ($this->push)     $medios[] = 'push';
         if ($this->email)    $medios[] = 'email';
         if ($this->whatsapp) $medios[] = 'whatsapp';
+
         return $medios;
+    }
+
+    /**
+     * Responsables de contacto para email/WhatsApp: null = sin preferencia (comportamiento legacy).
+     *
+     * @return list<string>|null listado de claves entre madre, padre, tutor (orden de preferencia en UI)
+     */
+    public function vinculosContactoResolucion(): ?array
+    {
+        $permitidos = ['padre', 'madre', 'tutor'];
+        $raw        = $this->vinculos_contacto;
+        if (is_array($raw) && $raw !== []) {
+            $out = [];
+            foreach ($raw as $v) {
+                $v = (string) $v;
+                if (in_array($v, $permitidos, true) && ! in_array($v, $out, true)) {
+                    $out[] = $v;
+                }
+            }
+
+            return $out === [] ? null : $out;
+        }
+
+        $single = (string) ($this->vinculo_contacto ?? '');
+        if ($single !== '' && in_array($single, $permitidos, true)) {
+            return [$single];
+        }
+
+        return null;
     }
 }

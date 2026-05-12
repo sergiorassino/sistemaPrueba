@@ -7,17 +7,18 @@ use App\Models\ComPreferencia;
 
 class PreferenciasMedios extends Component
 {
-    public string $vinculoContacto = '';
+    /** @var list<string> */
+    public array $vinculosContacto = [];
+
     public bool $push     = true;
     public bool $email    = true;
     public bool $whatsapp = true;
 
+    /** Orden de opciones: Padre, Madre, Tutor/a */
     public array $vinculos = [
-        'madre'      => 'Madre',
-        'padre'      => 'Padre',
-        'tutor'      => 'Tutor/a',
-        'resp_admin' => 'Responsable Administrativo/a',
-        'otro'       => 'Otro responsable',
+        'padre' => 'Padre',
+        'madre' => 'Madre',
+        'tutor' => 'Tutor/a',
     ];
 
     public function mount(): void
@@ -25,35 +26,67 @@ class PreferenciasMedios extends Component
         $idLegajo = (int) studentCtx()->idLegajo;
         $pref     = ComPreferencia::paraLegajo($idLegajo);
 
-        $this->push            = (bool) $pref->push;
-        $this->email           = (bool) $pref->email;
-        $this->whatsapp        = (bool) $pref->whatsapp;
-        $this->vinculoContacto = (string) ($pref->vinculo_contacto ?? '');
+        $this->push     = (bool) $pref->push;
+        $this->email    = (bool) $pref->email;
+        $this->whatsapp = (bool) $pref->whatsapp;
+
+        $json = $pref->vinculos_contacto;
+        if (is_array($json) && $json !== []) {
+            $this->vinculosContacto = $this->normalizarVinculosSeleccion($json);
+        } else {
+            $single = (string) ($pref->vinculo_contacto ?? '');
+            $this->vinculosContacto = in_array($single, ['padre', 'madre', 'tutor'], true)
+                ? [$single]
+                : [];
+        }
     }
 
     public function guardar(): void
     {
         $this->validate([
-            'vinculoContacto' => 'nullable|in:madre,padre,tutor,resp_admin,otro',
-            'push'            => 'boolean',
-            'email'           => 'boolean',
-            'whatsapp'        => 'boolean',
+            'vinculosContacto'   => ['nullable', 'array'],
+            'vinculosContacto.*' => ['in:padre,madre,tutor'],
+            'push'               => 'boolean',
+            'email'              => 'boolean',
+            'whatsapp'           => 'boolean',
         ]);
 
         $idLegajo = (int) studentCtx()->idLegajo;
 
+        $normalizados = $this->normalizarVinculosSeleccion($this->vinculosContacto);
+
         ComPreferencia::updateOrCreate(
             ['tipo_usuario' => 'familia', 'id_legajo' => $idLegajo],
             [
-                'vinculo_contacto' => $this->vinculoContacto !== '' ? $this->vinculoContacto : null,
-                'push'             => $this->push,
-                'email'            => $this->email,
-                'whatsapp'         => $this->whatsapp,
-                'updated_at'       => now(),
+                'vinculos_contacto' => $normalizados === [] ? null : $normalizados,
+                'vinculo_contacto'  => null,
+                'push'              => $this->push,
+                'email'             => $this->email,
+                'whatsapp'          => $this->whatsapp,
+                'updated_at'        => now(),
             ]
         );
 
+        $this->vinculosContacto = $normalizados;
+
         session()->flash('success', 'Preferencias guardadas correctamente.');
+    }
+
+    /**
+     * @param  array<int, mixed>  $entrada
+     * @return list<string>
+     */
+    private function normalizarVinculosSeleccion(array $entrada): array
+    {
+        $ordenUi = ['padre', 'madre', 'tutor'];
+        $out     = [];
+        foreach ($ordenUi as $clave) {
+            if (in_array($clave, $entrada, true) && ! in_array($clave, $out, true)) {
+                $out[] = $clave;
+            }
+        }
+
+        return $out;
     }
 
     public function render()

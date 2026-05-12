@@ -36,7 +36,7 @@ class MailAdapter
     /**
      * Determina el email de contacto según el tipo de destinatario.
      *
-     * Para familias: usa el vinculo_contacto de las preferencias para elegir el email correcto.
+     * Para familias: usa los responsables elegidos en preferencias (uno o varios) para armar la lista de emails.
      * Para profesores: usa profesores.email.
      */
     private static function resolverEmail(ComMensajeDestinatario $destinatario): ?string
@@ -52,19 +52,24 @@ class MailAdapter
                 return null;
             }
 
-            $pref = ComPreferencia::paraLegajo($destinatario->id_legajo);
-            $vinculo = $pref->exists ? $pref->vinculo_contacto : null;
+            $pref     = ComPreferencia::paraLegajo($destinatario->id_legajo);
+            $vinculos = $pref->exists ? $pref->vinculosContactoResolucion() : null;
 
             $candidatos = [];
 
-            if ($vinculo === 'madre' || $vinculo === null) {
+            if ($vinculos === null) {
                 $candidatos[] = $legajo->emailmad ?? null;
-            }
-            if ($vinculo === 'padre' || $vinculo === null) {
                 $candidatos[] = $legajo->emailpad ?? null;
-            }
-            if ($vinculo === 'tutor') {
-                $candidatos[] = $legajo->emailtut ?? null;
+            } else {
+                foreach ($vinculos as $v) {
+                    if ($v === 'madre') {
+                        $candidatos[] = $legajo->emailmad ?? null;
+                    } elseif ($v === 'padre') {
+                        $candidatos[] = $legajo->emailpad ?? null;
+                    } elseif ($v === 'tutor') {
+                        $candidatos[] = $legajo->emailtut ?? null;
+                    }
+                }
             }
             // email general del legajo como fallback
             $candidatos[] = $legajo->email ?? null;

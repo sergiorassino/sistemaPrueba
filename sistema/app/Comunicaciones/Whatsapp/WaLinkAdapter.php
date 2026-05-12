@@ -48,18 +48,23 @@ class WaLinkAdapter
             return null;
         }
 
-        $pref    = ComPreferencia::paraLegajo($destinatario->id_legajo);
-        $vinculo = $pref->exists ? $pref->vinculo_contacto : null;
+        $pref     = ComPreferencia::paraLegajo($destinatario->id_legajo);
+        $vinculos = $pref->exists ? $pref->vinculosContactoResolucion() : null;
 
         $candidatos = [];
-        if ($vinculo === 'madre' || $vinculo === null) {
+        if ($vinculos === null) {
             $candidatos[] = $legajo->telemad ?? null;
-        }
-        if ($vinculo === 'padre' || $vinculo === null) {
             $candidatos[] = $legajo->telepad ?? null;
-        }
-        if ($vinculo === 'tutor') {
-            $candidatos[] = $legajo->teletut ?? null;
+        } else {
+            foreach ($vinculos as $v) {
+                if ($v === 'madre') {
+                    $candidatos[] = $legajo->telemad ?? null;
+                } elseif ($v === 'padre') {
+                    $candidatos[] = $legajo->telepad ?? null;
+                } elseif ($v === 'tutor') {
+                    $candidatos[] = $legajo->teletut ?? null;
+                }
+            }
         }
 
         foreach ($candidatos as $tel) {

@@ -32,23 +32,36 @@
     <div class="se-card overflow-hidden">
         <div class="border-b border-accent-200 bg-white px-5 py-4">
             <p class="se-section-title">Contacto y medios</p>
-            <p class="mt-1 text-sm text-neutral-600">Elegí cómo y a qué responsable le llegan los comunicados de la escuela.</p>
+            <p class="mt-1 text-sm text-neutral-600">Elegí cómo y a qué responsables les llegan los comunicados de la escuela.</p>
         </div>
 
         <div class="space-y-6 border-t border-accent-100 bg-accent-50/30 p-5 sm:p-6">
             <div>
-                <label for="pref-vinculo-contacto" class="form-label">Responsable de recibir comunicados</label>
+                <p class="form-label">Responsable de recibir comunicados</p>
                 <p class="mt-1 text-xs text-neutral-500">
-                    Determina qué email y teléfono se usan cuando la institución escribe a la familia.
+                    Marcá uno o más. Si no marcás ninguno, se usa el primer dato de contacto disponible en el legajo.
                 </p>
-                <select id="pref-vinculo-contacto"
-                        wire:model="vinculoContacto"
-                        class="form-select mt-2">
-                    <option value="">Sin preferencia (primer dato disponible)</option>
+
+                <div class="mt-3 space-y-3" role="group" aria-label="Responsables de recibir comunicados">
                     @foreach ($vinculos as $val => $label)
-                        <option value="{{ $val }}">{{ $label }}</option>
+                        <label class="flex cursor-pointer select-none items-start gap-3 rounded-2xl border border-accent-200 bg-white p-4 shadow-sm transition hover:bg-accent-50/60">
+                            <input type="checkbox"
+                                   id="pref-vinculo-{{ $val }}"
+                                   wire:model="vinculosContacto"
+                                   value="{{ $val }}"
+                                   class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500"/>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-neutral-900">{{ $label }}</p>
+                            </div>
+                        </label>
                     @endforeach
-                </select>
+                </div>
+                @error('vinculosContacto')
+                    <p class="form-error mt-1">{{ $message }}</p>
+                @enderror
+                @error('vinculosContacto.*')
+                    <p class="form-error mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
@@ -77,7 +90,7 @@
                         <div class="min-w-0">
                             <p class="text-sm font-semibold text-neutral-900">Correo electrónico</p>
                             <p class="mt-1 text-xs leading-relaxed text-neutral-500">
-                                Se envía al email del legajo según el responsable seleccionado arriba.
+                                Se envía al email del legajo según los responsables seleccionados arriba.
                             </p>
                         </div>
                     </label>

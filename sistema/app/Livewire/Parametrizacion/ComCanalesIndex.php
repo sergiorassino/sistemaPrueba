@@ -25,6 +25,11 @@ class ComCanalesIndex extends Component
     public array $nuevoMedios = [];
     public bool $nuevoActivo = true;
 
+    /** Modal confirmar borrado de canal */
+    public bool $showConfirmEliminar = false;
+    public ?int $eliminarId = null;
+    public string $eliminarEtiqueta = '';
+
     public function mount(): void
     {
         abort_unless(tienePermiso(53), 403, 'Sin permiso para administrar canales de comunicación.');
@@ -158,6 +163,59 @@ class ComCanalesIndex extends Component
         } else {
             $this->editMedios[] = $medio;
         }
+    }
+
+    public function confirmarEliminar(int $id): void
+    {
+        abort_unless(tienePermiso(53), 403);
+
+        $canal = ComCanal::findOrFail($id);
+        $etiquetas = ComCanal::etiquetasRoles();
+        $de = $etiquetas[$canal->rol_emisor] ?? $canal->rol_emisor;
+        $para = $etiquetas[$canal->rol_receptor] ?? $canal->rol_receptor;
+
+        $this->cancelarFormNuevo();
+        if ($this->editandoId === $id) {
+            $this->cancelarEdicion();
+        }
+
+        $this->eliminarId = $id;
+        $this->eliminarEtiqueta = "{$de} → {$para}";
+        $this->showConfirmEliminar = true;
+    }
+
+    public function cerrarConfirmEliminar(): void
+    {
+        $this->showConfirmEliminar = false;
+        $this->eliminarId = null;
+        $this->eliminarEtiqueta = '';
+    }
+
+    public function eliminarCanal(): void
+    {
+        abort_unless(tienePermiso(53), 403);
+
+        if ($this->eliminarId === null) {
+            $this->cerrarConfirmEliminar();
+
+            return;
+        }
+
+        $canal = ComCanal::findOrFail($this->eliminarId);
+        $rolEmisor = $canal->rol_emisor;
+        $rolReceptor = $canal->rol_receptor;
+
+        $canal->delete();
+
+        Cache::forget("com_canal:{$rolEmisor}:{$rolReceptor}");
+        Cache::forget("com_canal:{$rolReceptor}:{$rolEmisor}");
+
+        if ($this->editandoId === $this->eliminarId) {
+            $this->cancelarEdicion();
+        }
+
+        $this->cerrarConfirmEliminar();
+        session()->flash('success', 'Canal eliminado correctamente.');
     }
 
     public function render()

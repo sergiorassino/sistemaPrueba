@@ -13,6 +13,25 @@
     var vapidMeta = document.querySelector('meta[name="vapid-public-key"]');
     var vapidKey = vapidMeta ? vapidMeta.getAttribute('content') : null;
 
+    /** Registration del SW bajo `scope` (p. ej. /notificaciones-push/). No usar solo `navigator.serviceWorker.ready` en páginas fuera de ese scope (p. ej. /alumnos/notificaciones). */
+    var pushNotificationsRegistration = null;
+
+    function resolveRegForPush() {
+        if (pushNotificationsRegistration) {
+            return Promise.resolve(pushNotificationsRegistration);
+        }
+        if (scope && navigator.serviceWorker.getRegistration) {
+            return navigator.serviceWorker.getRegistration(scope).then(function (r) {
+                if (r) {
+                    pushNotificationsRegistration = r;
+                    return r;
+                }
+                return navigator.serviceWorker.ready;
+            });
+        }
+        return navigator.serviceWorker.ready;
+    }
+
     window.studentPushUnsupportedReason = '';
     window.studentPushDiagnostics = function () {
         var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform && /iPad|iPhone|iPod/.test(navigator.platform));
@@ -65,6 +84,7 @@
 
     navigator.serviceWorker.register(swUrl, { scope: scope || './' })
         .then(function (reg) {
+            pushNotificationsRegistration = reg;
             window.dispatchEvent(new CustomEvent('pwa-sw-registered', { detail: reg }));
             return checkPushSupport(reg);
         })
@@ -98,9 +118,9 @@
                 sendSubscriptionToServer(sub, basePath);
                 return;
             }
-            if (Notification.permission === 'granted') {
-                subscribeUser(reg, vapidKey, basePath);
-            }
+            // Importante: no llamar a subscribeUser aquí aunque Notification.permission === 'granted'.
+            // Tras "Desactivar", el permiso suele seguir granted pero la suscripción push no existe;
+            // re-suscribir al refrescar recrearía el registro en BD sin que el usuario pulse Activar.
         });
     }
 
@@ -171,8 +191,12 @@
         if (Notification.permission === 'granted') return Promise.resolve('granted');
         if (Notification.permission === 'denied') return Promise.resolve('denied');
         return Notification.requestPermission().then(function (p) {
-            if (p === 'granted' && navigator.serviceWorker.ready) {
-                navigator.serviceWorker.ready.then(function (reg) {
+            if (p === 'granted') {
+                resolveRegForPush().then(function (reg) {
+                    if (!reg || !reg.pushManager) {
+                        show('Service Worker de notificaciones no disponible.', 'error');
+                        return;
+                    }
                     if (!('PushManager' in window)) {
                         show('Este navegador no soporta Push (PushManager).', 'error');
                         return;
@@ -200,7 +224,7 @@
                     }
                     return markUnsupported('Este navegador no soporta PushManager (push web) en este contexto.');
                 }
-                if (!navigator.serviceWorker || !navigator.serviceWorker.ready) {
+                if (!navigator.serviceWorker) {
                     return markUnsupported('Service Worker no disponible. Verificá HTTPS y que el navegador permita Service Workers.');
                 }
                 if (!vapidKey) {
@@ -209,7 +233,10 @@
                 }
 
                 if (Notification.permission === 'granted') {
-                    return navigator.serviceWorker.ready.then(function (reg) {
+                    return resolveRegForPush().then(function (reg) {
+                        if (!reg || !reg.pushManager) {
+                            return markUnsupported('Service Worker de notificaciones no disponible.');
+                        }
                         return reg.pushManager.getSubscription().then(function (sub) {
                             if (sub) {
                                 sendSubscriptionToServer(sub, basePath || '');

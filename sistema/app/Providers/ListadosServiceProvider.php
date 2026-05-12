@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Providers;
+
+use App\Livewire\Listados\ListadoPorCurso;
+use App\Livewire\Parametrizacion\CamposLegajoIndex;
+use App\Livewire\Parametrizacion\SolapaLegajoIndex;
+use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
+
+class ListadosServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->mergeConfigFrom(base_path('config/listados.php'), 'listados');
+    }
+
+    public function boot(): void
+    {
+        $this->loadViewsFrom(resource_path('views/listados'), 'listados');
+
+        Livewire::component('listados.por-curso', ListadoPorCurso::class);
+        Livewire::component('listados.parametrizacion.campos-legajo', CamposLegajoIndex::class);
+        Livewire::component('listados.parametrizacion.solapas-legajo', SolapaLegajoIndex::class);
+    }
+}

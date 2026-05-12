@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
  *   1. Marca como "ya ejecutada" la migración que crea el schema desde dump
  *      (las tablas legacy ya existen en la BD destino; no necesitamos recrearlas).
  *   2. Corre el resto de las migraciones core (son todas idempotentes).
- *   3. Corre las migraciones de los paquetes (com_*, campos_listado_alumnos).
+ *   3. Corre las migraciones de los paquetes (com_*, campos_legajo, solapas_legajo).
  *   4. Corre las migraciones tenant del colegio activo (si hay).
  *
  * No ejecuta migraciones que modifiquen estructuralmente tablas existentes
@@ -95,7 +95,7 @@ class MigrateLegacyCommand extends Command
         $this->line('  Resumen de lo que se agregó a la BD legacy:');
         $this->line('    • Tablas SE nuevas : push_subscriptions, push_mensajes_enviados,');
         $this->line('                         push_mensajes_destinatarios');
-        $this->line('    • Tablas módulo Listados   : campos_listado_alumnos');
+        $this->line('    • Tablas módulo Listados   : solapas_legajo, campos_legajo');
         $this->line('    • Tablas módulo Comunicaciones : com_canales, com_hilos,');
         $this->line('                         com_hilos_participantes, com_mensajes,');
         $this->line('                         com_mensajes_destinatarios, com_mensajes_envios,');
@@ -170,7 +170,7 @@ class MigrateLegacyCommand extends Command
         $this->newLine();
         $this->line('  2. php artisan migrate  (migraciones core + paquetes)');
         $this->line('     → Columnas nuevas en tablas existentes (idempotentes)');
-        $this->line('     → Tablas nuevas del SE: push_*, com_*, campos_listado_alumnos');
+        $this->line('     → Tablas nuevas del SE: push_*, com_*, solapas_legajo, campos_legajo');
         $this->newLine();
         $this->line('  3. php artisan migrate --path=database/migrations/tenant');
         $this->line('     → Migraciones exclusivas de este colegio (si las hay)');

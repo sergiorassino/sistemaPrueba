@@ -2,5 +2,7 @@
 
 return [
     App\Providers\AppServiceProvider::class,
+    App\Providers\ComunicacionesServiceProvider::class,
+    App\Providers\ListadosServiceProvider::class,
     App\Providers\TenantOverridesServiceProvider::class,
 ];

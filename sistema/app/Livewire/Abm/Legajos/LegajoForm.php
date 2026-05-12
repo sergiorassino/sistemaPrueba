@@ -2,18 +2,39 @@
 
 namespace App\Livewire\Abm\Legajos;
 
+use App\Models\CampoLegajo;
 use App\Models\Condicion;
 use App\Models\Curso;
 use App\Models\Familia;
 use App\Models\Legajo;
 use App\Models\Matricula;
 use App\Models\Nivel;
+use App\Models\SolapaLegajo;
 use App\Models\Terlec;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
 
 class LegajoForm extends Component
 {
+    /** Columnas siempre visibles y persistidas (no pueden desactivarse). */
+    private const CORE_COLUMNS = ['apellido', 'nombre', 'dni'];
+
+    /** Slugs canónicos del formulario (plantillas Blade por panel). */
+    private const PANEL_SLUGS = ['alumno', 'domicilio', 'madre', 'padre', 'tutor', 'escolar'];
+
+    /** Columnas opcionales de la solapa «Alumno» en el Blade (el trío core va aparte). */
+    private const ALUMNO_TAB_COLUMNS = ['cuil', 'fechnaci', 'sexo', 'nacion', 'idFamilias', 'tipoalumno', 'legajo', 'libro', 'folio'];
+
+    /** Columnas que pertenecen a cada plantilla de pestaña del formulario. */
+    private const TAB_COLUMNS = [
+        'domicilio' => ['callenum', 'barrio', 'localidad', 'codpos', 'ln_ciudad', 'ln_depto', 'ln_provincia', 'ln_pais', 'telefono', 'email'],
+        'madre'     => ['nombremad', 'dnimad', 'fechnacmad', 'nacionmad', 'estacivimad', 'vivemad', 'ocupacmad', 'domimad', 'telemad', 'emailmad'],
+        'padre'     => ['nombrepad', 'dnipad', 'fechnacpad', 'nacionpad', 'estacivipad', 'vivepad', 'ocupacpad', 'domipad', 'telepad', 'emailpad'],
+        'tutor'     => ['nombretut', 'dnitut', 'teletut', 'emailtut', 'respAdmiNom', 'respAdmiDni'],
+        'escolar'   => ['escori', 'destino', 'parroquia', 'ec_padres', 'vivecon', 'hermanos', 'needes', 'needes_detalle', 'certDisc', 'identif', 'retira', 'emeravis', 'obs'],
+    ];
+
     public ?int $id = null;
     public string $activeTab = 'alumno';
 
@@ -52,7 +73,6 @@ class LegajoForm extends Component
     public string $domimad     = '';
     public string $ocupacmad   = '';
     public string $telemad     = '';
-    public string $telecelmad  = '';
     public string $emailmad    = '';
     public string $vivemad     = '';
 
@@ -65,7 +85,6 @@ class LegajoForm extends Component
     public string $domipad     = '';
     public string $ocupacpad   = '';
     public string $telepad     = '';
-    public string $telecelpad  = '';
     public string $emailpad    = '';
     public string $vivepad     = '';
 
@@ -111,6 +130,29 @@ class LegajoForm extends Component
     public string     $m_fechaMatricula = '';
     public string     $m_fechaBaja      = '';
 
+    /**
+     * Columnas de `legajos` con control dedicado en el formulario (no van en extras).
+     *
+     * @var list<string>
+     */
+    private const COLUMNAS_FORMULARIO_GESTIONADAS = [
+        'apellido', 'nombre', 'dni', 'cuil', 'fechnaci', 'sexo', 'nacion', 'idFamilias', 'tipoalumno', 'legajo', 'libro', 'folio',
+        'callenum', 'barrio', 'localidad', 'codpos', 'ln_ciudad', 'ln_depto', 'ln_provincia', 'ln_pais', 'telefono', 'email',
+        'nombremad', 'dnimad', 'fechnacmad', 'nacionmad', 'estacivimad', 'domimad', 'ocupacmad', 'telemad', 'emailmad', 'vivemad',
+        'nombrepad', 'dnipad', 'fechnacpad', 'nacionpad', 'estacivipad', 'domipad', 'ocupacpad', 'telepad', 'emailpad', 'vivepad',
+        'nombretut', 'dnitut', 'teletut', 'emailtut', 'respAdmiNom', 'respAdmiDni',
+        'escori', 'destino', 'obs', 'identif', 'vivecon', 'hermanos', 'ec_padres', 'parroquia',
+        'needes', 'needes_detalle', 'certDisc', 'emeravis', 'retira',
+    ];
+
+    /** No cargar ni persistir vía extras (sistema / seguridad). */
+    private const COLUMNAS_SISTEMA_NO_EXTRAS = [
+        'id', 'pwrd', 'fechhora', 'fechActDatos', 'bloqmatr', 'bloqadmi',
+    ];
+
+    /** Columnas extra de `legajos` (p. ej. telealte1_nom) sin control dedicado en el Blade. */
+    public array $legajoExtras = [];
+
     public function mount(?int $id = null): void
     {
         $this->id = $id;
@@ -122,19 +164,40 @@ class LegajoForm extends Component
     protected function rules(): array
     {
         $dniUnique = 'unique:legajos,dni' . ($this->id ? ",{$this->id}" : '');
+        $set = $this->camposActivosSet();
 
-        return [
-            'apellido'   => ['required', 'string', 'max:50'],
-            'nombre'     => ['required', 'string', 'max:50'],
-            'dni'        => ['required', 'digits_between:7,11', $dniUnique],
-            'idFamilias' => ['nullable', 'integer', 'min:1'],
-            'fechnaci'   => ['nullable', 'date'],
-            'cuil'       => ['nullable', 'string', 'max:13'],
-            'email'      => ['nullable', 'email', 'max:100'],
-            'emailmad'   => ['nullable', 'email', 'max:50'],
-            'emailpad'   => ['nullable', 'email', 'max:50'],
-            'emailtut'   => ['nullable', 'email', 'max:50'],
+        $r = [
+            'apellido' => ['required', 'string', 'max:50'],
+            'nombre'   => ['required', 'string', 'max:50'],
+            'dni'      => ['required', 'digits_between:7,11', $dniUnique],
         ];
+
+        if ($set === null || isset($set['idFamilias'])) {
+            $r['idFamilias'] = ['nullable', 'integer', 'min:1'];
+        }
+        if ($set === null || isset($set['fechnaci'])) {
+            $r['fechnaci'] = ['nullable', 'date'];
+        }
+        if ($set === null || isset($set['cuil'])) {
+            $r['cuil'] = ['nullable', 'string', 'max:13'];
+        }
+        if ($set === null || isset($set['email'])) {
+            $r['email'] = ['nullable', 'email', 'max:100'];
+        }
+        if ($set === null || isset($set['emailmad'])) {
+            $r['emailmad'] = ['nullable', 'email', 'max:50'];
+        }
+        if ($set === null || isset($set['emailpad'])) {
+            $r['emailpad'] = ['nullable', 'email', 'max:50'];
+        }
+        if ($set === null || isset($set['emailtut'])) {
+            $r['emailtut'] = ['nullable', 'email', 'max:50'];
+        }
+
+        $r['legajoExtras'] = ['array'];
+        $r['legajoExtras.*'] = ['nullable', 'string', 'max:4000'];
+
+        return $r;
     }
 
     protected function messages(): array
@@ -162,9 +225,18 @@ class LegajoForm extends Component
     {
         $this->validate();
 
-        $data = $this->formData();
+        $allData = $this->formData();
+        $set = $this->camposActivosSet();
+
+        // Restrict payload to active columns; core trio always included.
+        if ($set !== null) {
+            $allData = array_filter($allData, fn ($col) => isset($set[$col]), ARRAY_FILTER_USE_KEY);
+        }
+
+        $data = $allData;
 
         if ($this->id) {
+            // update() only touches the given keys, preserving hidden-column values in the DB.
             Legajo::findOrFail($this->id)->update($data);
             session()->flash('success', "Legajo de {$data['apellido']}, {$data['nombre']} actualizado.");
         } else {
@@ -396,7 +468,6 @@ class LegajoForm extends Component
         $this->domimad     = $l->domimad     ?? '';
         $this->ocupacmad   = $l->ocupacmad   ?? '';
         $this->telemad     = $l->telemad     ?? '';
-        $this->telecelmad  = $l->telecelmad  ?? '';
         $this->emailmad    = $l->emailmad    ?? '';
         $this->vivemad     = $l->vivemad     ?? '';
 
@@ -408,7 +479,6 @@ class LegajoForm extends Component
         $this->domipad     = $l->domipad     ?? '';
         $this->ocupacpad   = $l->ocupacpad   ?? '';
         $this->telepad     = $l->telepad     ?? '';
-        $this->telecelpad  = $l->telecelpad  ?? '';
         $this->emailpad    = $l->emailpad    ?? '';
         $this->vivepad     = $l->vivepad     ?? '';
 
@@ -432,11 +502,35 @@ class LegajoForm extends Component
         $this->certDisc       = $l->certDisc       ?? '';
         $this->emeravis       = $l->emeravis       ?? '';
         $this->retira         = $l->retira         ?? '';
+
+        $this->rellenarLegajoExtrasDesdeModelo($l);
+    }
+
+    private function rellenarLegajoExtrasDesdeModelo(Legajo $l): void
+    {
+        $this->legajoExtras = [];
+        $managed = array_flip(self::COLUMNAS_FORMULARIO_GESTIONADAS);
+        $skip = array_merge(self::COLUMNAS_SISTEMA_NO_EXTRAS, CampoLegajo::COLUMNAS_EXCLUIDAS);
+
+        foreach ($l->getAttributes() as $key => $val) {
+            if (isset($managed[$key]) || in_array($key, $skip, true)) {
+                continue;
+            }
+            if ($val === null) {
+                $this->legajoExtras[$key] = '';
+            } elseif ($val instanceof \DateTimeInterface) {
+                $this->legajoExtras[$key] = $val->format('Y-m-d');
+            } elseif (is_bool($val)) {
+                $this->legajoExtras[$key] = $val ? '1' : '0';
+            } else {
+                $this->legajoExtras[$key] = (string) $val;
+            }
+        }
     }
 
     private function formData(): array
     {
-        return [
+        $data = [
             'apellido'    => strtoupper(trim($this->apellido)),
             'nombre'      => ucwords(strtolower(trim($this->nombre))),
             'dni'         => $this->dni !== '' ? (int) $this->dni : null,
@@ -467,7 +561,6 @@ class LegajoForm extends Component
             'domimad'     => $this->domimad,
             'ocupacmad'   => $this->ocupacmad,
             'telemad'     => $this->telemad,
-            'telecelmad'  => $this->telecelmad,
             'emailmad'    => $this->emailmad,
             'vivemad'     => $this->vivemad,
             'nombrepad'   => $this->nombrepad,
@@ -478,7 +571,6 @@ class LegajoForm extends Component
             'domipad'     => $this->domipad,
             'ocupacpad'   => $this->ocupacpad,
             'telepad'     => $this->telepad,
-            'telecelpad'  => $this->telecelpad,
             'emailpad'    => $this->emailpad,
             'vivepad'     => $this->vivepad,
             'nombretut'   => $this->nombretut,
@@ -501,6 +593,209 @@ class LegajoForm extends Component
             'emeravis'    => $this->emeravis,
             'retira'      => $this->retira,
         ];
+
+        $managedFlip = array_flip(self::COLUMNAS_FORMULARIO_GESTIONADAS);
+        foreach ($this->legajoExtras as $k => $v) {
+            if (isset($managedFlip[$k])) {
+                continue;
+            }
+            $data[$k] = is_string($v) ? trim($v) : $v;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Slugs de solapa que no coinciden con plantillas fijas pero deben usar la
+     * plantilla «escolar» cuando solo hay columnas nuevas (no mapeadas).
+     *
+     * @var list<string>
+     */
+    private const SLUGS_MISC_PANEL_ESCOLAR = ['otros', 'misc', 'varios', 'adicional', 'general', 'extras'];
+
+    /**
+     * @return array<string, string>
+     */
+    private static function columnToPanelMap(): array
+    {
+        static $map = null;
+        if ($map !== null) {
+            return $map;
+        }
+        $map = [];
+        foreach (self::ALUMNO_TAB_COLUMNS as $col) {
+            $map[$col] = 'alumno';
+        }
+        foreach (self::TAB_COLUMNS as $panel => $cols) {
+            foreach ($cols as $col) {
+                $map[$col] = $panel;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Decide qué plantilla Blade usar para una solapa según las columnas asignadas.
+     * Las columnas sin entrada en el mapa no votan (nunca se infiere «alumno» por error).
+     * Si solo hay columnas nuevas, se usa plantilla escolar u otras reglas por slug.
+     */
+    private static function inferPanelForSolapa(int $solapaId, string $slug): string
+    {
+        $slugLower = strtolower($slug);
+        $canonical = array_flip(self::PANEL_SLUGS);
+        if (isset($canonical[$slugLower])) {
+            return $slugLower;
+        }
+
+        $columns = CampoLegajo::query()
+            ->where('solapa_legajo_id', $solapaId)
+            ->pluck('columna')
+            ->map(fn ($c) => (string) $c)
+            ->all();
+
+        if ($columns === []) {
+            return 'escolar';
+        }
+
+        $map = self::columnToPanelMap();
+        $votes = [];
+        foreach ($columns as $col) {
+            if (! isset($map[$col])) {
+                continue;
+            }
+            $panel = $map[$col];
+            // Nunca usar la plantilla «alumno» para una solapa que no sea slug «alumno»
+            // (evita legajo/libro/folio en «Otros» con plantilla equivocada).
+            if ($slugLower !== 'alumno' && $panel === 'alumno') {
+                continue;
+            }
+            $votes[$panel] = ($votes[$panel] ?? 0) + 1;
+        }
+
+        if ($votes !== []) {
+            arsort($votes);
+
+            return array_key_first($votes) ?? 'escolar';
+        }
+
+        // Solo columnas nuevas (no listadas en plantillas): nunca «alumno» (evita DNI/apellido/nombre duplicados).
+        if (in_array($slugLower, self::SLUGS_MISC_PANEL_ESCOLAR, true)) {
+            return 'escolar';
+        }
+
+        return 'escolar';
+    }
+
+    /**
+     * @param  array<string,int>|null  $camposActivos
+     * @return array{0: array<string, string>, 1: array<string, string>}
+     */
+    private function resolverTabsVisibles(?array $camposActivos): array
+    {
+        $canonical = array_flip(self::PANEL_SLUGS);
+
+        if (Schema::hasTable('solapas_legajo')) {
+            $solapasConCampos = SolapaLegajo::query()
+                ->whereHas('campos')
+                ->orderBy('orden')
+                ->get(['id', 'nombre', 'slug']);
+
+            if ($solapasConCampos->isNotEmpty()) {
+                $tabs = [];
+                $tabSlugToPanel = [];
+
+                $alumnoNombre = SolapaLegajo::where('slug', 'alumno')->value('nombre') ?? 'Alumno';
+                $tabs['alumno'] = $alumnoNombre;
+                $tabSlugToPanel['alumno'] = 'alumno';
+
+                foreach ($solapasConCampos as $s) {
+                    if ($s->slug === 'alumno') {
+                        $tabs['alumno'] = $s->nombre;
+
+                        continue;
+                    }
+                    $tabs[$s->slug] = $s->nombre;
+                    $tabSlugToPanel[$s->slug] = isset($canonical[$s->slug])
+                        ? $s->slug
+                        : self::inferPanelForSolapa((int) $s->id, (string) $s->slug);
+                }
+
+                return [$tabs, $tabSlugToPanel];
+            }
+        }
+
+        // ── Fallback: TAB_COLUMNS ────────────────────────────────────────────
+        $tabLabels = [
+            'domicilio' => 'Domicilio',
+            'madre'     => 'Madre',
+            'padre'     => 'Padre',
+            'tutor'     => 'Tutor',
+            'escolar'   => 'Escolaridad',
+        ];
+        $tabs = ['alumno' => 'Alumno'];
+        $tabSlugToPanel = ['alumno' => 'alumno'];
+
+        foreach (self::TAB_COLUMNS as $tabId => $cols) {
+            if ($camposActivos === null) {
+                $tabs[$tabId] = $tabLabels[$tabId];
+            } else {
+                foreach ($cols as $col) {
+                    if (isset($camposActivos[$col])) {
+                        $tabs[$tabId] = $tabLabels[$tabId];
+                        break;
+                    }
+                }
+            }
+        }
+
+        foreach (array_keys($tabs) as $slug) {
+            if (! isset($tabSlugToPanel[$slug])) {
+                $tabSlugToPanel[$slug] = $slug;
+            }
+        }
+
+        return [$tabs, $tabSlugToPanel];
+    }
+
+    /**
+     * Pestañas con parametrización: orden de `solapas_legajo`; «alumno» siempre primero.
+     *
+     * @param  array<string, list<array{columna: string, etiqueta: ?string}>>  $camposPorSlug
+     * @return array<string, string>
+     */
+    private function resolverTabsParametrizados(array $camposPorSlug): array
+    {
+        $rest = [];
+        foreach (SolapaLegajo::query()->orderBy('orden')->get(['slug', 'nombre']) as $s) {
+            if ($s->slug === 'alumno') {
+                continue;
+            }
+            if (! empty($camposPorSlug[$s->slug] ?? [])) {
+                $rest[$s->slug] = $s->nombre;
+            }
+        }
+
+        $alumnoNombre = SolapaLegajo::where('slug', 'alumno')->value('nombre') ?? 'Alumno';
+
+        return array_merge(['alumno' => $alumnoNombre], $rest);
+    }
+
+    /**
+     * Devuelve null si no hay parametrización activa (mostrar todo como siempre).
+     * Si hay columnas con solapa asignada, devuelve array_flip del conjunto unido
+     * con el trío obligatorio.
+     *
+     * @return array<string, int>|null
+     */
+    private function camposActivosSet(): ?array
+    {
+        $visibles = CampoLegajo::columnasActivasParaLegajo();
+        if ($visibles === null) {
+            return null;
+        }
+
+        return array_flip(array_unique(array_merge(self::CORE_COLUMNS, $visibles)));
     }
 
     private function pageForLegajo(int $id, int $perPage): int
@@ -549,8 +844,59 @@ class LegajoForm extends Component
                 ->get();
         }
 
-        return view('livewire.abm.legajos.form', compact('familias', 'cursos', 'condiciones', 'matriculasAlumno'))
-            ->layout('layouts.app', ['pageTitle' => $this->id ? 'Editar legajo' : 'Nuevo legajo']);
+        // null = sin restricción (mostrar todo, comportamiento original).
+        // array = set de columnas activas (array_flip de nombres de columna).
+        $camposActivos = $this->camposActivosSet();
+
+        $showField = fn (string $col): bool => $camposActivos === null || isset($camposActivos[$col]);
+
+        $modoParametrizadoLegajo = $camposActivos !== null;
+        $columnasPorSolapaSlug = [];
+
+        if ($modoParametrizadoLegajo) {
+            $columnasPorSolapaSlug = CampoLegajo::camposPorSolapaSlugOrdenados();
+            $tabsVisibles = $this->resolverTabsParametrizados($columnasPorSolapaSlug);
+            $tabSlugToPanel = [];
+            $showFieldEnTab = static fn (string $col): bool => false;
+        } else {
+            $columnsPorSlugTab = [];
+            if (Schema::hasTable('solapas_legajo') && Schema::hasTable('campos_legajo')) {
+                foreach (SolapaLegajo::query()->orderBy('orden')->get(['id', 'slug']) as $solapa) {
+                    $columnsPorSlugTab[$solapa->slug] = CampoLegajo::query()
+                        ->where('solapa_legajo_id', $solapa->id)
+                        ->orderBy('orden_en_solapa')
+                        ->orderBy('columna')
+                        ->pluck('columna')
+                        ->map(fn ($c) => (string) $c)
+                        ->values()
+                        ->all();
+                }
+            }
+
+            $activeTabKey = $this->activeTab;
+            $showFieldEnTab = function (string $col) use ($showField, $camposActivos, $columnsPorSlugTab, $activeTabKey): bool {
+                if (! $showField($col)) {
+                    return false;
+                }
+                if ($camposActivos === null || $columnsPorSlugTab === []) {
+                    return true;
+                }
+
+                return in_array($col, $columnsPorSlugTab[$activeTabKey] ?? [], true);
+            };
+
+            [$tabsVisibles, $tabSlugToPanel] = $this->resolverTabsVisibles($camposActivos);
+        }
+
+        if (! isset($tabsVisibles[$this->activeTab])) {
+            $this->activeTab = array_key_first($tabsVisibles) ?? 'alumno';
+        }
+
+        return view('livewire.abm.legajos.form', compact(
+            'familias', 'cursos', 'condiciones', 'matriculasAlumno',
+            'camposActivos', 'showField', 'showFieldEnTab', 'tabsVisibles', 'tabSlugToPanel',
+            'modoParametrizadoLegajo', 'columnasPorSolapaSlug',
+        ))->layout('layouts.app', ['pageTitle' => $this->id ? 'Editar legajo' : 'Nuevo legajo']);
     }
 }
 

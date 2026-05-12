@@ -5,6 +5,7 @@ use App\Http\Controllers\Alumnos\PushApiController;
 use App\Http\Controllers\Alumnos\PushController;
 use App\Http\Controllers\AntecedentesDisciplinariosPdfController;
 use App\Http\Controllers\CalificacionesSecundario\ConsultaCalificacionesSecundarioPdfController;
+use App\Http\Controllers\ListadoCursoPdfController;
 use App\Http\Controllers\SancionComunicadoPdfController;
 use App\Livewire\Abm\Curplan\CurplanForm;
 use App\Livewire\Abm\Curplan\CurplanIndex;
@@ -17,10 +18,22 @@ use App\Livewire\Abm\Planes\PlanesForm;
 use App\Livewire\Abm\Planes\PlanesIndex;
 use App\Livewire\Abm\Terlec\TerlecIndex;
 use App\Livewire\Alumnos\Auth\Login as AlumnosLogin;
+use App\Livewire\Alumnos\Comunicaciones\BandejaFamilia;
+use App\Livewire\Alumnos\Comunicaciones\HiloShowFamilia;
+use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
+use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
 use App\Livewire\Auth\Login;
+use App\Livewire\Comunicaciones\BandejaGestion;
+use App\Livewire\Comunicaciones\BandejaRevision;
+use App\Livewire\Comunicaciones\HiloShow;
+use App\Livewire\Comunicaciones\NuevoComunicado;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
 use App\Livewire\Administracion\Permisos\PermisosUsuariosIndex;
+use App\Livewire\Listados\ListadoPorCurso;
+use App\Livewire\Parametrizacion\CamposLegajoIndex;
+use App\Livewire\Parametrizacion\SolapaLegajoIndex;
+use App\Livewire\Parametrizacion\ComCanalesIndex;
 use App\Livewire\Parametrizacion\ParametrosSistemaForm;
 use App\Livewire\Push\EnviarPush;
 use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
@@ -73,7 +86,10 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/notificaciones/mis', [PushController::class, 'misNotificaciones'])->name('alumnos.push.mis');
     Route::get('/notificaciones/{id}', [PushController::class, 'ver'])->whereNumber('id')->name('alumnos.push.ver');
 
-    // Comunicaciones familia ↔ escuela: rutas registradas por Se\ModuloComunicaciones\ComunicacionesServiceProvider
+    Route::get('/comunicaciones', BandejaFamilia::class)->name('alumnos.comunicaciones.index');
+    Route::get('/comunicaciones/nuevo', NuevoComunicadoFamilia::class)->name('alumnos.comunicaciones.nuevo');
+    Route::get('/comunicaciones/preferencias', PreferenciasMedios::class)->name('alumnos.comunicaciones.preferencias');
+    Route::get('/comunicaciones/{id}', HiloShowFamilia::class)->whereNumber('id')->name('alumnos.comunicaciones.hilo');
 });
 
 // API Push (misma sesión del alumno; fuera del prefix /alumnos para que el SW tenga scope simple)
@@ -98,7 +114,10 @@ Route::middleware(['auth', 'school.context'])->group(function () {
         ->middleware('permiso:2')
         ->name('push.enviar');
 
-    // Módulo de Comunicaciones: rutas registradas por Se\ModuloComunicaciones\ComunicacionesServiceProvider
+    Route::get('/comunicaciones', BandejaGestion::class)->middleware('permiso:51')->name('comunicaciones.index');
+    Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:51', 'permiso:56'])->name('comunicaciones.revision');
+    Route::get('/comunicaciones/nuevo', NuevoComunicado::class)->middleware('permiso:52')->name('comunicaciones.nuevo');
+    Route::get('/comunicaciones/{id}', HiloShow::class)->middleware('permiso:51')->whereNumber('id')->name('comunicaciones.hilo');
 
     // Administración: permisos de usuarios (orden 0)
     Route::get('/administracion/permisos', PermisosUsuariosIndex::class)
@@ -116,16 +135,26 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/abm/curplan/nuevo', CurplanForm::class)->middleware('permiso:1')->name('abm.curplan.create');
     Route::get('/abm/curplan/{id}/editar', CurplanForm::class)->middleware('permiso:1')->whereNumber('id')->name('abm.curplan.edit');
     Route::get('/abm/materias-anio', MateriasAnioIndex::class)->middleware('permiso:1')->name('abm.materias-anio');
-    // param.campos-listado-alumnos: registrada por se/modulo-listados
     Route::get('/parametrizacion/parametros-sistema', ParametrosSistemaForm::class)
         ->middleware('permiso:1')
         ->name('param.parametros-sistema');
+    Route::get('/parametrizacion/campos-legajo', CamposLegajoIndex::class)
+        ->middleware('permiso:1')
+        ->name('param.campos-listado-alumnos'); // nombre conservado para no romper enlaces existentes
+    Route::get('/parametrizacion/solapas-legajo', SolapaLegajoIndex::class)
+        ->middleware('permiso:1')
+        ->name('param.solapas-legajo');
+    Route::get('/parametrizacion/com-canales', ComCanalesIndex::class)
+        ->middleware('permiso:53')
+        ->name('param.com-canales');
     Route::get('/abm/legajos', LegajosIndex::class)->middleware('permiso:2')->name('abm.legajos');
     Route::get('/abm/legajos/nuevo', LegajoForm::class)->middleware('permiso:2')->name('abm.legajos.create');
     Route::get('/abm/legajos/{id}/editar', LegajoForm::class)->middleware('permiso:2')->whereNumber('id')->name('abm.legajos.edit');
 
-    // Módulo Listados: rutas registradas por Se\ModuloListados\ListadosServiceProvider (se/modulo-listados)
-    // listadoPorCurso_v1.2: rutas registradas por Se\ModuloListadoPorCursoV12\ListadoPorCursoV12ServiceProvider
+    Route::get('/listados/por-curso', ListadoPorCurso::class)->middleware('permiso:2')->name('listados.por-curso');
+    Route::get('/listados/por-curso/listado', ListadoCursoPdfController::class)->middleware('permiso:2')->name('listados.por-curso.pdf');
+
+    // listadoPorCurso_v1.2: rutas registradas por Se\ModuloListadoPorCursoV12\ListadoPorCursoV12ServiceProvider (paquete opcional)
 
     // Calificaciones (nivel secundario): carga y consulta institucional (mismo PDF que autogestión)
     Route::get('/calificaciones-secundario/carga', CargaCalificacionesSecundario::class)

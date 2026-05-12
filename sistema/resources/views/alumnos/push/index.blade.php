@@ -55,6 +55,31 @@
             el.textContent = msg;
         };
 
+        /** Mismo ServiceWorkerRegistration que registró el SW de push (scope /notificaciones-push/). */
+        let alumnoPushSwRegistration = null;
+
+        async function resolvePushServiceWorkerRegistration() {
+            if (alumnoPushSwRegistration) {
+                return alumnoPushSwRegistration;
+            }
+            const scopeUrl = document.querySelector('meta[name="pwa-scope"]')?.getAttribute('content')?.trim();
+            if (scopeUrl && navigator.serviceWorker?.getRegistration) {
+                try {
+                    const byScope = await navigator.serviceWorker.getRegistration(scopeUrl);
+                    if (byScope) {
+                        return byScope;
+                    }
+                } catch (e) {
+                    // seguir con fallback
+                }
+            }
+            try {
+                return await navigator.serviceWorker.ready;
+            } catch (e) {
+                return null;
+            }
+        }
+
         document.getElementById('btnEnablePush')?.addEventListener('click', async () => {
             const p = await window.studentRequestPushPermission?.();
             if (p === 'denied') window.studentShowPushStatus('Permiso denegado. Habilitalo desde la configuración del navegador.', 'error');
@@ -80,7 +105,11 @@
 
         document.getElementById('btnDisablePush')?.addEventListener('click', async () => {
             try {
-                const reg = await navigator.serviceWorker.ready;
+                const reg = await resolvePushServiceWorkerRegistration();
+                if (!reg?.pushManager) {
+                    window.studentShowPushStatus('No se encontró el registro de notificaciones de este sitio.', 'error');
+                    return;
+                }
                 const sub = await reg.pushManager.getSubscription();
                 if (!sub) {
                     window.studentShowPushStatus('Este dispositivo no tiene notificaciones activadas.', 'error');
@@ -110,7 +139,11 @@
         // Estado real del dispositivo: si ya hay suscripción, mostrar "Desactivar notificaciones".
         window.addEventListener('pwa-sw-registered', async (ev) => {
             try {
-                const reg = ev?.detail || (await navigator.serviceWorker.ready);
+                alumnoPushSwRegistration = ev?.detail ?? null;
+                const reg = alumnoPushSwRegistration || (await resolvePushServiceWorkerRegistration());
+                if (!reg?.pushManager) {
+                    return;
+                }
                 const sub = await reg.pushManager.getSubscription();
                 setUiSubscribed(!!sub);
             } catch (e) {

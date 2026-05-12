@@ -688,12 +688,25 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'param.campos-listado-alumnos'),
                    ])
-                   title="Campos Disponibles Listado Alumnos {{ $sidebarModuleVersion('configuracion') }}">
+                   title="Campos activos (Legajo del estudiante) {{ $sidebarModuleVersion('configuracion') }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                     </svg>
-                    <span class="truncate">Campos Disponibles Listado Alumnos</span>
+                    <span class="truncate">Campos activos (Legajo del estudiante)</span>
+                </a>
+
+                <a href="{{ route('param.solapas-legajo') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'param.solapas-legajo'),
+                   ])
+                   title="Solapas del Legajo {{ $sidebarModuleVersion('configuracion') }}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 10h18M3 6h18M3 14h10M3 18h10"/>
+                    </svg>
+                    <span class="truncate">Solapas del Legajo</span>
                 </a>
 
                 <a href="{{ route('param.parametros-sistema') }}"

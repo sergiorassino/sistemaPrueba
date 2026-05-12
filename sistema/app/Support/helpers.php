@@ -111,6 +111,40 @@ if (! function_exists('studentLogoUrl')) {
     }
 }
 
+if (! function_exists('entoInstitutionalLogoUrlFallback')) {
+    /**
+     * Primer logo institucional definido en `ento` (cualquier nivel).
+     * Misma fuente que `schoolLogoUrl()` / `studentLogoUrl()` para pantallas sin
+     * contexto de nivel (login de estudiantes) o si el nivel activo no tiene `logo_path`.
+     */
+    function entoInstitutionalLogoUrlFallback(): ?string
+    {
+        static $memo = null;
+        static $done = false;
+
+        if ($done) {
+            return $memo;
+        }
+        $done = true;
+
+        $path = Ento::query()
+            ->whereNotNull('logo_path')
+            ->where('logo_path', '<>', '')
+            ->orderBy('idNivel')
+            ->value('logo_path');
+
+        if (! is_string($path) || trim($path) === '') {
+            $memo = null;
+
+            return null;
+        }
+
+        $memo = Storage::disk('public')->url(trim($path));
+
+        return $memo;
+    }
+}
+
 if (! function_exists('schoolPdfHeaderData')) {
     /**
      * Datos institucionales para encabezados de PDFs (Dompdf).

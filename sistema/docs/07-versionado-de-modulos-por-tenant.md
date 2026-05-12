@@ -9,18 +9,18 @@
 
 El sistema atiende múltiples colegios (tenants) que parten de un código base común pero necesitan ir diferenciándose con el tiempo. El riesgo central es: **modificar algo para el colegio A sin tener certeza de que no se afectan los colegios B y C**.
 
-La solución es encapsular cada variante funcional en un **paquete Laravel independiente** (path package en monorepo), instalar ese paquete solo en el repo del colegio que lo necesita, y declarar en la configuración del tenant qué versión debe usar.
+La solución habitual es: el código compartido vive en **`app/`** (y vistas en `resources/views/`). Cuando un colegio necesita una **variante fuerte** (lógica o UI distinta), se encapsula en un **paquete Laravel por path** (`packages/…` en monorepo), se declara solo en el `composer.json` del repo que lo usa, y el tenant elige la versión en configuración.
 
 ---
 
 ## 2. Principio de diseño
 
-- Todo módulo nace en `v1.0` dentro de `app/` (código compartido del sistema base).
-- Cuando un colegio necesita una variante, se crea un paquete nuevo (`v2.0`, `v3.0`, etc.) en `packages/`.
-- El colegio A requiere el paquete v2 en su `composer.json`. Los colegios B y C no lo incluyen: **el código v2 no existe en sus repos**.
+- Todo módulo nace en `v1.0` dentro de `app/` (código compartido del sistema base), con rutas en `routes/web.php` y vistas bajo `resources/views/` cuando corresponda.
+- Cuando un colegio necesita una variante incompatible con la base, se crea un paquete nuevo (`v2.0`, `v3.0`, etc.) en `packages/` y se enlaza por **path** en Composer solo en el repo que lo necesita.
+- El colegio A requiere el paquete v2 en su `composer.json`. Los colegios B y C no lo incluyen: **el código v2 no existe en sus instalaciones**.
 - El sidebar y el dashboard leen la configuración del tenant (`tenantConfig()`) y apuntan a la ruta correcta según la versión activa.
 
-**Nunca se modifica el módulo v1 para hacer cambios de v2.** Cada versión es un paquete separado, con sus propias rutas, componentes y vistas.
+**Nunca se modifica el módulo v1 en `app/` para “meter” la lógica de v2.** La variante v2 es código separado (paquete o rama dedicada), con rutas y nombres de ruta propios para no pisar a los demás colegios.
 
 ---
 
@@ -215,21 +215,38 @@ $dashboardLinks[] = [
 
 ---
 
-## 7. Módulos versionados existentes
+## 7. Módulos en `app/` y versionado por tenant
 
-| Módulo | v1.0 (base, en `app/`) | v2.0 (paquete) | Clave de config |
-|---|---|---|---|
-| Listados por curso | `route('listados.por-curso')` | `route('listadosV2.por-curso')` | `listados.por_curso_version` |
-| Listados por curso | `route('listadoPorCurso.v1_2')` | — | `listados.por_curso_version = v1.2` |
-| Seguimiento disciplinario | `route('seguimiento.disciplinario')` | `route('disciplinarioV2.index')` | `disciplinario.version` |
+### 7.1 Módulos base (sin paquete Composer)
 
-**Paquetes en `packages/`:**
+Estos módulos viven en el mismo árbol que el resto del sistema (`app/`, `routes/web.php`, `resources/views/…`). **No** se instalan vía `composer require` como dependencias `se/*`.
 
-| Paquete | Versión | Descripción |
+| Módulo | Ubicación principal | Rutas típicas |
 |---|---|---|
-| `se/modulo-listado-por-curso-v12` | v1.2 | Listado simple (apellido, nombre, DNI) sin PDF |
-| `se/modulo-listados-v2` | v2.0 | Listado con búsqueda interactiva |
+| **Comunicaciones / cuaderno** (docentes y portal familia) | `App\Livewire\Comunicaciones\*`, `App\Livewire\Alumnos\Comunicaciones\*`, `App\Comunicaciones\*`, modelos `App\Models\Com*`, vistas `resources/views/comunicaciones/` | `comunicaciones.*`, `alumnos.comunicaciones.*`, `param.com-canales` |
+| **Listados por curso (v1.0)** | `App\Livewire\Listados\ListadoPorCurso`, `App\Http\Controllers\ListadoCursoPdfController`, `App\Models\CampoListadoAlumno`, soporte en `App\Support\Listados\*`, vistas `resources/views/listados/` | `listados.por-curso`, `listados.por-curso.pdf`, `param.campos-listado-alumnos` |
+| **Campos activos del legajo** | `CampoListadoAlumno` (tabla `campos_listado_alumnos`, columna `visible_listado`). Gobierna tanto la visibilidad de columnas en el PDF por curso como los campos editables en el ABM de legajo (`App\Livewire\Abm\Legajos\LegajoForm`). Apellido, nombre y DNI siempre activos. | `param.campos-listado-alumnos` |
+
+Los overrides por tenant de vistas listados siguen el namespace `listados::` y rutas bajo `resources/views/custom/{slug}/listados/` (ver `TenantOverridesServiceProvider`).
+
+### 7.2 Tabla de versiones (sidebar / dashboard)
+
+| Módulo | v1.0 (base, en `app/`) | Variante (paquete u otro módulo) | Clave de config |
+|---|---|---|---|
+| Listados por curso | `route('listados.por-curso')` | `route('listadoPorCurso.v1_2')` si está el módulo opcional v1.2; u otra ruta si existiera paquete v2 | `listados.por_curso_version` |
+| Seguimiento disciplinario | `route('seguimiento.disciplinario')` | `route('disciplinarioV2.index')` si se instala paquete v2 | `disciplinario.version` |
+
+### 7.3 Ejemplos de paquetes opcionales (`packages/` o repos dedicados)
+
+Solo aplican a colegios que los agreguen explícitamente a su `composer.json`:
+
+| Paquete (ejemplo) | Versión | Descripción |
+|---|---|---|
+| `se/modulo-listado-por-curso-v12` | v1.2 | Listado simple (apellido, nombre, DNI) sin PDF — alternativa a v1.0 en `app/` |
+| `se/modulo-listados-v2` | v2.0 | Listado con búsqueda interactiva (hipotético / futuro) |
 | `se/modulo-disciplinario-v2` | v2.0 | Seguimiento disciplinario — variante personalizable |
+
+Los nombres `se/modulo-*` son **ilustrativos** del patrón; el nombre real del paquete y el namespace deben acordarse al crear la variante.
 
 ---
 

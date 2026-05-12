@@ -1,0 +1,16 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Bloquear carpetas sensibles de Laravel (en la raíz del proyecto)
+    # RewriteRule ^(app|bootstrap|config|database|resources|routes|storage|vendor)(/|$) - [F,L]
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|vendor)(/|$) - [F,L]
+
+    # Bloquear archivos sensibles en la raíz
+    RewriteRule ^(\.env|artisan|composer\.(json|lock)|package(-lock)?\.json|vite\.config\.js|webpack\.mix\.js)$ - [F,L]
+
+    # El resto: servir desde public/
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

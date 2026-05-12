@@ -9,20 +9,8 @@
         "laravel/framework": "^11.0",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^4.2",
-        "minishlink/web-push": "^10.0",
-        "se/modulo-comunicaciones": "^0.1",
-        "se/modulo-listados": "^0.1"
+        "minishlink/web-push": "^10.0"
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/sergiorassino/modulo-comunicaciones.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/sergiorassino/modulo-listados.git"
-        }
-    ],
     "require-dev": {
         "fakerphp/faker": "^1.23",
         "laravel/pint": "^1.13",

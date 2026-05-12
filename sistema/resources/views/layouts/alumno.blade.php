@@ -147,7 +147,7 @@
        ]">
 
     @php
-        $logoUrl = studentLogoUrl() ?: asset('img/3.png');
+        $logoUrl = studentLogoUrl() ?: entoInstitutionalLogoUrlFallback() ?: asset('img/3.png');
         $alumno = auth('alumno')->user();
         $sidebarSessionLine = studentCtx()->nivelNombre()
             . ' · ' . studentCtx()->terlecAno()
@@ -159,7 +159,7 @@
 
         <div class="flex min-w-0 items-center gap-2"
              :class="sidebarCollapsed ? 'flex-col justify-center' : 'flex-1'">
-            <span class="rounded-lg bg-white px-2 py-1.5 shadow-sm flex-shrink-0">
+            <span class="rounded-2xl bg-white px-2 py-1.5 shadow-sm flex-shrink-0 overflow-hidden">
                 <img src="{{ $logoUrl }}" alt=""
                      class="object-contain flex-shrink-0 block"
                      :class="sidebarCollapsed ? 'h-8 w-8' : 'h-9 w-auto max-w-[9.5rem]'">

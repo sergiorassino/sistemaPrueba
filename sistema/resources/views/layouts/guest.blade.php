@@ -8,6 +8,9 @@
     @livewireStyles
 </head>
 <body class="h-full antialiased text-neutral-800">
+@php
+    $guestBrandLogo = entoInstitutionalLogoUrlFallback() ?: asset('img/3.png');
+@endphp
 
 <div class="min-h-screen flex flex-col md:flex-row">
 
@@ -20,12 +23,16 @@
         <div class="pointer-events-none absolute inset-0 opacity-95 bg-[radial-gradient(ellipse_120%_80%_at_90%_0%,rgba(255,255,255,0.08),transparent_50%),radial-gradient(ellipse_90%_55%_at_10%_100%,rgba(51,51,51,0.35),transparent_52%)]"
              aria-hidden="true"></div>
 
-        <div class="relative z-10 flex flex-col gap-8">
-            <img src="{{ asset('img/3.png') }}"
-                 alt="{{ config('app.name') }}"
-                 class="w-auto h-28 xl:h-32 object-contain drop-shadow-lg">
+        <div class="relative z-10 flex w-full flex-col gap-8">
+            <div class="flex w-full justify-center">
+                <span class="inline-flex rounded-2xl bg-white px-3 py-2.5 shadow-md overflow-hidden">
+                    <img src="{{ $guestBrandLogo }}"
+                         alt=""
+                         class="w-auto h-28 xl:h-32 max-w-[min(100%,14rem)] object-contain">
+                </span>
+            </div>
 
-            <div class="max-w-lg">
+            <div class="max-w-lg w-full mx-auto md:mx-0">
                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-white/65">{{ config('app.name') }}</p>
                 @if (($guestPortal ?? 'staff') === 'alumno')
                     <h1 class="mt-3 text-3xl xl:text-[2rem] font-bold leading-tight tracking-tight">
@@ -65,9 +72,11 @@
 
             {{-- Logo móvil (panel editorial oculto) --}}
             <div class="mb-7 md:hidden w-full flex justify-center">
-                <img src="{{ asset('img/3.png') }}"
-                     alt="{{ config('app.name') }}"
-                     class="max-h-[148px] w-auto object-contain drop-shadow-md">
+                <span class="inline-flex rounded-2xl bg-white px-4 py-3 shadow-md overflow-hidden">
+                    <img src="{{ $guestBrandLogo }}"
+                         alt=""
+                         class="max-h-[148px] w-auto max-w-[min(100%,16rem)] object-contain">
+                </span>
             </div>
 
             <div class="w-full max-w-md">

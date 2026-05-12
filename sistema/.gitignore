@@ -9,9 +9,8 @@
 /storage/framework/views/**
 /storage/framework/testing/**
 /vendor
-.env
-.env.backup
-.env.production
+.env*
+!.env.example
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml

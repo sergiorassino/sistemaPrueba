@@ -15,7 +15,7 @@ use Illuminate\Support\ServiceProvider;
  *     archivo del cliente ganan; lo que no aparece se hereda del default).
  *  3. Prepende el path de vistas custom del cliente en el namespace del paquete,
  *     para que un archivo en resources/views/custom/{slug}/listados/ pise
- *     la vista correspondiente del paquete se/modulo-listados.
+ *     la vista correspondiente del módulo listados (resources/views/listados).
  *
  * Override Nivel 1 — config (sin código):
  *   config('tenant.listados.titulo')
@@ -23,7 +23,7 @@ use Illuminate\Support\ServiceProvider;
  *
  * Override Nivel 2 — vista (solo Blade):
  *   Crear resources/views/custom/{slug}/listados/livewire/listados/por-curso.blade.php
- *   → pisa la vista 'listados::livewire.listados.por-curso' del paquete.
+ *   → pisa la vista 'listados::livewire.listados.por-curso' del módulo en app.
  *
  *   Hook de snippet (sin namespace):
  *   @includeIf('custom.' . tenantConfig('slug') . '.listados.hero-badge')
@@ -36,11 +36,11 @@ class TenantOverridesServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Permite apagar todo el sistema de overrides por tenant sin eliminar la lógica.
-        // Útil para dejar el sistema "baseline" (v1) aunque existan archivos de tenant o vistas custom.
+        // Permite apagar overrides (merge de config/tenants/*.php y vistas custom) sin tocar
+        // el identificador del cliente: `tenant.slug` sigue viniendo de config/tenant.php
+        // (TENANT_SLUG), necesario p. ej. para rutas de disco compartidas (logos por colegio).
         $enabled = filter_var(env('ENABLE_TENANT_OVERRIDES', false), FILTER_VALIDATE_BOOL);
         if (! $enabled) {
-            config(['tenant.slug' => 'default']);
             return;
         }
 
@@ -72,7 +72,7 @@ class TenantOverridesServiceProvider extends ServiceProvider
          |
          | if ($slug === 'montecristo') {
          |     $this->app->bind(
-         |         \Se\ModuloListados\Livewire\ListadoPorCurso::class,
+         |         \App\Livewire\Listados\ListadoPorCurso::class,
          |         \App\Custom\Montecristo\Listados\ListadoPorCurso::class,
          |     );
          | }
@@ -95,7 +95,7 @@ class TenantOverridesServiceProvider extends ServiceProvider
          | el mismo path que una vista del paquete la pisa automáticamente.
          |
          | Ejemplo: resources/views/custom/montecristo/listados/livewire/listados/por-curso.blade.php
-         | → pisa 'listados::livewire.listados.por-curso' del paquete.
+         | → pisa 'listados::livewire.listados.por-curso' (vistas en resources/views/listados).
          |
          | Los hooks @includeIf('custom.{slug}.listados.hero-badge') también
          | resuelven desde esta carpeta (mismo directorio base).

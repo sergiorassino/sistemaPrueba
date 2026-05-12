@@ -20,8 +20,8 @@
             'icon' => 'levels',
         ];
         $dashboardLinks[] = [
-            'title' => 'Campos listado alumnos',
-            'hint' => 'Visibilidad en PDF por curso',
+            'title' => 'Campos activos',
+            'hint' => 'Legajo del estudiante y listado PDF',
             'href' => route('param.campos-listado-alumnos'),
             'icon' => 'table',
         ];

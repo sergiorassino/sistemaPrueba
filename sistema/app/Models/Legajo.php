@@ -8,18 +8,12 @@ class Legajo extends Authenticatable
 {
     protected $table = 'legajos';
     public $timestamps = false;
-    protected $fillable = [
-        'apellido', 'nombre', 'dni', 'cuil', 'fechnaci', 'sexo', 'nacion',
-        'idFamilias', 'tipoalumno', 'legajo', 'libro', 'folio',
-        'callenum', 'barrio', 'localidad', 'codpos',
-        'ln_ciudad', 'ln_depto', 'ln_provincia', 'ln_pais',
-        'telefono', 'email',
-        'nombremad', 'dnimad', 'fechnacmad', 'nacionmad', 'estacivimad', 'domimad', 'ocupacmad', 'telemad', 'telecelmad', 'emailmad', 'vivemad',
-        'nombrepad', 'dnipad', 'fechnacpad', 'nacionpad', 'estacivipad', 'domipad', 'ocupacpad', 'telepad', 'telecelpad', 'emailpad', 'vivepad',
-        'nombretut', 'dnitut', 'teletut', 'emailtut', 'respAdmiNom', 'respAdmiDni',
-        'escori', 'destino', 'obs', 'identif', 'vivecon', 'hermanos', 'ec_padres', 'parroquia',
-        'needes', 'needes_detalle', 'certDisc', 'emeravis', 'retira', 'fechhora',
-    ];
+
+    /**
+     * Permite columnas extra por colegio (p. ej. telealte1_nom) sin listarlas todas en fillable.
+     * Mass assignment solo bloquea identificador y contraseña.
+     */
+    protected $guarded = ['id', 'pwrd'];
 
     protected $hidden = ['pwrd'];
 

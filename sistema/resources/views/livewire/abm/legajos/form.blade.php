@@ -44,14 +44,7 @@
         {{-- Tabs --}}
         <div class="border-b border-accent-200 bg-white">
             <nav class="se-form-tabs">
-                @foreach ([
-                    'alumno'    => 'Alumno',
-                    'domicilio' => 'Domicilio',
-                    'madre'     => 'Madre',
-                    'padre'     => 'Padre',
-                    'tutor'     => 'Tutor',
-                    'escolar'   => 'Escolaridad',
-                ] as $tab => $label)
+                @foreach ($tabsVisibles as $tab => $label)
                     <button wire:click="setTab('{{ $tab }}')"
                             @class([
                                 'se-form-tab',
@@ -64,12 +57,49 @@
             </nav>
         </div>
 
-        {{-- Tab contents --}}
-        <div class="space-y-5 px-5 py-5 sm:px-6">
+        {{-- Contenido de solapas: parametrizado = orden desde campos_legajo; sin param = plantillas legacy --}}
+        @if($modoParametrizadoLegajo)
+            <div class="space-y-5 px-5 py-5 sm:px-6" wire:key="legajo-tab-{{ $activeTab }}">
+                @if($activeTab === 'alumno')
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <label class="form-label">Apellido *</label>
+                            <input wire:model="apellido" type="text" maxlength="50" class="form-input @error('apellido') border-red-400 @enderror">
+                            @error('apellido') <p class="form-error">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="form-label">Nombre *</label>
+                            <input wire:model="nombre" type="text" maxlength="50" class="form-input @error('nombre') border-red-400 @enderror">
+                            @error('nombre') <p class="form-error">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="form-label">DNI *</label>
+                            <input wire:model="dni" type="text" inputmode="numeric" maxlength="11" class="form-input @error('dni') border-red-400 @enderror">
+                            @error('dni') <p class="form-error">{{ $message }}</p> @enderror
+                        </div>
+                        @foreach($columnasPorSolapaSlug['alumno'] ?? [] as $campo)
+                            @include('livewire.abm.legajos.partials.legajo-campo-dinamico', ['campo' => $campo, 'familias' => $familias])
+                        @endforeach
+                    </div>
+                @else
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        @forelse(($columnasPorSolapaSlug[$activeTab] ?? []) as $campo)
+                            @include('livewire.abm.legajos.partials.legajo-campo-dinamico', ['campo' => $campo, 'familias' => $familias])
+                        @empty
+                            <p class="text-sm text-neutral-500 sm:col-span-2">No hay campos asignados a esta solapa en Campos activos.</p>
+                        @endforelse
+                    </div>
+                @endif
+            </div>
+        @else
+        @php($activePanel = $tabSlugToPanel[$activeTab] ?? $activeTab)
+        <div class="space-y-5 px-5 py-5 sm:px-6" wire:key="legajo-tab-{{ $activeTab }}">
 
             {{-- ── TAB ALUMNO ── --}}
-            @if ($activeTab === 'alumno')
+            @if ($activePanel === 'alumno')
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {{-- Trío obligatorio: solo en la solapa cuyo slug es «alumno» (no en plantilla alumno reutilizada) --}}
+                    @if ($activeTab === 'alumno')
                     <div>
                         <label class="form-label">Apellido *</label>
                         <input wire:model="apellido" type="text" maxlength="50" class="form-input @error('apellido') border-red-400 @enderror">
@@ -85,125 +115,127 @@
                         <input wire:model="dni" type="text" inputmode="numeric" maxlength="11" class="form-input @error('dni') border-red-400 @enderror">
                         @error('dni') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
-                    <div>
-                        <label class="form-label">CUIL</label>
-                        <input wire:model="cuil" type="text" maxlength="13" placeholder="Ej: 20-12345678-9" class="form-input">
-                    </div>
-                    <div>
-                        <label class="form-label">Fecha de nacimiento</label>
-                        <input wire:model="fechnaci" type="date" class="form-input @error('fechnaci') border-red-400 @enderror">
-                        @error('fechnaci') <p class="form-error">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="form-label">Sexo</label>
-                        <select wire:model="sexo" class="form-select">
-                            <option value="">— Seleccione —</option>
-                            <option value="M">Masculino</option>
-                            <option value="F">Femenino</option>
-                            <option value="X">No binario</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="form-label">Nacionalidad</label>
-                        <input wire:model="nacion" type="text" maxlength="20" class="form-input">
-                    </div>
-                    <div>
-                        <label class="form-label">Familia</label>
-                        <select wire:model="idFamilias" class="form-select @error('idFamilias') border-red-400 @enderror">
-                            @foreach ($familias as $f)
-                                <option value="{{ $f->id }}">{{ $f->apellido }}{{ $f->responsable ? ' – ' . $f->responsable : '' }}</option>
-                            @endforeach
-                        </select>
-                        @error('idFamilias') <p class="form-error">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="form-label">N° Legajo</label>
-                        <input wire:model="legajo" type="text" maxlength="10" class="form-input">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="form-label">Libro</label>
-                            <input wire:model="libro" type="text" maxlength="10" class="form-input">
-                        </div>
-                        <div>
-                            <label class="form-label">Folio</label>
-                            <input wire:model="folio" type="text" maxlength="10" class="form-input">
-                        </div>
-                    </div>
+                    @endif
+
+                    @include('livewire.abm.legajos.partials.campos-opcionales-alumno-panel')
                 </div>
             @endif
 
             {{-- ── TAB DOMICILIO ── --}}
-            @if ($activeTab === 'domicilio')
+            @if ($activePanel === 'domicilio')
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @if($showFieldEnTab('callenum'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Calle y número</label>
                         <input wire:model="callenum" type="text" maxlength="50" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('barrio'))
                     <div>
                         <label class="form-label">Barrio</label>
                         <input wire:model="barrio" type="text" maxlength="50" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('localidad'))
                     <div>
                         <label class="form-label">Localidad</label>
                         <input wire:model="localidad" type="text" maxlength="50" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('codpos'))
                     <div>
                         <label class="form-label">Código postal</label>
                         <input wire:model="codpos" type="text" maxlength="10" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('telefono'))
                     <div>
                         <label class="form-label">Teléfono</label>
                         <input wire:model="telefono" type="text" maxlength="60" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('email'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Email</label>
                         <input wire:model="email" type="email" maxlength="100" class="form-input @error('email') border-red-400 @enderror">
                         @error('email') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('ln_ciudad') || $showFieldEnTab('ln_depto') || $showFieldEnTab('ln_provincia') || $showFieldEnTab('ln_pais'))
                     <p class="sm:col-span-2 text-xs font-medium text-gray-500 pt-1">Lugar de nacimiento</p>
+                    @if($showFieldEnTab('ln_ciudad'))
                     <div>
                         <label class="form-label">Ciudad</label>
                         <input wire:model="ln_ciudad" type="text" maxlength="50" class="form-input">
                     </div>
+                    @endif
+                    @if($showFieldEnTab('ln_depto'))
                     <div>
                         <label class="form-label">Departamento</label>
                         <input wire:model="ln_depto" type="text" maxlength="50" class="form-input">
                     </div>
+                    @endif
+                    @if($showFieldEnTab('ln_provincia'))
                     <div>
                         <label class="form-label">Provincia</label>
                         <input wire:model="ln_provincia" type="text" maxlength="50" class="form-input">
                     </div>
+                    @endif
+                    @if($showFieldEnTab('ln_pais'))
                     <div>
                         <label class="form-label">País</label>
                         <input wire:model="ln_pais" type="text" maxlength="50" class="form-input">
                     </div>
+                    @endif
+                    @endif
                 </div>
             @endif
 
             {{-- ── TAB MADRE ── --}}
-            @if ($activeTab === 'madre')
+            @if ($activePanel === 'madre')
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @if($showFieldEnTab('nombremad'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Nombre completo</label>
                         <input wire:model="nombremad" type="text" maxlength="50" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('dnimad'))
                     <div>
                         <label class="form-label">DNI</label>
                         <input wire:model="dnimad" type="text" maxlength="10" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('fechnacmad'))
                     <div>
                         <label class="form-label">Fecha de nacimiento</label>
                         <input wire:model="fechnacmad" type="date" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('nacionmad'))
                     <div>
                         <label class="form-label">Nacionalidad</label>
                         <input wire:model="nacionmad" type="text" maxlength="20" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('estacivimad'))
                     <div>
                         <label class="form-label">Estado civil</label>
                         <input wire:model="estacivimad" type="text" maxlength="20" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('vivemad'))
                     <div>
                         <label class="form-label">¿Vive con el alumno?</label>
                         <select wire:model="vivemad" class="form-select">
@@ -212,53 +244,78 @@
                             <option value="no">No</option>
                         </select>
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('ocupacmad'))
                     <div>
                         <label class="form-label">Ocupación</label>
                         <input wire:model="ocupacmad" type="text" maxlength="30" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('domimad'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Domicilio</label>
                         <input wire:model="domimad" type="text" maxlength="100" class="form-input">
                     </div>
-                    <div>
+                    @endif
+
+                    @if($showFieldEnTab('telemad'))
+                    <div class="sm:col-span-2">
                         <label class="form-label">Teléfono</label>
                         <input wire:model="telemad" type="text" maxlength="50" class="form-input">
                     </div>
-                    <div>
-                        <label class="form-label">Celular</label>
-                        <input wire:model="telecelmad" type="text" maxlength="50" class="form-input">
-                    </div>
+                    @endif
+
+                    @if($showFieldEnTab('emailmad'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Email</label>
                         <input wire:model="emailmad" type="email" maxlength="50" class="form-input @error('emailmad') border-red-400 @enderror">
                         @error('emailmad') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
+                    @endif
                 </div>
             @endif
 
             {{-- ── TAB PADRE ── --}}
-            @if ($activeTab === 'padre')
+            @if ($activePanel === 'padre')
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @if($showFieldEnTab('nombrepad'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Nombre completo</label>
                         <input wire:model="nombrepad" type="text" maxlength="50" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('dnipad'))
                     <div>
                         <label class="form-label">DNI</label>
                         <input wire:model="dnipad" type="text" maxlength="10" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('fechnacpad'))
                     <div>
                         <label class="form-label">Fecha de nacimiento</label>
                         <input wire:model="fechnacpad" type="date" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('nacionpad'))
                     <div>
                         <label class="form-label">Nacionalidad</label>
                         <input wire:model="nacionpad" type="text" maxlength="20" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('estacivipad'))
                     <div>
                         <label class="form-label">Estado civil</label>
                         <input wire:model="estacivipad" type="text" maxlength="20" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('vivepad'))
                     <div>
                         <label class="form-label">¿Vive con el alumno?</label>
                         <select wire:model="vivepad" class="form-select">
@@ -267,91 +324,138 @@
                             <option value="no">No</option>
                         </select>
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('ocupacpad'))
                     <div>
                         <label class="form-label">Ocupación</label>
                         <input wire:model="ocupacpad" type="text" maxlength="30" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('domipad'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Domicilio</label>
                         <input wire:model="domipad" type="text" maxlength="100" class="form-input">
                     </div>
-                    <div>
+                    @endif
+
+                    @if($showFieldEnTab('telepad'))
+                    <div class="sm:col-span-2">
                         <label class="form-label">Teléfono</label>
                         <input wire:model="telepad" type="text" maxlength="50" class="form-input">
                     </div>
-                    <div>
-                        <label class="form-label">Celular</label>
-                        <input wire:model="telecelpad" type="text" maxlength="50" class="form-input">
-                    </div>
+                    @endif
+
+                    @if($showFieldEnTab('emailpad'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Email</label>
                         <input wire:model="emailpad" type="email" maxlength="50" class="form-input @error('emailpad') border-red-400 @enderror">
                         @error('emailpad') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
+                    @endif
                 </div>
             @endif
 
             {{-- ── TAB TUTOR ── --}}
-            @if ($activeTab === 'tutor')
+            @if ($activePanel === 'tutor')
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @if($showFieldEnTab('nombretut') || $showFieldEnTab('dnitut') || $showFieldEnTab('teletut') || $showFieldEnTab('emailtut'))
                     <p class="sm:col-span-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Tutor / Referente</p>
+                    @if($showFieldEnTab('nombretut'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Nombre</label>
                         <input wire:model="nombretut" type="text" maxlength="50" class="form-input">
                     </div>
+                    @endif
+                    @if($showFieldEnTab('dnitut'))
                     <div>
                         <label class="form-label">DNI</label>
                         <input wire:model="dnitut" type="text" inputmode="numeric" class="form-input">
                     </div>
+                    @endif
+                    @if($showFieldEnTab('teletut'))
                     <div>
                         <label class="form-label">Teléfono</label>
                         <input wire:model="teletut" type="text" maxlength="20" class="form-input">
                     </div>
+                    @endif
+                    @if($showFieldEnTab('emailtut'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Email</label>
                         <input wire:model="emailtut" type="email" maxlength="50" class="form-input @error('emailtut') border-red-400 @enderror">
                         @error('emailtut') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
+                    @endif
+                    @endif
 
+                    @if($showFieldEnTab('respAdmiNom') || $showFieldEnTab('respAdmiDni'))
                     <p class="sm:col-span-2 text-xs font-semibold text-gray-500 uppercase tracking-wide pt-2">Responsable administrativo</p>
+                    @if($showFieldEnTab('respAdmiNom'))
                     <div>
                         <label class="form-label">Nombre</label>
                         <input wire:model="respAdmiNom" type="text" maxlength="100" class="form-input">
                     </div>
+                    @endif
+                    @if($showFieldEnTab('respAdmiDni'))
                     <div>
                         <label class="form-label">DNI</label>
                         <input wire:model="respAdmiDni" type="text" inputmode="numeric" class="form-input">
                     </div>
+                    @endif
+                    @endif
                 </div>
             @endif
 
             {{-- ── TAB ESCOLARIDAD ── --}}
-            @if ($activeTab === 'escolar')
+            @if ($activePanel === 'escolar')
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {{-- Campos típicos de solapa «Alumno» si se asignaron a Otros / escolar --}}
+                    @include('livewire.abm.legajos.partials.campos-opcionales-alumno-panel')
+
+                    @if($showFieldEnTab('escori'))
                     <div>
                         <label class="form-label">Escuela de origen</label>
                         <input wire:model="escori" type="text" maxlength="50" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('destino'))
                     <div>
                         <label class="form-label">Destino</label>
                         <input wire:model="destino" type="text" maxlength="50" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('parroquia'))
                     <div>
                         <label class="form-label">Parroquia</label>
                         <input wire:model="parroquia" type="text" maxlength="50" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('ec_padres'))
                     <div>
                         <label class="form-label">Estado civil de los padres</label>
                         <input wire:model="ec_padres" type="text" maxlength="30" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('vivecon'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Vive con</label>
                         <input wire:model="vivecon" type="text" maxlength="200" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('hermanos'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Hermanos</label>
                         <textarea wire:model="hermanos" rows="2" class="form-input resize-y"></textarea>
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('needes'))
                     <div>
                         <label class="form-label">¿Necesidades especiales?</label>
                         <select wire:model="needes" class="form-select">
@@ -359,36 +463,54 @@
                             <option value="si">Sí</option>
                         </select>
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('certDisc'))
                     <div>
                         <label class="form-label">Certif. discapacidad</label>
                         <input wire:model="certDisc" type="text" maxlength="100" class="form-input">
                     </div>
-                    @if ($needes === 'si')
+                    @endif
+
+                    @if($showFieldEnTab('needes') && $showFieldEnTab('needes_detalle') && $needes === 'si')
                         <div class="sm:col-span-2">
                             <label class="form-label">Detalle necesidades especiales</label>
                             <textarea wire:model="needes_detalle" rows="2" class="form-input resize-y"></textarea>
                         </div>
                     @endif
+
+                    @if($showFieldEnTab('identif'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Identificación (CUIL u otro)</label>
                         <input wire:model="identif" type="text" maxlength="100" class="form-input">
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('retira'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Personas autorizadas a retirar</label>
                         <textarea wire:model="retira" rows="2" class="form-input resize-y"></textarea>
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('emeravis'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Contacto de emergencia</label>
                         <textarea wire:model="emeravis" rows="2" class="form-input resize-y"></textarea>
                     </div>
+                    @endif
+
+                    @if($showFieldEnTab('obs'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Observaciones</label>
                         <textarea wire:model="obs" rows="3" class="form-input resize-y"></textarea>
                     </div>
+                    @endif
                 </div>
             @endif
 
         </div>
+        @endif
 
         {{-- Footer --}}
         <div class="border-t border-accent-200 bg-accent-50/70 px-5 py-3 sm:px-6">

@@ -17,25 +17,25 @@ use App\Livewire\Abm\Niveles\NivelesIndex;
 use App\Livewire\Abm\Planes\PlanesForm;
 use App\Livewire\Abm\Planes\PlanesIndex;
 use App\Livewire\Abm\Terlec\TerlecIndex;
+use App\Livewire\Administracion\Permisos\PermisosUsuariosIndex;
 use App\Livewire\Alumnos\Auth\Login as AlumnosLogin;
 use App\Livewire\Alumnos\Comunicaciones\BandejaFamilia;
 use App\Livewire\Alumnos\Comunicaciones\HiloShowFamilia;
 use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
 use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
 use App\Livewire\Auth\Login;
+use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
+use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
 use App\Livewire\Comunicaciones\BandejaGestion;
 use App\Livewire\Comunicaciones\BandejaRevision;
 use App\Livewire\Comunicaciones\HiloShow;
 use App\Livewire\Comunicaciones\InformeEnvioComunicado;
 use App\Livewire\Comunicaciones\NuevoComunicado;
-use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
-use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
-use App\Livewire\Administracion\Permisos\PermisosUsuariosIndex;
 use App\Livewire\Listados\ListadoPorCurso;
 use App\Livewire\Parametrizacion\CamposLegajoIndex;
-use App\Livewire\Parametrizacion\SolapaLegajoIndex;
 use App\Livewire\Parametrizacion\ComCanalesIndex;
 use App\Livewire\Parametrizacion\ParametrosSistemaForm;
+use App\Livewire\Parametrizacion\SolapaLegajoIndex;
 use App\Livewire\Push\EnviarPush;
 use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
 use App\Livewire\Seguimiento\Disciplinario\DisciplinarioIndex;
@@ -84,8 +84,6 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/calificaciones', CalificacionesController::class)->name('alumnos.calificaciones');
 
     Route::get('/notificaciones', [PushController::class, 'index'])->name('alumnos.push.index');
-    Route::get('/notificaciones/mis', [PushController::class, 'misNotificaciones'])->name('alumnos.push.mis');
-    Route::get('/notificaciones/{id}', [PushController::class, 'ver'])->whereNumber('id')->name('alumnos.push.ver');
 
     Route::get('/comunicaciones', BandejaFamilia::class)->name('alumnos.comunicaciones.index');
     Route::get('/comunicaciones/nuevo', NuevoComunicadoFamilia::class)->name('alumnos.comunicaciones.nuevo');

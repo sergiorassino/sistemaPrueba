@@ -323,6 +323,49 @@ function bindCalifCargaTablas() {
 
 document.addEventListener('DOMContentLoaded', () => queueMicrotask(bindCalifCargaTablas));
 
+document.addEventListener('alpine:initialized', () => {
+    scheduleSeShellPeekBootAfterAlpine();
+});
+
+window.addEventListener(
+    'load',
+    () => {
+        scheduleSeShellPeekBootAfterAlpine();
+    },
+    { once: true },
+);
+
+/**
+ * Fuerza el estado rail/ancho del sidebar según ruta (peek) tras la primera hidratación.
+ * En la carga inicial Alpine/Livewire a veces deja `sidebarCollapsed` en el default hasta un morph/navegación;
+ * `respectInteraction: false` ignora hover/focus para corregir ese primer frame.
+ */
+function triggerSeShellPeekBoot(respectInteraction = false) {
+    const shell = document.getElementById('se-shell');
+    if (!shell) {
+        return;
+    }
+    const Alpine = window.Alpine;
+    if (!Alpine || typeof Alpine.$data !== 'function') {
+        return;
+    }
+    try {
+        const data = Alpine.$data(shell);
+        if (data && typeof data.applyPeekSidebarBootState === 'function') {
+            data.applyPeekSidebarBootState(respectInteraction);
+        }
+    } catch (e) {
+        // Alpine aún no hidrató el shell
+    }
+}
+
+function scheduleSeShellPeekBootAfterAlpine() {
+    queueMicrotask(() => triggerSeShellPeekBoot(false));
+    requestAnimationFrame(() => triggerSeShellPeekBoot(false));
+    window.setTimeout(() => triggerSeShellPeekBoot(false), 0);
+    window.setTimeout(() => triggerSeShellPeekBoot(false), 80);
+}
+
 function triggerSeSidebarOverflowSync() {
     const shell = document.getElementById('se-shell');
     if (!shell) {
@@ -333,6 +376,9 @@ function triggerSeSidebarOverflowSync() {
     if (Alpine && typeof Alpine.$data === 'function') {
         try {
             const data = Alpine.$data(shell);
+            if (data && typeof data.applyPeekSidebarBootState === 'function') {
+                data.applyPeekSidebarBootState(true);
+            }
             if (data && typeof data.syncSidebarCollapse === 'function') {
                 data.syncSidebarCollapse();
                 return;
@@ -352,6 +398,9 @@ document.addEventListener('livewire:navigated', () => {
 });
 
 document.addEventListener('livewire:init', () => {
+    queueMicrotask(() => triggerSeShellPeekBoot(false));
+    window.setTimeout(() => triggerSeShellPeekBoot(false), 50);
+
     const L = window.Livewire;
     if (L && typeof L.hook === 'function') {
         L.hook('morph.updated', () => {

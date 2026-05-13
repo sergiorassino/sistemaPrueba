@@ -2,8 +2,13 @@
 
 namespace App\Support\Listados;
 
+use App\Models\CampoLegajo;
+use App\Models\SolapaLegajo;
+use Illuminate\Support\Facades\Schema;
+
 /**
- * Campos permitidos para el PDF de listado por curso (legajos + matrícula + condición).
+ * Campos permitidos para el PDF de listado por curso (principalmente columnas de `legajos`;
+ * el controlador puede añadir columnas de matrícula/condición según el filtro de condición).
  * Solo se aceptan claves de este catálogo en la query string; nunca input libre hacia SQL.
  */
 final class ListadoCursoPdfFieldCatalog
@@ -13,6 +18,9 @@ final class ListadoCursoPdfFieldCatalog
         'legajos.nombre',
         'legajos.dni',
     ];
+
+    /** @var array<string, array{label: string, group: string, table: string, column: string, needs_condiciones?: bool}>|null */
+    private static ?array $mergedDefinitions = null;
 
     /** @var array<string, array{label: string, group: string, table: string, column: string, needs_condiciones?: bool}> */
     private const DEFINITIONS = [
@@ -131,8 +139,9 @@ final class ListadoCursoPdfFieldCatalog
     public static function legajoColumnLabel(string $column): string
     {
         $key = 'legajos.'.$column;
+        $def = self::definition($key);
 
-        return self::DEFINITIONS[$key]['label'] ?? str_replace('_', ' ', ucfirst($column));
+        return $def['label'] ?? str_replace('_', ' ', ucfirst($column));
     }
 
     public static function alias(string $key): string
@@ -143,7 +152,7 @@ final class ListadoCursoPdfFieldCatalog
     /** @return list<string> */
     public static function allowedKeys(): array
     {
-        return array_keys(self::DEFINITIONS);
+        return array_keys(self::mergedDefinitions());
     }
 
     /**
@@ -172,10 +181,10 @@ final class ListadoCursoPdfFieldCatalog
     {
         $cols = [];
         foreach ($keys as $key) {
-            if (! isset(self::DEFINITIONS[$key])) {
+            $def = self::definition($key);
+            if ($def === null) {
                 continue;
             }
-            $def = self::DEFINITIONS[$key];
             $cols[] = [
                 'key' => $key,
                 'label' => $def['label'],
@@ -194,10 +203,10 @@ final class ListadoCursoPdfFieldCatalog
     {
         $expr = [];
         foreach ($keys as $key) {
-            if (! isset(self::DEFINITIONS[$key])) {
+            $def = self::definition($key);
+            if ($def === null) {
                 continue;
             }
-            $def = self::DEFINITIONS[$key];
             $alias = self::alias($key);
             $expr[] = $def['table'].'.'.$def['column'].' as '.$alias;
         }
@@ -208,10 +217,11 @@ final class ListadoCursoPdfFieldCatalog
     public static function needsCondicionesJoin(array $keys): bool
     {
         foreach ($keys as $key) {
-            if (! isset(self::DEFINITIONS[$key])) {
+            $def = self::definition($key);
+            if ($def === null) {
                 continue;
             }
-            if ((self::DEFINITIONS[$key]['needs_condiciones'] ?? false) === true) {
+            if (($def['needs_condiciones'] ?? false) === true) {
                 return true;
             }
         }
@@ -220,10 +230,250 @@ final class ListadoCursoPdfFieldCatalog
     }
 
     /**
+     * Bloque fijo Apellido / Nombre / DNI (no están en `campos_legajo`) cuando no hay solapa «alumno» en BD.
+     *
+     * @return list<array{key: string, label: string}>
+     */
+    private static function itemsPdfColumnasFijasAlumno(): array
+    {
+        $items = [];
+        foreach (CampoLegajo::COLUMNAS_FIJAS_ALUMNO as $col) {
+            $key = 'legajos.'.$col;
+            $def = self::definition($key);
+            if ($def !== null) {
+                $items[] = ['key' => $key, 'label' => $def['label']];
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * Fallback cuando no existen `solapas_legajo` / `campos_legajo` o no se pudo armar ningún bloque:
+     * solo el trío fijo (apellido, nombre, DNI).
+     *
+     * @return list<array{titulo: string, items: list<array{key: string, label: string}>}>
+     */
+    private static function bloquesPdfLegajoSinParametrizacion(): array
+    {
+        $fijos = self::itemsPdfColumnasFijasAlumno();
+        $blocks = [];
+        if ($fijos !== []) {
+            $blocks[] = ['titulo' => 'Identificación', 'items' => $fijos];
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * Nombre de columna física en `legajos` tal como figura en el catálogo PDF, o null si no hay entrada.
+     */
+    public static function canonicalLegajoColumnName(string $columnaDb): ?string
+    {
+        $key = self::catalogKeyForLegajoColumna($columnaDb);
+        if ($key === null) {
+            return null;
+        }
+        $def = self::definition($key);
+
+        return $def['column'] ?? null;
+    }
+
+    /**
+     * Clave de catálogo `legajos.*` para un nombre de columna física (insensible a mayúsculas).
+     */
+    private static function catalogKeyForLegajoColumna(string $columnaDb): ?string
+    {
+        $columnaDb = trim($columnaDb);
+        if ($columnaDb === '') {
+            return null;
+        }
+
+        $key = 'legajos.'.$columnaDb;
+        if (isset(self::DEFINITIONS[$key])) {
+            return $key;
+        }
+        foreach (self::DEFINITIONS as $k => $def) {
+            if ($def['table'] === 'legajos' && strcasecmp($def['column'], $columnaDb) === 0) {
+                return $k;
+            }
+        }
+
+        $phys = self::physicalLegajoColumnName($columnaDb);
+        if ($phys === null) {
+            return null;
+        }
+        $dynKey = 'legajos.'.$phys;
+
+        return isset(self::mergedDefinitions()[$dynKey]) ? $dynKey : null;
+    }
+
+    /**
+     * Nombre de columna en `legajos` tal como figura en el esquema, o null si no existe (comparación insensible).
+     */
+    private static function physicalLegajoColumnName(string $columnaDb): ?string
+    {
+        if (! Schema::hasTable('legajos')) {
+            return null;
+        }
+        $needle = strtolower(trim($columnaDb));
+        foreach (Schema::getColumnListing('legajos') as $phys) {
+            $phys = (string) $phys;
+            if (strtolower($phys) === $needle) {
+                return $phys;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Catálogo efectivo: definiciones estáticas más columnas de `legajos` asignadas en `campos_legajo`
+     * que aún no están en el catálogo (el ABM del legajo las muestra igual; el PDF debe poder listarlas).
+     *
+     * @return array<string, array{label: string, group: string, table: string, column: string, needs_condiciones?: bool}>
+     */
+    private static function mergedDefinitions(): array
+    {
+        if (self::$mergedDefinitions !== null) {
+            return self::$mergedDefinitions;
+        }
+
+        $merged = self::DEFINITIONS;
+        if (! Schema::hasTable('legajos') || ! Schema::hasTable('campos_legajo')) {
+            self::$mergedDefinitions = $merged;
+
+            return self::$mergedDefinitions;
+        }
+
+        $staticPhysLower = [];
+        foreach (self::DEFINITIONS as $def) {
+            if (($def['table'] ?? '') === 'legajos') {
+                $staticPhysLower[strtolower((string) $def['column'])] = true;
+            }
+        }
+
+        $columnasAsignadas = CampoLegajo::query()
+            ->whereNotNull('solapa_legajo_id')
+            ->pluck('columna')
+            ->map(fn ($c) => trim((string) $c))
+            ->unique()
+            ->all();
+
+        foreach ($columnasAsignadas as $raw) {
+            if ($raw === '' || in_array($raw, CampoLegajo::COLUMNAS_EXCLUIDAS, true)) {
+                continue;
+            }
+            $phys = self::physicalLegajoColumnName($raw);
+            if ($phys === null) {
+                continue;
+            }
+            if (isset($staticPhysLower[strtolower($phys)])) {
+                continue;
+            }
+            $dynKey = 'legajos.'.$phys;
+            if (isset($merged[$dynKey])) {
+                continue;
+            }
+            $merged[$dynKey] = [
+                'label' => str_replace('_', ' ', ucfirst($phys)),
+                'group' => 'Legajo',
+                'table' => 'legajos',
+                'column' => $phys,
+            ];
+        }
+
+        self::$mergedDefinitions = $merged;
+
+        return self::$mergedDefinitions;
+    }
+
+    /**
+     * @return array{label: string, group: string, table: string, column: string, needs_condiciones?: bool}|null
+     */
+    private static function definition(string $key): ?array
+    {
+        $m = self::mergedDefinitions();
+
+        return $m[$key] ?? null;
+    }
+
+    /**
+     * Campos de legajo en una solapa para el selector PDF (misma regla que el listado por solapa).
+     *
+     * @return list<array{key: string, label: string}>
+     */
+    private static function itemsLegajoCamposParaSolapaPdf(SolapaLegajo $solapa): array
+    {
+        $items = [];
+        $campos = CampoLegajo::query()
+            ->where('solapa_legajo_id', $solapa->id)
+            ->whereNotNull('solapa_legajo_id')
+            ->whereNotIn('columna', CampoLegajo::COLUMNAS_FIJAS_ALUMNO)
+            ->orderBy('orden_en_solapa')
+            ->orderBy('columna')
+            ->get(['columna', 'etiqueta']);
+
+        foreach ($campos as $c) {
+            $col = trim((string) $c->columna);
+            $catalogKey = self::catalogKeyForLegajoColumna($col);
+            if ($catalogKey === null) {
+                continue;
+            }
+            $def = self::definition($catalogKey);
+            if ($def === null) {
+                continue;
+            }
+            $defLabel = $def['label'];
+            $etiqueta = $c->etiqueta;
+            $label = ($etiqueta !== null && $etiqueta !== '') ? (string) $etiqueta : $defLabel;
+            $items[] = ['key' => $catalogKey, 'label' => $label];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Un fieldset por fila de `solapas_legajo` en orden `orden`. Contenido: `campos_legajo` de esa solapa
+     * (más apellido/nombre/DNI si slug = alumno). Las solapas sin campos asignados generan bloque con
+     * `items` vacío (p. ej. solapa «Otros» hasta que se muevan columnas en parametrización).
+     *
+     * @return list<array{titulo: string, items: list<array{key: string, label: string}>}>
+     */
+    private static function armarBloquesPdfPorSolapas(): array
+    {
+        $solapas = SolapaLegajo::query()->orderBy('orden')->get(['id', 'nombre', 'slug']);
+        if ($solapas->isEmpty()) {
+            return [];
+        }
+
+        $blocks = [];
+        foreach ($solapas as $solapa) {
+            $items = [];
+
+            if (strcasecmp((string) $solapa->slug, 'alumno') === 0) {
+                foreach (self::itemsPdfColumnasFijasAlumno() as $row) {
+                    $items[] = $row;
+                }
+            }
+
+            foreach (self::itemsLegajoCamposParaSolapaPdf($solapa) as $row) {
+                $items[] = $row;
+            }
+
+            // Siempre un bloque por solapa (p. ej. «Otros» recién creada sin campos en `campos_legajo`):
+            // antes se omitía y la solapa no aparecía en el selector del PDF.
+            $blocks[] = ['titulo' => (string) $solapa->nombre, 'items' => $items];
+        }
+
+        return $blocks;
+    }
+
+    /**
      * Grupos de campos para la UI del listado PDF.
      *
-     * @param  list<string>|null  $soloColumnasLegajosVisibles nombres de columna física en `legajos`;
-     *                             null = no filtrar por visibilidad (tabla de parametrización vacía o inexistente).
+     * @param  list<string>|null  $soloColumnasLegajosVisibles  nombres de columna física en `legajos`;
+     *                                                          null = no filtrar por visibilidad (tabla de parametrización vacía o inexistente).
      * @return array<string, list<array{key: string, label: string}>>
      */
     public static function groupedForUi(?array $soloColumnasLegajosVisibles = null): array
@@ -234,7 +484,7 @@ final class ListadoCursoPdfFieldCatalog
         }
 
         $groups = [];
-        foreach (self::DEFINITIONS as $key => $def) {
+        foreach (self::mergedDefinitions() as $key => $def) {
             if ($def['table'] === 'legajos' && $visibles !== null) {
                 $col = $def['column'];
                 if (! isset($visibles[$col])) {
@@ -252,11 +502,32 @@ final class ListadoCursoPdfFieldCatalog
     }
 
     /**
+     * UI del listado PDF por curso: un bloque por fila de `solapas_legajo` (título = `nombre`, orden = `orden`).
+     * En cada bloque: filas de `campos_legajo` asignadas a esa solapa. Slug reservado `alumno`: agrega apellido,
+     * nombre y DNI al inicio. Las columnas de `legajos` asignadas a una solapa y ausentes del catálogo estático
+     * se incorporan al catálogo en tiempo de ejecución (misma fuente que el ABM de legajo).
+     * Sin tablas o sin bloques armables: {@see bloquesPdfLegajoSinParametrizacion()}.
+     * (Matrícula y condición de cursada se gestionan fuera del legajo; no se ofrecen en este selector.)
+     *
+     * @return list<array{titulo: string, items: list<array{key: string, label: string}>}>
+     */
+    public static function groupedForUiPorSolapas(): array
+    {
+        if (! Schema::hasTable('solapas_legajo') || ! Schema::hasTable('campos_legajo')) {
+            return self::bloquesPdfLegajoSinParametrizacion();
+        }
+
+        $blocks = self::armarBloquesPdfPorSolapas();
+
+        return $blocks !== [] ? $blocks : self::bloquesPdfLegajoSinParametrizacion();
+    }
+
+    /**
      * Grupos de campos de `legajos` para el formulario del ABM de legajo.
      * Solo incluye entradas cuya tabla es `legajos`; aplica el mismo filtro de
      * visibilidad que `groupedForUi()` pero descarta matrícula/condiciones.
      *
-     * @param  list<string>|null  $soloColumnasLegajosVisibles null = sin filtro (modo "mostrar todo").
+     * @param  list<string>|null  $soloColumnasLegajosVisibles  null = sin filtro (modo "mostrar todo").
      * @return array<string, list<array{key: string, label: string, column: string}>>
      */
     public static function groupedLegajosFieldsForUi(?array $soloColumnasLegajosVisibles = null): array
@@ -264,7 +535,7 @@ final class ListadoCursoPdfFieldCatalog
         $visibles = $soloColumnasLegajosVisibles !== null ? array_flip($soloColumnasLegajosVisibles) : null;
 
         $groups = [];
-        foreach (self::DEFINITIONS as $key => $def) {
+        foreach (self::mergedDefinitions() as $key => $def) {
             if ($def['table'] !== 'legajos') {
                 continue;
             }

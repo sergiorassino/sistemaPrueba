@@ -40,7 +40,7 @@ class MigrateLegacyCommand extends Command
     public function handle(): int
     {
         $slug = env('TENANT_SLUG', '(sin definir)');
-        $db   = env('DB_DATABASE', '(sin definir)');
+        $db = env('DB_DATABASE', '(sin definir)');
 
         $this->newLine();
         $this->line("  Tenant activo : <comment>{$slug}</comment>");
@@ -58,6 +58,7 @@ class MigrateLegacyCommand extends Command
             );
             if (! $confirm) {
                 $this->line('  Cancelado.');
+
                 return self::SUCCESS;
             }
         }
@@ -85,7 +86,7 @@ class MigrateLegacyCommand extends Command
         $this->newLine();
         $this->line('<comment>  Paso 4/4</comment> — Corriendo migraciones tenant del colegio...');
         $this->call('migrate', [
-            '--path'  => 'database/migrations/tenant',
+            '--path' => 'database/migrations/tenant',
             '--force' => true,
         ]);
 
@@ -93,8 +94,7 @@ class MigrateLegacyCommand extends Command
         $this->info('  Migración completada.');
         $this->newLine();
         $this->line('  Resumen de lo que se agregó a la BD legacy:');
-        $this->line('    • Tablas SE nuevas : push_subscriptions, push_mensajes_enviados,');
-        $this->line('                         push_mensajes_destinatarios');
+        $this->line('    • Tablas SE nuevas : push_subscriptions');
         $this->line('    • Tablas módulo Listados   : solapas_legajo, campos_legajo');
         $this->line('    • Tablas módulo Comunicaciones : com_canales, com_hilos,');
         $this->line('                         com_hilos_participantes, com_mensajes,');
@@ -124,6 +124,7 @@ class MigrateLegacyCommand extends Command
 
         if ($alreadyRan) {
             $this->line('           Ya estaba registrada. OK.');
+
             return;
         }
 
@@ -132,7 +133,7 @@ class MigrateLegacyCommand extends Command
 
         DB::table('migrations')->insert([
             'migration' => self::LEGACY_SCHEMA_MIGRATION,
-            'batch'     => $batch,
+            'batch' => $batch,
         ]);
 
         $this->line('           Registrada como ejecutada (tablas legacy ya existentes). OK.');
@@ -166,7 +167,7 @@ class MigrateLegacyCommand extends Command
         $this->line('  Lo que haría se:migrate-legacy:');
         $this->newLine();
         $this->line('  1. Falsificar migración del schema legacy (tablas ya existen en la BD)');
-        $this->line('     → ' . self::LEGACY_SCHEMA_MIGRATION);
+        $this->line('     → '.self::LEGACY_SCHEMA_MIGRATION);
         $this->newLine();
         $this->line('  2. php artisan migrate  (migraciones core + paquetes)');
         $this->line('     → Columnas nuevas en tablas existentes (idempotentes)');

@@ -76,6 +76,7 @@ class ListadoCursoPdfController extends Controller
 
         $pedidos = array_filter(array_map('trim', explode(',', $camposRaw)));
         $campos = ListadoCursoPdfFieldCatalog::normalizeSelection($pedidos);
+        $campos = CampoLegajo::aplicarVisibilidadListadoPdf($campos);
 
         $claveCondicionCatalogo = 'condiciones.condicion';
         if (ListadoCursoCondicionFiltro::forzarColumnaCondicionEnPdf($filtroCondicion)) {
@@ -85,8 +86,6 @@ class ListadoCursoPdfController extends Controller
             ));
             $campos[] = $claveCondicionCatalogo;
         }
-
-        $campos = CampoLegajo::aplicarVisibilidadListadoPdf($campos);
 
         $select = array_merge(
             ['matricula.idCursos as __id_curso'],

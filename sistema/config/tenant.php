@@ -26,6 +26,17 @@ return [
      */
     'nombre' => 'Colegio',
 
+    /*
+     | Autogestión del estudiante (portal familia / alumnos).
+     |
+     | aranceles_aulica_url: si está definida (p. ej. ALUMNO_ARANCELES_AULICA_URL en .env),
+     | el sidebar muestra "Gestión de Aranceles Escolares" enlazando a ese portal.
+     | Por defecto null: ningún colegio ve el ítem salvo que lo habilite explícitamente.
+     */
+    'autogestion' => [
+        'aranceles_aulica_url' => env('ALUMNO_ARANCELES_AULICA_URL'),
+    ],
+
     // =========================================================
     // Configuración por módulo
     // =========================================================

@@ -90,40 +90,63 @@
         }
     </style>
 </head>
-@php $route = request()->route()?->getName(); @endphp
+@php
+    $route = request()->route()?->getName();
+    /** En desktop: rail colapsado salvo la bandeja principal; hover/focus expanden (mismo patrón que `layouts/app`). */
+    $isSidebarPeekMode = (($route ?? '') !== 'alumnos.comunicaciones.index');
+@endphp
 <body class="h-full">
 
 <div id="se-shell"
      class="h-full"
      x-data="{
         sidebarOpen: false,
+        peekMenuMode: @json($isSidebarPeekMode),
         sidebarCollapsed: false,
-        init() {
-            const pendingMenuCollapse = localStorage.getItem('sidebarCollapseNext') === '1';
-            this.sidebarCollapsed = pendingMenuCollapse
-                ? false
-                : (localStorage.getItem('sidebarCollapsed') === '1');
-
-            if (pendingMenuCollapse) {
-                this.sidebarOpen = false;
-                const collapseAfterPaint = () => {
-                    if (localStorage.getItem('sidebarCollapseNext') !== '1') return;
-                    this.applyPostNavCollapse();
-                };
-                requestAnimationFrame(() => requestAnimationFrame(collapseAfterPaint));
-                window.setTimeout(collapseAfterPaint, 350);
-            }
+        _sidebarPeekTimer: null,
+        isDesktopPeekLayout() {
+            return window.matchMedia && window.matchMedia('(min-width: 768px)').matches;
         },
-        applyPostNavCollapse() {
-            if (window.matchMedia && window.matchMedia('(min-width: 768px)').matches) {
+        peekSidebarExpandNow() {
+            if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
+            clearTimeout(this._sidebarPeekTimer);
+            this.sidebarCollapsed = false;
+        },
+        peekSidebarMaybeCollapseLater() {
+            if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
+            clearTimeout(this._sidebarPeekTimer);
+            this._sidebarPeekTimer = window.setTimeout(() => {
+                const el = this.$refs.seSidebar;
+                if (!el) return;
+                if (el.matches(':hover')) return;
+                if (el.contains(document.activeElement)) return;
                 this.sidebarCollapsed = true;
-                localStorage.setItem('sidebarCollapsed', '1');
-            }
-            localStorage.removeItem('sidebarCollapseNext');
+            }, 200);
         },
-        toggleSidebar() {
-            this.sidebarCollapsed = !this.sidebarCollapsed;
-            localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed ? '1' : '0');
+        peekSidebarFocusOut(ev) {
+            if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
+            const sidebar = this.$refs.seSidebar;
+            const rt = ev.relatedTarget;
+            if (sidebar && rt && sidebar.contains(rt)) return;
+            this.peekSidebarMaybeCollapseLater();
+        },
+        applyPeekSidebarBootState(respectInteraction = true) {
+            if (!this.peekMenuMode || !this.isDesktopPeekLayout()) {
+                this.sidebarCollapsed = false;
+                return;
+            }
+            if (respectInteraction) {
+                const el = this.$refs.seSidebar;
+                if (el && (el.matches(':hover') || el.contains(document.activeElement))) return;
+            }
+            this.sidebarCollapsed = true;
+        },
+        init() {
+            this.applyPeekSidebarBootState(false);
+            if (!this._sePeekResizeBound) {
+                this._sePeekResizeBound = true;
+                window.addEventListener('resize', () => this.applyPeekSidebarBootState(true));
+            }
         },
      }">
 
@@ -138,7 +161,12 @@
      @click="sidebarOpen = false"
      style="display:none"></div>
 
-<aside class="se-sidebar fixed inset-y-0 left-0 z-[1000] flex flex-col transform transition-transform duration-200 ease-in-out
+<aside x-ref="seSidebar"
+       @mouseenter="peekSidebarExpandNow()"
+       @mouseleave="peekSidebarMaybeCollapseLater()"
+       @focusin="peekSidebarExpandNow()"
+       @focusout="peekSidebarFocusOut($event)"
+       class="se-sidebar fixed inset-y-0 left-0 z-[1000] flex flex-col transform transition-transform duration-200 ease-in-out
               md:translate-x-0 md:transition-[width] md:duration-200 md:ease-in-out md:shadow-lg"
        :class="[
            sidebarOpen ? 'translate-x-0' : '-translate-x-full',
@@ -176,18 +204,6 @@
                 </span>
             </p>
         </div>
-
-        <button type="button"
-                class="se-sidebar-iconbtn hidden md:inline-flex items-center justify-center w-9 h-9 rounded-md transition-colors flex-shrink-0"
-                :title="sidebarCollapsed ? 'Expandir menú' : 'Contraer menú'"
-                @click="toggleSidebar()">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="9" stroke-width="2"/>
-                <path stroke-linecap="round" stroke-width="2" d="M8 10h8"/>
-                <path stroke-linecap="round" stroke-width="2" d="M8 12.75h8"/>
-                <path stroke-linecap="round" stroke-width="2" d="M8 15.5h8"/>
-            </svg>
-        </button>
     </div>
 
     @php
@@ -197,8 +213,7 @@
     @endphp
     <nav class="flex-1 relative z-[1] px-2.5 py-3 overflow-y-auto space-y-0.5"
          :class="sidebarCollapsed ? '!px-1 !py-2' : ''"
-         @pointerdown.capture="$event.target.closest('a[href]') && localStorage.setItem('sidebarCollapseNext', '1')"
-         @click.capture="$event.target.closest('a[href]') && (localStorage.setItem('sidebarCollapseNext', '1'), sidebarOpen = false)">
+         @click.capture="$event.target.closest('a[href]') && (sidebarOpen = false)">
 
         <a href="{{ route('alumnos.calificaciones') }}"
            target="_blank"
@@ -212,18 +227,19 @@
             <span x-show="!sidebarCollapsed" x-cloak class="truncate">Consulta de Calificaciones</span>
         </a>
 
-        <a href="{{ route('alumnos.push.index') }}"
-           @class([
-               'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-               'is-active shadow-sm' => str_starts_with($route ?? '', 'alumnos.push'),
-           ])
-           title="Notificaciones Push">
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-            </svg>
-            <span x-show="!sidebarCollapsed" x-cloak class="truncate">Notificaciones Push</span>
-        </a>
+        @if(filled(tenantConfig('autogestion.aranceles_aulica_url')))
+            <a href="{{ tenantConfig('autogestion.aranceles_aulica_url') }}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors"
+               title="Gestión de Aranceles Escolares (se abre en una nueva pestaña)">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="truncate">Gestión de Aranceles Escolares</span>
+            </a>
+        @endif
 
         <p x-show="!sidebarCollapsed" x-cloak class="mt-3 mb-0.5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-white/50">
             Cuaderno de comunicados
@@ -239,7 +255,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
             </svg>
-            <span x-show="!sidebarCollapsed" x-cloak class="truncate">Bandeja</span>
+            <span x-show="!sidebarCollapsed" x-cloak class="truncate">Bandeja de Comunicados</span>
         </a>
 
         <a href="{{ route('alumnos.comunicaciones.nuevo') }}"
@@ -252,6 +268,23 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
             <span x-show="!sidebarCollapsed" x-cloak class="truncate">Nuevo comunicado</span>
+        </a>
+
+        <p x-show="!sidebarCollapsed" x-cloak class="mt-3 mb-0.5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-white/50">
+            Ajustes
+        </p>
+
+        <a href="{{ route('alumnos.push.index') }}"
+           @class([
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+               'is-active shadow-sm' => str_starts_with($route ?? '', 'alumnos.push'),
+           ])
+           title="Notificaciones Push">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span x-show="!sidebarCollapsed" x-cloak class="truncate">Notificaciones Push</span>
         </a>
 
         <a href="{{ route('alumnos.comunicaciones.preferencias') }}"

@@ -31,11 +31,6 @@
                         style="display:none;background:#0f766e;color:#fff;border:1px solid #0f766e;cursor:pointer">
                     Desactivar notificaciones
                 </button>
-
-                <a href="{{ route('alumnos.push.mis') }}"
-                   class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-gray-100 text-gray-800 hover:bg-gray-200 transition border border-gray-200">
-                    Mis notificaciones
-                </a>
             </div>
 
             <p class="text-xs text-gray-500 mt-4">

@@ -9,6 +9,9 @@ use Livewire\Component;
 
 class CamposLegajoIndex extends Component
 {
+    /** '' = todas las columnas; '__sin__' = solo sin solapa; caso contrario id numérico de `solapas_legajo`. */
+    public string $filtroSolapa = '';
+
     public function sincronizarDesdeLegajos(CamposLegajoSync $sync): void
     {
         $r = $sync->sincronizarDesdeSchema();
@@ -74,12 +77,24 @@ class CamposLegajoIndex extends Component
 
     public function render()
     {
-        $campos  = CampoLegajo::query()
+        $q = CampoLegajo::query()
             ->whereNotIn('columna', CampoLegajo::COLUMNAS_FIJAS_ALUMNO)
-            ->orderBy('orden')
-            ->orderBy('columna')
-            ->with('solapa')
-            ->get();
+            ->with('solapa');
+
+        if ($this->filtroSolapa === '__sin__') {
+            $q->whereNull('solapa_legajo_id')
+                ->orderBy('orden')
+                ->orderBy('columna');
+        } elseif ($this->filtroSolapa !== '' && ctype_digit($this->filtroSolapa)) {
+            $q->where('solapa_legajo_id', (int) $this->filtroSolapa)
+                ->orderBy('orden_en_solapa')
+                ->orderBy('columna');
+        } else {
+            $q->orderBy('orden')
+                ->orderBy('columna');
+        }
+
+        $campos = $q->get();
 
         $solapas = SolapaLegajo::query()
             ->orderBy('orden')

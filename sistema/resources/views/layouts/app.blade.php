@@ -131,6 +131,17 @@
         if (sidebar && rt && sidebar.contains(rt)) return;
         this.peekSidebarMaybeCollapseLater();
     },
+    applyPeekSidebarBootState(respectInteraction = true) {
+        if (!this.peekMenuMode || !this.isDesktopPeekLayout()) {
+            this.sidebarCollapsed = false;
+            return;
+        }
+        if (respectInteraction) {
+            const el = this.$refs.seSidebar;
+            if (el && (el.matches(':hover') || el.contains(document.activeElement))) return;
+        }
+        this.sidebarCollapsed = true;
+    },
     init() {
         const raw = localStorage.getItem('sidebarGroups');
         if (raw) {
@@ -140,26 +151,10 @@
             } catch (e) {}
         }
         // Desktop dashboard: sidebar ancho siempre; resto de rutas: rail hasta hover/focus.
-        if (this.isDesktopPeekLayout() && this.peekMenuMode) {
-            this.sidebarCollapsed = true;
-        } else {
-            this.sidebarCollapsed = false;
-        }
+        this.applyPeekSidebarBootState(false);
         if (!this._sePeekResizeBound) {
             this._sePeekResizeBound = true;
-            window.addEventListener('resize', () => {
-                if (!this.peekMenuMode) {
-                    this.sidebarCollapsed = false;
-                    return;
-                }
-                if (this.isDesktopPeekLayout()) {
-                    const el = this.$refs.seSidebar;
-                    if (el && (el.matches(':hover') || el.contains(document.activeElement))) return;
-                    this.sidebarCollapsed = true;
-                } else {
-                    this.sidebarCollapsed = false;
-                }
-            });
+            window.addEventListener('resize', () => this.applyPeekSidebarBootState(true));
         }
     },
     toggleGroup(key) {

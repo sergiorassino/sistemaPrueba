@@ -4,7 +4,6 @@ namespace App\Livewire\Push;
 
 use App\Models\Ento;
 use App\Push\DestinatariosRepository;
-use App\Push\PushMensajeEnviadoRepository;
 use App\Push\PushSubscriptionRepository;
 use App\Push\WebPushService;
 use Illuminate\Support\Facades\RateLimiter;
@@ -16,15 +15,20 @@ class EnviarPush extends Component
     public string $tipoDestino = 'alumno'; // alumno|curso|colegio
 
     public string $alumnoSearch = '';
+
     /** @var list<array{id:int,label:string,dni:?string}> */
     public array $alumnoResults = [];
+
     public ?int $alumnoId = null;
+
     public ?string $alumnoLabel = null;
 
     public ?int $cursoId = null;
 
     public string $title = '';
+
     public string $body = '';
+
     public ?string $url = null;
 
     public array $preview = [
@@ -104,16 +108,17 @@ class EnviarPush extends Component
             'alumnoId' => [Rule::requiredIf($this->tipoDestino === 'alumno'), 'nullable', 'integer'],
             'cursoId' => [Rule::requiredIf($this->tipoDestino === 'curso'), 'nullable', 'integer'],
             'title' => ['required', 'string', 'max:80'],
-            'body' => ['required', 'string', 'max:' . WebPushService::MAX_MENSAJE_CARACTERES],
+            'body' => ['required', 'string', 'max:'.WebPushService::MAX_MENSAJE_CARACTERES],
             'url' => ['nullable', 'string', 'max:200'],
         ];
     }
 
     public function send(): void
     {
-        $key = 'push:send:' . (auth()->id() ?? 'guest');
+        $key = 'push:send:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 20)) {
             $this->addError('title', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+
             return;
         }
         RateLimiter::hit($key, 60);
@@ -129,24 +134,13 @@ class EnviarPush extends Component
         $keys = $this->destinatariosUserKeys();
         if (empty($keys)) {
             $this->addError('tipoDestino', 'No hay destinatarios para enviar.');
+
             return;
         }
 
         $url = $this->url !== null && trim($this->url) !== '' ? trim($this->url) : url('/');
 
         $result = WebPushService::sendToUsers($keys, $this->title, $this->body, $url, $nombreColegio);
-
-        PushMensajeEnviadoRepository::guardar(
-            $this->title,
-            $this->body,
-            $url,
-            $keys,
-            $result['sent_user_keys'] ?? [],
-            $result['failed_user_keys'] ?? [],
-            $this->tipoDestino,
-            $idTerlec > 0 ? $idTerlec : null,
-            auth()->id() ? (string) auth()->id() : null
-        );
 
         $this->lastSend = [
             'sent' => $result['ok'],
@@ -170,4 +164,3 @@ class EnviarPush extends Component
         ])->layout('layouts.app', ['pageTitle' => 'Enviar notificación push']);
     }
 }
-

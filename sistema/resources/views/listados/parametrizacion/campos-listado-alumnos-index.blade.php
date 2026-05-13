@@ -6,6 +6,7 @@
                 <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Campos activos (Legajo del estudiante)</h2>
                 <p class="max-w-2xl text-sm text-white/80">
                     Asigná cada campo a una solapa para el formulario del legajo y el listado PDF por curso.
+                    El PDF agrupa las columnas por solapa (<span class="font-mono">solapas_legajo.nombre</span>).
                     En <strong>Etiqueta</strong> podés definir el texto del label que verá el usuario en cada solapa del legajo; si lo dejás vacío, se usa el nombre por defecto del sistema.
                     <strong>Apellido, nombre y DNI</strong> no se listan aquí: siempre aparecen en la solapa Alumno.
                     El orden dentro de cada solapa en el formulario sigue la columna «Orden en solapa».
@@ -35,6 +36,25 @@
                     <span wire:loading wire:target="sincronizarDesdeLegajos">Comparando…</span>
                 </button>
                 <a href="{{ route('param.solapas-legajo') }}" class="btn-secondary btn-sm">Gestionar solapas</a>
+            </div>
+        </div>
+
+        <div class="se-toolbar flex flex-col gap-3 border-b border-accent-200 bg-accent-50/60 px-5 py-3 sm:flex-row sm:items-end sm:justify-between">
+            <div class="min-w-0 flex-1 sm:max-w-md">
+                <label for="filtro-solapa-campos-legajo" class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                    Ver columnas por solapa
+                </label>
+                <select id="filtro-solapa-campos-legajo" wire:model.live="filtroSolapa"
+                        class="form-select w-full text-sm py-2">
+                    <option value="">Todas las columnas</option>
+                    <option value="__sin__">Sin solapa (ocultas del legajo)</option>
+                    @foreach ($solapas as $s)
+                        <option value="{{ $s->id }}">{{ $s->nombre }}</option>
+                    @endforeach
+                </select>
+                <p class="mt-1.5 text-xs text-neutral-500">
+                    Filtrá por una solapa para ordenar solo esos campos y asignar el <strong>orden en solapa</strong> con más claridad.
+                </p>
             </div>
         </div>
 
@@ -90,7 +110,13 @@
                         @empty
                             <tr>
                                 <td colspan="5" class="table-cell py-10 text-center text-neutral-500">
-                                    No hay registros. Ejecutá «Actualizar columnas desde esquema».
+                                    @if ($filtroSolapa === '')
+                                        No hay registros. Ejecutá «Actualizar columnas desde esquema».
+                                    @elseif ($filtroSolapa === '__sin__')
+                                        No hay columnas sin solapa asignada.
+                                    @else
+                                        No hay columnas asignadas a esta solapa.
+                                    @endif
                                 </td>
                             </tr>
                         @endforelse

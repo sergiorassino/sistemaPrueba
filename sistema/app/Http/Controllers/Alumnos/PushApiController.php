@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Alumnos;
 
 use App\Http\Controllers\Controller;
-use App\Push\PushMensajeEnviadoRepository;
 use App\Push\PushSubscriptionRepository;
 use App\Push\WebPushService;
 use Illuminate\Http\Request;
@@ -82,22 +81,6 @@ class PushApiController extends Controller
 
         $result = WebPushService::sendToUsers($userKeys, $title, $body, $url, $nombreColegio);
 
-        try {
-            PushMensajeEnviadoRepository::guardar(
-                $title,
-                $body,
-                $url,
-                $userKeys,
-                $result['sent_user_keys'] ?? [],
-                $result['failed_user_keys'] ?? [],
-                'alumno',
-                null,
-                (string) Auth::guard('alumno')->id()
-            );
-        } catch (\Throwable $e) {
-            // No bloquear envío si falla el historial
-        }
-
         return response()->json([
             'ok' => true,
             'sent' => $result['ok'],
@@ -108,4 +91,3 @@ class PushApiController extends Controller
         ]);
     }
 }
-

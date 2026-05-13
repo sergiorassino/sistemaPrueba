@@ -139,7 +139,7 @@
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <p class="se-section-title">Columnas del PDF</p>
-                        <p class="mt-1 text-sm text-neutral-600">Legajos y matrícula. El orden de columnas sigue los grupos abajo.</p>
+                        <p class="mt-1 text-sm text-neutral-600">Un bloque por cada solapa (orden <span class="font-mono">solapas_legajo.orden</span>, título <span class="font-mono">solapas_legajo.nombre</span>). Dentro: columnas de <span class="font-mono">campos_legajo</span> visibles para listado en esa solapa. Slug <span class="font-mono">alumno</span>: incluye apellido, nombre y DNI. Matrícula y condición de cursada no forman parte del legajo y no se eligen aquí.</p>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <button type="button" wire:click="seleccionarSoloDefecto" class="btn-secondary btn-sm whitespace-nowrap">
@@ -154,20 +154,24 @@
 
             <div class="max-h-[22rem] overflow-y-auto border-t border-accent-100 bg-white p-5 sm:p-6">
                 <div class="space-y-6">
-                    @foreach ($camposPorGrupo as $grupo => $items)
+                    @foreach ($camposPorGrupo as $bloque)
                         <fieldset class="min-w-0 rounded-2xl border border-accent-200 bg-accent-50/50 p-4">
-                            <legend class="mb-3 w-full border-b border-accent-200 pb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-primary-700">{{ $grupo }}</legend>
-                            <div class="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2 xl:grid-cols-3">
-                                @foreach ($items as $item)
-                                    <label class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-transparent px-2 py-1.5 text-sm text-neutral-800 transition-colors hover:bg-white/80 hover:border-accent-200/80">
-                                        <input type="checkbox"
-                                               class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500"
-                                               wire:model.live="camposSeleccionados"
-                                               value="{{ $item['key'] }}">
-                                        <span>{{ $item['label'] }}</span>
-                                    </label>
-                                @endforeach
-                            </div>
+                            <legend class="mb-3 w-full border-b border-accent-200 pb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-primary-700">{{ $bloque['titulo'] }}</legend>
+                            @if (count($bloque['items']) === 0)
+                                <p class="text-sm text-neutral-500">No hay campos asignados a esta solapa en parametrización (<span class="font-mono">campos_legajo</span>).</p>
+                            @else
+                                <div class="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2 xl:grid-cols-3">
+                                    @foreach ($bloque['items'] as $item)
+                                        <label class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-transparent px-2 py-1.5 text-sm text-neutral-800 transition-colors hover:bg-white/80 hover:border-accent-200/80">
+                                            <input type="checkbox"
+                                                   class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500"
+                                                   wire:model.live="camposSeleccionados"
+                                                   value="{{ $item['key'] }}">
+                                            <span>{{ $item['label'] }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            @endif
                         </fieldset>
                     @endforeach
                 </div>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Listados\ListadoCursoPdfFieldCatalog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Schema;
@@ -22,10 +23,10 @@ class CampoLegajo extends Model
     ];
 
     protected $casts = [
-        'visible_listado'  => 'boolean',
-        'orden'            => 'integer',
+        'visible_listado' => 'boolean',
+        'orden' => 'integer',
         'solapa_legajo_id' => 'integer',
-        'orden_en_solapa'  => 'integer',
+        'orden_en_solapa' => 'integer',
     ];
 
     /** Columnas de `legajos` excluidas de la parametrización (seguridad). */
@@ -98,7 +99,7 @@ class CampoLegajo extends Model
                 $map[$slug] = [];
             }
             $map[$slug][] = [
-                'columna'  => (string) $r->columna,
+                'columna' => (string) $r->columna,
                 'etiqueta' => $r->etiqueta !== null && $r->etiqueta !== '' ? (string) $r->etiqueta : null,
             ];
         }
@@ -109,8 +110,8 @@ class CampoLegajo extends Model
     // ─── Listado PDF ──────────────────────────────────────────────────────────
 
     /**
-     * Quita del listado PDF las claves `legajos.*` sin solapa asignada.
-     * La visibilidad en PDF se deriva de tener solapa asignada (solapa_legajo_id IS NOT NULL).
+     * Filtra claves `legajos.*` según columnas con solapa y listado visible.
+     * Con parametrización activa descarta cualquier otra clave (p. ej. matrícula en query string antigua).
      *
      * @param  list<string>  $keys
      * @return list<string>
@@ -121,47 +122,48 @@ class CampoLegajo extends Model
             return $keys;
         }
 
-        $ocultas = static::query()
-            ->where('visible_listado', false)
-            ->whereNotIn('columna', self::COLUMNAS_FIJAS_ALUMNO)
-            ->pluck('columna')
-            ->all();
-
-        if ($ocultas === []) {
+        $permitidas = static::columnasLegajosVisiblesParaUi();
+        if ($permitidas === null) {
             return $keys;
         }
 
-        $set = array_flip($ocultas);
+        $flip = array_flip($permitidas);
         $out = [];
         foreach ($keys as $k) {
             if (str_starts_with($k, 'legajos.')) {
                 $col = substr($k, strlen('legajos.'));
-                if (isset($set[$col])) {
+                if (! isset($flip[$col])) {
                     continue;
                 }
+                $out[] = $k;
+
+                continue;
             }
-            $out[] = $k;
+            // Con parametrización activa solo pasan columnas de `legajos`; el PDF puede añadir condición después.
+            continue;
         }
 
         if ($out !== []) {
             return $out;
         }
 
+        $defecto = [];
         foreach (['legajos.apellido', 'legajos.nombre', 'legajos.dni'] as $k) {
-            if (str_starts_with($k, 'legajos.')) {
-                $col = substr($k, strlen('legajos.'));
-                if (isset($set[$col])) {
-                    continue;
-                }
+            $col = substr($k, strlen('legajos.'));
+            if (isset($flip[$col])) {
+                $defecto[] = $k;
             }
-
-            return [$k];
         }
 
-        return ['matricula.nroMatricula'];
+        return $defecto !== [] ? $defecto : [];
     }
 
-    /** @return list<string>|null nombres de columna visibles para la UI del PDF; null = no aplicar filtro. */
+    /**
+     * Columnas de `legajos` elegibles en el selector del PDF: el trío fijo más las que tienen
+     * solapa asignada (mismo criterio que el formulario del legajo por solapa). Null si no hay tabla o está vacía.
+     *
+     * @return list<string>|null
+     */
     public static function columnasLegajosVisiblesParaUi(): ?array
     {
         if (! Schema::hasTable('campos_legajo') || ! static::query()->exists()) {
@@ -169,12 +171,16 @@ class CampoLegajo extends Model
         }
 
         $cols = static::query()
-            ->where('visible_listado', true)
+            ->whereNotNull('solapa_legajo_id')
             ->whereNotIn('columna', self::COLUMNAS_FIJAS_ALUMNO)
             ->orderBy('orden')
             ->orderBy('columna')
             ->pluck('columna')
-            ->map(fn ($c) => (string) $c)
+            ->map(function ($c) {
+                $raw = (string) $c;
+
+                return ListadoCursoPdfFieldCatalog::canonicalLegajoColumnName($raw) ?? $raw;
+            })
             ->values()
             ->all();
 

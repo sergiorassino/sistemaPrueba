@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Listados;
 
-use App\Models\Curso;
-use Illuminate\Database\Eloquent\Builder;
-use Livewire\Component;
 use App\Models\CampoLegajo;
+use App\Models\Curso;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\Listados\ListadoCursoPdfFieldCatalog;
+use Illuminate\Database\Eloquent\Builder;
+use Livewire\Component;
 
 class ListadoPorCurso extends Component
 {
@@ -53,8 +53,7 @@ class ListadoPorCurso extends Component
             ->map(fn (string $sid) => $cursos->firstWhere('Id', (int) $sid))
             ->filter();
 
-        $soloLegajosVisibles = CampoLegajo::columnasLegajosVisiblesParaUi();
-        $camposPorGrupo = ListadoCursoPdfFieldCatalog::groupedForUi($soloLegajosVisibles);
+        $camposPorGrupo = ListadoCursoPdfFieldCatalog::groupedForUiPorSolapas();
 
         return view('listados::livewire.listados.por-curso', compact('cursos', 'cursosIzquierda', 'cursosDerecha', 'camposPorGrupo'))
             ->layout('layouts.app', ['pageTitle' => tenantConfig('listados.titulo', 'Listado por curso')]);
@@ -167,7 +166,7 @@ class ListadoPorCurso extends Component
         $this->camposSeleccionados = collect(ListadoCursoPdfFieldCatalog::allowedKeys())
             ->filter(function (string $k) use ($soloLegajos) {
                 if (! str_starts_with($k, 'legajos.')) {
-                    return true;
+                    return false;
                 }
                 if ($soloLegajos === null) {
                     return true;

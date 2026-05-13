@@ -44,11 +44,12 @@ class ComunicacionesRepository
     }
 
     /**
-     * Buscar profesores del nivel actual (para pantalla de revisión).
+     * Buscar profesores del nivel actual (para pantalla de revisión o destinatarios docentes).
      *
+     * @param  string|null  $rolNormalizado  Si se indica ('profesor'|'preceptor'|'directivo'), solo ese rol.
      * @return list<array{id:int,label:string,dni:?string}>
      */
-    public static function buscarProfesores(int $idNivel, string $q, int $limit = 15): array
+    public static function buscarProfesores(int $idNivel, string $q, int $limit = 15, ?string $rolNormalizado = null): array
     {
         $q = trim($q);
         if ($q === '') {
@@ -57,7 +58,8 @@ class ComunicacionesRepository
 
         $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $q) . '%';
 
-        return DB::table('profesores as p')
+        $query = DB::table('profesores as p')
+            ->join('profesortipo as pt', 'pt.id', '=', 'p.IdTipoProf')
             ->where('p.nivel', $idNivel)
             ->where(function ($w) use ($like) {
                 $w->where('p.apellido', 'like', $like)
@@ -66,14 +68,388 @@ class ComunicacionesRepository
             })
             ->orderBy('p.apellido')
             ->orderBy('p.nombre')
-            ->limit($limit)
-            ->get(['p.id', 'p.apellido', 'p.nombre', 'p.dni'])
-            ->map(fn ($r) => [
+            ->limit($rolNormalizado !== null ? min(80, max($limit * 4, 40)) : $limit)
+            ->get(['p.id', 'p.apellido', 'p.nombre', 'p.dni', 'pt.tipo']);
+
+        $out = [];
+        foreach ($query as $r) {
+            if ($rolNormalizado !== null
+                && CanalesPolicy::normalizarRolProfesor((string) $r->tipo) !== $rolNormalizado) {
+                continue;
+            }
+            $out[] = [
                 'id' => (int) $r->id,
                 'label' => trim((string) $r->apellido . ', ' . (string) $r->nombre),
                 'dni' => $r->dni !== null ? (string) $r->dni : null,
-            ])
-            ->all();
+            ];
+            if (count($out) >= $limit) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Profesores o preceptores del nivel (para selector con checkboxes), ordenados.
+     * Opcionalmente filtra por texto en apellido, nombre o DNI.
+     *
+     * @return list<array{id:int,label:string,dni:?string}>
+     */
+    public static function profesoresDelNivelParaSelector(int $idNivel, string $rolNormalizado, string $filtro = '', int $limit = 800): array
+    {
+        $limit = max(1, min(2000, $limit));
+        $t = mb_strtolower(trim($filtro));
+
+        $rows = DB::table('profesores as p')
+            ->join('profesortipo as pt', 'pt.id', '=', 'p.IdTipoProf')
+            ->where('p.nivel', $idNivel)
+            ->orderBy('p.apellido')
+            ->orderBy('p.nombre')
+            ->get(['p.id', 'p.apellido', 'p.nombre', 'p.dni', 'pt.tipo']);
+
+        $out = [];
+        foreach ($rows as $r) {
+            if (CanalesPolicy::normalizarRolProfesor((string) $r->tipo) !== $rolNormalizado) {
+                continue;
+            }
+            $label = trim((string) $r->apellido . ', ' . (string) $r->nombre);
+            $dni = $r->dni !== null ? (string) $r->dni : null;
+            if ($t !== '') {
+                $blob = mb_strtolower($label . ' ' . ($dni ?? ''));
+                if (! str_contains($blob, $t)) {
+                    continue;
+                }
+            }
+            $out[] = [
+                'id' => (int) $r->id,
+                'label' => $label,
+                'dni' => $dni,
+            ];
+            if (count($out) >= $limit) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Deja solo ids de profesores del nivel cuyo tipo normalizado coincide con $rolNorm.
+     *
+     * @param  list<int>  $ids
+     * @return list<int>
+     */
+    public static function filtrarIdsProfesoresPorRolNorm(array $ids, int $idNivel, string $rolNorm): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        if ($ids === []) {
+            return [];
+        }
+
+        $rows = DB::table('profesores as p')
+            ->join('profesortipo as pt', 'pt.id', '=', 'p.IdTipoProf')
+            ->where('p.nivel', $idNivel)
+            ->whereIn('p.id', $ids)
+            ->get(['p.id', 'pt.tipo']);
+
+        $out = [];
+        foreach ($rows as $r) {
+            if (CanalesPolicy::normalizarRolProfesor((string) $r->tipo) === $rolNorm) {
+                $out[] = (int) $r->id;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Profesores vinculados al hilo (creador docente, remitentes y destinatarios profesor).
+     *
+     * @return list<int>
+     */
+    public static function idsProfesoresEnHilo(int $idHilo): array
+    {
+        $hilo = ComHilo::query()->find($idHilo);
+        $ids  = [];
+        if ($hilo !== null && $hilo->creado_por_tipo === 'profesor' && $hilo->creado_por_id) {
+            $ids[] = (int) $hilo->creado_por_id;
+        }
+
+        // Remitente del cuerpo inicial: asegura al emisor en el hilo aunque id_hilo del mensaje esté mal o sea legado.
+        if ($hilo !== null) {
+            $idIni = (int) ($hilo->cuerpo_inicial_id ?? 0);
+            if ($idIni > 0) {
+                $ini = ComMensaje::query()->find($idIni);
+                if ($ini !== null
+                    && $ini->tipo_remitente === 'profesor'
+                    && $ini->id_profesor) {
+                    $ids[] = (int) $ini->id_profesor;
+                }
+            }
+        }
+
+        $fromMsgs = ComMensaje::query()
+            ->where('id_hilo', $idHilo)
+            ->where('tipo_remitente', 'profesor')
+            ->whereNotNull('id_profesor')
+            ->pluck('id_profesor');
+        foreach ($fromMsgs as $id) {
+            $ids[] = (int) $id;
+        }
+
+        $fromDest = ComMensajeDestinatario::query()
+            ->where('id_hilo', $idHilo)
+            ->where('tipo_destinatario', 'profesor')
+            ->whereNotNull('id_profesor')
+            ->pluck('id_profesor');
+        foreach ($fromDest as $id) {
+            $ids[] = (int) $id;
+        }
+
+        return array_values(array_unique(array_filter($ids)));
+    }
+
+    /**
+     * @return list<int>
+     */
+    public static function idsProfesoresDestinoRespuestaDocente(int $idHilo, int $idRemitente): array
+    {
+        $mine = (int) $idRemitente;
+
+        return array_values(array_filter(
+            array_map('intval', static::idsProfesoresEnHilo($idHilo)),
+            static fn (int $id) => $id > 0 && $id !== $mine
+        ));
+    }
+
+    /**
+     * Roles normalizados únicos para un conjunto de ids de profesores.
+     *
+     * No filtra por la columna `nivel` de `profesores`. Usa `LEFT JOIN` a `profesortipo` para no perder
+     * filas con `IdTipoProf` nulo (en ese caso este método no devuelve rol para ese id; usar
+     * {@see self::rolesDestinatariosRespuestaDocente} en hilos docentes).
+     *
+     * @param  list<int>  $idsProfesor
+     * @return list<string>
+     */
+    public static function rolesNormalizadosUnicosProfesores(array $idsProfesor): array
+    {
+        $idsProfesor = array_values(array_unique(array_map('intval', $idsProfesor)));
+        if ($idsProfesor === []) {
+            return [];
+        }
+
+        $rows = DB::table('profesores as p')
+            ->leftJoin('profesortipo as pt', 'pt.id', '=', 'p.IdTipoProf')
+            ->whereIn('p.id', $idsProfesor)
+            ->pluck('pt.tipo');
+
+        $roles = [];
+        foreach ($rows as $tipo) {
+            if ($tipo === null || (string) $tipo === '') {
+                continue;
+            }
+            $roles[] = CanalesPolicy::normalizarRolProfesor((string) $tipo);
+        }
+
+        return array_values(array_unique($roles));
+    }
+
+    /**
+     * Roles de los destinatarios de una respuesta en hilo docentes (excluye a quien responde),
+     * con resolución robusta si falta tipo en BD o el join con profesortipo no devuelve fila.
+     *
+     * @return list<string>
+     */
+    public static function rolesDestinatariosRespuestaDocente(int $idHilo, int $idRemitenteExcluido, ComHilo $hilo): array
+    {
+        $idsDest = static::idsProfesoresDestinoRespuestaDocente($idHilo, $idRemitenteExcluido);
+        $roles   = [];
+        foreach ($idsDest as $idProf) {
+            $idProf = (int) $idProf;
+            if ($idProf <= 0) {
+                continue;
+            }
+            $rol = static::rolDocenteParticipanteParaCanal($idHilo, $hilo, $idProf);
+            if ($rol !== '') {
+                $roles[] = $rol;
+            }
+        }
+
+        return array_values(array_unique($roles));
+    }
+
+    /**
+     * Roles destinatarios de una respuesta en hilo docentes, con respaldo cuando el cálculo por
+     * participantes queda vacío (p. ej. datos inconsistentes) pero el usuario es destinatario
+     * del primer mensaje y existe un autor docente distinto: se usa solo ese autor como contraparte.
+     *
+     * @return list<string>
+     */
+    public static function rolesDestinatariosRespuestaDocenteResuelto(int $idHilo, int $idRemitenteExcluido, ComHilo $hilo): array
+    {
+        $roles = static::rolesDestinatariosRespuestaDocente($idHilo, $idRemitenteExcluido, $hilo);
+        if ($roles !== []) {
+            return $roles;
+        }
+
+        if (! $hilo->esComunicacionInternaDocentes()) {
+            return [];
+        }
+
+        $idIni = (int) ($hilo->cuerpo_inicial_id ?? 0);
+        if ($idIni <= 0) {
+            return [];
+        }
+
+        $soyDestinatarioInicial = ComMensajeDestinatario::query()
+            ->where('id_mensaje', $idIni)
+            ->where('tipo_destinatario', 'profesor')
+            ->where('id_profesor', $idRemitenteExcluido)
+            ->exists();
+
+        if (! $soyDestinatarioInicial) {
+            return [];
+        }
+
+        $ini = ComMensaje::query()->find($idIni);
+        if ($ini === null || $ini->tipo_remitente !== 'profesor' || ! $ini->id_profesor) {
+            return [];
+        }
+
+        $idAutor = (int) $ini->id_profesor;
+        if ($idAutor <= 0 || $idAutor === $idRemitenteExcluido) {
+            return [];
+        }
+
+        $rol = static::rolDocenteParticipanteParaCanal($idHilo, $hilo, $idAutor);
+        if ($rol === '') {
+            $r = mb_strtolower(trim((string) ($ini->rol_remitente ?? '')));
+            foreach (['directivo', 'preceptor', 'profesor', 'familia'] as $canon) {
+                if ($r === $canon) {
+                    $rol = $canon;
+                    break;
+                }
+            }
+            if ($rol === '' && $r !== '') {
+                $rol = CanalesPolicy::normalizarRolProfesor($r);
+            }
+        }
+
+        return $rol !== '' ? [$rol] : [];
+    }
+
+    /**
+     * Rol normalizado (directivo|preceptor|profesor|familia) para política de canales.
+     */
+    private static function rolDocenteParticipanteParaCanal(int $idHilo, ComHilo $hilo, int $idProf): string
+    {
+        $row = DB::table('profesores as p')
+            ->leftJoin('profesortipo as pt', 'pt.id', '=', 'p.IdTipoProf')
+            ->where('p.id', $idProf)
+            ->first(['pt.tipo']);
+        $tipo = $row ? (string) ($row->tipo ?? '') : '';
+        if ($tipo !== '') {
+            return CanalesPolicy::normalizarRolProfesor($tipo);
+        }
+
+        if ($hilo->creado_por_tipo === 'profesor' && (int) $hilo->creado_por_id === $idProf) {
+            $r = mb_strtolower(trim((string) ($hilo->creado_por_rol ?? '')));
+            foreach (['directivo', 'preceptor', 'profesor', 'familia'] as $canon) {
+                if ($r === $canon) {
+                    return $canon;
+                }
+            }
+            if ($r !== '') {
+                return CanalesPolicy::normalizarRolProfesor($r);
+            }
+            $idIni = (int) ($hilo->cuerpo_inicial_id ?? 0);
+            if ($idIni > 0) {
+                $rolIni = ComMensaje::query()->where('id', $idIni)->value('rol_remitente');
+                $ri     = mb_strtolower(trim((string) ($rolIni ?? '')));
+                foreach (['directivo', 'preceptor', 'profesor', 'familia'] as $canon) {
+                    if ($ri === $canon) {
+                        return $canon;
+                    }
+                }
+                if ($ri !== '') {
+                    return CanalesPolicy::normalizarRolProfesor($ri);
+                }
+            }
+        }
+
+        $rolMsg = ComMensaje::query()
+            ->where('id_hilo', $idHilo)
+            ->where('tipo_remitente', 'profesor')
+            ->where('id_profesor', $idProf)
+            ->orderByDesc('id')
+            ->value('rol_remitente');
+        $rm = mb_strtolower(trim((string) ($rolMsg ?? '')));
+        foreach (['directivo', 'preceptor', 'profesor', 'familia'] as $canon) {
+            if ($rm === $canon) {
+                return $canon;
+            }
+        }
+        if ($rm !== '') {
+            return CanalesPolicy::normalizarRolProfesor($rm);
+        }
+
+        $prof = Profesor::with('tipo')->find($idProf);
+        if ($prof !== null) {
+            return CanalesPolicy::rolDeProfesor($prof);
+        }
+
+        return '';
+    }
+
+    /**
+     * @param  list<string>  $rolesReceptor
+     * @return list<string>
+     */
+    public static function mediosPermitidosRespuestaVariosRoles(
+        string $rolEmisor,
+        array $rolesReceptor,
+        bool $simetricoInternoDocentes = false
+    ): array {
+        if ($rolesReceptor === []) {
+            return [];
+        }
+
+        $medios = null;
+        foreach ($rolesReceptor as $rolRec) {
+            $m = CanalesPolicy::mediosPermitidos($rolEmisor, $rolRec);
+            if ($m === [] && $simetricoInternoDocentes) {
+                $m = CanalesPolicy::mediosPermitidos($rolRec, $rolEmisor);
+            }
+            $medios = $medios === null ? $m : array_values(array_intersect($medios, $m));
+        }
+
+        return $medios ?? [];
+    }
+
+    /**
+     * @param  list<string>  $rolesReceptor
+     */
+    public static function puedeResponderVariosRoles(
+        string $rolEmisor,
+        array $rolesReceptor,
+        bool $simetricoInternoDocentes = false
+    ): bool {
+        if ($rolesReceptor === []) {
+            return false;
+        }
+        foreach ($rolesReceptor as $rolRec) {
+            $ok = CanalesPolicy::puedeResponder($rolEmisor, $rolRec);
+            if (! $ok && $simetricoInternoDocentes) {
+                $ok = CanalesPolicy::puedeIniciar($rolRec, $rolEmisor);
+            }
+            if (! $ok) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -125,9 +501,9 @@ class ComunicacionesRepository
             });
 
         $select = [
-            'h.id', 'h.asunto', 'h.scope', 'h.estado',
+            'h.id', 'h.asunto', 'h.scope', 'h.estado', 'h.cuerpo_inicial_id',
             'h.creado_por_tipo', 'h.creado_por_id', 'h.creado_por_rol',
-            'h.familia_puede_responder',
+            'h.familia_puede_responder', 'h.docentes_permite_respuestas',
             'h.id_curso', 'h.cursos_envio',
             'h.ultimo_mensaje_at', 'h.created_at',
             DB::raw('SUM(CASE WHEN d.leido_at IS NULL AND d.id IS NOT NULL THEN 1 ELSE 0 END) as no_leidos'),
@@ -140,6 +516,7 @@ class ComunicacionesRepository
         $select[] = DB::raw('(SELECT m.contenido FROM com_mensajes m WHERE m.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_contenido');
         $select[] = DB::raw("(SELECT COUNT(DISTINCT d0.id_legajo) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia' AND d0.id_legajo IS NOT NULL) as destinatarios_familia_count");
         $select[] = DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_legajo SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia') as destinatarios_nombres_concat");
+        $select[] = DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_profesor SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor') as destinatarios_doc_nombres_concat");
         $select[] = DB::raw("(SELECT CASE WHEN TRIM(COALESCE(c.cursec, '')) <> '' THEN TRIM(c.cursec) ELSE TRIM(COALESCE(cp.curPlanCurso, 'Curso')) END FROM cursos c LEFT JOIN curplan cp ON cp.id = c.idCurPlan WHERE c.Id = h.id_curso LIMIT 1) as curso_envio_label");
 
         $select[] = DB::raw('(SELECT m0.tipo_remitente FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_tipo');
@@ -149,6 +526,7 @@ class ComunicacionesRepository
         $query->select($select)
             ->groupBy('h.id', 'h.asunto', 'h.scope', 'h.estado', 'h.creado_por_tipo',
                       'h.creado_por_id', 'h.creado_por_rol', 'h.familia_puede_responder',
+                      'h.docentes_permite_respuestas',
                       'h.ultimo_mensaje_at', 'h.created_at', 'h.cuerpo_inicial_id', 'h.id_curso', 'h.cursos_envio')
             ->orderByDesc('h.ultimo_mensaje_at');
 
@@ -263,7 +641,7 @@ class ComunicacionesRepository
     }
 
     /**
-     * Marca un mensaje concreto como no leído para el profesor (solo mensajes recibidos desde familia).
+     * Marca un mensaje concreto como no leído para el profesor (mensajes recibidos: familia u otro docente).
      */
     public static function marcarNoLeidoMensajeProfesor(
         int $idMensaje,
@@ -283,7 +661,11 @@ class ComunicacionesRepository
         $msg = ComMensaje::query()
             ->where('id', $idMensaje)
             ->where('id_hilo', $idHilo)
-            ->where('tipo_remitente', 'familia')
+            ->where(function ($q) use ($idProfesor) {
+                $q->where('tipo_remitente', '!=', 'profesor')
+                    ->orWhereNull('id_profesor')
+                    ->orWhere('id_profesor', '!=', $idProfesor);
+            })
             ->first();
 
         if ($msg === null) {
@@ -361,6 +743,7 @@ class ComunicacionesRepository
      *   dni_remitente: ?string,
      *   destinatarios_profesores: list<int>,
      *   familia_puede_responder?: bool,
+     *   docentes_permite_respuestas?: ?bool, // solo scope docentes; null = permitir respuestas (legado)
      * } $datos
      * @param list<string> $mediosCanal
      */
@@ -368,7 +751,7 @@ class ComunicacionesRepository
     {
         return DB::transaction(function () use ($datos, $mediosCanal) {
             // 1. Hilo
-            $hilo = ComHilo::create([
+            $hiloAttrs = [
                 'asunto'                  => $datos['asunto'],
                 'scope'                   => $datos['scope'],
                 'id_legajo'               => $datos['id_legajos'][0] ?? null,
@@ -384,7 +767,11 @@ class ComunicacionesRepository
                 'ultimo_mensaje_at'       => now(),
                 'created_at'              => now(),
                 'updated_at'              => now(),
-            ]);
+            ];
+            if (array_key_exists('docentes_permite_respuestas', $datos)) {
+                $hiloAttrs['docentes_permite_respuestas'] = $datos['docentes_permite_respuestas'];
+            }
+            $hilo = ComHilo::create($hiloAttrs);
 
             // 2. Primer mensaje
             $mensaje = ComMensaje::create([
@@ -442,7 +829,7 @@ class ComunicacionesRepository
     }
 
     /**
-     * Enlaces wa.me generados para un mensaje (driver wa_link).
+     * Enlaces WhatsApp manuales generados para un mensaje (driver wa_link: wa.me o web.whatsapp.com/send).
      *
      * @return list<array{label:string, url:string}>
      */
@@ -460,7 +847,10 @@ class ComunicacionesRepository
         $out = [];
         foreach ($rows as $r) {
             $url = trim((string) $r->url);
-            if ($url !== '' && str_starts_with($url, 'https://wa.me/')) {
+            $esManual = $url !== ''
+                && (str_starts_with($url, 'https://wa.me/')
+                    || str_starts_with($url, 'https://web.whatsapp.com/send'));
+            if ($esManual) {
                 $label = trim((string) ($r->label ?? ''));
                 $out[] = [
                     'label' => $label !== '' ? $label : 'WhatsApp',
@@ -470,6 +860,92 @@ class ComunicacionesRepository
         }
 
         return $out;
+    }
+
+    /**
+     * Informe de envíos del primer mensaje de un hilo: una fila por destinatario y medio.
+     *
+     * @return array{
+     *   id_hilo:int,
+     *   id_mensaje:int,
+     *   asunto:string,
+     *   contenido_preview:string,
+     *   filas:list<array{nombre:string,tipo_destinatario:string,medio:string,estado:string,motivo:?string,proveedor_msgid:?string}>,
+     *   totales:array{enviado:int,fallido:int,no_aplicable:int,pendiente:int}
+     * }|null
+     */
+    public static function informeEnviosPrimerMensajeDelHilo(int $idHilo, int $idNivel, int $idTerlec): ?array
+    {
+        $hilo = DB::table('com_hilos')
+            ->where('id', $idHilo)
+            ->where('id_nivel', $idNivel)
+            ->where('id_terlec', $idTerlec)
+            ->first(['id', 'asunto', 'cuerpo_inicial_id']);
+
+        if ($hilo === null || empty($hilo->cuerpo_inicial_id)) {
+            return null;
+        }
+
+        $idMensaje = (int) $hilo->cuerpo_inicial_id;
+
+        $contenidoPreview = (string) (DB::table('com_mensajes')
+            ->where('id', $idMensaje)
+            ->value('contenido') ?? '');
+        if (mb_strlen($contenidoPreview) > 220) {
+            $contenidoPreview = mb_substr($contenidoPreview, 0, 217) . '…';
+        }
+
+        $destRows = DB::table('com_mensajes_destinatarios')
+            ->where('id_mensaje', $idMensaje)
+            ->orderBy('nombre_snapshot')
+            ->get(['id', 'tipo_destinatario', 'nombre_snapshot']);
+
+        $porId = [];
+        foreach ($destRows as $d) {
+            $porId[(int) $d->id] = [
+                'nombre'             => trim((string) ($d->nombre_snapshot ?? '')),
+                'tipo_destinatario' => (string) $d->tipo_destinatario,
+            ];
+        }
+
+        $totales = ['enviado' => 0, 'fallido' => 0, 'no_aplicable' => 0, 'pendiente' => 0];
+        $filas   = [];
+
+        if ($porId !== []) {
+            $idsDest = array_keys($porId);
+            $envios  = DB::table('com_mensajes_envios')
+                ->whereIn('id_mensaje_destinatario', $idsDest)
+                ->orderBy('id_mensaje_destinatario')
+                ->orderBy('medio')
+                ->get(['id_mensaje_destinatario', 'medio', 'estado', 'motivo', 'proveedor_msgid']);
+
+            foreach ($envios as $e) {
+                $idDest = (int) $e->id_mensaje_destinatario;
+                $meta    = $porId[$idDest] ?? ['nombre' => '—', 'tipo_destinatario' => ''];
+                $estado  = (string) $e->estado;
+                if (isset($totales[$estado])) {
+                    $totales[$estado]++;
+                }
+                $nombre = $meta['nombre'] !== '' ? $meta['nombre'] : '—';
+                $filas[] = [
+                    'nombre'              => $nombre,
+                    'tipo_destinatario'  => $meta['tipo_destinatario'],
+                    'medio'               => (string) $e->medio,
+                    'estado'              => $estado,
+                    'motivo'              => $e->motivo !== null ? (string) $e->motivo : null,
+                    'proveedor_msgid'     => $e->proveedor_msgid !== null ? (string) $e->proveedor_msgid : null,
+                ];
+            }
+        }
+
+        return [
+            'id_hilo'    => (int) $hilo->id,
+            'id_mensaje' => $idMensaje,
+            'asunto'             => (string) ($hilo->asunto ?? ''),
+            'contenido_preview' => $contenidoPreview,
+            'filas'              => $filas,
+            'totales'    => $totales,
+        ];
     }
 
     /**
@@ -554,6 +1030,14 @@ class ComunicacionesRepository
         string $tipoRemitente,
         int $idRemitente
     ): void {
+        if ($tipoRemitente === 'profesor' && $hilo->esComunicacionInternaDocentes()) {
+            foreach (static::idsProfesoresDestinoRespuestaDocente((int) $hilo->id, $idRemitente) as $idProf) {
+                static::insertarDestinatario($mensaje, (int) $hilo->id, 'profesor', $idProf);
+            }
+
+            return;
+        }
+
         $tipoDestino = $tipoRemitente === 'profesor' ? 'familia' : 'profesor';
 
         $participantes = ComHiloParticipante::query()
@@ -566,18 +1050,18 @@ class ComunicacionesRepository
                 ->where('id_hilo', $hilo->id)
                 ->where('tipo_remitente', $tipoDestino)
                 ->when($tipoDestino === 'profesor', fn ($q) => $q->whereNotNull('id_profesor'))
-                ->when($tipoDestino === 'familia',  fn ($q) => $q->whereNotNull('id_legajo'))
+                ->when($tipoDestino === 'familia', fn ($q) => $q->whereNotNull('id_legajo'))
                 ->distinct()
                 ->get($tipoDestino === 'profesor' ? ['id_profesor'] : ['id_legajo']);
 
             foreach ($idsEnHilo as $row) {
                 $id = $tipoDestino === 'profesor' ? $row->id_profesor : $row->id_legajo;
-                static::insertarDestinatario($mensaje, $hilo->id, $tipoDestino, (int) $id);
+                static::insertarDestinatario($mensaje, (int) $hilo->id, $tipoDestino, (int) $id);
             }
         } else {
             foreach ($participantes as $p) {
                 $id = $tipoDestino === 'profesor' ? (int) $p->id_profesor : (int) $p->id_legajo;
-                static::insertarDestinatario($mensaje, $hilo->id, $tipoDestino, $id);
+                static::insertarDestinatario($mensaje, (int) $hilo->id, $tipoDestino, $id);
             }
         }
     }
@@ -589,13 +1073,14 @@ class ComunicacionesRepository
         int $id
     ): void {
         if ($tipo === 'profesor') {
-            $prof = Profesor::find($id);
+            $prof = Profesor::with('tipo')->find($id);
+            $rolDest = $prof ? CanalesPolicy::rolDeProfesor($prof) : 'profesor';
             ComMensajeDestinatario::create([
                 'id_mensaje'        => $mensaje->id,
                 'id_hilo'           => $idHilo,
                 'tipo_destinatario' => 'profesor',
                 'id_profesor'       => $id,
-                'rol_destinatario'  => 'profesor',
+                'rol_destinatario'  => $rolDest,
                 'nombre_snapshot'   => $prof ? trim("{$prof->apellido}, {$prof->nombre}") : null,
                 'dni_snapshot'      => $prof?->dni ?? null,
             ]);

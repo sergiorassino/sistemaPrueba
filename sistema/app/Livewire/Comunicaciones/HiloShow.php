@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComunicacionesRepository;
+use App\Models\ComCanal;
 use App\Models\ComHilo;
 use App\Models\ComMensaje;
 use App\Models\ComMensajeDestinatario;
@@ -316,15 +317,45 @@ class HiloShow extends Component
 
         abort_if($profesor === null, 403);
 
-        $rolEmisor  = CanalesPolicy::rolDeProfesor($profesor);
-        $rolReceptor = 'familia';
+        $rolEmisor = CanalesPolicy::rolDeProfesor($profesor);
 
-        if (! CanalesPolicy::puedeResponder($rolEmisor, $rolReceptor)) {
-            $this->addError('respuesta', 'Su rol no puede responder a este comunicado.');
-            return;
+        $hiloCtx = ComHilo::query()
+            ->where('id', $this->idHilo)
+            ->where('id_nivel', (int) $ctx->idNivel)
+            ->where('id_terlec', (int) $ctx->idTerlec)
+            ->first();
+
+        abort_if($hiloCtx === null, 404);
+
+        if ($hiloCtx->esComunicacionInternaDocentes()) {
+            if (! $hiloCtx->docentesDestinatariosPuedenResponder()) {
+                $this->addError('respuesta', 'Este comunicado es solo informativo; no admite respuestas en el hilo.');
+
+                return;
+            }
+            $rolesTargets = ComunicacionesRepository::rolesDestinatariosRespuestaDocenteResuelto((int) $hiloCtx->id, $idProf, $hiloCtx);
+            if (! ComunicacionesRepository::puedeResponderVariosRoles($rolEmisor, $rolesTargets, true)) {
+                $this->addError('respuesta', 'Su rol no puede responder en este hilo.');
+
+                return;
+            }
+            $medios = ComunicacionesRepository::mediosPermitidosRespuestaVariosRoles($rolEmisor, $rolesTargets, true);
+            if ($medios === []) {
+                $medios = array_values(array_intersect(['push', 'email'], ComCanal::mediosDisponibles()));
+            }
+            if ($medios === []) {
+                $medios = ['push'];
+            }
+        } else {
+            $rolReceptor = 'familia';
+            if (! CanalesPolicy::puedeResponder($rolEmisor, $rolReceptor)) {
+                $this->addError('respuesta', 'Su rol no puede responder a este comunicado.');
+
+                return;
+            }
+            $medios = CanalesPolicy::mediosPermitidos($rolEmisor, $rolReceptor);
         }
 
-        $medios   = CanalesPolicy::mediosPermitidos($rolEmisor, $rolReceptor);
         $nombreProf = trim("{$profesor->apellido}, {$profesor->nombre}");
 
         $mensajeResp = ComunicacionesRepository::responder(
@@ -369,13 +400,40 @@ class HiloShow extends Component
 
         $profesor        = $ctx->profesor();
         $rolEmisor       = $profesor ? CanalesPolicy::rolDeProfesor($profesor) : null;
-        $puedeResponder  = $rolEmisor !== null && CanalesPolicy::puedeResponder($rolEmisor, 'familia');
+        $esHiloDocentes = $hilo->esComunicacionInternaDocentes();
+        $puedeResponder  = false;
+        if ($rolEmisor !== null) {
+            if ($esHiloDocentes) {
+                $rolesTargets = ComunicacionesRepository::rolesDestinatariosRespuestaDocenteResuelto(
+                    (int) $hilo->id,
+                    (int) $ctx->idProfesor,
+                    $hilo
+                );
+                $puedeResponder = $hilo->docentesDestinatariosPuedenResponder()
+                    && ComunicacionesRepository::puedeResponderVariosRoles($rolEmisor, $rolesTargets, true);
+            } else {
+                $puedeResponder = CanalesPolicy::puedeResponder($rolEmisor, 'familia');
+            }
+        }
 
         $mensajesPorDia = $hilo->mensajes->groupBy(fn ($m) => $m->created_at?->toDateString());
 
         $paraCompleto = null;
         if ($hilo->creado_por_tipo === 'profesor') {
-            if ($hilo->scope === 'colegio') {
+            if ($hilo->esComunicacionInternaDocentes()) {
+                $nombres = ComMensajeDestinatario::query()
+                    ->where('id_mensaje', (int) $hilo->cuerpo_inicial_id)
+                    ->where('tipo_destinatario', 'profesor')
+                    ->whereNotNull('nombre_snapshot')
+                    ->orderBy('id_profesor')
+                    ->pluck('nombre_snapshot')
+                    ->map(fn ($s) => trim((string) $s))
+                    ->filter(fn ($s) => $s !== '')
+                    ->unique()
+                    ->values()
+                    ->all();
+                $paraCompleto = count($nombres) ? implode(' · ', $nombres) : 'Docentes';
+            } elseif ($hilo->scope === 'colegio') {
                 $paraCompleto = 'Todo el colegio';
             } elseif (in_array($hilo->scope, ['curso', 'varios_cursos'], true)) {
                 $labels = [];

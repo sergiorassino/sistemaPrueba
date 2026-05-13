@@ -26,6 +26,7 @@ use App\Livewire\Auth\Login;
 use App\Livewire\Comunicaciones\BandejaGestion;
 use App\Livewire\Comunicaciones\BandejaRevision;
 use App\Livewire\Comunicaciones\HiloShow;
+use App\Livewire\Comunicaciones\InformeEnvioComunicado;
 use App\Livewire\Comunicaciones\NuevoComunicado;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
@@ -117,6 +118,10 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/comunicaciones', BandejaGestion::class)->middleware('permiso:51')->name('comunicaciones.index');
     Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:51', 'permiso:56'])->name('comunicaciones.revision');
     Route::get('/comunicaciones/nuevo', NuevoComunicado::class)->middleware('permiso:52')->name('comunicaciones.nuevo');
+    Route::get('/comunicaciones/informe-envio/{id}', InformeEnvioComunicado::class)
+        ->middleware(['permiso:51', 'permiso:52'])
+        ->whereNumber('id')
+        ->name('comunicaciones.informe-envio');
     Route::get('/comunicaciones/{id}', HiloShow::class)->middleware('permiso:51')->whereNumber('id')->name('comunicaciones.hilo');
 
     // Administración: permisos de usuarios (orden 0)

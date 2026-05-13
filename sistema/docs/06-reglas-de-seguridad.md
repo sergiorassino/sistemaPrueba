@@ -86,6 +86,7 @@ Antes de considerar completo un módulo o PR:
 - [ ] ¿Permisos verificados según modelo de cadena `0/1`?
 - [ ] ¿Se evitó cualquier operación destructiva o recreación masiva de BD sin backup y aprobación explícita?
 - [ ] Si hubo cambios de esquema o datos vía SQL o migraciones, ¿se ejecutaron solo bajo revisión humana (no automatizada por herramientas)?
+- [ ] ¿Quedó documentado al cierre el **SQL equivalente** (o comando Artisan explícito) para reproducir el cambio en BD, según §9.1?
 
 ---
 
@@ -98,3 +99,14 @@ Antes de considerar completo un módulo o PR:
 **Nota:** las reglas del proyecto orientan al modelo, pero **no lo garantizan al 100%**; conviene revisar en el chat si el agente propone ejecutar algo contra la BD antes de aceptar herramientas de terminal.
 
 **Colaboradores:** no hace falta replicar políticas en “User rules” de Cursor. Con clonar el repo alcanza para tener en el contexto del agente: **`AGENTS.md`** en la raíz del repositorio, **`sistema/AGENTS.md`**, esta sección y los archivos en **`sistema/.cursor/rules/`** (versionados). Quien use otra herramienta debe igualmente respetar lo documentado aquí en revisiones de PR.
+
+### 9.1 Entregable al cerrar cambios que tocan la base de datos
+
+Cuando un cambio en el repositorio suponga **alteración de esquema** o **corrección / carga de datos** (migración nueva, script documentado, instrucciones de backfill, etc.), quien implemente (incluidas herramientas de IA) debe dejar **al final** de la respuesta o descripción del PR:
+
+- El **SQL ejecutable** equivalente a lo que hace la migración en `up()` (o el script), con comentarios mínimos de alcance; y  
+- Si el cambio **no es reversible** por fila, indicarlo (no basta con un `down()` vacío en código).
+
+Objetivo: el operador humano puede revisar en el cliente SQL, ejecutar en el orden correcto y archivar el texto sin depender solo del diff de PHP.
+
+**Alternativa aceptable:** indicar explícitamente que basta con `php artisan migrate` (u otro comando Artisan **concreto**) en un entorno donde ya estén versionadas las migraciones, siempre que el efecto sea el mismo que el SQL entregado. El asistente **no** debe invocar ese comando contra la BD del proyecto desde su terminal.

@@ -27,17 +27,50 @@ class WebPushService
             $subject = 'mailto:admin@ejemplo.edu';
         }
 
-        $webPush = new WebPush([
-            'VAPID' => [
-                'subject' => $subject,
-                'publicKey' => $publicKey,
-                'privateKey' => $privateKey,
+        $webPush = new WebPush(
+            [
+                'VAPID' => [
+                    'subject' => $subject,
+                    'publicKey' => $publicKey,
+                    'privateKey' => $privateKey,
+                ],
             ],
-        ]);
+            [],
+            max(5, (int) config('push.http.timeout', 30)),
+            static::guzzleOptionsParaPush(),
+        );
 
         $webPush->setAutomaticPadding(false);
 
         return $webPush;
+    }
+
+    /**
+     * Opciones del cliente Guzzle usado por minishlink/web-push (verificación SSL / CA bundle).
+     *
+     * @return array<string, mixed>
+     */
+    private static function guzzleOptionsParaPush(): array
+    {
+        $opts = [];
+
+        $ca = trim((string) config('push.http.ca_bundle', ''));
+        if ($ca === '') {
+            foreach ([ini_get('curl.cainfo'), ini_get('openssl.cafile')] as $iniCa) {
+                if (is_string($iniCa) && $iniCa !== '' && is_file($iniCa)) {
+                    $ca = $iniCa;
+                    break;
+                }
+            }
+        }
+
+        if ($ca !== '' && is_file($ca)) {
+            $opts['verify'] = $ca;
+        } elseif (config('push.http.verify', true) === false) {
+            $opts['verify'] = false;
+        }
+
+        return $opts;
     }
 
     private static function cuerpoConPrefijo(string $nombreAlumno, string $tituloOperador, string $cuerpoOperador): string
@@ -57,6 +90,9 @@ class WebPushService
 
     private static function mensajeCortoParaUsuario(string $reason): string
     {
+        if (stripos($reason, 'SSL certificate') !== false || stripos($reason, 'curl error 60') !== false) {
+            return 'Certificado SSL (cURL 60): en el servidor falta el bundle de CA para notificaciones push. Configurá WEB_PUSH_CA_BUNDLE (cacert.pem) o curl.cainfo en php.ini.';
+        }
         if (stripos($reason, '410') !== false || stripos($reason, 'Gone') !== false || stripos($reason, 'No such subscription') !== false) {
             return 'Suscripción expirada o ya no válida (410). Que el alumno reactive notificaciones en ese dispositivo.';
         }

@@ -62,6 +62,46 @@ class DestinatariosRepository
     }
 
     /**
+     * Listado de alumnos matriculados en el nivel y ciclo lectivo (selector con checkboxes).
+     * Si $filtro está vacío, devuelve todos hasta el límite; si no, filtra por apellido, nombre o DNI.
+     *
+     * @return list<array{id:int,label:string,dni:?string}>
+     */
+    public static function alumnosMatriculadosParaSelector(int $idNivel, int $idTerlec, string $filtro = '', int $limit = 2500): array
+    {
+        $limit = max(1, min(3000, $limit));
+        $q = DB::table('legajos as l')
+            ->join('matricula as m', 'm.idLegajos', '=', 'l.id')
+            ->where('m.idNivel', $idNivel)
+            ->where('m.idTerlec', $idTerlec)
+            ->whereNotNull('m.idLegajos')
+            ->select(['l.id', 'l.apellido', 'l.nombre', 'l.dni'])
+            ->distinct();
+
+        $t = trim($filtro);
+        if ($t !== '') {
+            $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $t) . '%';
+            $q->where(function ($w) use ($like) {
+                $w->where('l.apellido', 'like', $like)
+                    ->orWhere('l.nombre', 'like', $like)
+                    ->orWhere('l.dni', 'like', $like);
+            });
+        }
+
+        return $q->orderBy('l.apellido')
+            ->orderBy('l.nombre')
+            ->limit($limit)
+            ->get()
+            ->map(function ($r) {
+                $label = trim((string) $r->apellido . ', ' . (string) $r->nombre);
+                $dni = $r->dni !== null ? (string) $r->dni : null;
+
+                return ['id' => (int) $r->id, 'label' => $label, 'dni' => $dni];
+            })
+            ->all();
+    }
+
+    /**
      * @return list<string> user_keys (legajos.id) de un curso del contexto.
      */
     public static function alumnosPorCurso(int $idNivel, int $idTerlec, int $idCurso): array

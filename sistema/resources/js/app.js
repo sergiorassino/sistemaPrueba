@@ -369,3 +369,33 @@ document.addEventListener('livewire:init', () => {
 // import { Livewire, Alpine } from '../../vendor/livewire/livewire/dist/livewire.esm';
 // Alpine.plugin(collapse);
 // Livewire.start();
+
+/**
+ * Enlaces WhatsApp manual (wa.me / web.whatsapp.com): reutilizar la misma ventana/pestaña.
+ * <a target="nombre"> no es fiable con destinos externos; window.open(href, nombre) sí (gesto del usuario).
+ */
+document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-se-wa-reuse="1"]');
+    if (!a) {
+        return;
+    }
+    if (e.defaultPrevented) {
+        return;
+    }
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+        return;
+    }
+    const winName = a.getAttribute('data-se-wa-window-name');
+    if (!winName || !a.href) {
+        return;
+    }
+    e.preventDefault();
+    const w = window.open(a.href, winName);
+    if (w) {
+        try {
+            w.focus();
+        } catch {
+            // ignorar restricciones cross-origin
+        }
+    }
+});

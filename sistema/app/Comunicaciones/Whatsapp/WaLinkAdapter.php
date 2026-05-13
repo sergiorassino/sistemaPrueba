@@ -10,7 +10,7 @@ use App\Models\ComPreferencia;
 class WaLinkAdapter
 {
     /**
-     * Genera el link wa.me para envío manual.
+     * Genera el enlace para envío manual (WhatsApp Web en navegador o wa.me según configuración).
      *
      * Estado: 'enviado' (link generado) o 'no_aplicable' (sin teléfono).
      * El link se guarda en proveedor_msgid para mostrarlo en la UI.
@@ -30,9 +30,13 @@ class WaLinkAdapter
         $asunto    = $mensaje->hilo?->asunto ?? 'Comunicado';
         $contenido = mb_substr((string) $mensaje->contenido, 0, 500);
         $texto     = "{$asunto}\n\n{$contenido}";
-        // wa.me espera número internacional sin prefijo +
+        // Sin prefijo + (wa.me y web.whatsapp.com/send lo aceptan así)
         $waNum = ltrim($telefono, '+');
-        $link  = 'https://wa.me/' . $waNum . '?text=' . rawurlencode($texto);
+        $textoEncoded = rawurlencode($texto);
+        $estilo       = (string) config('comunicaciones.whatsapp_manual_link_style', 'web');
+        $link         = $estilo === 'wa_me'
+            ? 'https://wa.me/' . $waNum . '?text=' . $textoEncoded
+            : 'https://web.whatsapp.com/send?phone=' . rawurlencode($waNum) . '&text=' . $textoEncoded;
 
         return ['estado' => 'enviado', 'motivo' => null, 'link' => $link];
     }

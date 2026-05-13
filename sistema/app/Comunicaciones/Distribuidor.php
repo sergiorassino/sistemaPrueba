@@ -2,13 +2,13 @@
 
 namespace App\Comunicaciones;
 
-use Illuminate\Support\Facades\DB;
 use App\Comunicaciones\Adapters\MailAdapter;
 use App\Comunicaciones\Adapters\PushAdapter;
 use App\Comunicaciones\Adapters\WhatsappAdapter;
 use App\Models\ComMensaje;
 use App\Models\ComMensajeDestinatario;
 use App\Models\ComPreferencia;
+use Illuminate\Support\Facades\DB;
 
 class Distribuidor
 {
@@ -20,21 +20,38 @@ class Distribuidor
      */
     public static function distribuir(ComMensaje $mensaje, array $mediosCanal): void
     {
+        $maxSeconds = (int) config('comunicaciones.distribuir_max_seconds', 300);
+        if ($maxSeconds > 0) {
+            @set_time_limit($maxSeconds);
+        }
+
         $mensaje->load(['hilo', 'destinatarios']);
         $nombreColegio = static::nombreColegio($mensaje);
+
+        $destinatariosCorreo = [];
 
         foreach ($mensaje->destinatarios as $destinatario) {
             $mediosUsuario = static::mediosActivosParaDestinatario($destinatario);
             $medios        = array_intersect($mediosCanal, $mediosUsuario);
 
+            if (in_array('email', $medios, true)) {
+                $destinatariosCorreo[] = $destinatario;
+            }
+
             foreach ($medios as $medio) {
+                if ($medio === 'email') {
+                    continue;
+                }
                 match ($medio) {
                     'push'      => PushAdapter::enviar($destinatario, $mensaje, $nombreColegio),
-                    'email'     => MailAdapter::enviar($destinatario, $mensaje, $nombreColegio),
                     'whatsapp'  => WhatsappAdapter::enviar($destinatario, $mensaje),
                     default     => null,
                 };
             }
+        }
+
+        if ($destinatariosCorreo !== []) {
+            MailAdapter::enviarCorreoParaVariosDestinatarios($mensaje, $destinatariosCorreo, $nombreColegio);
         }
     }
 
@@ -65,6 +82,7 @@ class Distribuidor
             return '';
         }
         $insti = DB::table('ento')->where('idNivel', $idNivel)->value('insti');
+
         return is_string($insti) ? trim($insti) : '';
     }
 }

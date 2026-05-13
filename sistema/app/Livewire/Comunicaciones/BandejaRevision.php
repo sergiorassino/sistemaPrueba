@@ -7,7 +7,7 @@ use App\Comunicaciones\ComunicacionesRepository;
 
 class BandejaRevision extends Component
 {
-    public string $filtro = 'todos'; // todos|no_leidos|respondidos
+    public string $filtro = 'todos'; // todos|no_leidos
     public string $direccion = 'todos'; // todos|recibidos|enviados
     public string $periodo = 'actual'; // actual|historico
 
@@ -25,6 +25,13 @@ class BandejaRevision extends Component
         $this->idProfesorObjetivo = (int) $ctx->idProfesor;
         $prof = $ctx->profesor();
         $this->profesorObjetivoLabel = $prof ? trim("{$prof->apellido}, {$prof->nombre}") : null;
+    }
+
+    public function hydrate(): void
+    {
+        if (! in_array($this->filtro, ['todos', 'no_leidos'], true)) {
+            $this->filtro = 'todos';
+        }
     }
 
     public function updatedProfesorSearch(): void

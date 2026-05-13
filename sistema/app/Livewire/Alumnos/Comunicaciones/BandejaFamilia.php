@@ -7,7 +7,14 @@ use App\Comunicaciones\ComunicacionesRepository;
 
 class BandejaFamilia extends Component
 {
-    public string $filtro = 'todos'; // todos|no_leidos|respondidos
+    public string $filtro = 'todos'; // todos|no_leidos
+
+    public function hydrate(): void
+    {
+        if (! in_array($this->filtro, ['todos', 'no_leidos'], true)) {
+            $this->filtro = 'todos';
+        }
+    }
 
     public function render()
     {

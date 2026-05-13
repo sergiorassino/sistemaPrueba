@@ -40,7 +40,7 @@
         <div>
             <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">Estado</p>
             <div class="mt-2 flex flex-wrap gap-2">
-                @foreach (['todos' => 'Todos', 'no_leidos' => 'No leídos', 'respondidos' => 'Respondidos'] as $val => $label)
+                @foreach (['todos' => 'Todos', 'no_leidos' => 'No leídos'] as $val => $label)
                     <button type="button"
                             wire:click="$set('filtro', '{{ $val }}')"
                             @class([

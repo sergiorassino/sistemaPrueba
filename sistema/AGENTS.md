@@ -12,6 +12,13 @@ Este archivo está **en el repositorio**: aplica a **todas** las personas y herr
 
 **Sí hacer:** entregar **solo SQL** (o el comando Artisan) **en el chat como texto** para que un humano lo revise y ejecute en su cliente; y guardar migraciones/código en archivos **sin** invocarlos para aplicar el cambio en la BD.
 
+**Cierre de tareas (IAs y colaboradores):** si el cambio implica **esquema o datos** (nueva migración, seeder de datos de negocio, script de alineación, `UPDATE`/`DELETE` documentados, etc.), al **final** de la respuesta o del PR debe figurar un bloque **listo para copiar** con:
+
+1. Las sentencias **SQL** equivalentes al `up()` de la migración (u operación de datos), en el orden correcto respecto de FKs si aplica; y  
+2. Una **advertencia breve** de alcance (tablas afectadas, irreversibilidad).
+
+Si lo habitual en el entorno es aplicar migraciones con Artisan en lugar de SQL manual, puede indicarse además `php artisan migrate` como alternativa, **sin** ejecutarlo desde la herramienta del asistente.
+
 Detalle y matices: `docs/06-reglas-de-seguridad.md` sección **9**.
 
 ## Resto del baseline

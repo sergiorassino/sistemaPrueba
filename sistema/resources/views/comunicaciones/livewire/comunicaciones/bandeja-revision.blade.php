@@ -81,7 +81,7 @@
             <div>
                 <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">Estado</p>
                 <div class="mt-2 flex flex-wrap gap-2">
-                    @foreach (['todos' => 'Todos', 'no_leidos' => 'No leídos', 'respondidos' => 'Respondidos'] as $val => $label)
+                    @foreach (['todos' => 'Todos', 'no_leidos' => 'No leídos'] as $val => $label)
                         <button type="button"
                                 wire:click="$set('filtro', '{{ $val }}')"
                                 @class([
@@ -107,9 +107,16 @@
                 $nombresDest = $esEnviados
                     ? array_values(array_filter(explode('||', (string) ($hilo->destinatarios_nombres_concat ?? ''))))
                     : [];
+                $nombresDocDest = $esEnviados
+                    ? array_values(array_filter(explode('||', (string) ($hilo->destinatarios_doc_nombres_concat ?? ''))))
+                    : [];
                 $cursoEnvioLabel = $esEnviados ? trim((string) ($hilo->curso_envio_label ?? '')) : '';
                 $cntFamilias = $esEnviados ? (int) ($hilo->destinatarios_familia_count ?? 0) : 0;
                 $maxNombresLista = 24;
+                $esDocentesInterno = \App\Models\ComHilo::inferirEsComunicacionInternaDocentesDesdeDatos(
+                    isset($hilo->scope) ? (string) $hilo->scope : null,
+                    (int) ($hilo->cuerpo_inicial_id ?? 0)
+                );
                 $cursosDest = [];
                 if ($esEnviados && in_array($hilo->scope, ['curso', 'varios_cursos'], true)) {
                     $rawCursos = $hilo->cursos_envio ?? null;
@@ -142,6 +149,11 @@
                         $paraLabel = count($labelsCursos) > 0 ? implode(' · ', $labelsCursos) : 'Cursos';
                     } elseif ($hilo->scope === 'colegio') {
                         $paraLabel = 'Todo el colegio';
+                    } elseif ($esDocentesInterno) {
+                        $paraLabel = count($nombresDocDest) > 0 ? implode(' · ', array_slice($nombresDocDest, 0, $maxNombresLista)) : 'Docentes';
+                        if (count($nombresDocDest) > $maxNombresLista) {
+                            $paraLabel .= ' · …';
+                        }
                     } else {
                         $paraLabel = count($nombresDest) > 0 ? implode(' · ', array_slice($nombresDest, 0, $maxNombresLista)) : ($cntFamilias > 0 ? ($cntFamilias.' '.($cntFamilias === 1 ? 'familia' : 'familias')) : '—');
                         if (count($nombresDest) > $maxNombresLista) {
@@ -185,7 +197,14 @@
                                 {{ $noLeidos }} no leído{{ $noLeidos > 1 ? 's' : '' }}
                             </span>
                         @endif
-                        @if ($hilo->creado_por_tipo === 'profesor' && ! ($hilo->familia_puede_responder ?? true))
+                        @php
+                            $soloInformativoBandeja = ($esDocentesInterno
+                                    && isset($hilo->docentes_permite_respuestas)
+                                    && $hilo->docentes_permite_respuestas !== null
+                                    && (int) $hilo->docentes_permite_respuestas === 0)
+                                || (! $esDocentesInterno && ! ($hilo->familia_puede_responder ?? true));
+                        @endphp
+                        @if ($hilo->creado_por_tipo === 'profesor' && $soloInformativoBandeja)
                             <span class="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">
                                 Solo informativo
                             </span>

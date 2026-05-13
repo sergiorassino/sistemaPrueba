@@ -12,7 +12,7 @@ class ComunicadoMail extends Mailable
 {
     public function __construct(
         public readonly ComMensaje $mensaje,
-        public readonly ComMensajeDestinatario $destinatario,
+        public readonly ?ComMensajeDestinatario $destinatario = null,
         public readonly string $nombreColegio = '',
     ) {}
 

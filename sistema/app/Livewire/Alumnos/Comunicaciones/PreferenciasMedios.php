@@ -43,28 +43,35 @@ class PreferenciasMedios extends Component
 
     public function guardar(): void
     {
-        $this->validate([
+        $rules = [
             'vinculosContacto'   => ['nullable', 'array'],
             'vinculosContacto.*' => ['in:padre,madre,tutor'],
-            'push'               => 'boolean',
-            'email'              => 'boolean',
-            'whatsapp'           => 'boolean',
-        ]);
+        ];
+        if (config('comunicaciones.alumno_ui_medios_preferencia')) {
+            $rules['push']     = 'boolean';
+            $rules['email']    = 'boolean';
+            $rules['whatsapp'] = 'boolean';
+        }
+        $this->validate($rules);
 
         $idLegajo = (int) studentCtx()->idLegajo;
 
         $normalizados = $this->normalizarVinculosSeleccion($this->vinculosContacto);
 
+        $attrs = [
+            'vinculos_contacto' => $normalizados === [] ? null : $normalizados,
+            'vinculo_contacto'  => null,
+            'updated_at'        => now(),
+        ];
+        if (config('comunicaciones.alumno_ui_medios_preferencia')) {
+            $attrs['push']     = $this->push;
+            $attrs['email']    = $this->email;
+            $attrs['whatsapp'] = $this->whatsapp;
+        }
+
         ComPreferencia::updateOrCreate(
             ['tipo_usuario' => 'familia', 'id_legajo' => $idLegajo],
-            [
-                'vinculos_contacto' => $normalizados === [] ? null : $normalizados,
-                'vinculo_contacto'  => null,
-                'push'              => $this->push,
-                'email'             => $this->email,
-                'whatsapp'          => $this->whatsapp,
-                'updated_at'        => now(),
-            ]
+            $attrs
         );
 
         $this->vinculosContacto = $normalizados;

@@ -23,6 +23,8 @@ class Login extends Component
 
     public function updatedDni(string $value): void
     {
+        $this->resetErrorBag('dni');
+
         $dni = trim($value);
 
         // Evitar consultas si el DNI todavía no es válido
@@ -54,6 +56,11 @@ class Login extends Component
         }
     }
 
+    public function updatedPwrd(): void
+    {
+        $this->resetErrorBag('dni');
+    }
+
     public function rules(): array
     {
         return [
@@ -79,8 +86,7 @@ class Login extends Component
 
     public function login()
     {
-        // Si el usuario no seleccionó nivel/año (o el debounce aún no corrió),
-        // intentar sugerirlos desde el último acceso guardado.
+        // Si el usuario no seleccionó nivel/año, intentar sugerirlos desde el último acceso guardado.
         $dni = trim($this->dni);
         if (
             $dni !== ''

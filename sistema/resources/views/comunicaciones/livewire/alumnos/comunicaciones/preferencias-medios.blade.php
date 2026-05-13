@@ -32,7 +32,13 @@
     <div class="se-card overflow-hidden">
         <div class="border-b border-accent-200 bg-white px-5 py-4">
             <p class="se-section-title">Contacto y medios</p>
-            <p class="mt-1 text-sm text-neutral-600">Elegí cómo y a qué responsables les llegan los comunicados de la escuela.</p>
+            <p class="mt-1 text-sm text-neutral-600">
+                @if (config('comunicaciones.alumno_ui_medios_preferencia'))
+                    Elegí cómo y a qué responsables les llegan los comunicados de la escuela.
+                @else
+                    Elegí a qué responsables les llegan los comunicados de la escuela.
+                @endif
+            </p>
         </div>
 
         <div class="space-y-6 border-t border-accent-100 bg-accent-50/30 p-5 sm:p-6">
@@ -64,50 +70,52 @@
                 @enderror
             </div>
 
-            <div>
-                <p class="form-label">Medios de aviso</p>
-                <p class="mt-1 text-xs text-neutral-500">
-                    Elegí los medios que querés usar. La bandeja del portal siempre está disponible.
-                </p>
+            @if (config('comunicaciones.alumno_ui_medios_preferencia'))
+                <div>
+                    <p class="form-label">Medios de aviso</p>
+                    <p class="mt-1 text-xs text-neutral-500">
+                        Elegí los medios que querés usar. La bandeja del portal siempre está disponible.
+                    </p>
 
-                <div class="mt-3 space-y-3">
-                    <label class="flex cursor-pointer select-none items-start gap-3 rounded-2xl border border-accent-200 bg-white p-4 shadow-sm transition hover:bg-accent-50/60">
-                        <input type="checkbox"
-                               wire:model="push"
-                               class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500"/>
-                        <div class="min-w-0">
-                            <p class="text-sm font-semibold text-neutral-900">Notificaciones push</p>
-                            <p class="mt-1 text-xs leading-relaxed text-neutral-500">
-                                En el navegador o en la aplicación instalada. Requiere activarlas en el dispositivo.
-                            </p>
-                        </div>
-                    </label>
+                    <div class="mt-3 space-y-3">
+                        <label class="flex cursor-pointer select-none items-start gap-3 rounded-2xl border border-accent-200 bg-white p-4 shadow-sm transition hover:bg-accent-50/60">
+                            <input type="checkbox"
+                                   wire:model="push"
+                                   class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500"/>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-neutral-900">Notificaciones push</p>
+                                <p class="mt-1 text-xs leading-relaxed text-neutral-500">
+                                    En el navegador o en la aplicación instalada. Requiere activarlas en el dispositivo.
+                                </p>
+                            </div>
+                        </label>
 
-                    <label class="flex cursor-pointer select-none items-start gap-3 rounded-2xl border border-accent-200 bg-white p-4 shadow-sm transition hover:bg-accent-50/60">
-                        <input type="checkbox"
-                               wire:model="email"
-                               class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500"/>
-                        <div class="min-w-0">
-                            <p class="text-sm font-semibold text-neutral-900">Correo electrónico</p>
-                            <p class="mt-1 text-xs leading-relaxed text-neutral-500">
-                                Se envía al email del legajo según los responsables seleccionados arriba.
-                            </p>
-                        </div>
-                    </label>
+                        <label class="flex cursor-pointer select-none items-start gap-3 rounded-2xl border border-accent-200 bg-white p-4 shadow-sm transition hover:bg-accent-50/60">
+                            <input type="checkbox"
+                                   wire:model="email"
+                                   class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500"/>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-neutral-900">Correo electrónico</p>
+                                <p class="mt-1 text-xs leading-relaxed text-neutral-500">
+                                    Se envía al email del legajo según los responsables seleccionados arriba.
+                                </p>
+                            </div>
+                        </label>
 
-                    <label class="flex cursor-pointer select-none items-start gap-3 rounded-2xl border border-accent-200 bg-white p-4 shadow-sm transition hover:bg-accent-50/60">
-                        <input type="checkbox"
-                               wire:model="whatsapp"
-                               class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500"/>
-                        <div class="min-w-0">
-                            <p class="text-sm font-semibold text-neutral-900">WhatsApp</p>
-                            <p class="mt-1 text-xs leading-relaxed text-neutral-500">
-                                Al celular registrado en el legajo. El envío puede ser manual por la institución.
-                            </p>
-                        </div>
-                    </label>
+                        <label class="flex cursor-pointer select-none items-start gap-3 rounded-2xl border border-accent-200 bg-white p-4 shadow-sm transition hover:bg-accent-50/60">
+                            <input type="checkbox"
+                                   wire:model="whatsapp"
+                                   class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500"/>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-neutral-900">WhatsApp</p>
+                                <p class="mt-1 text-xs leading-relaxed text-neutral-500">
+                                    Al celular registrado en el legajo. El envío puede ser manual por la institución.
+                                </p>
+                            </div>
+                        </label>
+                    </div>
                 </div>
-            </div>
+            @endif
 
             <div class="flex justify-end border-t border-accent-200 pt-2">
                 <button type="button"

@@ -11,7 +11,7 @@
         <form wire:submit="login" class="space-y-3" autocomplete="on">
             <div>
                 <label class="form-label text-xs" for="dni">DNI (usuario)</label>
-                <input wire:model.live.debounce.400ms="dni"
+                <input wire:model.live="dni"
                        id="dni"
                        name="username"
                        type="text"
@@ -27,7 +27,7 @@
             <div x-data="{ showPassword: false }">
                 <label class="form-label text-xs" for="pwrd">Contraseña</label>
                 <div class="relative">
-                    <input wire:model="pwrd"
+                    <input wire:model.live="pwrd"
                            id="pwrd"
                            name="password"
                            x-bind:type="showPassword ? 'text' : 'password'"

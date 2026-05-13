@@ -18,6 +18,16 @@ class Login extends Component
 
     public string $pwrd = '';
 
+    public function updatedDni(): void
+    {
+        $this->resetErrorBag('dni');
+    }
+
+    public function updatedPwrd(): void
+    {
+        $this->resetErrorBag('dni');
+    }
+
     public function rules(): array
     {
         return [

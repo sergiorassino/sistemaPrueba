@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Matricula;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Arma el dataset de consulta de calificaciones (nivel secundario, boletín PDF compartido).
@@ -25,14 +26,14 @@ final class ConsultaCalificacionesAlumno
      *     cursoLabel: string,
      *     rows: list<object>,
      *     materias_adeudadas: list<object{materia: string, curso: string, linea: string}>,
-     *     disciplina: array{amonestaciones: int, apercibimientos_orales: int, apercibimientos_escritos: int}
+     *     items_boletin: list<object{etiqueta: string, fuente: string, total: float}>
      * }
      */
     public static function build(): array
     {
         $ctx = studentCtx();
         if (! $ctx->isValid()) {
-            return ['ok' => false, 'error' => 'Sesión inválida.', 'anoLectivo' => null, 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'materias_adeudadas' => [], 'disciplina' => self::disciplinaVacía()];
+            return ['ok' => false, 'error' => 'Sesión inválida.', 'anoLectivo' => null, 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'materias_adeudadas' => [], 'items_boletin' => []];
         }
 
         $idLegajo = (int) $ctx->idLegajo;
@@ -58,7 +59,7 @@ final class ConsultaCalificacionesAlumno
                 'cursoLabel' => '',
                 'rows' => [],
                 'materias_adeudadas' => [],
-                'disciplina' => self::disciplinaVacía(),
+                'items_boletin' => [],
             ];
         }
 
@@ -72,11 +73,11 @@ final class ConsultaCalificacionesAlumno
     {
         $ctx = schoolCtx();
         if (! $ctx->isValid()) {
-            return ['ok' => false, 'error' => 'Sesión inválida.', 'anoLectivo' => null, 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'materias_adeudadas' => [], 'disciplina' => self::disciplinaVacía()];
+            return ['ok' => false, 'error' => 'Sesión inválida.', 'anoLectivo' => null, 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'materias_adeudadas' => [], 'items_boletin' => []];
         }
 
         if ($idMatricula <= 0) {
-            return ['ok' => false, 'error' => 'Solicitud inválida.', 'anoLectivo' => $ctx->terlecAno(), 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'materias_adeudadas' => [], 'disciplina' => self::disciplinaVacía()];
+            return ['ok' => false, 'error' => 'Solicitud inválida.', 'anoLectivo' => $ctx->terlecAno(), 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'materias_adeudadas' => [], 'items_boletin' => []];
         }
 
         /** @var Matricula|null $matricula */
@@ -97,7 +98,7 @@ final class ConsultaCalificacionesAlumno
                 'cursoLabel' => '',
                 'rows' => [],
                 'materias_adeudadas' => [],
-                'disciplina' => self::disciplinaVacía(),
+                'items_boletin' => [],
             ];
         }
 
@@ -114,7 +115,7 @@ final class ConsultaCalificacionesAlumno
      *     cursoLabel: string,
      *     rows: list<object>,
      *     materias_adeudadas: list<object{materia: string, curso: string, linea: string}>,
-     *     disciplina: array{amonestaciones: int, apercibimientos_orales: int, apercibimientos_escritos: int}
+     *     items_boletin: list<object{etiqueta: string, fuente: string, total: float}>
      * }
      */
     private static function datasetDesdeMatricula(Matricula $matricula): array
@@ -167,7 +168,7 @@ final class ConsultaCalificacionesAlumno
             'cursoLabel' => $cursoLabel,
             'rows' => $rows->all(),
             'materias_adeudadas' => $materiasAdeudadas,
-            'disciplina' => self::resumenDisciplina($idMat),
+            'items_boletin' => self::itemsBoletinParaMatricula($idMat, $idTerlec),
         ];
     }
 
@@ -291,54 +292,70 @@ final class ConsultaCalificacionesAlumno
         return implode(' ', $out);
     }
 
-    /**
-     * @return array{amonestaciones: int, apercibimientos_orales: int, apercibimientos_escritos: int}
-     */
-    private static function disciplinaVacía(): array
-    {
-        return [
-            'amonestaciones' => 0,
-            'apercibimientos_orales' => 0,
-            'apercibimientos_escritos' => 0,
-        ];
-    }
+    private const ITEMS_BOLETIN_FUENTES = ['inasistencias', 'sanciones'];
 
     /**
-     * @return array{amonestaciones: int, apercibimientos_orales: int, apercibimientos_escritos: int}
+     * Filas para el pie del PDF (inasistencias / sanciones) según {@see ItemBoletin}.
+     *
+     * @return list<object{etiqueta: string, fuente: string, total: float}>
      */
-    private static function resumenDisciplina(int $idMatricula): array
+    private static function itemsBoletinParaMatricula(int $idMatricula, int $idTerlec): array
     {
-        $out = self::disciplinaVacía();
-        if ($idMatricula <= 0) {
-            return $out;
+        if ($idMatricula <= 0 || ! Schema::hasTable('itemsboletin')) {
+            return [];
         }
 
-        $items = DB::table('sanciones')
-            ->leftJoin('sanciontipo', 'sanciontipo.id', '=', 'sanciones.idTipoSancion')
-            ->where('sanciones.idMatricula', $idMatricula)
-            ->selectRaw('LOWER(COALESCE(sanciontipo.tipo, "")) as tipo_l')
-            ->selectRaw('COALESCE(sanciones.cantidad, 1) as cant')
-            ->get();
+        $definiciones = DB::table('itemsboletin')
+            ->where('activo', true)
+            ->where(function ($q) use ($idTerlec) {
+                $q->whereNull('idTerlec')
+                    ->orWhere('idTerlec', $idTerlec);
+            })
+            ->orderBy('orden')
+            ->orderBy('id')
+            ->get(['etiqueta', 'fuente', 'condicion_where']);
 
-        foreach ($items as $r) {
-            $t = (string) ($r->tipo_l ?? '');
-            $c = (int) ($r->cant ?? 1);
-            if ($c < 1) {
-                $c = 1;
+        $out = [];
+        foreach ($definiciones as $def) {
+            $etiqueta = trim((string) ($def->etiqueta ?? ''));
+            $fuente = trim((string) ($def->fuente ?? ''));
+            $cond = trim((string) ($def->condicion_where ?? ''));
+            if ($etiqueta === '' || ! in_array($fuente, self::ITEMS_BOLETIN_FUENTES, true) || ! self::condicionWhereItemsBoletinSegura($cond)) {
+                continue;
             }
-            if (str_contains($t, 'amonest')) {
-                $out['amonestaciones'] += $c;
-            } elseif (str_contains($t, 'apercib')) {
-                if (str_contains($t, 'escrit')) {
-                    $out['apercibimientos_escritos'] += $c;
-                } elseif (str_contains($t, 'oral') || str_contains($t, 'verbal')) {
-                    $out['apercibimientos_orales'] += $c;
-                } else {
-                    $out['apercibimientos_orales'] += $c;
-                }
-            }
+            $total = self::sumarCantidadItemsBoletin($fuente, $cond, $idMatricula);
+            $out[] = (object) ['etiqueta' => $etiqueta, 'fuente' => $fuente, 'total' => $total];
         }
 
         return $out;
+    }
+
+    /**
+     * Evita concatenar SQL arbitrario no acotado (la condición sale de BD pero debe ser solo expresión AND).
+     */
+    private static function condicionWhereItemsBoletinSegura(string $condicion): bool
+    {
+        if ($condicion === '' || strlen($condicion) > 500) {
+            return false;
+        }
+        if (preg_match('/;|--|\/\*|\*\/|[`"]|\bunion\b|\bselect\b|\binsert\b|\bupdate\b|\bdelete\b|\bdrop\b|\bexec\b|\binto\b|\boutfile\b|\bload\b|\bgrant\b/i', $condicion)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static function sumarCantidadItemsBoletin(string $tabla, string $condicionAnd, int $idMatricula): float
+    {
+        $sum = DB::table($tabla)
+            ->where('idMatricula', $idMatricula)
+            ->whereRaw('('.$condicionAnd.')')
+            ->sum(DB::raw('COALESCE(cantidad, 0)'));
+
+        $v = (float) $sum;
+
+        return $tabla === 'inasistencias'
+            ? round($v, 2)
+            : round($v, 0);
     }
 }

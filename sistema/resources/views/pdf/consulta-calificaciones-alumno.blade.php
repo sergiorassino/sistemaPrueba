@@ -341,16 +341,23 @@
     @endif
 
     @php
-        $d = $consulta['disciplina'] ?? [];
-        $a = (int) ($d['amonestaciones'] ?? 0);
-        $ao = (int) ($d['apercibimientos_orales'] ?? 0);
-        $ae = (int) ($d['apercibimientos_escritos'] ?? 0);
+        $itemsBoletin = $consulta['items_boletin'] ?? [];
     @endphp
-    <div class="disc">
-        <p><span class="disc-lbl">Amonestaciones:</span> @if ($a > 0){{ $a }}@else{{ $blank }}@endif</p>
-        <p><span class="disc-lbl">Apercibimientos Orales:</span> @if ($ao > 0){{ $ao }}@else{{ $blank }}@endif</p>
-        <p><span class="disc-lbl">Apercibimientos Escritos:</span> @if ($ae > 0){{ $ae }}@else{{ $blank }}@endif</p>
-    </div>
+    @if (count($itemsBoletin) > 0)
+        <div class="disc">
+            @foreach ($itemsBoletin as $it)
+                @php
+                    $t = (float) ($it->total ?? 0);
+                    $esInas = (($it->fuente ?? '') === 'inasistencias');
+                    $mostrar = $esInas ? (abs($t) >= 0.005) : ((int) round($t) !== 0);
+                    $txt = $esInas
+                        ? number_format($t, 2, ',', '')
+                        : (string) (int) round($t);
+                @endphp
+                <p><span class="disc-lbl">{{ $it->etiqueta }}:</span> @if ($mostrar){{ $txt }}@else{{ $blank }}@endif</p>
+            @endforeach
+        </div>
+    @endif
 
 </div>
 </body>

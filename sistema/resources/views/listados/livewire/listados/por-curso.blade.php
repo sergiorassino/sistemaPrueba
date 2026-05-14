@@ -6,9 +6,8 @@
                 <div>
                     <div class="flex flex-wrap items-center gap-3">
                         <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">
-                            {{ tenantConfig('listados.titulo', 'Alumnos por curso') }}
+                            Alumnos por curso
                         </h2>
-                        @includeIf('custom.' . tenantConfig('slug', 'default') . '.listados.hero-badge')
                     </div>
                     <p class="mt-2 max-w-2xl text-sm text-white/80">
                         {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
@@ -47,7 +46,6 @@
             </div>
         </div>
     @else
-        @if(tenantConfig('listados.mostrar_filtro_condicion', true))
         <div class="se-toolbar">
             <div class="min-w-0 flex-1 space-y-2">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">Condición de matrícula en el PDF</p>
@@ -79,7 +77,6 @@
                 </div>
             </div>
         </div>
-        @endif
 
         <div class="se-card overflow-hidden">
             <div class="border-b border-accent-200 bg-white px-5 py-4">

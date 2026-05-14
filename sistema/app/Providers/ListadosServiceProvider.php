@@ -10,11 +10,6 @@ use Livewire\Livewire;
 
 class ListadosServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-        $this->mergeConfigFrom(base_path('config/listados.php'), 'listados');
-    }
-
     public function boot(): void
     {
         $this->loadViewsFrom(resource_path('views/listados'), 'listados');

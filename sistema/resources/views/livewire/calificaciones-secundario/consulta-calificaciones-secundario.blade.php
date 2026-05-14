@@ -1,5 +1,4 @@
 {{-- Módulo calificacionesSecundario: consulta institucional del boletín (PDF compartido con autogestión). --}}
-{{-- Preferir config(): evita depender del helper en entornos con autoload distinto al local. Monte Cristo: TENANT_SLUG=montecristo --}}
 <div class="mx-auto w-full max-w-5xl space-y-6">
     <section class="se-hero">
         <div class="se-hero-inner">
@@ -38,50 +37,36 @@
                 <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Estudiantes del curso</p>
                 <p class="text-sm text-neutral-600">Abre el boletín en PDF (mismo formato que en autogestión del estudiante).</p>
             </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-accent-200 text-sm">
+            <div class="flex w-full justify-center overflow-x-auto px-4 pb-4 pt-1">
+                <table class="w-max max-w-full table-auto divide-y divide-accent-200 text-sm">
                     <thead class="bg-white">
                         <tr>
-                            <th scope="col" class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Apellido y nombre</th>
-                            @if (config('tenant.slug') === 'montecristo')
-                                <th scope="col" class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-500">D.N.I.</th>
-                                <th scope="col" class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Fecha de nacimiento</th>
-                            @endif
-                            <th scope="col" class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Boletín</th>
+                            <th scope="col" class="py-3 pl-5 pr-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Apellido y nombre</th>
+                            <th scope="col" class="py-3 pl-2 pr-5 text-right text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Consulta de calificaciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-accent-100 bg-white">
                         @forelse ($matriculas as $mat)
                             <tr class="hover:bg-accent-50/60">
-                                <td class="px-5 py-3 font-medium text-neutral-800">
+                                <td class="py-3 pl-5 pr-2 align-middle font-medium text-neutral-800">
                                     {{ trim((string) ($mat->legajo?->nombre_completo ?? '')) === '' ? '—' : $mat->legajo->nombre_completo }}
                                 </td>
-                                @if (config('tenant.slug') === 'montecristo')
-                                    <td class="px-5 py-3 text-neutral-600">{{ trim((string) ($mat->legajo?->dni ?? '')) !== '' ? $mat->legajo->dni : '—' }}</td>
-                                    <td class="px-5 py-3 text-neutral-600">
-                                        {{ $mat->legajo?->fechnaci ? $mat->legajo->fechnaci->format('d/m/Y') : '—' }}
-                                    </td>
-                                @endif
-                                <td class="px-5 py-3 text-right">
+                                <td class="py-3 pl-2 pr-5 text-right align-middle">
                                     <a href="{{ route('calificacionesSecundario.consulta.pdf', ['matricula' => $mat->id]) }}"
                                        target="_blank"
                                        rel="noopener noreferrer"
-                                       class="inline-flex max-w-full items-center justify-center gap-1.5 rounded-xl border border-accent-200 bg-white px-3 py-2 text-xs font-semibold text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-accent-50">
+                                       class="inline-flex max-w-full flex-wrap items-center justify-end gap-1.5 whitespace-normal rounded-xl border border-accent-200 bg-white px-3 py-2 text-xs font-semibold text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-accent-50">
                                         <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                                         </svg>
-                                        @if (config('tenant.slug') === 'montecristo')
-                                            <span class="text-left leading-snug whitespace-normal lg:whitespace-nowrap">CONSULTA DE CALIFICACIONES</span>
-                                        @else
-                                            Boletín
-                                        @endif
+                                        CONSULTA DE CALIFICACIONES
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ config('tenant.slug') === 'montecristo' ? 4 : 2 }}" class="px-5 py-10 text-center text-sm text-neutral-500">
+                                <td colspan="2" class="px-5 py-10 text-center text-sm text-neutral-500">
                                     No hay matrículas en este curso para el ciclo lectivo actual.
                                 </td>
                             </tr>

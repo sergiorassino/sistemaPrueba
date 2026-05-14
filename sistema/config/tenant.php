@@ -1,123 +1,25 @@
 <?php
 
 /*
- | Configuración del cliente (tenant) activo.
+ | Valores por defecto de `config('tenant.*')` para todos los despliegues.
  |
- | Este archivo define los valores por defecto seguros del sistema.
- | TenantOverridesServiceProvider carga encima el archivo
- | config/tenants/{TENANT_SLUG}.php, sobreescribiendo solo lo que difiere.
+ | Personalización por colegio: archivo versionado `config/tenants/{TENANT_SLUG}.php`
+ | (merge recursivo sobre este array). Así cada cliente documenta en git qué difiere
+ | y un colegio nuevo puede partir copiando el archivo del más parecido.
  |
- | En desarrollo local: cambiar TENANT_SLUG en .env para probar otro cliente.
- | En producción: cada repo de colegio tiene su propio config/tenants/{slug}.php
- |                con los valores específicos de ese cliente.
+ | - slug: se toma de TENANT_SLUG en el entorno (identifica despliegue / BD / archivo tenants).
+ | - nombre: fallback del nombre institucional si no hay dato en `ento`.
+ | - autogestion: definir por colegio en `config/tenants/{slug}.php` cuando corresponda.
  */
 
 return [
 
-    /*
-     | Identificador del cliente. Se carga desde el .env.
-     | Nunca modificar directamente aquí; usar TENANT_SLUG en .env.
-     */
     'slug' => env('TENANT_SLUG', 'default'),
 
-    /*
-     | Nombre institucional. Usado en encabezados y PDFs cuando
-     | no hay dato en la tabla ento (fallback).
-     */
     'nombre' => 'Colegio',
 
-    /*
-     | Autogestión del estudiante (portal familia / alumnos).
-     |
-     | aranceles_aulica_url: si está definida (p. ej. ALUMNO_ARANCELES_AULICA_URL en .env),
-     | el sidebar muestra "Gestión de Aranceles Escolares" enlazando a ese portal.
-     | Por defecto null: ningún colegio ve el ítem salvo que lo habilite explícitamente.
-     */
     'autogestion' => [
-        'aranceles_aulica_url' => env('ALUMNO_ARANCELES_AULICA_URL'),
-    ],
-
-    // =========================================================
-    // Configuración por módulo
-    // =========================================================
-
-    'listados' => [
-
-        /*
-         | Título que aparece en el hero de la pantalla de listados
-         | y en el título del tab del navegador.
-         */
-        'titulo' => 'Alumnos por curso',
-
-        /*
-         | Si true, muestra el selector "Regulares / Salidos / Todas"
-         | antes del PDF. Algunos colegios no usan este filtro.
-         */
-        'mostrar_filtro_condicion' => true,
-
-        /*
-         | Si true, el menú y el dashboard enlazan al módulo listadoPorCurso_v1.2
-         | (pantalla simple: apellido, nombre, DNI) en lugar del listado con PDF.
-         */
-        'usar_listado_por_curso_v12' => false,
-
-        /*
-         | Título del ítem de menú / tarjeta cuando está activo listadoPorCurso_v1.2.
-         */
-        'titulo_listado_por_curso_v12' => 'Listado por curso',
-
-        /*
-         | Selector explícito de versión para el acceso desde el sidebar/dashboard.
-         |
-         | Valores sugeridos:
-         | - 'v1.0' : módulo original (listados con PDF)  -> route('listados.por-curso')
-         | - 'v1.2' : módulo alternativo existente        -> route('listadoPorCurso.v1_2')
-         | - 'v2.0' : módulo nuevo/independiente          -> route('listadosV2.por-curso')
-         |
-         | Regla: esto debe ser "declarativo" por tenant, para que el cambio en A
-         | no afecte B/C y quede auditable en config.
-         */
-        'por_curso_version' => 'v1.0',
-
-    ],
-
-    /*
-     | Módulo: Seguimiento disciplinario
-     */
-    'disciplinario' => [
-
-        /*
-         | Selector de versión para el sidebar/dashboard.
-         |
-         | Valores:
-         | - 'v1.0' : módulo original en app/ -> route('seguimiento.disciplinario')
-         | - 'v2.0' : paquete independiente   -> route('disciplinarioV2.index')
-         */
-        'version' => 'v1.0',
-
-    ],
-
-    /*
-     | Sidebar: versionado por módulo (para tooltips y auditoría visual).
-     |
-     | Cada ítem del sidebar puede mostrar su versión propia en el tooltip:
-     |  "Nombre del ítem vX.Y".
-     |
-     | Nota: si no se define un módulo acá, el layout hace fallback a
-     | tenant.sidebar.ui_version (si existiera) o 'v1.0'.
-     */
-    'sidebar' => [
-        'modulos' => [
-            'core' => 'v1.0',
-            'estudiantes' => 'v1.0',
-            'listados' => 'v1.0',
-            'push' => 'v1.0',
-            'cuaderno_comunicados' => 'v1.0',
-            'calificaciones' => 'v1.0',
-            'comunicaciones' => 'v1.0',
-            'disciplinario' => 'v1.0',
-            'configuracion' => 'v1.0',
-        ],
+        'aranceles_aulica_url' => null,
     ],
 
 ];

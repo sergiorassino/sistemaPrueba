@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\Schema;
  * Compara el schema de dos bases de datos MySQL y reporta diferencias (drift).
  *
  * Uso:
- *   php artisan se:drift-report --compare-with=ia_montecristo
- *   php artisan se:drift-report --compare-with=ia_montecristo --format=markdown
+ *   php artisan se:drift-report --compare-with=ia_ejemplo
+ *   php artisan se:drift-report --compare-with=ia_ejemplo --format=markdown
  *
  * La base de referencia es la que está configurada en DB_DATABASE del .env actual.
  */

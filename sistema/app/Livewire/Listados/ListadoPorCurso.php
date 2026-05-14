@@ -56,7 +56,7 @@ class ListadoPorCurso extends Component
         $camposPorGrupo = ListadoCursoPdfFieldCatalog::groupedForUiPorSolapas();
 
         return view('listados::livewire.listados.por-curso', compact('cursos', 'cursosIzquierda', 'cursosDerecha', 'camposPorGrupo'))
-            ->layout('layouts.app', ['pageTitle' => tenantConfig('listados.titulo', 'Listado por curso')]);
+            ->layout('layouts.app', ['pageTitle' => 'Alumnos por curso']);
     }
 
     /** Pasa a la derecha los cursos seleccionados a la izquierda (orden según listado). */

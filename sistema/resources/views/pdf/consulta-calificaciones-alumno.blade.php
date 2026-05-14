@@ -171,6 +171,14 @@
         .disc { margin-top: 5mm; font-size: 7pt; line-height: 1.35; }
         .disc p { margin: 0 0 2px 0; font-weight: 400; }
         .disc .disc-lbl { font-weight: 400; }
+        .adeu { margin-top: 2.45mm; font-size: 6.8pt; }
+        .adeu-title {
+            font-weight: 700;
+            margin: 0 0 2px 0;
+            font-size: 6.9pt;
+            letter-spacing: 0.02em;
+        }
+        .adeu-body { margin: 0; font-weight: 400; line-height: 1.02; text-align: left; }
     </style>
 </head>
 <body>
@@ -323,6 +331,16 @@
     </div>
 
     @php
+        $adeudadas = $consulta['materias_adeudadas'] ?? [];
+    @endphp
+    @if (count($adeudadas) > 0)
+        <div class="adeu">
+            <p class="adeu-title">MATERIAS PREVIAS:</p>
+            <p class="adeu-body">@foreach ($adeudadas as $a){{ $a->linea }}@if (! $loop->last) - @endif@endforeach</p>
+        </div>
+    @endif
+
+    @php
         $d = $consulta['disciplina'] ?? [];
         $a = (int) ($d['amonestaciones'] ?? 0);
         $ao = (int) ($d['apercibimientos_orales'] ?? 0);
@@ -334,7 +352,6 @@
         <p><span class="disc-lbl">Apercibimientos Escritos:</span> @if ($ae > 0){{ $ae }}@else{{ $blank }}@endif</p>
     </div>
 
-    @includeIf('custom.'.tenantConfig('slug', 'default').'.pdf.leyenda-boletin-calificaciones')
 </div>
 </body>
 </html>

@@ -1,10 +1,9 @@
 <?php
 
 /*
- | Override de tenant para Colegio Montecristo.
+ | Colegio Montecristo — personalización declarada en repo (no en .env).
  |
- | Requiere ENABLE_TENANT_OVERRIDES=true y TENANT_SLUG=montecristo.
- | Alternativa: definir solo ALUMNO_ARANCELES_AULICA_URL en .env en ese despliegue.
+ | Requiere TENANT_SLUG=montecristo en el despliegue de ese colegio.
  */
 
 return [

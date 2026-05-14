@@ -140,7 +140,7 @@ class ParametrosSistemaForm extends Component
         if ($this->logo instanceof TemporaryUploadedFile) {
             $old = (string) ($ento->logo_path ?? '');
 
-            $slug = tenantConfig('slug', 'default');
+            $slug = (string) config('tenant.slug', 'default');
             $dir = 'ento/logos/' . $slug . '/nivel-' . $idNivel;
             $ext = strtolower((string) $this->logo->getClientOriginalExtension());
             if (! in_array($ext, ['jpg', 'jpeg', 'png'], true)) {

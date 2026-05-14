@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Matricula;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -23,6 +24,7 @@ final class ConsultaCalificacionesAlumno
      *     dni: string,
      *     cursoLabel: string,
      *     rows: list<object>,
+     *     materias_adeudadas: list<object{materia: string, curso: string, linea: string}>,
      *     disciplina: array{amonestaciones: int, apercibimientos_orales: int, apercibimientos_escritos: int}
      * }
      */
@@ -30,7 +32,7 @@ final class ConsultaCalificacionesAlumno
     {
         $ctx = studentCtx();
         if (! $ctx->isValid()) {
-            return ['ok' => false, 'error' => 'Sesión inválida.', 'anoLectivo' => null, 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'disciplina' => self::disciplinaVacía()];
+            return ['ok' => false, 'error' => 'Sesión inválida.', 'anoLectivo' => null, 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'materias_adeudadas' => [], 'disciplina' => self::disciplinaVacía()];
         }
 
         $idLegajo = (int) $ctx->idLegajo;
@@ -55,6 +57,7 @@ final class ConsultaCalificacionesAlumno
                 'dni' => '',
                 'cursoLabel' => '',
                 'rows' => [],
+                'materias_adeudadas' => [],
                 'disciplina' => self::disciplinaVacía(),
             ];
         }
@@ -69,11 +72,11 @@ final class ConsultaCalificacionesAlumno
     {
         $ctx = schoolCtx();
         if (! $ctx->isValid()) {
-            return ['ok' => false, 'error' => 'Sesión inválida.', 'anoLectivo' => null, 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'disciplina' => self::disciplinaVacía()];
+            return ['ok' => false, 'error' => 'Sesión inválida.', 'anoLectivo' => null, 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'materias_adeudadas' => [], 'disciplina' => self::disciplinaVacía()];
         }
 
         if ($idMatricula <= 0) {
-            return ['ok' => false, 'error' => 'Solicitud inválida.', 'anoLectivo' => $ctx->terlecAno(), 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'disciplina' => self::disciplinaVacía()];
+            return ['ok' => false, 'error' => 'Solicitud inválida.', 'anoLectivo' => $ctx->terlecAno(), 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'materias_adeudadas' => [], 'disciplina' => self::disciplinaVacía()];
         }
 
         /** @var Matricula|null $matricula */
@@ -93,6 +96,7 @@ final class ConsultaCalificacionesAlumno
                 'dni' => '',
                 'cursoLabel' => '',
                 'rows' => [],
+                'materias_adeudadas' => [],
                 'disciplina' => self::disciplinaVacía(),
             ];
         }
@@ -109,6 +113,7 @@ final class ConsultaCalificacionesAlumno
      *     dni: string,
      *     cursoLabel: string,
      *     rows: list<object>,
+     *     materias_adeudadas: list<object{materia: string, curso: string, linea: string}>,
      *     disciplina: array{amonestaciones: int, apercibimientos_orales: int, apercibimientos_escritos: int}
      * }
      */
@@ -150,6 +155,9 @@ final class ConsultaCalificacionesAlumno
             ->orderBy('m.materia')
             ->get(array_merge(['m.materia as espacio_curricular'], $cols));
 
+        $idNivel = (int) $matricula->idNivel;
+        $materiasAdeudadas = self::materiasAdeudadasCiclosAnteriores($idLegajo, $idTerlec, $idNivel);
+
         return [
             'ok' => true,
             'matricula' => $matricula,
@@ -158,8 +166,129 @@ final class ConsultaCalificacionesAlumno
             'dni' => $dni,
             'cursoLabel' => $cursoLabel,
             'rows' => $rows->all(),
+            'materias_adeudadas' => $materiasAdeudadas,
             'disciplina' => self::resumenDisciplina($idMat),
         ];
+    }
+
+    /**
+     * Materias marcadas como adeudadas (`apro = 1`) en ciclos lectivos anteriores al de la matrícula consultada.
+     *
+     * @return list<object{materia: string, curso: string, linea: string}>
+     */
+    private static function materiasAdeudadasCiclosAnteriores(int $idLegajo, int $idTerlecActual, int $idNivel): array
+    {
+        if ($idLegajo <= 0 || $idTerlecActual <= 0) {
+            return [];
+        }
+
+        $raw = DB::table('calificaciones as c')
+            ->join('materias as m', function ($join) {
+                $join->on('m.id', '=', 'c.idMaterias')
+                    ->on('m.idTerlec', '=', 'c.idTerlec');
+            })
+            ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
+            ->leftJoin('curplan as cp', 'cp.id', '=', 'cu.idCurPlan')
+            ->leftJoin('terlec as t', 't.id', '=', 'c.idTerlec')
+            ->where('c.idLegajos', $idLegajo)
+            ->where('c.apro', 1)
+            ->where('c.idTerlec', '<>', $idTerlecActual)
+            ->where('cu.idNivel', $idNivel)
+            ->orderByDesc('t.ano')
+            ->orderBy('m.materia')
+            ->select([
+                'm.materia',
+                'cu.cursec',
+                'cp.curPlanCurso',
+                'cu.turno',
+                'cu.c',
+                'cu.s',
+            ])
+            ->get();
+
+        /** @var Collection<int, object{materia: string, curso: string, linea: string}> $out */
+        $out = $raw
+            ->map(function (object $r): object {
+                $materia = trim((string) ($r->materia ?? ''));
+                $cursoRaw = self::cursoLabelDesdeFilaCalificacion($r);
+                $cursoFmt = self::cursoTituloPalabras($cursoRaw);
+                $matFmt = mb_strtoupper($materia, 'UTF-8');
+
+                return (object) [
+                    'materia' => $materia,
+                    'curso' => $cursoRaw,
+                    'linea' => $matFmt.' ('.$cursoFmt.')',
+                ];
+            })
+            ->filter(fn (object $o) => $o->materia !== '')
+            ->values();
+
+        return $out->all();
+    }
+
+    /**
+     * Replica de la lógica de {@see \App\Models\Curso::nombreParaListado()} sobre filas del query de adeudadas.
+     */
+    private static function cursoLabelDesdeFilaCalificacion(object $r): string
+    {
+        $sec = trim((string) ($r->cursec ?? ''));
+        if ($sec !== '') {
+            return $sec;
+        }
+
+        $nombrePlan = trim((string) ($r->curPlanCurso ?? ''));
+        $extras = collect([$r->turno ?? '', $r->c ?? '', $r->s ?? ''])
+            ->map(fn ($v) => trim((string) $v))
+            ->filter()
+            ->values();
+
+        if ($nombrePlan !== '') {
+            return $extras->isNotEmpty()
+                ? $nombrePlan.' · '.$extras->implode(' · ')
+                : $nombrePlan;
+        }
+
+        if ($extras->isNotEmpty()) {
+            return $extras->implode(' · ');
+        }
+
+        return 'Curso';
+    }
+
+    /**
+     * Curso entre paréntesis: cada palabra con inicial mayúscula (ej. Quinto A, Plan Básico · Turno Mañana).
+     */
+    private static function cursoTituloPalabras(string $curso): string
+    {
+        $s = trim($curso);
+        if ($s === '') {
+            return '';
+        }
+        $lower = mb_strtolower($s, 'UTF-8');
+        $pieces = explode(' · ', $lower);
+        $titledPieces = array_map(
+            fn (string $p): string => self::tituloPalabrasPorEspacios(trim($p)),
+            $pieces
+        );
+
+        return implode(' · ', $titledPieces);
+    }
+
+    /**
+     * @return string cadena vacía si $segment es vacío
+     */
+    private static function tituloPalabrasPorEspacios(string $segment): string
+    {
+        if ($segment === '') {
+            return '';
+        }
+        $words = preg_split('/\s+/u', $segment, -1, PREG_SPLIT_NO_EMPTY);
+        $out = [];
+        foreach ($words as $w) {
+            $out[] = mb_convert_case($w, MB_CASE_TITLE, 'UTF-8');
+        }
+
+        return implode(' ', $out);
     }
 
     /**

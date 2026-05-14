@@ -227,8 +227,8 @@
             <span x-show="!sidebarCollapsed" x-cloak class="truncate">Consulta de Calificaciones</span>
         </a>
 
-        @if(filled(tenantConfig('autogestion.aranceles_aulica_url')))
-            <a href="{{ tenantConfig('autogestion.aranceles_aulica_url') }}"
+        @if(filled(config('tenant.autogestion.aranceles_aulica_url')))
+            <a href="{{ config('tenant.autogestion.aranceles_aulica_url') }}"
                target="_blank"
                rel="noopener noreferrer"
                class="se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors"

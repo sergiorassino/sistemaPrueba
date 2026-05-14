@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
  * Cambia el tenant activo en el .env local sin reemplazar el archivo completo.
  *
  * Uso:
- *   php artisan se:switch montecristo
+ *   php artisan se:switch colegio_ejemplo
  *   php artisan se:switch sistemaprueba --db=ia_demo
  *   php artisan se:switch nssc
  *   php artisan se:switch          (sin argumento → muestra el tenant actual)
@@ -20,7 +20,7 @@ use Illuminate\Console\Command;
 class SwitchTenantCommand extends Command
 {
     protected $signature = 'se:switch
-                            {slug?           : Slug del colegio destino (ej: montecristo, nssc, sistemaprueba)}
+                            {slug?           : Slug del colegio destino (ej: nssc, sistemaprueba)}
                             {--db=           : Nombre explícito de la BD. Por defecto: ia_{slug}}
                             {--list          : Listar los tenants conocidos sin cambiar nada}';
 

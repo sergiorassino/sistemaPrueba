@@ -6,23 +6,6 @@ use App\Support\SchoolContext;
 use App\Support\StudentContext;
 use Illuminate\Support\Facades\Storage;
 
-if (! function_exists('tenantConfig')) {
-    /**
-     * Devuelve un valor de la configuración del cliente activo.
-     *
-     * Equivalente a config('tenant.{key}', $default).
-     * Usar esta función en lugar de config() directamente para que sea fácil
-     * localizar todos los puntos donde se consulta el tenant.
-     *
-     * @param  string  $key     Clave relativa a 'tenant.' (ej: 'listados.titulo')
-     * @param  mixed   $default Valor por defecto si la clave no existe
-     */
-    function tenantConfig(string $key, mixed $default = null): mixed
-    {
-        return config("tenant.{$key}", $default);
-    }
-}
-
 if (! function_exists('schoolCtx')) {
     function schoolCtx(): SchoolContext
     {
@@ -275,7 +258,7 @@ if (! function_exists('schoolNombre')) {
     /**
      * Nombre institucional del colegio para el nivel activo en sesión.
      * Lee `ento.insti` filtrado por `schoolCtx()->idNivel`.
-     * Fallback: `tenantConfig('nombre')` y luego 'Colegio'.
+     * Fallback: `config('tenant.nombre')` y luego 'Colegio'.
      */
     function schoolNombre(): string
     {
@@ -297,7 +280,7 @@ if (! function_exists('schoolNombre')) {
             }
         }
 
-        return $memo = (string) tenantConfig('nombre', 'Colegio');
+        return $memo = (string) config('tenant.nombre', 'Colegio');
     }
 }
 

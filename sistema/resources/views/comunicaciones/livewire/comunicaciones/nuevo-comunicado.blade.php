@@ -296,18 +296,20 @@
         </div>
     </div>
 
+    @teleport('body')
+        <div>
     @if ($modalAlumnosAbierto)
-        <div class="fixed inset-0 z-[90] flex items-center justify-center px-4 py-8 sm:px-6" role="dialog" aria-modal="true"
+        <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4" role="dialog" aria-modal="true"
              aria-labelledby="com-modal-alumnos-titulo">
             <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarModalAlumnos"></div>
 
-            <div class="relative z-10 flex max-h-[min(90vh,40rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
-                <div class="border-b border-accent-200 bg-accent-50/60 px-5 py-4">
+            <div class="relative z-10 my-auto flex w-full max-w-xl max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),34rem)]">
+                <div class="border-b border-accent-200 bg-accent-50/60 px-4 py-2.5 sm:px-5 sm:py-3">
                     <p id="com-modal-alumnos-titulo" class="text-sm font-bold text-neutral-900">Elegir alumnos</p>
-                    <p class="mt-1 text-xs leading-relaxed text-neutral-600">Marcá los destinatarios. Podés acotar el listado con el filtro; las selecciones fuera de la vista actual se mantienen al confirmar.</p>
+                    <p class="mt-0.5 text-[11px] leading-snug text-neutral-600">Marcá los destinatarios. Podés acotar el listado con el filtro; las selecciones fuera de la vista actual se mantienen al confirmar.</p>
                 </div>
 
-                <div class="border-b border-accent-100 bg-white px-5 py-3">
+                <div class="border-b border-accent-100 bg-white px-4 py-2 sm:px-5 sm:py-2.5">
                     <label for="com-modal-alumnos-filtro" class="form-label">Filtrar listado</label>
                     <input id="com-modal-alumnos-filtro"
                            type="text"
@@ -328,18 +330,18 @@
                     </div>
                 </div>
 
-                <div class="min-h-0 flex-1 overflow-y-auto px-5 py-2">
+                <div class="min-h-0 flex-1 overflow-y-auto px-4 py-1 sm:px-5">
                     @forelse ($modalAlumnosLista as $al)
                         <label wire:key="modal-alumno-{{ $al['id'] }}"
-                               class="flex cursor-pointer items-start gap-3 border-b border-accent-100 py-2.5 last:border-b-0 hover:bg-accent-50/60">
+                               class="flex cursor-pointer items-start gap-2 border-b border-accent-100 py-1 last:border-b-0 hover:bg-accent-50/60">
                             <input type="checkbox"
                                    wire:model="modalAlumnosMarcados"
                                    value="{{ $al['id'] }}"
-                                   class="mt-1 rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
-                            <span class="min-w-0 flex-1 text-sm">
-                                <span class="font-semibold text-neutral-900">{{ $al['label'] }}</span>
+                                   class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
+                            <span class="min-w-0 flex-1 text-sm leading-tight text-neutral-900">
+                                <span class="font-semibold">{{ $al['label'] }}</span>
                                 @if (! empty($al['dni']))
-                                    <span class="ml-1 text-xs text-neutral-400">DNI {{ $al['dni'] }}</span>
+                                    <span class="ml-1 text-[11px] font-normal leading-tight text-neutral-400">DNI {{ $al['dni'] }}</span>
                                 @endif
                             </span>
                         </label>
@@ -348,15 +350,15 @@
                     @endforelse
                 </div>
 
-                <div class="flex flex-col gap-2 border-t border-accent-200 bg-accent-50/40 px-5 py-4 sm:flex-row sm:justify-end">
+                <div class="flex flex-col gap-2 border-t border-accent-200 bg-accent-50/40 px-4 py-2.5 sm:flex-row sm:justify-end sm:px-5 sm:py-3">
                     <button type="button"
                             wire:click="cerrarModalAlumnos"
-                            class="inline-flex w-full items-center justify-center rounded-xl border border-accent-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-800 shadow-sm transition hover:bg-accent-50 sm:w-auto">
+                            class="inline-flex w-full items-center justify-center rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-800 shadow-sm transition hover:bg-accent-50 sm:w-auto">
                         Cancelar
                     </button>
                     <button type="button"
                             wire:click="aplicarModalAlumnos"
-                            class="inline-flex w-full items-center justify-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto">
+                            class="inline-flex w-full items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto">
                         Aplicar selección
                     </button>
                 </div>
@@ -365,17 +367,17 @@
     @endif
 
     @if ($modalCursosAbierto)
-        <div class="fixed inset-0 z-[90] flex items-center justify-center px-4 py-8 sm:px-6" role="dialog" aria-modal="true"
+        <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4" role="dialog" aria-modal="true"
              aria-labelledby="com-modal-cursos-titulo">
             <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarModalCursos"></div>
 
-            <div class="relative z-10 flex max-h-[min(90vh,36rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
-                <div class="border-b border-accent-200 bg-accent-50/60 px-5 py-4">
+            <div class="relative z-10 my-auto flex w-full max-w-lg max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),30rem)]">
+                <div class="border-b border-accent-200 bg-accent-50/60 px-4 py-2.5 sm:px-5 sm:py-3">
                     <p id="com-modal-cursos-titulo" class="text-sm font-bold text-neutral-900">Elegir cursos</p>
-                    <p class="mt-1 text-xs leading-relaxed text-neutral-600">Marcá uno o varios cursos del ciclo lectivo actual.</p>
+                    <p class="mt-0.5 text-[11px] leading-snug text-neutral-600">Marcá uno o varios cursos del ciclo lectivo actual.</p>
                 </div>
 
-                <div class="border-b border-accent-100 bg-white px-5 py-3">
+                <div class="border-b border-accent-100 bg-white px-4 py-2 sm:px-5 sm:py-2.5">
                     <label for="com-modal-cursos-filtro" class="form-label">Filtrar por nombre</label>
                     <input id="com-modal-cursos-filtro"
                            type="text"
@@ -396,30 +398,30 @@
                     </div>
                 </div>
 
-                <div class="min-h-0 flex-1 overflow-y-auto px-5 py-2">
+                <div class="min-h-0 flex-1 overflow-y-auto px-4 py-1 sm:px-5">
                     @forelse ($modalCursosLista as $c)
                         <label wire:key="modal-curso-{{ $c['id'] }}"
-                               class="flex cursor-pointer items-center gap-3 border-b border-accent-100 py-2.5 last:border-b-0 hover:bg-accent-50/60">
+                               class="flex cursor-pointer items-center gap-2 border-b border-accent-100 py-1 last:border-b-0 hover:bg-accent-50/60">
                             <input type="checkbox"
                                    wire:model="modalCursosMarcados"
                                    value="{{ $c['id'] }}"
                                    class="rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
-                            <span class="text-sm font-semibold text-neutral-900">{{ $c['label'] }}</span>
+                            <span class="text-sm font-semibold leading-tight text-neutral-900">{{ $c['label'] }}</span>
                         </label>
                     @empty
                         <p class="py-8 text-center text-sm text-neutral-500">No hay cursos que coincidan con el filtro.</p>
                     @endforelse
                 </div>
 
-                <div class="flex flex-col gap-2 border-t border-accent-200 bg-accent-50/40 px-5 py-4 sm:flex-row sm:justify-end">
+                <div class="flex flex-col gap-2 border-t border-accent-200 bg-accent-50/40 px-4 py-2.5 sm:flex-row sm:justify-end sm:px-5 sm:py-3">
                     <button type="button"
                             wire:click="cerrarModalCursos"
-                            class="inline-flex w-full items-center justify-center rounded-xl border border-accent-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-800 shadow-sm transition hover:bg-accent-50 sm:w-auto">
+                            class="inline-flex w-full items-center justify-center rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-800 shadow-sm transition hover:bg-accent-50 sm:w-auto">
                         Cancelar
                     </button>
                     <button type="button"
                             wire:click="aplicarModalCursos"
-                            class="inline-flex w-full items-center justify-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto">
+                            class="inline-flex w-full items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto">
                         Aplicar selección
                     </button>
                 </div>
@@ -428,19 +430,19 @@
     @endif
 
     @if ($modalDocentesAbierto)
-        <div class="fixed inset-0 z-[90] flex items-center justify-center px-4 py-8 sm:px-6" role="dialog" aria-modal="true"
+        <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4" role="dialog" aria-modal="true"
              aria-labelledby="com-modal-docentes-titulo">
             <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarModalDocentes"></div>
 
-            <div class="relative z-10 flex max-h-[min(90vh,40rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
-                <div class="border-b border-accent-200 bg-accent-50/60 px-5 py-4">
+            <div class="relative z-10 my-auto flex w-full max-w-xl max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),34rem)]">
+                <div class="border-b border-accent-200 bg-accent-50/60 px-4 py-2.5 sm:px-5 sm:py-3">
                     <p id="com-modal-docentes-titulo" class="text-sm font-bold text-neutral-900">
                         Elegir {{ $tipoDocenteLista === 'preceptores' ? 'preceptores' : 'profesores' }}
                     </p>
-                    <p class="mt-1 text-xs leading-relaxed text-neutral-600">Listado del nivel actual. Podés filtrar por apellido, nombre o DNI.</p>
+                    <p class="mt-0.5 text-[11px] leading-snug text-neutral-600">Listado del nivel actual. Podés filtrar por apellido, nombre o DNI.</p>
                 </div>
 
-                <div class="border-b border-accent-100 bg-white px-5 py-3">
+                <div class="border-b border-accent-100 bg-white px-4 py-2 sm:px-5 sm:py-2.5">
                     <label for="com-modal-docentes-filtro" class="form-label">Filtrar listado</label>
                     <input id="com-modal-docentes-filtro"
                            type="text"
@@ -461,18 +463,18 @@
                     </div>
                 </div>
 
-                <div class="min-h-0 flex-1 overflow-y-auto px-5 py-2">
+                <div class="min-h-0 flex-1 overflow-y-auto px-4 py-1 sm:px-5">
                     @forelse ($modalDocentesLista as $d)
                         <label wire:key="modal-docente-{{ $d['id'] }}"
-                               class="flex cursor-pointer items-start gap-3 border-b border-accent-100 py-2.5 last:border-b-0 hover:bg-accent-50/60">
+                               class="flex cursor-pointer items-start gap-2 border-b border-accent-100 py-1 last:border-b-0 hover:bg-accent-50/60">
                             <input type="checkbox"
                                    wire:model="modalDocentesMarcados"
                                    value="{{ $d['id'] }}"
-                                   class="mt-1 rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
-                            <span class="min-w-0 flex-1 text-sm">
-                                <span class="font-semibold text-neutral-900">{{ $d['label'] }}</span>
+                                   class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
+                            <span class="min-w-0 flex-1 text-sm leading-tight text-neutral-900">
+                                <span class="font-semibold">{{ $d['label'] }}</span>
                                 @if (! empty($d['dni']))
-                                    <span class="ml-1 text-xs text-neutral-400">DNI {{ $d['dni'] }}</span>
+                                    <span class="ml-1 text-[11px] font-normal leading-tight text-neutral-400">DNI {{ $d['dni'] }}</span>
                                 @endif
                             </span>
                         </label>
@@ -481,19 +483,21 @@
                     @endforelse
                 </div>
 
-                <div class="flex flex-col gap-2 border-t border-accent-200 bg-accent-50/40 px-5 py-4 sm:flex-row sm:justify-end">
+                <div class="flex flex-col gap-2 border-t border-accent-200 bg-accent-50/40 px-4 py-2.5 sm:flex-row sm:justify-end sm:px-5 sm:py-3">
                     <button type="button"
                             wire:click="cerrarModalDocentes"
-                            class="inline-flex w-full items-center justify-center rounded-xl border border-accent-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-800 shadow-sm transition hover:bg-accent-50 sm:w-auto">
+                            class="inline-flex w-full items-center justify-center rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-800 shadow-sm transition hover:bg-accent-50 sm:w-auto">
                         Cancelar
                     </button>
                     <button type="button"
                             wire:click="aplicarModalDocentes"
-                            class="inline-flex w-full items-center justify-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto">
+                            class="inline-flex w-full items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto">
                         Aplicar selección
                     </button>
                 </div>
             </div>
         </div>
     @endif
+        </div>
+    @endteleport
 </div>

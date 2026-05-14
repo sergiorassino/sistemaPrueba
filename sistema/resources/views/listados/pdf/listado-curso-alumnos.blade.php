@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <style>
+        @page { margin: 15mm 8mm 12mm 8mm; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 11pt; color: #333; }
         h1 { font-size: 14pt; margin: 0 0 2px 0; color: #111; }
         .modo-estudiantes { font-size: 11pt; font-weight: bold; color: #333; margin: 0 0 10px 0; letter-spacing: 0.02em; }

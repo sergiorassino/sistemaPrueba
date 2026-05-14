@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <style>
+        @page { margin: 15mm 12mm 15mm 12mm; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 10pt; color: #111; line-height: 1.25; }
         .titulo { font-weight: 700; text-align: center; text-transform: uppercase; margin: 2px 0 8px 0; font-size: 10.5pt; }
         .titulo-fecha { font-weight: 400; text-transform: none; }

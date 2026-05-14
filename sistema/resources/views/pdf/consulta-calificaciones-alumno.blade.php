@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        @page { margin: 6mm 7mm; }
+        /* A4 apaisado: margen superior amplio para que el header no quede en zona no imprimible */
+        @page { margin: 15mm 7mm 6mm 7mm; }
         body {
             font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
             font-size: 6pt;
@@ -170,6 +171,11 @@
 
         .disc { margin-top: 5mm; font-size: 7pt; line-height: 1.35; }
         .disc p { margin: 0 0 2px 0; font-weight: 400; }
+        /* Inasistencias / sanciones: menos interlineado y menos aire entre renglones */
+        .disc p.disc-item-tight {
+            line-height: 1.05;
+            margin: 0 0 0.5px 0;
+        }
         .disc .disc-lbl { font-weight: 400; }
         .adeu { margin-top: 2.45mm; font-size: 6.8pt; }
         .adeu-title {
@@ -348,13 +354,15 @@
             @foreach ($itemsBoletin as $it)
                 @php
                     $t = (float) ($it->total ?? 0);
-                    $esInas = (($it->fuente ?? '') === 'inasistencias');
+                    $fuente = (string) ($it->fuente ?? '');
+                    $esInas = ($fuente === 'inasistencias');
+                    $itemTight = in_array($fuente, ['inasistencias', 'sanciones'], true);
                     $mostrar = $esInas ? (abs($t) >= 0.005) : ((int) round($t) !== 0);
                     $txt = $esInas
                         ? number_format($t, 2, ',', '')
                         : (string) (int) round($t);
                 @endphp
-                <p><span class="disc-lbl">{{ $it->etiqueta }}:</span> @if ($mostrar){{ $txt }}@else{{ $blank }}@endif</p>
+                <p @class(['disc-item-tight' => $itemTight])><span class="disc-lbl">{{ $it->etiqueta }}:</span> @if ($mostrar){{ $txt }}@else{{ $blank }}@endif</p>
             @endforeach
         </div>
     @endif

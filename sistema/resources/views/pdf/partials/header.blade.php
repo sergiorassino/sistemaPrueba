@@ -14,8 +14,20 @@
 @endphp
 
 <style>
-    /* Header sobrio, compatible con impresión monocromo */
-    .pdf-header { width: 100%; border-bottom: 1px solid #111; padding-bottom: 6px; margin-bottom: 10px; }
+    /*
+     * Dompdf no aplica box-sizing: border-box (wiki CSSCompatibility).
+     * Con width:100% el borde y el padding se suman y el recuadro desborda los márgenes del impreso.
+     */
+    .pdf-header {
+        width: calc(100% - 16px - 1.5pt);
+        margin-left: 0;
+        margin-right: 0;
+        border: 0.75pt solid #111;
+        border-radius: 8px;
+        padding: 6px 8px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
     .pdf-header table {
         width: 100%;
         border-collapse: collapse;

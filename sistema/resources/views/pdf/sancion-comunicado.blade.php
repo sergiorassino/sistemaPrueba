@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <style>
+        @page { margin: 15mm 12mm 15mm 12mm; }
         /* Ajuste de tipografías para acercarse al modelo TCPDF */
         body { font-family: DejaVu Sans, sans-serif; font-size: 10pt; line-height: 1.25; color: #111; }
         .wrap { width: 100%; }

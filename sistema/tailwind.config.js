@@ -4,7 +4,6 @@ export default {
         './resources/**/*.blade.php',
         './resources/**/*.js',
         './app/Livewire/**/*.php',
-        './vendor/se/modulo-listados/resources/views/**/*.blade.php',
     ],
     safelist: [
         // Módulo listados: segmentos del filtro "Condición de matrícula en el PDF"

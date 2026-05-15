@@ -1,282 +1,132 @@
-# Versionado de Módulos por Tenant
+# Personalización por colegio (tenant)
 
-> Estrategia para personalizar funcionalidades por colegio sin afectar a los demás.
-> Todo módulo nuevo que requiera diferenciación entre colegios debe seguir este patrón.
-
----
-
-## 1. El problema que resuelve
-
-El sistema atiende múltiples colegios (tenants) que parten de un código base común pero necesitan ir diferenciándose con el tiempo. El riesgo central es: **modificar algo para el colegio A sin tener certeza de que no se afectan los colegios B y C**.
-
-La solución habitual es: el código compartido vive en **`app/`** (y vistas en `resources/views/`). Cuando un colegio necesita una **variante fuerte** (lógica o UI distinta), se encapsula en un **paquete Laravel por path** (`packages/…` en monorepo), se declara solo en el `composer.json` del repo que lo usa, y el tenant elige la versión en configuración.
+> Cómo diferenciar funcionalidades entre escuelas sin afectar a las demás.
+> Antes de tocar un módulo compartido, leer este documento.
 
 ---
 
-## 2. Principio de diseño
+## 1. Modelo de despliegue
 
-- Todo módulo nace en `v1.0` dentro de `app/` (código compartido del sistema base), con rutas en `routes/web.php` y vistas bajo `resources/views/` cuando corresponda.
-- Cuando un colegio necesita una variante incompatible con la base, se crea un paquete nuevo (`v2.0`, `v3.0`, etc.) en `packages/` y se enlaza por **path** en Composer solo en el repo que lo necesita.
-- El colegio A requiere el paquete v2 en su `composer.json`. Los colegios B y C no lo incluyen: **el código v2 no existe en sus instalaciones**.
-- El sidebar y el dashboard leen la configuración del tenant (`tenantConfig()`) y apuntan a la ruta correcta según la versión activa.
+Cada colegio es un **tenant** identificado por `TENANT_SLUG` en `.env`:
 
-**Nunca se modifica el módulo v1 en `app/` para “meter” la lógica de v2.** La variante v2 es código separado (paquete o rama dedicada), con rutas y nombres de ruta propios para no pisar a los demás colegios.
+- **Base de datos propia** (`DB_DATABASE`, habitualmente `ia_{slug}` salvo excepciones en `SwitchTenantCommand`).
+- **Mismo código** Laravel en `sistema/` (monorepo compartido).
+- **Overrides livianos** versionados en `config/tenants/{slug}.php`.
 
----
+No usamos multi-tenant en una sola BD con `tenant_id` en cada fila: el aislamiento fuerte es **instalación (o entorno) + BD separada**.
 
-## 3. Estructura de un paquete versionado
-
-```
-sistema/packages/modulo-{nombre}-v2/
-├── composer.json
-├── routes/
-│   └── web.php
-├── src/
-│   ├── {Nombre}V2ServiceProvider.php
-│   └── Livewire/
-│       └── {Componente}V2Index.php
-│       └── (otros componentes...)
-└── resources/
-    └── views/
-        └── livewire/
-            └── {nombre}-v2/
-                └── index.blade.php
-                └── (otras vistas...)
-```
-
-### `composer.json` del paquete
-
-```json
-{
-    "name": "se/modulo-{nombre}-v2",
-    "type": "library",
-    "version": "2.0.0",
-    "require": {
-        "php": "^8.2",
-        "laravel/framework": "^11.0",
-        "livewire/livewire": "^4.2"
-    },
-    "autoload": {
-        "psr-4": {
-            "Se\\Modulo{Nombre}V2\\": "src/"
-        }
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "Se\\Modulo{Nombre}V2\\{Nombre}V2ServiceProvider"
-            ]
-        }
-    }
-}
-```
-
-### `ServiceProvider`
-
-```php
-class {Nombre}V2ServiceProvider extends ServiceProvider
-{
-    public function boot(): void
-    {
-        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
-        $this->loadViewsFrom(__DIR__.'/../resources/views', '{nombreV2}');
-
-        Livewire::component('{nombreV2}.index', Livewire\{Componente}V2Index::class);
-    }
-}
-```
-
-### Rutas
-
-Las rutas v2 tienen nombres únicos y URLs únicas, sin colisión con v1:
-
-```php
-// v1 (en app/): route('seguimiento.disciplinario')  → /seguimiento/disciplinario
-// v2 (paquete): route('disciplinarioV2.index')       → /seguimiento/disciplinario-v2
-```
+En desarrollo local: `php artisan se:switch {slug}` cambia `TENANT_SLUG` y `DB_DATABASE` en el `.env` activo.
 
 ---
 
-## 4. Configuración por tenant
+## 2. Qué **no** usamos (histórico)
 
-### 4.1 Clave en `config/tenant.php` (default global)
+Se evaluó empaquetar variantes de módulos con **Composer path** (`packages/modulo-*`, dependencias `se/modulo-*`, un `composer.json` distinto por colegio). Ese enfoque **se descartó**: complejidad operativa, despliegues difíciles de mantener y poco valor frente a las alternativas actuales.
 
-Cada módulo versionable declara su clave en el archivo base:
+**No documentar ni implementar** paquetes `se/modulo-*`, `TenantOverridesServiceProvider`, vistas en `resources/views/custom/{slug}/`, ni helpers `tenantConfig()` para elegir versiones de módulo. La carpeta `packages/` queda vacía a propósito.
 
-```php
-'disciplinario' => [
-    // 'v1.0' usa el módulo en app/  → route('seguimiento.disciplinario')
-    // 'v2.0' usa el paquete         → route('disciplinarioV2.index')
-    'version' => 'v1.0',
-],
-```
+---
 
-El default es siempre `v1.0`. Todos los colegios que no declaren otra cosa usan el módulo base.
+## 3. Capas de personalización (de menor a mayor impacto)
 
-### 4.2 Override en `config/tenants/{slug}.php` (solo lo que difiere)
+### 3.1 Configuración en archivos (`config/tenant.php` + `config/tenants/{slug}.php`)
 
-Solo el colegio que necesita la versión nueva declara el override:
+`TenantConfigMergeServiceProvider` hace merge recursivo del archivo del slug sobre los defaults.
+
+- Defaults: `config/tenant.php`.
+- Solo diferencias del colegio: `config/tenants/{slug}.php` (versionado en git).
+- Leer valores con `config('tenant.clave')` o `config('tenant.bloque.clave')`.
+
+Ejemplo real (Montecristo — enlace externo en portal alumno):
 
 ```php
 // config/tenants/montecristo.php
 return [
-    'nombre' => 'Colegio Montecristo',
-
-    'disciplinario' => [
-        'version' => 'v2.0',   // usa el paquete se/modulo-disciplinario-v2
-    ],
-
-    'sidebar' => [
-        'modulos' => [
-            // ... otros módulos en v1.0 ...
-            'disciplinario' => 'v2.0',  // etiqueta de versión en tooltip del sidebar
-        ],
+    'autogestion' => [
+        'aranceles_aulica_url' => 'https://familia.aulica.com.ar/login?idCompany=953',
     ],
 ];
 ```
 
-Los colegios B y C no tienen esta clave → heredan `v1.0` del base → no usan el paquete v2.
+**Regla:** en `config/tenants/{slug}.php` declarar **solo** lo que difiere del default. Si coincide con `config/tenant.php`, no repetirlo.
+
+Usos típicos: URLs de terceros, flags de comportamiento, textos o límites que no convenga guardar en BD.
+
+El `slug` también se usa en rutas de almacenamiento (ej. logos en `ento/logos/{slug}/…`).
+
+### 3.2 Parametrización en base de datos (principal)
+
+Cada colegio tiene **su propia BD**; la parametrización vive en tablas y pantallas de administración. Es el mecanismo habitual para “este colegio ve otro legajo / otro listado / no usa X”.
+
+| Área | Tablas / pantallas | Efecto |
+|------|-------------------|--------|
+| **Permisos** | `permisosusuarios`, `profesores.permisos` | Qué entradas del menú y acciones existen (`tienePermiso(orden)`, middleware `permiso:N`). Ver [03-autenticacion-y-permisos.md](03-autenticacion-y-permisos.md). |
+| **Legajo — solapas y campos** | `solapas_legajo`, `campos_legajo` | Pestañas y campos visibles en ABM; parametrización en `param.solapas-legajo` y `param.campos-listado-alumnos`. |
+| **Listado por curso / PDF** | `campos_legajo.visible_listado` | Columnas del listado y del PDF por curso. |
+| **Institucional** | `ento` | Nombre, logo, CUE, etc. por nivel (`param.parametros-sistema`). |
+| **Comunicaciones** | `com_*`, preferencias | Canales, reglas y datos del cuaderno de comunicados. |
+
+Apellido, nombre y DNI del legajo son **siempre** obligatorios; no se desactivan por parametrización.
+
+### 3.3 Código compartido en `app/`
+
+Todo el código de módulos vive en el árbol estándar de Laravel:
+
+- PHP: `app/Livewire/`, `app/Http/`, `app/Models/`, `app/Support/`
+- Rutas: `routes/web.php`
+- Vistas: `resources/views/` (namespaces de vistas vía providers, ej. `listados::` desde `ListadosServiceProvider`)
+
+**No** hay dependencias internas `se/*` en `composer.json`. Los módulos se registran con service providers en `bootstrap/providers.php` (`ListadosServiceProvider`, `ComunicacionesServiceProvider`, etc.).
+
+El menú lateral y el dashboard enlazan **rutas fijas** y muestran u ocultan ítems según `tienePermiso()`. Los tooltips “v1.0” son solo referencia visual; no hay conmutación de versiones por config.
 
 ---
 
-## 5. Registrar el paquete en `composer.json`
-
-En el `composer.json` del colegio A (el que usa v2):
-
-```json
-{
-    "require": {
-        "se/modulo-{nombre}-v2": "@dev"
-    },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "packages/modulo-{nombre}-v2",
-            "options": { "symlink": true }
-        }
-    ]
-}
-```
-
-Los repos de B y C no incluyen esta dependencia. El paquete directamente no existe en su instalación.
-
-Instalar el paquete:
-
-```bash
-composer require "se/modulo-{nombre}-v2:@dev" --no-interaction
-```
-
----
-
-## 6. Enganche en sidebar y dashboard
-
-### Sidebar (`resources/views/layouts/app.blade.php`)
-
-Para cada módulo versionable, el sidebar:
-1. Lee la versión activa con `tenantConfig('{modulo}.version', 'v1.0')`
-2. Lanza `RuntimeException` si la versión pedida no tiene su ruta registrada (falla explícita y rápida)
-3. Muestra el link a la ruta correspondiente
-
-```php
-@php
-    $version = tenantConfig('disciplinario.version', 'v1.0');
-    if ($version === 'v2.0' && ! Route::has('disciplinarioV2.index')) {
-        throw new \RuntimeException("Sidebar: tenant solicita Disciplinario v2.0 pero la ruta no existe.");
-    }
-@endphp
-
-@if ($version === 'v2.0')
-    <a href="{{ route('disciplinarioV2.index') }}" ...>Seguimiento Disciplinario</a>
-@else
-    <a href="{{ route('seguimiento.disciplinario') }}" ...>Seguimiento Disciplinario</a>
-@endif
-```
-
-El cálculo del grupo activo de Alpine también contempla ambas familias de rutas:
-
-```php
-disciplinario: {{ (str_starts_with($route ?? '', 'seguimiento.disciplinario') || str_starts_with($route ?? '', 'disciplinarioV2.')) ? 'true' : 'false' }},
-```
-
-### Dashboard (`resources/views/dashboard.blade.php`)
-
-Mismo patrón:
-
-```php
-$version = tenantConfig('disciplinario.version', 'v1.0');
-$dashboardLinks[] = [
-    'title' => 'Seguimiento disciplinario',
-    'href'  => $version === 'v2.0'
-        ? route('disciplinarioV2.index')
-        : route('seguimiento.disciplinario'),
-    'icon'  => 'shield',
-];
-```
-
----
-
-## 7. Módulos en `app/` y versionado por tenant
-
-### 7.1 Módulos base (sin paquete Composer)
-
-Estos módulos viven en el mismo árbol que el resto del sistema (`app/`, `routes/web.php`, `resources/views/…`). **No** se instalan vía `composer require` como dependencias `se/*`.
+## 4. Módulos de referencia (ubicación actual)
 
 | Módulo | Ubicación principal | Rutas típicas |
-|---|---|---|
-| **Comunicaciones / cuaderno** (docentes y portal familia) | `App\Livewire\Comunicaciones\*`, `App\Livewire\Alumnos\Comunicaciones\*`, `App\Comunicaciones\*`, modelos `App\Models\Com*`, vistas `resources/views/comunicaciones/` | `comunicaciones.*`, `alumnos.comunicaciones.*`, `param.com-canales` |
-| **Listados por curso (v1.0)** | `App\Livewire\Listados\ListadoPorCurso`, `App\Http\Controllers\ListadoCursoPdfController`, `App\Models\CampoListadoAlumno`, soporte en `App\Support\Listados\*`, vistas `resources/views/listados/` | `listados.por-curso`, `listados.por-curso.pdf`, `param.campos-listado-alumnos` |
-| **Campos activos del legajo** | `CampoListadoAlumno` (tabla `campos_listado_alumnos`, columna `visible_listado`). Gobierna tanto la visibilidad de columnas en el PDF por curso como los campos editables en el ABM de legajo (`App\Livewire\Abm\Legajos\LegajoForm`). Apellido, nombre y DNI siempre activos. | `param.campos-listado-alumnos` |
-
-Los overrides por tenant de vistas listados siguen el namespace `listados::` y rutas bajo `resources/views/custom/{slug}/listados/` (ver `TenantOverridesServiceProvider`).
-
-### 7.2 Tabla de versiones (sidebar / dashboard)
-
-| Módulo | v1.0 (base, en `app/`) | Variante (paquete u otro módulo) | Clave de config |
-|---|---|---|---|
-| Listados por curso | `route('listados.por-curso')` | `route('listadoPorCurso.v1_2')` si está el módulo opcional v1.2; u otra ruta si existiera paquete v2 | `listados.por_curso_version` |
-| Seguimiento disciplinario | `route('seguimiento.disciplinario')` | `route('disciplinarioV2.index')` si se instala paquete v2 | `disciplinario.version` |
-
-### 7.3 Ejemplos de paquetes opcionales (`packages/` o repos dedicados)
-
-Solo aplican a colegios que los agreguen explícitamente a su `composer.json`:
-
-| Paquete (ejemplo) | Versión | Descripción |
-|---|---|---|
-| `se/modulo-listado-por-curso-v12` | v1.2 | Listado simple (apellido, nombre, DNI) sin PDF — alternativa a v1.0 en `app/` |
-| `se/modulo-listados-v2` | v2.0 | Listado con búsqueda interactiva (hipotético / futuro) |
-| `se/modulo-disciplinario-v2` | v2.0 | Seguimiento disciplinario — variante personalizable |
-
-Los nombres `se/modulo-*` son **ilustrativos** del patrón; el nombre real del paquete y el namespace deben acordarse al crear la variante.
+|--------|---------------------|---------------|
+| **Comunicaciones / cuaderno** | `App\Livewire\Comunicaciones\*`, `App\Comunicaciones\*`, modelos `Com*`, vistas `resources/views/comunicaciones/` | `comunicaciones.*`, `alumnos.comunicaciones.*`, `param.com-canales` |
+| **Listados por curso** | `App\Livewire\Listados\ListadoPorCurso`, `ListadoCursoPdfController`, `App\Support\Listados\*`, vistas `resources/views/listados/` | `listados.por-curso`, `listados.por-curso.pdf` |
+| **Legajos** | `App\Livewire\Abm\Legajos\*`, `LegajoForm` + `solapas_legajo` / `campos_legajo` | `abm.legajos`, `param.campos-listado-alumnos`, `param.solapas-legajo` |
+| **Seguimiento disciplinario** | `App\Livewire\Seguimiento\Disciplinario\*` | `seguimiento.disciplinario` |
+| **Calificaciones secundario** | `App\Livewire\Calificaciones\*` | `calificacionesSecundario.*` |
 
 ---
 
-## 8. Cuándo crear un paquete v2 (criterio)
+## 5. Cuándo un colegio necesita algo “muy distinto”
 
-Crear un paquete nuevo **solo cuando**:
+Orden recomendado:
 
-- Un colegio pide una funcionalidad que **modifica la lógica o la UI** de un módulo existente.
-- El cambio no puede resolverse con configuración simple en `config/tenants/{slug}.php`.
-- Se quiere **garantía absoluta** de que los demás colegios no se ven afectados.
+1. **¿Se resuelve con permisos o parametrización en BD?** → Usar eso primero.
+2. **¿Es un dato o URL fija?** → `config/tenants/{slug}.php`.
+3. **¿Requiere lógica o UI incompatible con el resto?** → Implementar en `app/` con ramas explícitas y seguras (`config('tenant.slug')`, feature flag en `config/tenants`, o consulta a tabla de parámetros), **documentando** el caso en el PR. Evitar `if ($colegio === 'x')` dispersos sin registro en config.
+4. **¿El cambio es tan grande que no puede convivir en main?** → Rama o despliegue dedicado temporalmente; no reintroducir paquetes Composer por módulo.
 
-No crear paquetes por anticipación. Si el módulo aún no tiene solicitudes de variantes, queda en `app/` hasta que surja la necesidad real.
-
----
-
-## 9. Flujo de trabajo para un cambio en colegio A
-
-1. **Crear** el paquete `packages/modulo-{nombre}-v2/` con la nueva funcionalidad.
-2. **Registrar** el path repository y el `require` en el `composer.json` del repo de A.
-3. **Ejecutar** `composer require "se/modulo-{nombre}-v2:@dev"`.
-4. **Declarar** la versión en `config/tenants/{slug-de-A}.php`.
-5. **Enganchar** en sidebar y dashboard (agregar el `@if` de versión).
-6. **Verificar** que B y C no tienen la dependencia ni la clave en su config → usan v1 sin cambios.
+Antes de agregar comportamiento solo para un colegio en código compartido, confirmar que no rompe el flujo por defecto de los demás (misma ruta, mismos permisos por defecto, migraciones aditivas).
 
 ---
 
-## 10. Limpieza de archivos de tenant
+## 6. Flujo de trabajo (ejemplo)
 
-Los archivos `config/tenants/{slug}.php` deben declarar **solo lo que difiere del default**:
+**Montecristo necesita enlace a aranceles en autogestión:**
 
-- Si una clave tiene el mismo valor que en `config/tenant.php`, **no declararla** en el tenant.
-- Si un bloque entero coincide con los defaults, **no incluirlo**.
-- El principio: leer el archivo de tenant debe responder a la pregunta "¿en qué es diferente este colegio?", no repetir lo que ya está en el base.
+1. Agregar clave en `config/tenants/montecristo.php`.
+2. Consumir con `config('tenant.autogestion.aranceles_aulica_url')` en la vista (ej. `layouts/alumno.blade.php`).
+3. En el servidor de Montecristo: `TENANT_SLUG=montecristo` y BD correspondiente.
+
+**Colegio nuevo con legajo distinto:**
+
+1. Clonar `config/tenants/{colegio-parecido}.php` si aplica; ajustar solo diferencias.
+2. Cargar datos en su BD: solapas, campos, catálogo de permisos y usuarios.
+3. No tocar `composer.json` ni crear carpetas en `packages/`.
+
+---
+
+## 7. Checklist para PRs que afectan varios colegios
+
+- [ ] ¿El cambio es seguro con parametrización por defecto (sin config de tenant)?
+- [ ] Si hay rama por `tenant.slug` o config, ¿está documentada la clave en `config/tenant.php` o en el tenant file?
+- [ ] ¿Migraciones aditivas y compatibles con BDs ya en producción?
+- [ ] ¿Menú y rutas respetan `tienePermiso()` y `schoolCtx()`?
+- [ ] ¿No se reintroducen dependencias `se/modulo-*` ni documentación del patrón Composer descartado?

@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Alumnos\CalificacionesController;
+use App\Http\Controllers\Alumnos\InformeInasistenciasController;
 use App\Http\Controllers\Alumnos\PushApiController;
 use App\Http\Controllers\Alumnos\PushController;
 use App\Http\Controllers\AntecedentesDisciplinariosPdfController;
+use App\Http\Controllers\InformeInasistenciasPdfController;
 use App\Http\Controllers\CalificacionesSecundario\ConsultaCalificacionesSecundarioPdfController;
 use App\Http\Controllers\ListadoCursoPdfController;
 use App\Http\Controllers\SancionComunicadoPdfController;
@@ -40,6 +42,8 @@ use App\Livewire\Push\EnviarPush;
 use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
 use App\Livewire\Seguimiento\Disciplinario\DisciplinarioIndex;
 use App\Livewire\Seguimiento\Disciplinario\SancionForm;
+use App\Livewire\Seguimiento\Inasistencias\InasistenciaForm;
+use App\Livewire\Seguimiento\Inasistencias\InasistenciasIndex;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
 use Illuminate\Support\Facades\Auth;
@@ -82,6 +86,7 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     })->name('alumnos.home');
 
     Route::get('/calificaciones', CalificacionesController::class)->name('alumnos.calificaciones');
+    Route::get('/inasistencias/informe', InformeInasistenciasController::class)->name('alumnos.inasistencias.informe');
 
     Route::get('/notificaciones', [PushController::class, 'index'])->name('alumnos.push.index');
 
@@ -157,8 +162,6 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/listados/por-curso', ListadoPorCurso::class)->middleware('permiso:2')->name('listados.por-curso');
     Route::get('/listados/por-curso/listado', ListadoCursoPdfController::class)->middleware('permiso:2')->name('listados.por-curso.pdf');
 
-    // listadoPorCurso_v1.2: rutas registradas por Se\ModuloListadoPorCursoV12\ListadoPorCursoV12ServiceProvider (paquete opcional)
-
     // Calificaciones (nivel secundario): carga y consulta institucional (mismo PDF que autogestión)
     Route::get('/calificaciones-secundario/carga', CargaCalificacionesSecundario::class)
         ->middleware('permiso:2')
@@ -196,4 +199,20 @@ Route::middleware(['auth', 'school.context'])->group(function () {
         ->middleware('permiso:2')
         ->whereNumber('idMatricula')
         ->name('seguimiento.disciplinario.antecedentes.pdf');
+
+    // Gestión de inasistencias
+    Route::get('/seguimiento/inasistencias', InasistenciasIndex::class)
+        ->middleware('permiso:2')
+        ->name('seguimiento.inasistencias');
+    Route::get('/seguimiento/inasistencias/nuevo', InasistenciaForm::class)
+        ->middleware('permiso:2')
+        ->name('seguimiento.inasistencias.create');
+    Route::get('/seguimiento/inasistencias/{id}/editar', InasistenciaForm::class)
+        ->middleware('permiso:2')
+        ->whereNumber('id')
+        ->name('seguimiento.inasistencias.edit');
+    Route::get('/seguimiento/inasistencias/{idMatricula}/informe/pdf', InformeInasistenciasPdfController::class)
+        ->middleware('permiso:2')
+        ->whereNumber('idMatricula')
+        ->name('seguimiento.inasistencias.informe.pdf');
 });

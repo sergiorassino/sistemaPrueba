@@ -113,6 +113,12 @@
             'href'  => route('seguimiento.disciplinario'),
             'icon'  => 'shield',
         ];
+        $dashboardLinks[] = [
+            'title' => 'Inasistencias',
+            'hint'  => 'Registro por alumno',
+            'href'  => route('seguimiento.inasistencias'),
+            'icon'  => 'clipboard',
+        ];
     }
 
     if (tienePermiso(51)) {

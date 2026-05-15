@@ -75,6 +75,10 @@ sistemaPrueba/
     └── routes/web.php           # Rutas (guest + auth + school.context)
 ```
 
+### Varios colegios (tenants)
+
+Mismo código en `sistema/`, **una BD por colegio**, identificador `TENANT_SLUG` en `.env` y overrides en `config/tenants/{slug}.php`. La diferenciación de módulos y pantallas se hace sobre todo con **permisos y parametrización en BD**; no con paquetes Composer opcionales. Detalle: [07-versionado-de-modulos-por-tenant.md](07-versionado-de-modulos-por-tenant.md).
+
 ---
 
 ## 6. Etapas de desarrollo

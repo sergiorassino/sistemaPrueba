@@ -76,8 +76,17 @@ a todos los módulos. Ver [06-reglas-de-seguridad.md](06-reglas-de-seguridad.md)
 
 ---
 
-## 5. Convenciones de documentación
+## 5. Varios colegios (tenants)
+
+- Un despliegue (o entorno local) por colegio: `TENANT_SLUG` + BD propia. Ver [07-versionado-de-modulos-por-tenant.md](07-versionado-de-modulos-por-tenant.md) (personalización real: config + BD + permisos; **sin** paquetes Composer por módulo).
+- Preferir parametrización en tablas (`solapas_legajo`, `campos_legajo`, permisos, `ento`) antes de ramas de código por colegio.
+- Overrides en `config/tenants/{slug}.php` solo para lo que no corresponda en BD.
+
+---
+
+## 6. Convenciones de documentación
 
 - Mantener la carpeta `docs/` actualizada con cada cambio significativo.
 - Cuando aparezcan nuevas preferencias/restricciones, agregarlas en este archivo.
 - Los archivos de documentación se numeran secuencialmente para facilitar la lectura.
+- Personalización multi-colegio: [07-versionado-de-modulos-por-tenant.md](07-versionado-de-modulos-por-tenant.md).

@@ -227,6 +227,18 @@
             <span x-show="!sidebarCollapsed" x-cloak class="truncate">Consulta de Calificaciones</span>
         </a>
 
+        <a href="{{ route('alumnos.inasistencias.informe') }}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors"
+           title="Informe de inasistencias (se abre en una nueva pestaña)">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span x-show="!sidebarCollapsed" x-cloak class="truncate">Informe de inasistencias</span>
+        </a>
+
         @if(filled(config('tenant.autogestion.aranceles_aulica_url')))
             <a href="{{ config('tenant.autogestion.aranceles_aulica_url') }}"
                target="_blank"

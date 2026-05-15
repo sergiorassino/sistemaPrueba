@@ -22,6 +22,7 @@ Antes de trabajar en cualquier módulo, leer:
 4. `docs/04-identidad-visual.md` — Paleta de colores, logos, design system
 5. `docs/05-preferencias-y-convenciones.md` — Convenciones de código y preferencias
 6. `docs/06-reglas-de-seguridad.md` — Baseline de seguridad obligatorio
+7. `docs/07-versionado-de-modulos-por-tenant.md` — Personalización por colegio (config, BD, permisos; sin paquetes Composer)
 
 ## Reglas críticas (siempre)
 

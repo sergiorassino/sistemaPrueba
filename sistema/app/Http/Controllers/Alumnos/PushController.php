@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Alumnos;
 
 use App\Http\Controllers\Controller;
 use App\Push\PushSubscriptionRepository;
-use Illuminate\Support\Facades\Auth;
+use App\Push\PushUserKey;
 
 class PushController extends Controller
 {
     public function index()
     {
-        $userKey = (string) Auth::guard('alumno')->id();
+        $userKey = PushUserKey::forAuthenticatedUser();
         $hasSubscription = PushSubscriptionRepository::hasAnyForUserKey($userKey);
 
         return view('alumnos.push.index', [

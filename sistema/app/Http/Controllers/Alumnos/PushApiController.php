@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Alumnos;
 
 use App\Http\Controllers\Controller;
 use App\Push\PushSubscriptionRepository;
+use App\Push\PushUserKey;
 use App\Push\WebPushService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +23,7 @@ class PushApiController extends Controller
             return response()->json(['ok' => false, 'error' => 'Datos de suscripción inválidos'], 400);
         }
 
-        $userKey = (string) Auth::guard('alumno')->id();
+        $userKey = PushUserKey::forAuthenticatedUser();
         $userAgent = $request->userAgent();
         $deviceType = PushSubscriptionRepository::deviceTypeFromUserAgent($userAgent);
 

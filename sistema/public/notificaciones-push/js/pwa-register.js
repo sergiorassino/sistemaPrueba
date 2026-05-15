@@ -11,7 +11,8 @@
     var swUrlMeta = document.querySelector('meta[name="pwa-sw-url"]');
     var swUrl = (swUrlMeta && swUrlMeta.getAttribute('content')) ? swUrlMeta.getAttribute('content') : (basePath || '') + 'sw.js';
     var vapidMeta = document.querySelector('meta[name="vapid-public-key"]');
-    var vapidKey = vapidMeta ? vapidMeta.getAttribute('content') : null;
+    var vapidKeyRaw = vapidMeta ? vapidMeta.getAttribute('content') : '';
+    var vapidKey = (vapidKeyRaw && String(vapidKeyRaw).trim() !== '') ? String(vapidKeyRaw).trim() : null;
 
     /** Registration del SW bajo `scope` (p. ej. /notificaciones-push/). No usar solo `navigator.serviceWorker.ready` en páginas fuera de ese scope (p. ej. /alumnos/notificaciones). */
     var pushNotificationsRegistration = null;

@@ -78,13 +78,13 @@
                             @error('dni') <p class="form-error">{{ $message }}</p> @enderror
                         </div>
                         @foreach($columnasPorSolapaSlug['alumno'] ?? [] as $campo)
-                            @include('livewire.abm.legajos.partials.legajo-campo-dinamico', ['campo' => $campo, 'familias' => $familias])
+                            @include('livewire.abm.legajos.partials.legajo-campo-dinamico', ['campo' => $campo, 'familias' => $familias, 'sexosOpciones' => $sexosOpciones])
                         @endforeach
                     </div>
                 @else
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         @forelse(($columnasPorSolapaSlug[$activeTab] ?? []) as $campo)
-                            @include('livewire.abm.legajos.partials.legajo-campo-dinamico', ['campo' => $campo, 'familias' => $familias])
+                            @include('livewire.abm.legajos.partials.legajo-campo-dinamico', ['campo' => $campo, 'familias' => $familias, 'sexosOpciones' => $sexosOpciones])
                         @empty
                             <p class="text-sm text-neutral-500 sm:col-span-2">No hay campos asignados a esta solapa en Campos activos.</p>
                         @endforelse

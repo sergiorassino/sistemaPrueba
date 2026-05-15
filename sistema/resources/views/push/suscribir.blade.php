@@ -1,6 +1,6 @@
-@extends('layouts.alumno')
+@extends('layouts.app')
 
-@section('pageTitle', 'Notificaciones')
+@section('pageTitle', 'Notificaciones push')
 
 @section('content')
     @include('push._suscribir-panel')

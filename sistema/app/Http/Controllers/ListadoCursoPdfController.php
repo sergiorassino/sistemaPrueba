@@ -3,21 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\Curso;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
+use App\Support\Listados\ListadoCursoExportParams;
+use App\Support\Listados\ListadoCursoPdfFieldCatalog;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use App\Models\CampoLegajo;
-use App\Support\Listados\ListadoCursoCondicionFiltro;
-use App\Support\Listados\ListadoCursoPdfFieldCatalog;
 
 class ListadoCursoPdfController extends Controller
 {
+    /** Filas de alumnos por hoja en el PDF (encabezado + tabla). */
+    private const ALUMNOS_POR_HOJA_PDF = 35;
+
     public function __invoke(Request $request)
     {
         $key = 'listado-curso-pdf:'.(auth()->id() ?? $request->ip());
@@ -69,23 +71,13 @@ class ListadoCursoPdfController extends Controller
 
         $allowedById = $cursosPermitidos->keyBy(fn (Curso $c) => (int) $c->Id);
 
-        $cursoIds = $this->resolverIdsCursos($cursosParam, $allowedById);
+        $cursoIds = ListadoCursoExportParams::resolverIdsCursos($cursosParam, $allowedById);
         if ($cursoIds === []) {
             abort(404);
         }
 
         $pedidos = array_filter(array_map('trim', explode(',', $camposRaw)));
-        $campos = ListadoCursoPdfFieldCatalog::normalizeSelection($pedidos);
-        $campos = CampoLegajo::aplicarVisibilidadListadoPdf($campos);
-
-        $claveCondicionCatalogo = 'condiciones.condicion';
-        if (ListadoCursoCondicionFiltro::forzarColumnaCondicionEnPdf($filtroCondicion)) {
-            $campos = array_values(array_filter(
-                $campos,
-                fn (string $c): bool => $c !== $claveCondicionCatalogo
-            ));
-            $campos[] = $claveCondicionCatalogo;
-        }
+        $campos = ListadoCursoExportParams::normalizarCamposSeleccion($pedidos, $filtroCondicion);
 
         $select = array_merge(
             ['matricula.idCursos as __id_curso'],
@@ -144,34 +136,9 @@ class ListadoCursoPdfController extends Controller
             'ano' => $ano,
             'columnasMeta' => $columnasMeta,
             'pdfHeader' => schoolPdfHeaderData(),
+            'alumnosPorHoja' => self::ALUMNOS_POR_HOJA_PDF,
         ])->setPaper('a4', $orientation);
 
         return $pdf->stream($slug.'.pdf');
-    }
-
-    /**
-     * @param  Collection<int, Curso>  $allowedById
-     * @return list<int>
-     */
-    private function resolverIdsCursos(string $cursosParam, Collection $allowedById): array
-    {
-        $parsed = collect(explode(',', $cursosParam))
-            ->map(fn ($v) => (int) trim((string) $v))
-            ->filter(fn ($id) => $id > 0)
-            ->unique()
-            ->values();
-
-        $out = [];
-        foreach ($parsed as $id) {
-            if ($allowedById->has($id) && ! in_array($id, $out, true)) {
-                $out[] = $id;
-            }
-        }
-
-        if (count($out) > 200) {
-            return [];
-        }
-
-        return $out;
     }
 }

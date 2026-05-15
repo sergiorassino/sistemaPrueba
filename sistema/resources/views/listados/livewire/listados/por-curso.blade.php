@@ -25,6 +25,15 @@
                         <span class="block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50">Seleccionados para PDF</span>
                         <span class="text-xl font-bold tabular-nums">{{ count($cursosElegidos) }}</span>
                     </span>
+                    <a href="{{ $this->excelUrlCompleto }}"
+                       @class([
+                           'inline-flex items-center justify-center rounded-2xl border px-4 py-3 text-sm font-semibold shadow-sm transition-colors',
+                           'border-white/20 bg-white text-primary-700 hover:bg-accent-50' => $this->puedeExportarExcelCompleto(),
+                           'pointer-events-none border-white/10 bg-white/20 text-white/50' => ! $this->puedeExportarExcelCompleto(),
+                       ])
+                       title="Todos los cursos del ciclo, todas las columnas del legajo (solapas). Archivo Estudiantes{{ schoolCtx()->terlecAno() }}.xlsx">
+                        Exportar Excel
+                    </a>
                 @endif
             </div>
         </div>
@@ -182,8 +191,12 @@
                        href="{{ $this->pdfUrl }}">
                         Abrir PDF en pestaña nueva
                     </a>
+                    <a class="btn-secondary @if(!$this->puedeGenerarPdf()) pointer-events-none opacity-50 @endif"
+                       href="{{ $this->excelUrlSeleccion }}">
+                        Descargar Excel (selección)
+                    </a>
                     @if (!$this->puedeGenerarPdf())
-                        <span class="text-sm text-neutral-500">Incluya al menos un curso a la derecha.</span>
+                        <span class="text-sm text-neutral-500">Para PDF o Excel con selección, incluya al menos un curso a la derecha.</span>
                     @endif
                 </div>
             </div>

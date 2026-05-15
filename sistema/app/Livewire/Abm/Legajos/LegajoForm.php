@@ -9,6 +9,7 @@ use App\Models\Familia;
 use App\Models\Legajo;
 use App\Models\Matricula;
 use App\Models\Nivel;
+use App\Models\Sexo;
 use App\Models\SolapaLegajo;
 use App\Models\Terlec;
 use Illuminate\Support\Facades\DB;
@@ -29,106 +30,175 @@ class LegajoForm extends Component
     /** Columnas que pertenecen a cada plantilla de pestaña del formulario. */
     private const TAB_COLUMNS = [
         'domicilio' => ['callenum', 'barrio', 'localidad', 'codpos', 'ln_ciudad', 'ln_depto', 'ln_provincia', 'ln_pais', 'telefono', 'email'],
-        'madre'     => ['nombremad', 'dnimad', 'fechnacmad', 'nacionmad', 'estacivimad', 'vivemad', 'ocupacmad', 'domimad', 'telemad', 'emailmad'],
-        'padre'     => ['nombrepad', 'dnipad', 'fechnacpad', 'nacionpad', 'estacivipad', 'vivepad', 'ocupacpad', 'domipad', 'telepad', 'emailpad'],
-        'tutor'     => ['nombretut', 'dnitut', 'teletut', 'emailtut', 'respAdmiNom', 'respAdmiDni'],
-        'escolar'   => ['escori', 'destino', 'parroquia', 'ec_padres', 'vivecon', 'hermanos', 'needes', 'needes_detalle', 'certDisc', 'identif', 'retira', 'emeravis', 'obs'],
+        'madre' => ['nombremad', 'dnimad', 'fechnacmad', 'nacionmad', 'estacivimad', 'vivemad', 'ocupacmad', 'domimad', 'telemad', 'emailmad'],
+        'padre' => ['nombrepad', 'dnipad', 'fechnacpad', 'nacionpad', 'estacivipad', 'vivepad', 'ocupacpad', 'domipad', 'telepad', 'emailpad'],
+        'tutor' => ['nombretut', 'dnitut', 'teletut', 'emailtut', 'respAdmiNom', 'respAdmiDni'],
+        'escolar' => ['escori', 'destino', 'parroquia', 'ec_padres', 'vivecon', 'hermanos', 'needes', 'needes_detalle', 'certDisc', 'identif', 'retira', 'emeravis', 'obs'],
     ];
 
     public ?int $id = null;
+
     public string $activeTab = 'alumno';
 
     // ─── Alumno ───────────────────────────────────────────────────────────────
-    public string     $apellido    = '';
-    public string     $nombre      = '';
-    public string     $dni         = '';
-    public string     $cuil        = '';
-    public string     $fechnaci    = '';
-    public string     $sexo        = '';
-    public string     $nacion      = '';
-    public int        $idFamilias  = 1;
-    public int|string $tipoalumno  = 0;
-    public string     $legajo      = '';
-    public string     $libro       = '';
-    public string     $folio       = '';
+    public string $apellido = '';
+
+    public string $nombre = '';
+
+    public string $dni = '';
+
+    public string $cuil = '';
+
+    public string $fechnaci = '';
+
+    public string $sexo = '';
+
+    public string $nacion = '';
+
+    public int $idFamilias = 1;
+
+    public int|string $tipoalumno = 0;
+
+    public string $legajo = '';
+
+    public string $libro = '';
+
+    public string $folio = '';
 
     // ─── Domicilio ────────────────────────────────────────────────────────────
-    public string $callenum  = '';
-    public string $barrio    = '';
+    public string $callenum = '';
+
+    public string $barrio = '';
+
     public string $localidad = '';
-    public string $codpos    = '';
-    public string $ln_ciudad   = '';
-    public string $ln_depto    = '';
+
+    public string $codpos = '';
+
+    public string $ln_ciudad = '';
+
+    public string $ln_depto = '';
+
     public string $ln_provincia = '';
-    public string $ln_pais     = '';
-    public string $telefono    = '';
-    public string $email       = '';
+
+    public string $ln_pais = '';
+
+    public string $telefono = '';
+
+    public string $email = '';
 
     // ─── Madre ────────────────────────────────────────────────────────────────
-    public string $nombremad   = '';
-    public string $dnimad      = '';
-    public string $fechnacmad  = '';
-    public string $nacionmad   = '';
+    public string $nombremad = '';
+
+    public string $dnimad = '';
+
+    public string $fechnacmad = '';
+
+    public string $nacionmad = '';
+
     public string $estacivimad = '';
-    public string $domimad     = '';
-    public string $ocupacmad   = '';
-    public string $telemad     = '';
-    public string $emailmad    = '';
-    public string $vivemad     = '';
+
+    public string $domimad = '';
+
+    public string $ocupacmad = '';
+
+    public string $telemad = '';
+
+    public string $emailmad = '';
+
+    public string $vivemad = '';
 
     // ─── Padre ────────────────────────────────────────────────────────────────
-    public string $nombrepad   = '';
-    public string $dnipad      = '';
-    public string $fechnacpad  = '';
-    public string $nacionpad   = '';
+    public string $nombrepad = '';
+
+    public string $dnipad = '';
+
+    public string $fechnacpad = '';
+
+    public string $nacionpad = '';
+
     public string $estacivipad = '';
-    public string $domipad     = '';
-    public string $ocupacpad   = '';
-    public string $telepad     = '';
-    public string $emailpad    = '';
-    public string $vivepad     = '';
+
+    public string $domipad = '';
+
+    public string $ocupacpad = '';
+
+    public string $telepad = '';
+
+    public string $emailpad = '';
+
+    public string $vivepad = '';
 
     // ─── Tutor / Responsable ──────────────────────────────────────────────────
-    public string $nombretut   = '';
-    public string $dnitut      = '';
-    public string $teletut     = '';
-    public string $emailtut    = '';
+    public string $nombretut = '';
+
+    public string $dnitut = '';
+
+    public string $teletut = '';
+
+    public string $emailtut = '';
+
     public string $respAdmiNom = '';
+
     public string $respAdmiDni = '';
 
     // ─── Escolaridad / Obs ────────────────────────────────────────────────────
-    public string $escori           = '';
-    public string $destino          = '';
-    public string $obs              = '';
-    public string $identif          = '';
-    public string $vivecon          = '';
-    public string $hermanos         = '';
-    public string $ec_padres        = '';
-    public string $parroquia        = '';
-    public string $needes           = '';
-    public string $needes_detalle   = '';
-    public string $certDisc         = '';
-    public string $emeravis         = '';
-    public string $retira           = '';
+    public string $escori = '';
+
+    public string $destino = '';
+
+    public string $obs = '';
+
+    public string $identif = '';
+
+    public string $vivecon = '';
+
+    public string $hermanos = '';
+
+    public string $ec_padres = '';
+
+    public string $parroquia = '';
+
+    public string $needes = '';
+
+    public string $needes_detalle = '';
+
+    public string $certDisc = '';
+
+    public string $emeravis = '';
+
+    public string $retira = '';
 
     // ─── Matrículas (modales) ────────────────────────────────────────────────
-    public bool   $showMatriculasModal = false;
-    public bool   $showMatriculaForm   = false;
-    public ?int   $matriculaEditId     = null;
-    public ?int   $matriculaDeleteId   = null;
-    public bool   $showMatriculaConfirm = false;
-    public string $matriculaDeleteInfo  = '';
+    public bool $showMatriculasModal = false;
+
+    public bool $showMatriculaForm = false;
+
+    public ?int $matriculaEditId = null;
+
+    public ?int $matriculaDeleteId = null;
+
+    public bool $showMatriculaConfirm = false;
+
+    public string $matriculaDeleteInfo = '';
 
     // Matrícula form fields
-    public int|string $m_idCursos       = '';
-    public int|string $m_idCondiciones  = '';
-    public int|string $m_idTerlec       = '';
-    public int|string $m_idNivel        = '';
-    public string     $m_terlec_ano     = '';
-    public string     $m_nivel_nombre   = '';
-    public string     $m_nroMatricula   = '';
-    public string     $m_fechaMatricula = '';
-    public string     $m_fechaBaja      = '';
+    public int|string $m_idCursos = '';
+
+    public int|string $m_idCondiciones = '';
+
+    public int|string $m_idTerlec = '';
+
+    public int|string $m_idNivel = '';
+
+    public string $m_terlec_ano = '';
+
+    public string $m_nivel_nombre = '';
+
+    public string $m_nroMatricula = '';
+
+    public string $m_fechaMatricula = '';
+
+    public string $m_fechaBaja = '';
 
     /**
      * Columnas de `legajos` con control dedicado en el formulario (no van en extras).
@@ -163,13 +233,13 @@ class LegajoForm extends Component
 
     protected function rules(): array
     {
-        $dniUnique = 'unique:legajos,dni' . ($this->id ? ",{$this->id}" : '');
+        $dniUnique = 'unique:legajos,dni'.($this->id ? ",{$this->id}" : '');
         $set = $this->camposActivosSet();
 
         $r = [
             'apellido' => ['required', 'string', 'max:50'],
-            'nombre'   => ['required', 'string', 'max:50'],
-            'dni'      => ['required', 'digits_between:7,11', $dniUnique],
+            'nombre' => ['required', 'string', 'max:50'],
+            'dni' => ['required', 'digits_between:7,11', $dniUnique],
         ];
 
         if ($set === null || isset($set['idFamilias'])) {
@@ -203,16 +273,16 @@ class LegajoForm extends Component
     protected function messages(): array
     {
         return [
-            'apellido.required'   => 'El apellido es obligatorio.',
-            'nombre.required'     => 'El nombre es obligatorio.',
-            'dni.required'        => 'El DNI es obligatorio.',
-            'dni.digits_between'  => 'El DNI debe tener entre 7 y 11 dígitos.',
-            'dni.unique'          => 'Ya existe un legajo con ese DNI.',
-            'fechnaci.date'       => 'Fecha de nacimiento inválida.',
-            'email.email'         => 'El email del alumno no es válido.',
-            'emailmad.email'      => 'El email de la madre no es válido.',
-            'emailpad.email'      => 'El email del padre no es válido.',
-            'emailtut.email'      => 'El email del tutor no es válido.',
+            'apellido.required' => 'El apellido es obligatorio.',
+            'nombre.required' => 'El nombre es obligatorio.',
+            'dni.required' => 'El DNI es obligatorio.',
+            'dni.digits_between' => 'El DNI debe tener entre 7 y 11 dígitos.',
+            'dni.unique' => 'Ya existe un legajo con ese DNI.',
+            'fechnaci.date' => 'Fecha de nacimiento inválida.',
+            'email.email' => 'El email del alumno no es válido.',
+            'emailmad.email' => 'El email de la madre no es válido.',
+            'emailpad.email' => 'El email del padre no es válido.',
+            'emailtut.email' => 'El email del tutor no es válido.',
         ];
     }
 
@@ -263,7 +333,7 @@ class LegajoForm extends Component
     // ─── Matrículas ───────────────────────────────────────────────────────────
     public function openMatriculas(): void
     {
-        if (!$this->id) {
+        if (! $this->id) {
             return;
         }
 
@@ -285,7 +355,7 @@ class LegajoForm extends Component
         $this->resetMatriculaForm();
 
         $this->m_idTerlec = (int) (schoolCtx()->idTerlec ?? 0);
-        $this->m_idNivel  = (int) (schoolCtx()->idNivel ?? 0);
+        $this->m_idNivel = (int) (schoolCtx()->idNivel ?? 0);
         $this->fillMatriculaReadonlyLabels();
         $this->m_fechaMatricula = now()->format('Y-m-d');
 
@@ -298,14 +368,14 @@ class LegajoForm extends Component
         $m = Matricula::where('idLegajos', $this->id)->findOrFail($id);
         $this->matriculaEditId = $id;
 
-        $this->m_idCursos      = (int) ($m->idCursos ?? 0);
+        $this->m_idCursos = (int) ($m->idCursos ?? 0);
         $this->m_idCondiciones = (int) ($m->idCondiciones ?? 0);
-        $this->m_idTerlec      = (int) ($m->idTerlec ?? 0);
-        $this->m_idNivel       = (int) ($m->idNivel ?? 0);
+        $this->m_idTerlec = (int) ($m->idTerlec ?? 0);
+        $this->m_idNivel = (int) ($m->idNivel ?? 0);
         $this->fillMatriculaReadonlyLabels();
-        $this->m_nroMatricula  = (string) ($m->nroMatricula ?? '');
+        $this->m_nroMatricula = (string) ($m->nroMatricula ?? '');
         $this->m_fechaMatricula = $m->fechaMatricula ? $m->fechaMatricula->format('Y-m-d') : '';
-        $this->m_fechaBaja      = $m->fechaBaja ? $m->fechaBaja->format('Y-m-d') : '';
+        $this->m_fechaBaja = $m->fechaBaja ? $m->fechaBaja->format('Y-m-d') : '';
 
         $this->resetValidation();
         $this->showMatriculaForm = true;
@@ -317,7 +387,7 @@ class LegajoForm extends Component
             'm_idCursos' => ['required', 'integer', 'min:1'],
             'm_idCondiciones' => ['required', 'integer', 'min:1'],
             'm_idTerlec' => ['required', 'integer', 'min:1'],
-            'm_idNivel'  => ['required', 'integer', 'min:1'],
+            'm_idNivel' => ['required', 'integer', 'min:1'],
             'm_nroMatricula' => ['nullable', 'string', 'max:20'],
             'm_fechaMatricula' => ['nullable', 'date'],
             'm_fechaBaja' => ['nullable', 'date'],
@@ -326,53 +396,66 @@ class LegajoForm extends Component
             'm_idCondiciones.required' => 'Seleccione condición.',
         ]);
 
-        if (!$this->id) {
+        if (! $this->id) {
             return;
         }
 
         $data = [
-            'idLegajos'     => (int) $this->id,
-            'idCursos'      => (int) $this->m_idCursos,
+            'idLegajos' => (int) $this->id,
+            'idCursos' => (int) $this->m_idCursos,
             'idCondiciones' => (int) $this->m_idCondiciones,
-            'idTerlec'      => (int) $this->m_idTerlec,
-            'idNivel'       => (int) $this->m_idNivel,
-            'nroMatricula'  => trim($this->m_nroMatricula) !== '' ? trim($this->m_nroMatricula) : null,
-            'fechaMatricula'=> $this->m_fechaMatricula ?: null,
-            'fechaBaja'     => $this->m_fechaBaja ?: null,
+            'idTerlec' => (int) $this->m_idTerlec,
+            'idNivel' => (int) $this->m_idNivel,
+            'nroMatricula' => trim($this->m_nroMatricula) !== '' ? trim($this->m_nroMatricula) : null,
+            'fechaMatricula' => $this->m_fechaMatricula ?: null,
+            'fechaBaja' => $this->m_fechaBaja ?: null,
         ];
 
         if ($this->matriculaEditId) {
-            Matricula::where('idLegajos', $this->id)
-                ->findOrFail($this->matriculaEditId)
-                ->update($data);
-            session()->flash('success', 'Matrícula actualizada.');
+            $existente = Matricula::where('idLegajos', $this->id)
+                ->findOrFail($this->matriculaEditId);
+
+            $planCambio =
+                (int) ($existente->idCursos ?? 0) !== (int) $data['idCursos']
+                || (int) ($existente->idTerlec ?? 0) !== (int) $data['idTerlec']
+                || (int) ($existente->idNivel ?? 0) !== (int) $data['idNivel'];
+
+            DB::transaction(function () use ($existente, $data, $planCambio) {
+                $existente->update($data);
+
+                if ($planCambio) {
+                    DB::table('calificaciones')
+                        ->where('idLegajos', (int) $data['idLegajos'])
+                        ->where('idMatricula', (int) $existente->id)
+                        ->delete();
+
+                    $this->seedCalificacionesForMatricula(
+                        (int) $data['idLegajos'],
+                        (int) $existente->id,
+                        (int) $data['idNivel'],
+                        (int) $data['idTerlec'],
+                        (int) $data['idCursos'],
+                    );
+                }
+            });
+
+            session()->flash(
+                'success',
+                $planCambio
+                    ? 'Matrícula actualizada. Las calificaciones se regeneraron según el nuevo curso.'
+                    : 'Matrícula actualizada.'
+            );
         } else {
             DB::transaction(function () use ($data) {
                 $matricula = Matricula::create($data);
 
-                $materias = DB::table('materias')
-                    ->where('idNivel', (int) $data['idNivel'])
-                    ->where('idTerlec', (int) $data['idTerlec'])
-                    ->where('idCursos', (int) $data['idCursos'])
-                    ->orderBy('ord')
-                    ->orderBy('id')
-                    ->get(['id', 'ord', 'idMatPlan']);
-
-                if ($materias->isNotEmpty()) {
-                    $rows = $materias->map(function ($m) use ($matricula, $data) {
-                        return [
-                            'idLegajos' => (int) $data['idLegajos'],
-                            'idMatricula' => (int) $matricula->id,
-                            'ord' => (int) ($m->ord ?? 0),
-                            'idTerlec' => (int) $data['idTerlec'],
-                            'idCursos' => (int) $data['idCursos'],
-                            'idMaterias' => (int) $m->id,
-                            'idMatPlan' => (int) ($m->idMatPlan ?? 0),
-                        ];
-                    })->values()->all();
-
-                    DB::table('calificaciones')->insert($rows);
-                }
+                $this->seedCalificacionesForMatricula(
+                    (int) $data['idLegajos'],
+                    (int) $matricula->id,
+                    (int) $data['idNivel'],
+                    (int) $data['idTerlec'],
+                    (int) $data['idCursos'],
+                );
             });
             session()->flash('success', 'Matrícula creada.');
         }
@@ -403,6 +486,43 @@ class LegajoForm extends Component
         $this->reset('matriculaDeleteId', 'matriculaDeleteInfo');
     }
 
+    /**
+     * Inserta filas en calificaciones según las materias definidas para nivel / ciclo / curso.
+     */
+    private function seedCalificacionesForMatricula(
+        int $idLegajos,
+        int $idMatricula,
+        int $idNivel,
+        int $idTerlec,
+        int $idCursos,
+    ): void {
+        $materias = DB::table('materias')
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
+            ->where('idCursos', $idCursos)
+            ->orderBy('ord')
+            ->orderBy('id')
+            ->get(['id', 'ord', 'idMatPlan']);
+
+        if ($materias->isEmpty()) {
+            return;
+        }
+
+        $rows = $materias->map(function ($m) use ($idLegajos, $idMatricula, $idTerlec, $idCursos) {
+            return [
+                'idLegajos' => $idLegajos,
+                'idMatricula' => $idMatricula,
+                'ord' => (int) ($m->ord ?? 0),
+                'idTerlec' => $idTerlec,
+                'idCursos' => $idCursos,
+                'idMaterias' => (int) $m->id,
+                'idMatPlan' => (int) ($m->idMatPlan ?? 0),
+            ];
+        })->values()->all();
+
+        DB::table('calificaciones')->insert($rows);
+    }
+
     private function resetMatriculaForm(): void
     {
         $this->reset([
@@ -416,10 +536,10 @@ class LegajoForm extends Component
     private function fillMatriculaReadonlyLabels(): void
     {
         $terlec = null;
-        $nivel  = null;
+        $nivel = null;
 
         $idTerlec = (int) ($this->m_idTerlec ?: 0);
-        $idNivel  = (int) ($this->m_idNivel ?: 0);
+        $idNivel = (int) ($this->m_idNivel ?: 0);
 
         if ($idTerlec > 0) {
             $terlec = Terlec::query()->find($idTerlec);
@@ -428,7 +548,7 @@ class LegajoForm extends Component
             $nivel = Nivel::query()->find($idNivel);
         }
 
-        $this->m_terlec_ano   = $terlec?->ano !== null ? (string) $terlec->ano : '';
+        $this->m_terlec_ano = $terlec?->ano !== null ? (string) $terlec->ano : '';
         $this->m_nivel_nombre = $nivel?->nivel ? (string) $nivel->nivel : '';
     }
 
@@ -436,72 +556,72 @@ class LegajoForm extends Component
     {
         $l = Legajo::findOrFail($id);
 
-        $this->apellido    = $l->apellido    ?? '';
-        $this->nombre      = $l->nombre      ?? '';
-        $this->dni         = (string) ($l->dni ?? '');
-        $this->cuil        = $l->cuil        ?? '';
-        $this->fechnaci    = $l->fechnaci ? $l->fechnaci->format('Y-m-d') : '';
-        $this->sexo        = $l->sexo        ?? '';
-        $this->nacion      = $l->nacion      ?? '';
-        $this->idFamilias  = $l->idFamilias > 0 ? (int) $l->idFamilias : 1;
-        $this->tipoalumno  = $l->tipoalumno  ?? 0;
-        $this->legajo      = $l->legajo      ?? '';
-        $this->libro       = $l->libro       ?? '';
-        $this->folio       = $l->folio       ?? '';
+        $this->apellido = $l->apellido ?? '';
+        $this->nombre = $l->nombre ?? '';
+        $this->dni = (string) ($l->dni ?? '');
+        $this->cuil = $l->cuil ?? '';
+        $this->fechnaci = $l->fechnaci ? $l->fechnaci->format('Y-m-d') : '';
+        $this->sexo = $l->sexo ?? '';
+        $this->nacion = $l->nacion ?? '';
+        $this->idFamilias = $l->idFamilias > 0 ? (int) $l->idFamilias : 1;
+        $this->tipoalumno = $l->tipoalumno ?? 0;
+        $this->legajo = $l->legajo ?? '';
+        $this->libro = $l->libro ?? '';
+        $this->folio = $l->folio ?? '';
 
-        $this->callenum    = $l->callenum    ?? '';
-        $this->barrio      = $l->barrio      ?? '';
-        $this->localidad   = $l->localidad   ?? '';
-        $this->codpos      = $l->codpos      ?? '';
-        $this->ln_ciudad   = $l->ln_ciudad   ?? '';
-        $this->ln_depto    = $l->ln_depto    ?? '';
+        $this->callenum = $l->callenum ?? '';
+        $this->barrio = $l->barrio ?? '';
+        $this->localidad = $l->localidad ?? '';
+        $this->codpos = $l->codpos ?? '';
+        $this->ln_ciudad = $l->ln_ciudad ?? '';
+        $this->ln_depto = $l->ln_depto ?? '';
         $this->ln_provincia = $l->ln_provincia ?? '';
-        $this->ln_pais     = $l->ln_pais     ?? '';
-        $this->telefono    = $l->telefono    ?? '';
-        $this->email       = $l->email       ?? '';
+        $this->ln_pais = $l->ln_pais ?? '';
+        $this->telefono = $l->telefono ?? '';
+        $this->email = $l->email ?? '';
 
-        $this->nombremad   = $l->nombremad   ?? '';
-        $this->dnimad      = $l->dnimad      ?? '';
-        $this->fechnacmad  = $l->fechnacmad ? $l->fechnacmad->format('Y-m-d') : '';
-        $this->nacionmad   = $l->nacionmad   ?? '';
+        $this->nombremad = $l->nombremad ?? '';
+        $this->dnimad = $l->dnimad ?? '';
+        $this->fechnacmad = $l->fechnacmad ? $l->fechnacmad->format('Y-m-d') : '';
+        $this->nacionmad = $l->nacionmad ?? '';
         $this->estacivimad = $l->estacivimad ?? '';
-        $this->domimad     = $l->domimad     ?? '';
-        $this->ocupacmad   = $l->ocupacmad   ?? '';
-        $this->telemad     = $l->telemad     ?? '';
-        $this->emailmad    = $l->emailmad    ?? '';
-        $this->vivemad     = $l->vivemad     ?? '';
+        $this->domimad = $l->domimad ?? '';
+        $this->ocupacmad = $l->ocupacmad ?? '';
+        $this->telemad = $l->telemad ?? '';
+        $this->emailmad = $l->emailmad ?? '';
+        $this->vivemad = $l->vivemad ?? '';
 
-        $this->nombrepad   = $l->nombrepad   ?? '';
-        $this->dnipad      = $l->dnipad      ?? '';
-        $this->fechnacpad  = $l->fechnacpad ? $l->fechnacpad->format('Y-m-d') : '';
-        $this->nacionpad   = $l->nacionpad   ?? '';
+        $this->nombrepad = $l->nombrepad ?? '';
+        $this->dnipad = $l->dnipad ?? '';
+        $this->fechnacpad = $l->fechnacpad ? $l->fechnacpad->format('Y-m-d') : '';
+        $this->nacionpad = $l->nacionpad ?? '';
         $this->estacivipad = $l->estacivipad ?? '';
-        $this->domipad     = $l->domipad     ?? '';
-        $this->ocupacpad   = $l->ocupacpad   ?? '';
-        $this->telepad     = $l->telepad     ?? '';
-        $this->emailpad    = $l->emailpad    ?? '';
-        $this->vivepad     = $l->vivepad     ?? '';
+        $this->domipad = $l->domipad ?? '';
+        $this->ocupacpad = $l->ocupacpad ?? '';
+        $this->telepad = $l->telepad ?? '';
+        $this->emailpad = $l->emailpad ?? '';
+        $this->vivepad = $l->vivepad ?? '';
 
-        $this->nombretut   = $l->nombretut   ?? '';
-        $this->dnitut      = (string) ($l->dnitut ?? '');
-        $this->teletut     = $l->teletut     ?? '';
-        $this->emailtut    = $l->emailtut    ?? '';
+        $this->nombretut = $l->nombretut ?? '';
+        $this->dnitut = (string) ($l->dnitut ?? '');
+        $this->teletut = $l->teletut ?? '';
+        $this->emailtut = $l->emailtut ?? '';
         $this->respAdmiNom = $l->respAdmiNom ?? '';
         $this->respAdmiDni = (string) ($l->respAdmiDni ?? '');
 
-        $this->escori         = $l->escori         ?? '';
-        $this->destino        = $l->destino        ?? '';
-        $this->obs            = $l->obs            ?? '';
-        $this->identif        = $l->identif        ?? '';
-        $this->vivecon        = $l->vivecon        ?? '';
-        $this->hermanos       = $l->hermanos       ?? '';
-        $this->ec_padres      = $l->ec_padres      ?? '';
-        $this->parroquia      = $l->parroquia      ?? '';
-        $this->needes         = $l->needes         ?? '';
+        $this->escori = $l->escori ?? '';
+        $this->destino = $l->destino ?? '';
+        $this->obs = $l->obs ?? '';
+        $this->identif = $l->identif ?? '';
+        $this->vivecon = $l->vivecon ?? '';
+        $this->hermanos = $l->hermanos ?? '';
+        $this->ec_padres = $l->ec_padres ?? '';
+        $this->parroquia = $l->parroquia ?? '';
+        $this->needes = $l->needes ?? '';
         $this->needes_detalle = $l->needes_detalle ?? '';
-        $this->certDisc       = $l->certDisc       ?? '';
-        $this->emeravis       = $l->emeravis       ?? '';
-        $this->retira         = $l->retira         ?? '';
+        $this->certDisc = $l->certDisc ?? '';
+        $this->emeravis = $l->emeravis ?? '';
+        $this->retira = $l->retira ?? '';
 
         $this->rellenarLegajoExtrasDesdeModelo($l);
     }
@@ -531,67 +651,67 @@ class LegajoForm extends Component
     private function formData(): array
     {
         $data = [
-            'apellido'    => strtoupper(trim($this->apellido)),
-            'nombre'      => ucwords(strtolower(trim($this->nombre))),
-            'dni'         => $this->dni !== '' ? (int) $this->dni : null,
-            'cuil'        => $this->cuil,
-            'fechnaci'    => $this->fechnaci ?: null,
-            'sexo'        => $this->sexo,
-            'nacion'      => $this->nacion,
-            'idFamilias'  => $this->idFamilias > 0 ? $this->idFamilias : 1,
-            'tipoalumno'  => (int) $this->tipoalumno,
-            'legajo'      => $this->legajo,
-            'libro'       => $this->libro,
-            'folio'       => $this->folio,
-            'callenum'    => $this->callenum,
-            'barrio'      => $this->barrio,
-            'localidad'   => $this->localidad,
-            'codpos'      => $this->codpos,
-            'ln_ciudad'   => $this->ln_ciudad,
-            'ln_depto'    => $this->ln_depto,
-            'ln_provincia'=> $this->ln_provincia,
-            'ln_pais'     => $this->ln_pais,
-            'telefono'    => $this->telefono,
-            'email'       => $this->email,
-            'nombremad'   => $this->nombremad,
-            'dnimad'      => $this->dnimad,
-            'fechnacmad'  => $this->fechnacmad ?: null,
-            'nacionmad'   => $this->nacionmad,
+            'apellido' => strtoupper(trim($this->apellido)),
+            'nombre' => ucwords(strtolower(trim($this->nombre))),
+            'dni' => $this->dni !== '' ? (int) $this->dni : null,
+            'cuil' => $this->cuil,
+            'fechnaci' => $this->fechnaci ?: null,
+            'sexo' => $this->sexo,
+            'nacion' => $this->nacion,
+            'idFamilias' => $this->idFamilias > 0 ? $this->idFamilias : 1,
+            'tipoalumno' => (int) $this->tipoalumno,
+            'legajo' => $this->legajo,
+            'libro' => $this->libro,
+            'folio' => $this->folio,
+            'callenum' => $this->callenum,
+            'barrio' => $this->barrio,
+            'localidad' => $this->localidad,
+            'codpos' => $this->codpos,
+            'ln_ciudad' => $this->ln_ciudad,
+            'ln_depto' => $this->ln_depto,
+            'ln_provincia' => $this->ln_provincia,
+            'ln_pais' => $this->ln_pais,
+            'telefono' => $this->telefono,
+            'email' => $this->email,
+            'nombremad' => $this->nombremad,
+            'dnimad' => $this->dnimad,
+            'fechnacmad' => $this->fechnacmad ?: null,
+            'nacionmad' => $this->nacionmad,
             'estacivimad' => $this->estacivimad,
-            'domimad'     => $this->domimad,
-            'ocupacmad'   => $this->ocupacmad,
-            'telemad'     => $this->telemad,
-            'emailmad'    => $this->emailmad,
-            'vivemad'     => $this->vivemad,
-            'nombrepad'   => $this->nombrepad,
-            'dnipad'      => $this->dnipad,
-            'fechnacpad'  => $this->fechnacpad ?: null,
-            'nacionpad'   => $this->nacionpad,
+            'domimad' => $this->domimad,
+            'ocupacmad' => $this->ocupacmad,
+            'telemad' => $this->telemad,
+            'emailmad' => $this->emailmad,
+            'vivemad' => $this->vivemad,
+            'nombrepad' => $this->nombrepad,
+            'dnipad' => $this->dnipad,
+            'fechnacpad' => $this->fechnacpad ?: null,
+            'nacionpad' => $this->nacionpad,
             'estacivipad' => $this->estacivipad,
-            'domipad'     => $this->domipad,
-            'ocupacpad'   => $this->ocupacpad,
-            'telepad'     => $this->telepad,
-            'emailpad'    => $this->emailpad,
-            'vivepad'     => $this->vivepad,
-            'nombretut'   => $this->nombretut,
-            'dnitut'      => $this->dnitut !== '' ? (int) $this->dnitut : null,
-            'teletut'     => $this->teletut,
-            'emailtut'    => $this->emailtut,
+            'domipad' => $this->domipad,
+            'ocupacpad' => $this->ocupacpad,
+            'telepad' => $this->telepad,
+            'emailpad' => $this->emailpad,
+            'vivepad' => $this->vivepad,
+            'nombretut' => $this->nombretut,
+            'dnitut' => $this->dnitut !== '' ? (int) $this->dnitut : null,
+            'teletut' => $this->teletut,
+            'emailtut' => $this->emailtut,
             'respAdmiNom' => $this->respAdmiNom,
             'respAdmiDni' => $this->respAdmiDni !== '' ? (int) $this->respAdmiDni : 0,
-            'escori'      => $this->escori,
-            'destino'     => $this->destino,
-            'obs'         => $this->obs,
-            'identif'     => $this->identif,
-            'vivecon'     => $this->vivecon,
-            'hermanos'    => $this->hermanos,
-            'ec_padres'   => $this->ec_padres,
-            'parroquia'   => $this->parroquia,
-            'needes'      => $this->needes,
+            'escori' => $this->escori,
+            'destino' => $this->destino,
+            'obs' => $this->obs,
+            'identif' => $this->identif,
+            'vivecon' => $this->vivecon,
+            'hermanos' => $this->hermanos,
+            'ec_padres' => $this->ec_padres,
+            'parroquia' => $this->parroquia,
+            'needes' => $this->needes,
             'needes_detalle' => $this->needes_detalle,
-            'certDisc'    => $this->certDisc,
-            'emeravis'    => $this->emeravis,
-            'retira'      => $this->retira,
+            'certDisc' => $this->certDisc,
+            'emeravis' => $this->emeravis,
+            'retira' => $this->retira,
         ];
 
         $managedFlip = array_flip(self::COLUMNAS_FORMULARIO_GESTIONADAS);
@@ -728,10 +848,10 @@ class LegajoForm extends Component
         // ── Fallback: TAB_COLUMNS ────────────────────────────────────────────
         $tabLabels = [
             'domicilio' => 'Domicilio',
-            'madre'     => 'Madre',
-            'padre'     => 'Padre',
-            'tutor'     => 'Tutor',
-            'escolar'   => 'Escolaridad',
+            'madre' => 'Madre',
+            'padre' => 'Padre',
+            'tutor' => 'Tutor',
+            'escolar' => 'Escolaridad',
         ];
         $tabs = ['alumno' => 'Alumno'];
         $tabSlugToPanel = ['alumno' => 'alumno'];
@@ -801,7 +921,7 @@ class LegajoForm extends Component
     private function pageForLegajo(int $id, int $perPage): int
     {
         $l = Legajo::find($id);
-        if (!$l) {
+        if (! $l) {
             return 1;
         }
 
@@ -832,6 +952,8 @@ class LegajoForm extends Component
         $condiciones = Condicion::query()
             ->orderBy('id')
             ->get(['id', 'condicion']);
+
+        $sexosOpciones = Sexo::opcionesParaSelect();
 
         $matriculasAlumno = collect();
         if ($this->id) {
@@ -893,10 +1015,9 @@ class LegajoForm extends Component
         }
 
         return view('livewire.abm.legajos.form', compact(
-            'familias', 'cursos', 'condiciones', 'matriculasAlumno',
+            'familias', 'cursos', 'condiciones', 'sexosOpciones', 'matriculasAlumno',
             'camposActivos', 'showField', 'showFieldEnTab', 'tabsVisibles', 'tabSlugToPanel',
             'modoParametrizadoLegajo', 'columnasPorSolapaSlug',
         ))->layout('layouts.app', ['pageTitle' => $this->id ? 'Editar legajo' : 'Nuevo legajo']);
     }
 }
-

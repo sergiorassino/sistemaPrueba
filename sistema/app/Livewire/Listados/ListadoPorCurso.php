@@ -155,6 +155,40 @@ class ListadoPorCurso extends Component
             ->isNotEmpty();
     }
 
+    /** Exportación completa: todos los cursos y columnas de solapas del legajo. */
+    public function getExcelUrlCompletoProperty(): string
+    {
+        return route('listados.exportar-excel');
+    }
+
+    /** Misma selección que el PDF: cursos a la derecha, columnas marcadas y condición. */
+    public function getExcelUrlSeleccionProperty(): string
+    {
+        if (! $this->puedeGenerarPdf()) {
+            return '#';
+        }
+
+        $campos = ListadoCursoPdfFieldCatalog::normalizeSelection($this->camposSeleccionados);
+        $filtro = ListadoCursoCondicionFiltro::normalize($this->filtroCondicion);
+
+        $ids = collect($this->cursosElegidos)
+            ->filter(fn ($v) => $v !== '' && $v !== null)
+            ->map(fn ($v) => (int) $v)
+            ->unique()
+            ->values();
+
+        return route('listados.exportar-excel', [
+            'cursos' => $ids->implode(','),
+            'campos' => implode(',', $campos),
+            'condicion' => $filtro,
+        ]);
+    }
+
+    public function puedeExportarExcelCompleto(): bool
+    {
+        return $this->queryCursos()->exists();
+    }
+
     public function seleccionarSoloDefecto(): void
     {
         $this->camposSeleccionados = CampoLegajo::aplicarVisibilidadListadoPdf(ListadoCursoPdfFieldCatalog::DEFAULT_KEYS);

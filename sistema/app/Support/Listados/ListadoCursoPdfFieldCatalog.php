@@ -523,6 +523,27 @@ final class ListadoCursoPdfFieldCatalog
     }
 
     /**
+     * Claves de columnas de `legajos` para exportación Excel: orden de solapas y campos
+     * parametrizados (misma fuente que el listado PDF por solapa).
+     *
+     * @return list<string>
+     */
+    public static function keysOrdenadosExportLegajoPorSolapas(): array
+    {
+        $keys = [];
+        foreach (self::groupedForUiPorSolapas() as $bloque) {
+            foreach ($bloque['items'] as $item) {
+                $k = $item['key'];
+                if (! in_array($k, $keys, true)) {
+                    $keys[] = $k;
+                }
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
      * Grupos de campos de `legajos` para el formulario del ABM de legajo.
      * Solo incluye entradas cuya tabla es `legajos`; aplica el mismo filtro de
      * visibilidad que `groupedForUi()` pero descarta matrícula/condiciones.

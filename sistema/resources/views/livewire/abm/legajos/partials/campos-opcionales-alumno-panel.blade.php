@@ -19,15 +19,7 @@
 @endif
 
 @if($showFieldEnTab('sexo'))
-<div>
-    <label class="form-label">Sexo</label>
-    <select wire:model="sexo" class="form-select">
-        <option value="">— Seleccione —</option>
-        <option value="M">Masculino</option>
-        <option value="F">Femenino</option>
-        <option value="X">No binario</option>
-    </select>
-</div>
+    @include('livewire.abm.legajos.partials.select-sexo', ['sexosOpciones' => $sexosOpciones ?? collect()])
 @endif
 
 @if($showFieldEnTab('nacion'))

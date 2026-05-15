@@ -5,9 +5,12 @@ use App\Http\Controllers\Alumnos\InformeInasistenciasController;
 use App\Http\Controllers\Alumnos\PushApiController;
 use App\Http\Controllers\Alumnos\PushController;
 use App\Http\Controllers\AntecedentesDisciplinariosPdfController;
-use App\Http\Controllers\InformeInasistenciasPdfController;
 use App\Http\Controllers\CalificacionesSecundario\ConsultaCalificacionesSecundarioPdfController;
+use App\Http\Controllers\EstudiantesExcelController;
+use App\Http\Controllers\InformeInasistenciasPdfController;
+use App\Http\Controllers\LibroMatriculaPdfController;
 use App\Http\Controllers\ListadoCursoPdfController;
+use App\Http\Controllers\Push\SuscribirController;
 use App\Http\Controllers\SancionComunicadoPdfController;
 use App\Livewire\Abm\Curplan\CurplanForm;
 use App\Livewire\Abm\Curplan\CurplanIndex;
@@ -28,17 +31,18 @@ use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
 use App\Livewire\Auth\Login;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
+use App\Livewire\CalificacionesSecundario\SincroGe;
 use App\Livewire\Comunicaciones\BandejaGestion;
 use App\Livewire\Comunicaciones\BandejaRevision;
 use App\Livewire\Comunicaciones\HiloShow;
 use App\Livewire\Comunicaciones\InformeEnvioComunicado;
 use App\Livewire\Comunicaciones\NuevoComunicado;
+use App\Livewire\Listados\LibroMatricula;
 use App\Livewire\Listados\ListadoPorCurso;
 use App\Livewire\Parametrizacion\CamposLegajoIndex;
 use App\Livewire\Parametrizacion\ComCanalesIndex;
 use App\Livewire\Parametrizacion\ParametrosSistemaForm;
 use App\Livewire\Parametrizacion\SolapaLegajoIndex;
-use App\Livewire\Push\EnviarPush;
 use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
 use App\Livewire\Seguimiento\Disciplinario\DisciplinarioIndex;
 use App\Livewire\Seguimiento\Disciplinario\SancionForm;
@@ -96,8 +100,8 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/comunicaciones/{id}', HiloShowFamilia::class)->whereNumber('id')->name('alumnos.comunicaciones.hilo');
 });
 
-// API Push (misma sesión del alumno; fuera del prefix /alumnos para que el SW tenga scope simple)
-Route::middleware(['auth:alumno'])->prefix('notificaciones-push/api')->group(function () {
+// API Push (sesión alumno o docente; fuera del prefix /alumnos para que el SW tenga scope simple)
+Route::middleware(['auth:web,alumno'])->prefix('notificaciones-push/api')->group(function () {
     Route::post('/subscribe', [PushApiController::class, 'subscribe'])->name('push.api.subscribe');
     Route::post('/unsubscribe', [PushApiController::class, 'unsubscribe'])->name('push.api.unsubscribe');
     Route::post('/send', [PushApiController::class, 'send'])->name('push.api.send');
@@ -114,9 +118,7 @@ Route::middleware(['auth', 'school.context'])->group(function () {
         return view('dashboard');
     })->name('dashboard');
 
-    Route::get('/notificaciones/push/enviar', EnviarPush::class)
-        ->middleware('permiso:2')
-        ->name('push.enviar');
+    Route::get('/notificaciones/push', SuscribirController::class)->name('push.suscribir');
 
     Route::get('/comunicaciones', BandejaGestion::class)->middleware('permiso:51')->name('comunicaciones.index');
     Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:51', 'permiso:56'])->name('comunicaciones.revision');
@@ -161,8 +163,18 @@ Route::middleware(['auth', 'school.context'])->group(function () {
 
     Route::get('/listados/por-curso', ListadoPorCurso::class)->middleware('permiso:2')->name('listados.por-curso');
     Route::get('/listados/por-curso/listado', ListadoCursoPdfController::class)->middleware('permiso:2')->name('listados.por-curso.pdf');
+    Route::get('/listados/exportar-excel', EstudiantesExcelController::class)
+        ->middleware('permiso:2')
+        ->name('listados.exportar-excel');
+    Route::get('/listados/libro-matricula', LibroMatricula::class)->middleware('permiso:2')->name('listados.libro-matricula');
+    Route::get('/listados/libro-matricula/pdf', LibroMatriculaPdfController::class)
+        ->middleware('permiso:2')
+        ->name('listados.libro-matricula.pdf');
 
-    // Calificaciones (nivel secundario): carga y consulta institucional (mismo PDF que autogestión)
+    // Calificaciones (nivel secundario): sincro GE/CIDI, carga y consulta institucional
+    Route::get('/calificaciones-secundario/sincro-ge', SincroGe::class)
+        ->middleware('permiso:2')
+        ->name('calificacionesSecundario.sincroGe');
     Route::get('/calificaciones-secundario/carga', CargaCalificacionesSecundario::class)
         ->middleware('permiso:2')
         ->name('calificacionesSecundario.carga');

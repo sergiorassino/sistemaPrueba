@@ -96,10 +96,10 @@
     sidebarCollapsed: false,
     _sidebarPeekTimer: null,
     groups: {
-        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'param.')) ? 'true' : 'false' }},
+        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'param.') || ($route ?? '') === 'push.suscribir') ? 'true' : 'false' }},
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
-        students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.') || str_starts_with($route ?? '', 'push.') || (str_starts_with($route ?? '', 'comunicaciones.') && tienePermiso(51) && tienePermiso(2))) ? 'true' : 'false' }},
+        students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.') || (str_starts_with($route ?? '', 'comunicaciones.') && tienePermiso(51) && tienePermiso(2))) ? 'true' : 'false' }},
         cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales') && tienePermiso(51) && tienePermiso(2)) ? 'true' : 'false' }},
         calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.')) ? 'true' : 'false' }},
         disciplinario: {{ str_starts_with($route ?? '', 'seguimiento.disciplinario') ? 'true' : 'false' }},
@@ -277,28 +277,34 @@
                 <a href="{{ route('listados.por-curso') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'listados.'),
+                       'is-active shadow-sm' => request()->routeIs('listados.por-curso', 'listados.por-curso.pdf', 'listados.exportar-excel'),
                    ])
-                   title="Listado por curso v1.0">
+                   title="Listados de Estudiantes por Curso v1.0">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
-                    <span class="truncate">Listado por curso</span>
+                    <span class="truncate">Listados de Estudiantes por Curso</span>
                 </a>
 
-                <a href="{{ route('push.enviar') }}"
+                @php
+                    if (! \Illuminate\Support\Facades\Route::has('listados.libro-matricula')) {
+                        throw new \RuntimeException("Sidebar: falta la ruta 'listados.libro-matricula'.");
+                    }
+                @endphp
+                <a href="{{ route('listados.libro-matricula') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'push.'),
+                       'is-active shadow-sm' => request()->routeIs('listados.libro-matricula', 'listados.libro-matricula.pdf'),
                    ])
-                   title="Enviar notificación push v1.0">
+                   title="Libro de Matrícula v1.0">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                     </svg>
-                    <span class="truncate">Enviar notificación push</span>
+                    <span class="truncate">Libro de Matrícula</span>
                 </a>
+
             </div>
         @endif
 
@@ -410,6 +416,18 @@
                  x-show="groups.calificacionesSec && !sidebarCollapsed"
                  x-collapse
                  x-cloak>
+                <a href="{{ route('calificacionesSecundario.sincroGe') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.sincroGe',
+                   ])
+                   title="Descargar calificaciones desde CIDI (GE) v1.0">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <span class="truncate">Descargar calificaciones desde CIDI</span>
+                </a>
                 <a href="{{ route('calificacionesSecundario.carga') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -682,6 +700,19 @@
                               d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
                     </svg>
                     <span class="truncate">Parámetros del sistema</span>
+                </a>
+
+                <a href="{{ route('push.suscribir') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'push.suscribir',
+                   ])
+                   title="Notificaciones push en este dispositivo">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    <span class="truncate">Notificaciones Push</span>
                 </a>
 
                 @if(tienePermiso(0))

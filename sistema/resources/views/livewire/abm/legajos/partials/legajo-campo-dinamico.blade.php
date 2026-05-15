@@ -14,13 +14,7 @@
             @error('fechnaci') <p class="form-error">{{ $message }}</p> @enderror</div>
         @break
     @case('sexo')
-        <div><label class="form-label">{{ $label }}</label>
-            <select wire:model="sexo" class="form-select">
-                <option value="">— Seleccione —</option>
-                <option value="M">Masculino</option>
-                <option value="F">Femenino</option>
-                <option value="X">No binario</option>
-            </select></div>
+        @include('livewire.abm.legajos.partials.select-sexo', ['label' => $label, 'sexosOpciones' => $sexosOpciones ?? collect()])
         @break
     @case('nacion')
         <div><label class="form-label">{{ $label }}</label>

@@ -3,107 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        @page { margin: 15mm 8mm 12mm 8mm; }
-        body { font-family: DejaVu Sans, sans-serif; font-size: 11pt; color: #333; }
-        h1 { font-size: 14pt; margin: 0 0 2px 0; color: #111; }
-        .modo-estudiantes { font-size: 11pt; font-weight: bold; color: #333; margin: 0 0 10px 0; letter-spacing: 0.02em; }
-        h2 { font-size: 12pt; margin: 18px 0 6px 0; color: #333; border-bottom: 1px solid #C1D7DA; padding-bottom: 2px; }
-        h2:first-of-type { margin-top: 8px; }
-        .meta { font-size: 10pt; margin-bottom: 12px; color: #555; }
-        /* auto: la 1.ª columna puede achicarse al contenido; fixed en Dompdf suele repartir ancho por igual e ignorar <col> */
-        table.tabla-alumnos { width: 100%; border-collapse: collapse; margin-top: 6px; margin-bottom: 8px; table-layout: auto; }
-        th, td { border: 1px solid #ccc; padding: 4px 5px; text-align: left; vertical-align: top; word-wrap: break-word; }
-        th { background: #C1D7DA; font-weight: bold; font-size: 8pt; line-height: 1.15; }
-        td { font-size: 8pt; }
-        /* Encabezado Nº: mismo padding/tipo que el resto de th para alinear la 1.ª línea */
+        @page { margin: 10mm 8mm 10mm 8mm; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 8pt; color: #333; margin: 0; padding: 0; }
+        .listado-ctx {
+            margin: 2px 0 8px 0;
+            padding: 2px 0 6px 0;
+            color: #333;
+        }
+        .listado-ctx .ctx-titulo {
+            font-size: 10pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin: 0 0 4px 0;
+            color: #111;
+        }
+        .listado-ctx .ctx-linea {
+            font-size: 8.5pt;
+            line-height: 1.5;
+            margin: 0 0 3px 0;
+        }
+        .listado-ctx .ctx-linea:last-child { margin-bottom: 0; }
+        .listado-ctx .ctx-item { white-space: nowrap; }
+        .listado-ctx .ctx-sep { color: #888; padding: 0 10px; }
+        table.tabla-alumnos { width: 100%; border-collapse: collapse; margin: 0; table-layout: auto; }
+        th, td { border: 1px solid #ccc; padding: 1px 3px; text-align: left; vertical-align: top; word-wrap: break-word; }
+        th { background: #C1D7DA; font-weight: bold; font-size: 7pt; line-height: 1.1; }
+        td { font-size: 7pt; line-height: 1.1; }
         th.num {
-            width: 24pt;
-            max-width: 24pt;
-            min-width: 24pt;
-            padding: 4px 5px;
+            width: 20pt;
+            max-width: 20pt;
+            min-width: 20pt;
+            padding: 1px 2px;
             text-align: center;
             white-space: nowrap;
-            font-size: 8pt;
-            line-height: 1.15;
             vertical-align: top;
         }
         td.num {
-            width: 24pt;
-            max-width: 24pt;
-            min-width: 24pt;
-            padding: 2px 1px;
+            width: 20pt;
+            max-width: 20pt;
+            min-width: 20pt;
+            padding: 1px 2px;
             text-align: center;
             white-space: nowrap;
-            font-size: 7pt;
+            font-size: 6.5pt;
             vertical-align: top;
         }
-        /* Condición de matrícula: 40 % más pequeña que 8pt base (= 4.8pt), alineado a la derecha */
         th.col-cond, td.col-cond {
             font-size: 4.8pt;
-            line-height: 1.12;
+            line-height: 1.1;
             text-align: right;
         }
         .salto { page-break-after: always; }
     </style>
 </head>
 <body>
-    {{--
-      Coupling conocido con el colegio: se usa el partial 'pdf.partials.header'
-      que vive en resources/views del colegio (o en sistema-base cuando se extraiga).
-      Cuando se cree se/sistema-base este @include pasará a 'base::pdf.partials.header'.
-    --}}
-    @include('pdf.partials.header', ['header' => $pdfHeader ?? null])
+    @php
+        $alumnosPorHoja = (int) ($alumnosPorHoja ?? 35);
+        $primeraHoja = true;
+    @endphp
 
-    <h1>Listado de Estudiantes</h1>
-    <p class="modo-estudiantes">{{ $modoEstudiantesPdf }}</p>
-    <div class="meta">
-        <strong>Nivel:</strong> {{ $nivelNombre }}<br>
-        <strong>Año lectivo:</strong> {{ $ano ?? '—' }}
-    </div>
+    @foreach ($bloques as $bloque)
+        @php
+            $alumnos = $bloque['alumnos'];
+            $paginas = $alumnos->isEmpty()
+                ? collect([collect()])
+                : $alumnos->chunk($alumnosPorHoja);
+        @endphp
+        @foreach ($paginas as $paginaIdx => $alumnosPagina)
+            @if (! $primeraHoja)
+                <div class="salto"></div>
+            @endif
+            @php
+                $primeraHoja = false;
+                $inicioNum = (int) $paginaIdx * $alumnosPorHoja;
+            @endphp
+            <div class="hoja-listado">
+                @include('pdf.partials.header', ['header' => $pdfHeader ?? null])
 
-    @foreach ($bloques as $idx => $bloque)
-        @if ($idx > 0)
-            <div class="salto"></div>
-        @endif
-        <h2>{{ $bloque['cursoLabel'] }}</h2>
-        <table class="tabla-alumnos">
-            <thead>
-                <tr>
-                    {{-- Ancho inline: Dompdf aplica mejor esto que <col> con table-layout:fixed --}}
-                    <th class="num" style="width:24pt;max-width:24pt;min-width:24pt;">Nº</th>
-                    @foreach ($columnasMeta as $col)
-                        @php $esColCond = ($col['key'] === 'condiciones.condicion'); @endphp
-                        <th class="{{ $esColCond ? 'col-cond' : '' }}">{{ $esColCond ? 'Cond.' : $col['label'] }}</th>
-                    @endforeach
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($bloque['alumnos'] as $i => $a)
-                    <tr>
-                        <td class="num" style="width:24pt;max-width:24pt;min-width:24pt;">{{ $i + 1 }}</td>
-                        @foreach ($columnasMeta as $col)
-                            @php
-                                $esColCond = ($col['key'] === 'condiciones.condicion');
-                                $alias = $col['alias'];
-                                $v = $a->{$alias} ?? null;
-                                if ($v === null || $v === '') {
-                                    $out = '—';
-                                } elseif (is_numeric($v) && (str_contains($col['key'], 'bloq') || str_ends_with($col['key'], 'inscripto') || str_contains($col['key'], 'acept'))) {
-                                    $out = $v ? 'Sí' : 'No';
-                                } else {
-                                    $out = $v;
-                                }
-                            @endphp
-                            <td class="{{ $esColCond ? 'col-cond' : '' }}">{{ $out }}</td>
-                        @endforeach
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="{{ count($columnasMeta) + 1 }}" style="text-align:center;color:#666;">No hay alumnos matriculados en este curso.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                <div class="listado-ctx">
+                    <p class="ctx-titulo">Listado de estudiantes</p>
+                    <p class="ctx-linea">
+                        <span class="ctx-item"><strong>Nivel:</strong> {{ $nivelNombre }}</span>
+                        <span class="ctx-sep">|</span>
+                        <span class="ctx-item"><strong>Año lectivo:</strong> {{ $ano ?? '—' }}</span>
+                    </p>
+                    <p class="ctx-linea">
+                        <span class="ctx-item"><strong>Condición:</strong> {{ $modoEstudiantesPdf }}</span>
+                        <span class="ctx-sep">|</span>
+                        <span class="ctx-item"><strong>Curso:</strong> {{ $bloque['cursoLabel'] }}</span>
+                    </p>
+                </div>
+
+                <table class="tabla-alumnos">
+                    <thead>
+                        <tr>
+                            <th class="num" style="width:20pt;max-width:20pt;min-width:20pt;">Nº</th>
+                            @foreach ($columnasMeta as $col)
+                                @php $esColCond = ($col['key'] === 'condiciones.condicion'); @endphp
+                                <th class="{{ $esColCond ? 'col-cond' : '' }}">{{ $esColCond ? 'Cond.' : $col['label'] }}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($alumnosPagina as $i => $a)
+                            <tr>
+                                <td class="num" style="width:20pt;max-width:20pt;min-width:20pt;">{{ $inicioNum + $i + 1 }}</td>
+                                @foreach ($columnasMeta as $col)
+                                    @php
+                                        $esColCond = ($col['key'] === 'condiciones.condicion');
+                                        $alias = $col['alias'];
+                                        $v = $a->{$alias} ?? null;
+                                        if ($v === null || $v === '') {
+                                            $out = '—';
+                                        } elseif ($col['key'] === 'legajos.sexo') {
+                                            $out = \App\Models\Sexo::etiquetaParaValorAlmacenado($v) ?: '—';
+                                        } elseif (is_numeric($v) && (str_contains($col['key'], 'bloq') || str_ends_with($col['key'], 'inscripto') || str_contains($col['key'], 'acept'))) {
+                                            $out = $v ? 'Sí' : 'No';
+                                        } else {
+                                            $out = $v;
+                                        }
+                                    @endphp
+                                    <td class="{{ $esColCond ? 'col-cond' : '' }}">{{ $out }}</td>
+                                @endforeach
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="{{ count($columnasMeta) + 1 }}" style="text-align:center;color:#666;">No hay alumnos matriculados en este curso.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        @endforeach
     @endforeach
 </body>
 </html>

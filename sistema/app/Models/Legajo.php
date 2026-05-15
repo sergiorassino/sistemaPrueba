@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 class Legajo extends Authenticatable
 {
     protected $table = 'legajos';
+
     public $timestamps = false;
 
     /**
@@ -18,18 +19,23 @@ class Legajo extends Authenticatable
     protected $hidden = ['pwrd'];
 
     protected $casts = [
-        'fechnaci'    => 'date',
-        'fechnacmad'  => 'date',
-        'fechnacpad'  => 'date',
-        'fechhora'    => 'datetime',
-        'fechActDatos'=> 'datetime',
-        'bloqmatr'    => 'boolean',
-        'bloqadmi'    => 'boolean',
+        'fechnaci' => 'date',
+        'fechnacmad' => 'date',
+        'fechnacpad' => 'date',
+        'fechhora' => 'datetime',
+        'fechActDatos' => 'datetime',
+        'bloqmatr' => 'boolean',
+        'bloqadmi' => 'boolean',
     ];
 
     public function familia()
     {
         return $this->belongsTo(Familia::class, 'idFamilias');
+    }
+
+    public function sexoCatalogo()
+    {
+        return $this->belongsTo(Sexo::class, 'sexo');
     }
 
     public function nivel()
@@ -59,15 +65,15 @@ class Legajo extends Authenticatable
 
     public function getNombreCompletoAttribute(): string
     {
-        return trim($this->apellido . ', ' . $this->nombre);
+        return trim($this->apellido.', '.$this->nombre);
     }
 
     public function scopeBuscar($query, string $termino)
     {
         return $query->where(function ($q) use ($termino) {
             $q->where('apellido', 'like', "%{$termino}%")
-              ->orWhere('nombre', 'like', "%{$termino}%")
-              ->orWhere('dni', 'like', "%{$termino}%");
+                ->orWhere('nombre', 'like', "%{$termino}%")
+                ->orWhere('dni', 'like', "%{$termino}%");
         });
     }
 }

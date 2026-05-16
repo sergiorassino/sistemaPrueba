@@ -10,6 +10,17 @@
         </div>
     @endif
 
+    @if (session('warning'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)"
+             class="se-soft-card flex items-center gap-3 border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <svg class="h-4 w-4 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            {{ session('warning') }}
+        </div>
+    @endif
+
     <section class="se-hero">
         <div class="se-hero-inner">
         <div class="min-w-0 space-y-3">
@@ -26,10 +37,6 @@
         </div>
 
         <div class="flex flex-wrap justify-start gap-2 sm:justify-end">
-            @if ($id)
-                <button wire:click="openMatriculas" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15">Gestionar matrículas</button>
-            @endif
-
             <a href="{{ route('abm.legajos', ['focus' => $id]) }}" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15">Cancelar</a>
 
             <button wire:click="save" wire:loading.attr="disabled" class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 disabled:opacity-60">
@@ -590,7 +597,11 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div class="lg:col-span-2">
                                 <label class="form-label">Curso y sección *</label>
-                                <select wire:model="m_idCursos" class="form-select @error('m_idCursos') border-red-400 @enderror">
+                                <select
+                                    wire:model.live="m_idCursos"
+                                    wire:change="evaluarCambioCursoMatriculaDesdeUi"
+                                    class="form-select @error('m_idCursos') border-red-400 @enderror"
+                                >
                                     <option value="">— Seleccione —</option>
                                     @foreach ($cursos as $c)
                                         <option value="{{ $c->Id }}">{{ trim($c->cursec) }}</option>
@@ -653,30 +664,72 @@
         </div>
     @endif
 
-    {{-- ═══════════════════ CONFIRM DELETE MATRICULA ═══════════════════ --}}
-    @if ($showMatriculaConfirm)
-        <div class="fixed inset-0 z-[60] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm">
-            <div class="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl" @click.stop>
+    {{-- ═══════════════════ CONFIRM CAMBIO DE PLAN (MATRÍCULA) ═══════════════════ --}}
+    @if ($showMatriculaPlanConfirm)
+        @teleport('body')
+        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm">
+            <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl" @click.stop>
                 <div class="px-6 py-5">
                     <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-100">
+                            <svg class="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-base font-semibold text-gray-800 mb-1">Confirmar eliminación</h3>
-                            <p class="text-sm text-gray-600">{{ $matriculaDeleteInfo }}</p>
+                            <h3 class="mb-1 text-base font-semibold text-gray-800">Cambio de plan de estudio</h3>
+                            <p class="text-sm leading-relaxed text-gray-600">{{ $matriculaPlanConfirmInfo }}</p>
                         </div>
                     </div>
                 </div>
-                <div class="px-6 pb-5 flex justify-end gap-3">
-                    <button wire:click="$set('showMatriculaConfirm', false)" class="btn-secondary">Cancelar</button>
-                    <button wire:click="deleteMatricula" wire:loading.attr="disabled" class="btn-danger">
-                        <span wire:loading.remove wire:target="deleteMatricula">Eliminar</span>
-                        <span wire:loading wire:target="deleteMatricula">Eliminando…</span>
+                <div class="flex justify-end gap-3 bg-accent-50 px-6 pb-5">
+                    <button type="button" wire:click="cancelMatriculaPlanChange" class="btn-secondary">Cancelar</button>
+                    <button type="button" wire:click="confirmMatriculaPlanChange" class="btn-danger">Continuar</button>
+                </div>
+            </div>
+        </div>
+        @endteleport
+    @endif
+
+    {{-- ═══════════════════ CONFIRM DELETE MATRICULA ═══════════════════ --}}
+    @if ($showMatriculaConfirm)
+        <div class="fixed inset-0 z-[60] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm">
+            <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl" @click.stop>
+                <div class="px-6 py-5">
+                    <div class="flex items-start gap-3">
+                        <div @class([
+                            'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+                            'bg-red-100' => $matriculaPuedeEliminar,
+                            'bg-amber-100' => ! $matriculaPuedeEliminar,
+                        ])>
+                            <svg @class([
+                                'h-5 w-5',
+                                'text-red-600' => $matriculaPuedeEliminar,
+                                'text-amber-700' => ! $matriculaPuedeEliminar,
+                            ]) fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="mb-1 text-base font-semibold text-gray-800">
+                                {{ $matriculaPuedeEliminar ? 'Confirmar eliminación' : 'No se puede eliminar' }}
+                            </h3>
+                            <p class="text-sm leading-relaxed text-gray-600">{{ $matriculaDeleteInfo }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 px-6 pb-5">
+                    <button wire:click="$set('showMatriculaConfirm', false)" class="btn-secondary">
+                        {{ $matriculaPuedeEliminar ? 'Cancelar' : 'Cerrar' }}
                     </button>
+                    @if ($matriculaPuedeEliminar)
+                        <button wire:click="deleteMatricula" wire:loading.attr="disabled" class="btn-danger">
+                            <span wire:loading.remove wire:target="deleteMatricula">Eliminar</span>
+                            <span wire:loading wire:target="deleteMatricula">Eliminando…</span>
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>

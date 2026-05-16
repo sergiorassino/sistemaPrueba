@@ -71,6 +71,7 @@
                         <th class="table-header w-[min(30%,20rem)]">Estudiante</th>
                         <th class="table-header w-32">DNI</th>
                         <th class="table-header">Matriculaciones en la escuela</th>
+                        <th class="table-header w-36"></th>
                         <th class="table-header w-40 text-right">Acciones</th>
                     </tr>
                 </thead>
@@ -94,30 +95,54 @@
                             <td class="table-cell font-mono text-neutral-700">
                                 {{ $l->dni }}
                             </td>
-                            <td class="table-cell py-3">
+                            <td class="table-cell py-2">
                                 @if ($l->matriculas->isEmpty())
                                     <span class="se-pill text-neutral-500">Sin matrículas</span>
                                 @else
-                                    <div class="flex max-w-3xl flex-wrap gap-2">
+                                    <div class="flex max-w-xs flex-col gap-0.5">
                                         @foreach ($l->matriculas as $mat)
+                                            @php
+                                                $nivelNombre = mb_strtolower(trim((string) ($mat->nivel?->nivel ?? '')));
+                                                $esCicloActivo = (int) ($mat->idTerlec ?? 0) === (int) schoolCtx()->idTerlec;
+                                                $nivelClases = match (true) {
+                                                    str_contains($nivelNombre, 'inicial') => 'border-green-300 bg-green-100 text-green-900',
+                                                    str_contains($nivelNombre, 'primar') => 'border-yellow-300 bg-yellow-100 text-yellow-900',
+                                                    str_contains($nivelNombre, 'secund') => 'border-sky-300 bg-sky-100 text-sky-900',
+                                                    default => 'border-accent-200 bg-accent-50 text-neutral-700',
+                                                };
+                                            @endphp
                                             <div @class([
-                                                'rounded-xl border px-3 py-2 text-xs shadow-sm',
-                                                'border-primary-300 bg-primary-50 text-primary-900' => (int) ($mat->idTerlec ?? 0) === (int) schoolCtx()->idTerlec,
-                                                'border-accent-200 bg-white text-neutral-700' => (int) ($mat->idTerlec ?? 0) !== (int) schoolCtx()->idTerlec,
+                                                'rounded-md border px-1.5 py-0.5 text-[10px] leading-tight shadow-sm',
+                                                $nivelClases,
+                                                'ring-1 ring-primary-500 ring-offset-1' => $esCicloActivo,
                                             ])>
-                                                <div class="flex items-center gap-2">
-                                                    <span class="font-mono font-bold">{{ $mat->terlec?->ano ?? '-' }}</span>
-                                                    <span class="max-w-48 truncate font-semibold" title="{{ $mat->curso?->cursec }}">
-                                                        {{ $mat->curso?->cursec ? trim($mat->curso->cursec) : '-' }}
+                                                <div class="flex min-w-0 items-center gap-1">
+                                                    <span class="shrink-0 font-mono font-bold tabular-nums">{{ $mat->terlec?->ano ?? '—' }}</span>
+                                                    <span class="shrink-0 opacity-50">·</span>
+                                                    <span class="shrink-0 font-semibold" title="{{ $mat->nivel?->nivel }}">
+                                                        {{ $mat->nivel?->nivel ?: '—' }}
                                                     </span>
-                                                </div>
-                                                <div class="mt-0.5 max-w-64 truncate text-[11px] opacity-75" title="{{ $mat->condicion?->condicion }}">
-                                                    {{ $mat->condicion?->condicion ?? '-' }}
+                                                    <span class="shrink-0 opacity-50">·</span>
+                                                    <span class="min-w-0 truncate font-medium" title="{{ $mat->curso?->cursec }}">
+                                                        {{ $mat->curso?->cursec ? trim($mat->curso->cursec) : '—' }}
+                                                    </span>
+                                                    @if ($mat->condicion?->condicion)
+                                                        <span class="shrink-0 opacity-50">·</span>
+                                                        <span class="min-w-0 truncate opacity-80" title="{{ $mat->condicion->condicion }}">
+                                                            {{ $mat->condicion->condicion }}
+                                                        </span>
+                                                    @endif
                                                 </div>
                                             </div>
                                         @endforeach
                                     </div>
                                 @endif
+                            </td>
+                            <td class="table-cell align-top">
+                                <a href="{{ route('abm.legajos.edit', ['id' => $l->id, 'matriculas' => 1]) }}"
+                                   class="btn-primary btn-sm whitespace-nowrap">
+                                    Gestionar matrículas
+                                </a>
                             </td>
                             <td class="table-cell text-right">
                                 <div class="flex flex-col items-stretch justify-end gap-2 sm:flex-row sm:items-center">
@@ -130,7 +155,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-14 text-center">
+                            <td colspan="5" class="px-6 py-14 text-center">
                                 <div class="mx-auto flex max-w-sm flex-col items-center gap-3">
                                     <div class="se-icon-badge">
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -98,10 +98,10 @@ class LegajosIndex extends Component
         $query = Legajo::with([
             'familia',
             'matriculas' => function ($q) {
-                $q->with(['terlec', 'curso', 'condicion'])
+                $q->with(['terlec', 'curso', 'condicion', 'nivel'])
                     ->leftJoin('terlec', 'terlec.id', '=', 'matricula.idTerlec')
-                    ->orderByDesc('terlec.ano')
-                    ->orderByDesc('matricula.id')
+                    ->orderBy('terlec.ano')
+                    ->orderBy('matricula.id')
                     ->select('matricula.*');
             },
         ]);

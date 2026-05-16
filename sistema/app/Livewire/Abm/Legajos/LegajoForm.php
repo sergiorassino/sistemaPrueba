@@ -169,6 +169,9 @@ class LegajoForm extends Component
     public string $retira = '';
 
     // ─── Matrículas (modales) ────────────────────────────────────────────────
+    /** Modal abierto desde el listado (`?matriculas=1`); al cerrar, volver al listado. */
+    public bool $matriculasDesdeListado = false;
+
     public bool $showMatriculasModal = false;
 
     public bool $showMatriculaForm = false;
@@ -180,6 +183,21 @@ class LegajoForm extends Component
     public bool $showMatriculaConfirm = false;
 
     public string $matriculaDeleteInfo = '';
+
+    public bool $matriculaPuedeEliminar = true;
+
+    public bool $showMatriculaPlanConfirm = false;
+
+    public string $matriculaPlanConfirmInfo = '';
+
+    /** Curso al abrir edición; base para comparar plan y revertir cancelación. */
+    public int $m_idCursosAlEditar = 0;
+
+    /** Curso elegido que dispara confirmación por cambio de plan. */
+    public int $m_idCursosPendiente = 0;
+
+    /** Curso destino ya aceptado en el modal de cambio de plan. */
+    public ?int $matriculaPlanConfirmadoParaCurso = null;
 
     // Matrícula form fields
     public int|string $m_idCursos = '';
@@ -228,6 +246,11 @@ class LegajoForm extends Component
         $this->id = $id;
         if ($id) {
             $this->loadLegajo($id);
+
+            if (request()->boolean('matriculas')) {
+                $this->matriculasDesdeListado = true;
+                $this->openMatriculas();
+            }
         }
     }
 
@@ -342,11 +365,23 @@ class LegajoForm extends Component
         $this->resetMatriculaForm();
     }
 
-    public function closeMatriculas(): void
+    public function closeMatriculas(): mixed
     {
         $this->showMatriculasModal = false;
         $this->showMatriculaForm = false;
         $this->resetMatriculaForm();
+
+        if ($this->matriculasDesdeListado && $this->id) {
+            $focusId = (int) $this->id;
+            $page = $this->pageForLegajo($focusId, 25);
+
+            return redirect()->route('abm.legajos', [
+                'page' => $page,
+                'focus' => $focusId,
+            ]);
+        }
+
+        return null;
     }
 
     public function openNuevaMatricula(): void
@@ -369,6 +404,8 @@ class LegajoForm extends Component
         $this->matriculaEditId = $id;
 
         $this->m_idCursos = (int) ($m->idCursos ?? 0);
+        $this->m_idCursosAlEditar = (int) ($m->idCursos ?? 0);
+        $this->resetMatriculaPlanConfirmState();
         $this->m_idCondiciones = (int) ($m->idCondiciones ?? 0);
         $this->m_idTerlec = (int) ($m->idTerlec ?? 0);
         $this->m_idNivel = (int) ($m->idNivel ?? 0);
@@ -379,6 +416,73 @@ class LegajoForm extends Component
 
         $this->resetValidation();
         $this->showMatriculaForm = true;
+    }
+
+    public function updated($property, $value = null): void
+    {
+        if ($property === 'm_idCursos') {
+            $this->evaluarCambioCursoMatricula((int) ($value ?? $this->m_idCursos));
+        }
+    }
+
+    public function evaluarCambioCursoMatriculaDesdeUi(): void
+    {
+        $this->evaluarCambioCursoMatricula((int) $this->m_idCursos);
+    }
+
+    private function evaluarCambioCursoMatricula(int $nuevoId): void
+    {
+        if (! $this->matriculaEditId) {
+            return;
+        }
+
+        $originalId = (int) $this->m_idCursosAlEditar;
+
+        if ($nuevoId < 1 || $nuevoId === $originalId) {
+            $this->resetMatriculaPlanConfirmState();
+
+            return;
+        }
+
+        if (! $this->matriculaCambioDePlanDistinto($originalId, $nuevoId)) {
+            $this->resetMatriculaPlanConfirmState();
+
+            return;
+        }
+
+        if ((int) $this->matriculaPlanConfirmadoParaCurso === $nuevoId) {
+            $this->showMatriculaPlanConfirm = false;
+
+            return;
+        }
+
+        $this->m_idCursosPendiente = $nuevoId;
+        $this->matriculaPlanConfirmInfo = $this->buildMatriculaPlanConfirmMessage($originalId, $nuevoId);
+        $this->matriculaPlanConfirmadoParaCurso = null;
+        $this->showMatriculaPlanConfirm = true;
+    }
+
+    public function confirmMatriculaPlanChange(): void
+    {
+        $destino = (int) ($this->m_idCursosPendiente ?: $this->m_idCursos);
+        if ($destino < 1) {
+            $this->showMatriculaPlanConfirm = false;
+
+            return;
+        }
+
+        $this->matriculaPlanConfirmadoParaCurso = $destino;
+        $this->showMatriculaPlanConfirm = false;
+
+        if ((int) $this->m_idCursos !== $destino) {
+            $this->m_idCursos = $destino;
+        }
+    }
+
+    public function cancelMatriculaPlanChange(): void
+    {
+        $this->m_idCursos = (int) $this->m_idCursosAlEditar;
+        $this->resetMatriculaPlanConfirmState();
     }
 
     public function saveMatricula(): void
@@ -415,15 +519,32 @@ class LegajoForm extends Component
             $existente = Matricula::where('idLegajos', $this->id)
                 ->findOrFail($this->matriculaEditId);
 
-            $planCambio =
-                (int) ($existente->idCursos ?? 0) !== (int) $data['idCursos']
-                || (int) ($existente->idTerlec ?? 0) !== (int) $data['idTerlec']
-                || (int) ($existente->idNivel ?? 0) !== (int) $data['idNivel'];
+            $idCursosAnterior = (int) ($existente->idCursos ?? 0);
+            $idCursosNuevo = (int) $data['idCursos'];
+            $cursoCambio = $idCursosAnterior !== $idCursosNuevo;
+            $planDistinto = $cursoCambio
+                && $this->matriculaCambioDePlanDistinto($idCursosAnterior, $idCursosNuevo);
 
-            DB::transaction(function () use ($existente, $data, $planCambio) {
+            if ($planDistinto && (int) $this->matriculaPlanConfirmadoParaCurso !== $idCursosNuevo) {
+                $this->m_idCursosPendiente = $idCursosNuevo;
+                $this->matriculaPlanConfirmInfo = $this->buildMatriculaPlanConfirmMessage(
+                    $idCursosAnterior,
+                    $idCursosNuevo,
+                );
+                $this->matriculaPlanConfirmadoParaCurso = null;
+                $this->showMatriculaPlanConfirm = true;
+                session()->flash(
+                    'warning',
+                    'Debe confirmar el cambio de plan de estudio antes de guardar la matrícula.'
+                );
+
+                return;
+            }
+
+            DB::transaction(function () use ($existente, $data, $cursoCambio, $planDistinto, $idCursosAnterior) {
                 $existente->update($data);
 
-                if ($planCambio) {
+                if ($cursoCambio && $planDistinto) {
                     DB::table('calificaciones')
                         ->where('idLegajos', (int) $data['idLegajos'])
                         ->where('idMatricula', (int) $existente->id)
@@ -436,15 +557,25 @@ class LegajoForm extends Component
                         (int) $data['idTerlec'],
                         (int) $data['idCursos'],
                     );
+                } elseif ($cursoCambio) {
+                    $this->relocateCalificacionesMismoPlan(
+                        (int) $data['idLegajos'],
+                        (int) $existente->id,
+                        (int) $data['idNivel'],
+                        (int) $data['idTerlec'],
+                        (int) $data['idCursos'],
+                    );
                 }
             });
 
             session()->flash(
                 'success',
-                $planCambio
+                $planDistinto
                     ? 'Matrícula actualizada. Las calificaciones se regeneraron según el nuevo curso.'
                     : 'Matrícula actualizada.'
             );
+
+            $this->resetMatriculaPlanConfirmState();
         } else {
             DB::transaction(function () use ($data) {
                 $matricula = Matricula::create($data);
@@ -471,19 +602,71 @@ class LegajoForm extends Component
         $this->matriculaDeleteId = $id;
         $descAno = $m->terlec?->ano ?? '—';
         $descCurso = $m->curso?->cursec ? trim($m->curso->cursec) : '—';
-        $this->matriculaDeleteInfo = "¿Confirma eliminar la matrícula {$descAno} · {$descCurso}?";
+
+        $dependencias = $this->dependenciasMatriculaParaBorrar($id);
+        if ($dependencias !== []) {
+            $modulos = collect($dependencias)
+                ->map(fn (int $cant, string $modulo) => "{$modulo} ({$cant})")
+                ->implode(', ');
+
+            $this->matriculaPuedeEliminar = false;
+            $this->matriculaDeleteInfo = "La matrícula que intenta borrar ({$descAno} · {$descCurso}) tiene registros relacionados en: {$modulos}.";
+        } else {
+            $this->matriculaPuedeEliminar = true;
+            $this->matriculaDeleteInfo = "¿Confirma eliminar la matrícula {$descAno} · {$descCurso}?";
+        }
+
         $this->showMatriculaConfirm = true;
     }
 
     public function deleteMatricula(): void
     {
-        if ($this->matriculaDeleteId && $this->id) {
+        if ($this->matriculaDeleteId && $this->id && $this->matriculaPuedeEliminar) {
+            $dependencias = $this->dependenciasMatriculaParaBorrar($this->matriculaDeleteId);
+            if ($dependencias !== []) {
+                $modulos = collect($dependencias)
+                    ->map(fn (int $cant, string $modulo) => "{$modulo} ({$cant})")
+                    ->implode(', ');
+                $this->matriculaPuedeEliminar = false;
+                $this->matriculaDeleteInfo = "La matrícula que intenta borrar tiene registros relacionados en: {$modulos}.";
+                $this->showMatriculaConfirm = true;
+
+                return;
+            }
+
             Matricula::where('idLegajos', $this->id)->findOrFail($this->matriculaDeleteId)->delete();
             session()->flash('success', 'Matrícula eliminada.');
         }
 
         $this->showMatriculaConfirm = false;
-        $this->reset('matriculaDeleteId', 'matriculaDeleteInfo');
+        $this->reset('matriculaDeleteId', 'matriculaDeleteInfo', 'matriculaPuedeEliminar');
+        $this->matriculaPuedeEliminar = true;
+    }
+
+    /**
+     * Módulos con registros que impiden borrar la matrícula (tabla => etiqueta en UI).
+     *
+     * @return array<string, int> etiqueta => cantidad
+     */
+    private function dependenciasMatriculaParaBorrar(int $idMatricula): array
+    {
+        $checks = [
+            'inasistencias' => 'Inasistencias',
+            'sanciones' => 'Seguimiento disciplinario',
+        ];
+
+        $deps = [];
+        foreach ($checks as $tabla => $etiqueta) {
+            if (! Schema::hasTable($tabla)) {
+                continue;
+            }
+            $cant = (int) DB::table($tabla)->where('idMatricula', $idMatricula)->count();
+            if ($cant > 0) {
+                $deps[$etiqueta] = $cant;
+            }
+        }
+
+        return $deps;
     }
 
     /**
@@ -523,6 +706,80 @@ class LegajoForm extends Component
         DB::table('calificaciones')->insert($rows);
     }
 
+    /**
+     * Cambio de sección/curso con el mismo plan: conserva notas y actualiza vínculos.
+     */
+    private function relocateCalificacionesMismoPlan(
+        int $idLegajos,
+        int $idMatricula,
+        int $idNivel,
+        int $idTerlec,
+        int $idCursosNuevo,
+    ): void {
+        $mapaMaterias = DB::table('materias')
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
+            ->where('idCursos', $idCursosNuevo)
+            ->pluck('id', 'idMatPlan')
+            ->mapWithKeys(fn ($id, $idMatPlan) => [(int) $idMatPlan => (int) $id]);
+
+        $calificaciones = DB::table('calificaciones')
+            ->where('idLegajos', $idLegajos)
+            ->where('idMatricula', $idMatricula)
+            ->get(['id', 'idMatPlan']);
+
+        foreach ($calificaciones as $calificacion) {
+            $update = ['idCursos' => $idCursosNuevo];
+            $idMatPlan = (int) ($calificacion->idMatPlan ?? 0);
+            if ($idMatPlan > 0 && $mapaMaterias->has($idMatPlan)) {
+                $update['idMaterias'] = $mapaMaterias[$idMatPlan];
+            }
+
+            DB::table('calificaciones')
+                ->where('id', (int) $calificacion->id)
+                ->update($update);
+        }
+    }
+
+    private function matriculaCambioDePlanDistinto(int $idCursosAnterior, int $idCursosNuevo): bool
+    {
+        if ($idCursosAnterior === $idCursosNuevo) {
+            return false;
+        }
+
+        $cursos = Curso::query()
+            ->whereIn('Id', [$idCursosAnterior, $idCursosNuevo])
+            ->get(['Id', 'idCurPlan']);
+
+        $planAnterior = (int) optional($cursos->firstWhere('Id', $idCursosAnterior))->idCurPlan;
+        $planNuevo = (int) optional($cursos->firstWhere('Id', $idCursosNuevo))->idCurPlan;
+
+        return $planAnterior !== $planNuevo;
+    }
+
+    private function buildMatriculaPlanConfirmMessage(int $idCursosAnterior, int $idCursosNuevo): string
+    {
+        $cursos = Curso::query()
+            ->whereIn('Id', [$idCursosAnterior, $idCursosNuevo])
+            ->get(['Id', 'cursec']);
+
+        $de = trim((string) optional($cursos->firstWhere('Id', $idCursosAnterior))->cursec ?: 'curso actual');
+        $a = trim((string) optional($cursos->firstWhere('Id', $idCursosNuevo))->cursec ?: 'nuevo curso');
+
+        return "El curso «{$de}» y «{$a}» tienen planes de estudio distintos. "
+            .'Al continuar se eliminarán las calificaciones cargadas para esta matrícula '
+            .'y se crearán filas nuevas según las materias del nuevo curso. '
+            .'¿Desea continuar?';
+    }
+
+    private function resetMatriculaPlanConfirmState(): void
+    {
+        $this->showMatriculaPlanConfirm = false;
+        $this->matriculaPlanConfirmInfo = '';
+        $this->m_idCursosPendiente = 0;
+        $this->matriculaPlanConfirmadoParaCurso = null;
+    }
+
     private function resetMatriculaForm(): void
     {
         $this->reset([
@@ -530,7 +787,9 @@ class LegajoForm extends Component
             'm_idCursos', 'm_idCondiciones', 'm_idTerlec', 'm_idNivel',
             'm_terlec_ano', 'm_nivel_nombre',
             'm_nroMatricula', 'm_fechaMatricula', 'm_fechaBaja',
+            'm_idCursosAlEditar',
         ]);
+        $this->resetMatriculaPlanConfirmState();
     }
 
     private function fillMatriculaReadonlyLabels(): void

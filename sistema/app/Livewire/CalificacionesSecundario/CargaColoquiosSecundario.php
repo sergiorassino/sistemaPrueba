@@ -46,6 +46,7 @@ class CargaColoquiosSecundario extends Component
     public function updatedPeriodo($value): void
     {
         $this->periodo = CalificacionesColoquioSecundario::normalizarPeriodo(is_string($value) ? $value : null);
+        $this->sincronizarMateriaYGrillaTrasCambioDeFiltros();
     }
 
     public function updatedCursoId($value): void
@@ -102,6 +103,108 @@ class CargaColoquiosSecundario extends Component
         if (! $materiaOk) {
             abort(404);
         }
+
+        $idsPermitidos = $this->idsMateriasConAlumnosParaCargar();
+        if (! in_array((int) $this->materiaId, $idsPermitidos, true)) {
+            abort(404);
+        }
+    }
+
+    protected function sincronizarMateriaYGrillaTrasCambioDeFiltros(): void
+    {
+        if (! $this->cursoId) {
+            return;
+        }
+
+        $idsPermitidos = $this->idsMateriasConAlumnosParaCargar();
+        if ($this->materiaId !== null && ! in_array((int) $this->materiaId, $idsPermitidos, true)) {
+            $this->materiaId = null;
+            $this->rows = [];
+        }
+
+        if ($this->cursoId && $this->materiaId) {
+            $this->loadGrid();
+        }
+    }
+
+    /**
+     * @return list<int> IDs de `materias` con al menos un alumno cargable en el período activo.
+     */
+    protected function idsMateriasConAlumnosParaCargar(): array
+    {
+        if (! $this->cursoId) {
+            return [];
+        }
+
+        $ctx = schoolCtx();
+        $cursoId = (int) $this->cursoId;
+        $idTerlec = (int) $ctx->idTerlec;
+        $periodo = $this->campoActivo();
+        $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
+        $teaPorLegajo = $this->legajosConTeaEnCurso($cursoId, $idTerlec);
+
+        $califs = DB::table('calificaciones as c')
+            ->join('legajos as l', 'l.id', '=', 'c.idLegajos')
+            ->join('matricula as m', function ($join) use ($cursoId, $idTerlec, $ctx, $idsCondicionesRegulares) {
+                $join->on('m.idLegajos', '=', 'l.id')
+                    ->where('m.idCursos', $cursoId)
+                    ->where('m.idTerlec', $idTerlec)
+                    ->where('m.idNivel', (int) $ctx->idNivel)
+                    ->whereIn('m.idCondiciones', $idsCondicionesRegulares)
+                    ->whereNull('m.fechaBaja');
+            })
+            ->where('c.idTerlec', $idTerlec)
+            ->where('c.idCursos', $cursoId)
+            ->get([
+                'c.idMaterias',
+                'c.idLegajos',
+                'c.dic',
+                'c.tea',
+                'c.ic01', 'c.ic02', 'c.ic03', 'c.ic04', 'c.ic05', 'c.ic06', 'c.ic07', 'c.ic08', 'c.ic09', 'c.ic10',
+                'c.ic11', 'c.ic12', 'c.ic13', 'c.ic14', 'c.ic15', 'c.ic16', 'c.ic17', 'c.ic18', 'c.ic19', 'c.ic20',
+                'c.ic21', 'c.ic22', 'c.ic23', 'c.ic24', 'c.ic25', 'c.ic26', 'c.ic27', 'c.ic28',
+            ]);
+
+        $materiasConAlumnos = [];
+        foreach ($califs as $r) {
+            $idMateria = (int) $r->idMaterias;
+            if (isset($materiasConAlumnos[$idMateria])) {
+                continue;
+            }
+
+            $idLegajo = (int) $r->idLegajos;
+            $rowModulos = $this->rowModulosDesdeCalificacion($r);
+
+            if (CalificacionesColoquioSecundario::cuentaParaMateriaConCarga(
+                $periodo,
+                $rowModulos,
+                (string) ($r->dic ?? ''),
+                isset($teaPorLegajo[$idLegajo]),
+            )) {
+                $materiasConAlumnos[$idMateria] = true;
+            }
+        }
+
+        return array_keys($materiasConAlumnos);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function rowModulosDesdeCalificacion(object $r): array
+    {
+        $out = ['tea' => (int) ($r->tea ?? 0)];
+        foreach ([
+            'ic01', 'ic02', 'ic03', 'ic04', 'ic05', 'ic06', 'ic07', 'ic08', 'ic09', 'ic10',
+            'ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16', 'ic17', 'ic18', 'ic19', 'ic20',
+            'ic21', 'ic22', 'ic23', 'ic24', 'ic25', 'ic26', 'ic27', 'ic28',
+        ] as $c) {
+            $out[$c] = (string) ($r->{$c} ?? '');
+        }
+
+        return $out;
     }
 
     public function loadGrid(): void
@@ -178,49 +281,19 @@ class CargaColoquiosSecundario extends Component
                 'c.dic', 'c.feb', 'c.tea', 'c.calif',
             ]);
 
+        $periodo = $this->campoActivo();
         $out = [];
         foreach ($califs as $r) {
             $idLegajo = (int) $r->idLegajos;
             $teaEnCurso = isset($teaPorLegajo[$idLegajo]);
+            $rowModulos = $this->rowModulosDesdeCalificacion($r);
+            $dic = (string) ($r->dic ?? '');
 
-            $rowData = [
-                'ic01' => (string) ($r->ic01 ?? ''),
-                'ic02' => (string) ($r->ic02 ?? ''),
-                'ic03' => (string) ($r->ic03 ?? ''),
-                'ic04' => (string) ($r->ic04 ?? ''),
-                'ic05' => (string) ($r->ic05 ?? ''),
-                'ic06' => (string) ($r->ic06 ?? ''),
-                'ic07' => (string) ($r->ic07 ?? ''),
-                'ic08' => (string) ($r->ic08 ?? ''),
-                'ic09' => (string) ($r->ic09 ?? ''),
-                'ic10' => (string) ($r->ic10 ?? ''),
-                'ic11' => (string) ($r->ic11 ?? ''),
-                'ic12' => (string) ($r->ic12 ?? ''),
-                'ic13' => (string) ($r->ic13 ?? ''),
-                'ic14' => (string) ($r->ic14 ?? ''),
-                'ic15' => (string) ($r->ic15 ?? ''),
-                'ic16' => (string) ($r->ic16 ?? ''),
-                'ic17' => (string) ($r->ic17 ?? ''),
-                'ic18' => (string) ($r->ic18 ?? ''),
-                'ic19' => (string) ($r->ic19 ?? ''),
-                'ic20' => (string) ($r->ic20 ?? ''),
-                'ic21' => (string) ($r->ic21 ?? ''),
-                'ic22' => (string) ($r->ic22 ?? ''),
-                'ic23' => (string) ($r->ic23 ?? ''),
-                'ic24' => (string) ($r->ic24 ?? ''),
-                'ic25' => (string) ($r->ic25 ?? ''),
-                'ic26' => (string) ($r->ic26 ?? ''),
-                'ic27' => (string) ($r->ic27 ?? ''),
-                'ic28' => (string) ($r->ic28 ?? ''),
-                'tea' => (int) ($r->tea ?? 0),
-            ];
-
-            if (! CalificacionesColoquioSecundario::esElegible($rowData, $teaEnCurso)) {
+            if (! CalificacionesColoquioSecundario::apareceEnListadoColoquio($periodo, $rowModulos, $dic, $teaEnCurso)) {
                 continue;
             }
 
             $id = (int) $r->id;
-            $dic = (string) ($r->dic ?? '');
             $dicAprobado = CalificacionesColoquioSecundario::notaColoquioAprobada($dic);
             $out[$id] = [
                 'id' => $id,
@@ -229,7 +302,7 @@ class CargaColoquiosSecundario extends Component
                 'dic' => $dic,
                 'feb' => (string) ($r->feb ?? ''),
                 'calif' => (string) ($r->calif ?? ''),
-                'motivo' => CalificacionesColoquioSecundario::motivoElegibilidad($rowData, $teaEnCurso),
+                'motivo' => CalificacionesColoquioSecundario::motivoElegibilidad($rowModulos, $teaEnCurso),
                 'dic_aprobado' => $dicAprobado,
                 'feb_inhabilitado' => $dicAprobado,
             ];
@@ -424,10 +497,16 @@ class CargaColoquiosSecundario extends Component
             return collect();
         }
 
+        $idsConAlumnos = $this->idsMateriasConAlumnosParaCargar();
+        if ($idsConAlumnos === []) {
+            return collect();
+        }
+
         return DB::table('materias')
             ->where('idNivel', (int) $ctx->idNivel)
             ->where('idTerlec', (int) $ctx->idTerlec)
             ->where('idCursos', (int) $this->cursoId)
+            ->whereIn('id', $idsConAlumnos)
             ->orderBy('ord')
             ->orderBy('id')
             ->get(['id', 'materia', 'abrev', 'ord']);

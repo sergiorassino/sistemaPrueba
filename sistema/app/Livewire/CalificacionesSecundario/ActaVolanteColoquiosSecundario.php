@@ -3,15 +3,18 @@
 namespace App\Livewire\CalificacionesSecundario;
 
 use App\Models\Curso;
-use App\Support\PlanillaCalificacionesSecundario as PlanillaCalificacionesPdf;
+use App\Support\ActaVolanteColoquiosSecundario as ActaVolanteColoquiosService;
+use App\Support\CalificacionesColoquioSecundario;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
 /**
- * Selección de curso y una o más materias para imprimir la planilla de calificaciones (PDF).
+ * Impresión de actas volantes de coloquio (una hoja por materia con alumnos elegibles).
  */
-class PlanillaCalificacionesSecundario extends Component
+class ActaVolanteColoquiosSecundario extends Component
 {
+    public string $periodo = CalificacionesColoquioSecundario::PERIODO_DICIEMBRE;
+
     public ?int $cursoId = null;
 
     /** IDs de materia marcados (`materias.id` como string). */
@@ -19,8 +22,15 @@ class PlanillaCalificacionesSecundario extends Component
 
     public function mount(): void
     {
+        $this->periodo = CalificacionesColoquioSecundario::PERIODO_DICIEMBRE;
         $this->cursoId = null;
         $this->materiasSeleccionadas = [];
+    }
+
+    public function updatedPeriodo($value): void
+    {
+        $this->periodo = CalificacionesColoquioSecundario::normalizarPeriodo(is_string($value) ? $value : null);
+        $this->sincronizarMateriasTrasCambioDeFiltros();
     }
 
     public function updatedCursoId($value): void
@@ -45,6 +55,23 @@ class PlanillaCalificacionesSecundario extends Component
     public function quitarTodasMaterias(): void
     {
         $this->materiasSeleccionadas = [];
+    }
+
+    protected function sincronizarMateriasTrasCambioDeFiltros(): void
+    {
+        if (! $this->cursoId) {
+            return;
+        }
+
+        $allowed = $this->materias()->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $this->materiasSeleccionadas = collect($this->materiasSeleccionadas)
+            ->map(fn ($v) => (int) $v)
+            ->filter(fn ($id) => $id > 0 && in_array($id, $allowed, true))
+            ->unique()
+            ->sort()
+            ->values()
+            ->map(fn ($id) => (string) $id)
+            ->all();
     }
 
     protected function normalizarMateriasSeleccionadas(): void
@@ -86,6 +113,8 @@ class PlanillaCalificacionesSecundario extends Component
     }
 
     /**
+     * Materias del curso con al menos un alumno elegible para coloquio en el período activo.
+     *
      * @return Collection<int, object>
      */
     public function materias(): Collection
@@ -94,33 +123,23 @@ class PlanillaCalificacionesSecundario extends Component
             return collect();
         }
 
-        return PlanillaCalificacionesPdf::materiasDelCurso((int) $this->cursoId);
-    }
-
-    public function etiquetaMateriasSeleccionadas(): string
-    {
-        if (! $this->puedeGenerarPdf()) {
-            return '';
-        }
-
-        $ids = collect($this->materiasSeleccionadas)->map(fn ($v) => (int) $v)->flip();
-
-        return $this->materias()
-            ->filter(fn ($m) => $ids->has((int) $m->id))
-            ->map(fn ($m) => trim((string) ($m->materia ?? '')) !== '' ? $m->materia : ('ID '.$m->id))
-            ->implode(' · ');
+        return ActaVolanteColoquiosService::materiasConAlumnosElegibles(
+            (int) $this->cursoId,
+            CalificacionesColoquioSecundario::normalizarPeriodo($this->periodo),
+        );
     }
 
     public function render()
     {
         $cursos = $this->cursos();
         $materias = $this->materias();
+        $campoActivo = CalificacionesColoquioSecundario::normalizarPeriodo($this->periodo);
+        $condicionLabel = CalificacionesColoquioSecundario::tituloCondicionColoquio($campoActivo);
 
         $cursoLabel = $this->cursoId
             ? optional($cursos->firstWhere('Id', (int) $this->cursoId))->nombreParaListado()
             : null;
 
-        $etiquetaMaterias = $this->etiquetaMateriasSeleccionadas();
         $cantidadMateriasSeleccionadas = collect($this->materiasSeleccionadas)
             ->filter(fn ($v) => (int) $v > 0)
             ->count();
@@ -133,20 +152,22 @@ class PlanillaCalificacionesSecundario extends Component
                 ->unique()
                 ->values();
 
-            $pdfUrl = route('calificacionesSecundario.planilla.pdf', [
+            $pdfUrl = route('calificacionesSecundario.actaVolanteColoquios.pdf', [
+                'periodo' => $campoActivo,
                 'curso' => $this->cursoId,
                 'materias' => $ids->implode(','),
             ]);
         }
 
-        return view('livewire.calificaciones-secundario.planilla-calificaciones-secundario', compact(
+        return view('livewire.calificaciones-secundario.acta-volante-coloquios-secundario', compact(
             'cursos',
             'materias',
+            'campoActivo',
+            'condicionLabel',
             'cursoLabel',
-            'etiquetaMaterias',
             'cantidadMateriasSeleccionadas',
             'pdfUrl',
         ))
-            ->layout('layouts.app', ['pageTitle' => 'Planilla de calificaciones']);
+            ->layout('layouts.app', ['pageTitle' => 'Actas volantes de coloquio']);
     }
 }

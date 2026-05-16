@@ -35,20 +35,71 @@
         <div class="se-card overflow-hidden p-0">
             <div class="border-b border-accent-200 bg-accent-50 px-5 py-3">
                 <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Estudiantes del curso</p>
-                <p class="text-sm text-neutral-600">Genera el informe de progreso escolar en PDF (sin marca de agua, con espacio para firmas).</p>
+                <p class="text-sm text-neutral-600">
+                    Marque uno, varios o todos los estudiantes y genere un único PDF con los informes seleccionados,
+                    o abra el informe de cada alumno por separado.
+                </p>
             </div>
+
+            @if ($hayMatriculas)
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-accent-100 bg-white px-5 py-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button"
+                                wire:click="seleccionarTodasMatriculas"
+                                class="rounded-xl border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-accent-50">
+                            Marcar todos
+                        </button>
+                        <button type="button"
+                                wire:click="quitarTodasMatriculas"
+                                class="rounded-xl border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 shadow-sm transition hover:border-accent-300 hover:bg-accent-50">
+                            Desmarcar todos
+                        </button>
+                        @if ($cantidadSeleccionados > 0)
+                            <span class="se-pill">{{ $cantidadSeleccionados }} seleccionado{{ $cantidadSeleccionados === 1 ? '' : 's' }}</span>
+                        @endif
+                    </div>
+                    @if ($pdfLoteUrl)
+                        <a href="{{ $pdfLoteUrl }}"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                            </svg>
+                            PDF con seleccionados
+                        </a>
+                    @endif
+                </div>
+            @endif
+
             <div class="flex w-full justify-center overflow-x-auto px-4 pb-4 pt-1">
                 <table class="w-max max-w-full table-auto divide-y divide-accent-200 text-sm">
                     <thead class="bg-white">
                         <tr>
-                            <th scope="col" class="py-3 pl-5 pr-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Apellido y nombre</th>
+                            <th scope="col" class="w-10 py-3 pl-5 pr-1 text-center">
+                                @if ($hayMatriculas)
+                                    <input type="checkbox"
+                                           class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
+                                           title="Marcar o desmarcar todos"
+                                           @checked($todasMarcadas)
+                                           wire:click="toggleSeleccionTodas">
+                                @endif
+                            </th>
+                            <th scope="col" class="py-3 pl-2 pr-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Apellido y nombre</th>
                             <th scope="col" class="py-3 pl-2 pr-5 text-right text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Informe</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-accent-100 bg-white">
                         @forelse ($matriculas as $mat)
-                            <tr class="hover:bg-accent-50/60">
-                                <td class="py-3 pl-5 pr-2 align-middle font-medium text-neutral-800">
+                            <tr class="hover:bg-accent-50/60" wire:key="boletin-mat-{{ $mat->id }}">
+                                <td class="py-3 pl-5 pr-1 text-center align-middle">
+                                    <input type="checkbox"
+                                           class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
+                                           wire:model.live="matriculasSeleccionadas"
+                                           value="{{ $mat->id }}">
+                                </td>
+                                <td class="py-3 pl-2 pr-2 align-middle font-medium text-neutral-800">
                                     {{ trim((string) ($mat->legajo?->nombre_completo ?? '')) === '' ? '—' : $mat->legajo->nombre_completo }}
                                 </td>
                                 <td class="py-3 pl-2 pr-5 text-right align-middle">
@@ -66,7 +117,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="2" class="px-5 py-10 text-center text-sm text-neutral-500">
+                                <td colspan="3" class="px-5 py-10 text-center text-sm text-neutral-500">
                                     No hay matrículas en este curso para el ciclo lectivo actual.
                                 </td>
                             </tr>

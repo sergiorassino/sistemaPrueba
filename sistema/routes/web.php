@@ -5,9 +5,11 @@ use App\Http\Controllers\Alumnos\InformeInasistenciasController;
 use App\Http\Controllers\Alumnos\PushApiController;
 use App\Http\Controllers\Alumnos\PushController;
 use App\Http\Controllers\AntecedentesDisciplinariosPdfController;
+use App\Http\Controllers\BoletinesSecundario\BoletinSecundarioLotePdfController;
 use App\Http\Controllers\BoletinesSecundario\BoletinSecundarioPdfController;
 use App\Http\Controllers\CalificacionesSecundario\ConsultaCalificacionesSecundarioPdfController;
 use App\Http\Controllers\CalificacionesSecundario\PlanillaCalificacionesPdfController;
+use App\Http\Controllers\CalificacionesSecundario\ActaVolanteColoquiosPdfController;
 use App\Http\Controllers\CalificacionesSecundario\PlanillaResumenCalificacionesPdfController;
 use App\Http\Controllers\EstudiantesExcelController;
 use App\Http\Controllers\InformeInasistenciasPdfController;
@@ -35,6 +37,7 @@ use App\Livewire\Auth\Login;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\CargaColoquiosSecundario;
 use App\Livewire\CalificacionesSecundario\PlanillaCalificacionesSecundario;
+use App\Livewire\CalificacionesSecundario\ActaVolanteColoquiosSecundario;
 use App\Livewire\CalificacionesSecundario\PlanillaResumenCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
 use App\Livewire\BoletinesSecundario\BoletinesSecundarioIndex;
@@ -188,6 +191,12 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/calificaciones-secundario/coloquios', CargaColoquiosSecundario::class)
         ->middleware('permiso:2')
         ->name('calificacionesSecundario.coloquios');
+    Route::get('/calificaciones-secundario/actas-volantes-coloquio', ActaVolanteColoquiosSecundario::class)
+        ->middleware('permiso:2')
+        ->name('calificacionesSecundario.actaVolanteColoquios');
+    Route::get('/calificaciones-secundario/actas-volantes-coloquio/pdf', ActaVolanteColoquiosPdfController::class)
+        ->middleware('permiso:2')
+        ->name('calificacionesSecundario.actaVolanteColoquios.pdf');
     Route::get('/calificaciones-secundario/planilla', PlanillaCalificacionesSecundario::class)
         ->middleware('permiso:2')
         ->name('calificacionesSecundario.planilla');
@@ -214,6 +223,9 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/boletines-secundario/pdf', BoletinSecundarioPdfController::class)
         ->middleware('permiso:2')
         ->name('boletinesSecundario.pdf');
+    Route::get('/boletines-secundario/pdf-lote', BoletinSecundarioLotePdfController::class)
+        ->middleware('permiso:2')
+        ->name('boletinesSecundario.pdfLote');
 
     // Seguimiento disciplinario
     Route::get('/seguimiento/disciplinario', DisciplinarioIndex::class)

@@ -140,7 +140,85 @@ Si se agrega otro flujo que deba calcular (p. ej. batch nocturno o otro nivel), 
 
 ---
 
-## 8. Convenciones de documentación
+## 8. PDFs con DomPDF (anchos de columna)
+
+Los PDFs del sistema usan **Barryvdh DomPDF** (`Pdf::loadView(...)`) y vistas Blade en `resources/views/pdf/` (y `resources/views/listados/pdf/`).
+
+### Regla de oro
+
+**No confiar en `colgroup`, anchos en mm/pt sueltos ni en clases CSS sin ancho en cada celda.** DomPDF reparte mal el ancho si solo hay `table-layout: fixed` o si el contenido largo (nombres, textos) empuja una columna.
+
+Aplicar el mismo criterio que ya funciona en:
+
+| Referencia | Archivo |
+|------------|---------|
+| Planilla de calificaciones | `resources/views/pdf/partials/planilla-calificaciones-hoja.blade.php` |
+| Libro de matrícula | `resources/views/listados/pdf/libro-matricula.blade.php` |
+| Informe de inasistencias | `resources/views/pdf/informe-inasistencias.blade.php` |
+| Acta volante de coloquio | `resources/views/pdf/acta-volante-coloquios.blade.php` |
+
+### Patrón obligatorio para tablas con columnas de distinto ancho
+
+1. **Tabla al 100%** del área imprimible (no mezclar `width: 170mm` fijo con `@page` distinto sin motivo):
+
+   ```css
+   table.mi-tabla {
+       width: 100%;
+       border-collapse: collapse; /* o separate si hace falta (planilla) */
+       table-layout: fixed;
+   }
+   ```
+
+2. **Porcentajes en cada `th` y cada `td`**, con `min-width: 0` y `overflow: hidden` (inline, generados en PHP en el Blade):
+
+   ```php
+   @php
+       $pct = static fn (float $parte, float $total): string =>
+           number_format(($parte / $total) * 100, 4, '.', '').'%';
+       $sty = static fn (float $parte, float $total): string =>
+           'width:'.$pct($parte, $total).';min-width:0;max-width:'.$pct($parte, $total).';overflow:hidden;';
+       $wNombre = $sty(78, 170);
+   @endphp
+   ```
+
+   ```blade
+   <th style="{{ $wNombre }}">Apellido y Nombres</th>
+   <td style="{{ $wNombre }}">{{ $nombre }}</td>
+   ```
+
+   En libro de matrícula el mismo porcentaje va en **regla CSS duplicada** (`th.col-x` y `td.col-x`); en planillas nuevas preferir **inline en cada celda** como arriba.
+
+3. **Texto largo en una columna estrecha:** `white-space: nowrap; overflow: hidden` en esa celda (ver columna estudiante en la planilla). No depender de `word-break` solo.
+
+4. **Subcolumnas** (ej. Eval. con N / R1 / R2): una celda exterior con el `%` ya fijado y una **`table.inner` al 100%** dentro (ver planilla). No usar `colspan` en el cuerpo para repartir subcolumnas.
+
+### Qué evitar (suele romper DomPDF)
+
+| Evitar | Motivo |
+|--------|--------|
+| Solo `<colgroup><col style="width:…mm">` | DomPDF lo ignora o lo aplica mal con `colspan`/`rowspan`. |
+| Dos tablas (encabezado + cuerpo) sin los mismos anchos en cada celda | Cada tabla calcula columnas por su cuenta. |
+| `width: 100%` en la tabla sin `%` en **cada** `th`/`td` | El motor reparte por contenido; la columna de nombres se ensancha. |
+| `colspan` / `rowspan` en el encabezado **sin** `style` de ancho en todas las celdas afectadas | El cuerpo hereda mal los anchos. Si hay `colspan`, la celda agrupada debe llevar el **suma** de los % (ej. tres columnas de 11,76 % → 35,29 %). |
+| Anidar el partial `pdf.partials.header` **dentro** de la misma tabla de datos | El header es otro bloque; no mezclar con la grilla (ver informe de inasistencias: header arriba, tabla abajo). |
+
+### Encabezado institucional (`pdf.partials.header`)
+
+- Usarlo **fuera** de la tabla de datos (contenedor aparte).
+- Sus estilos van scoped en `.pdf-header`; no sustituye el título del acta volante si el diseño legacy pide solo el nombre del colegio centrado.
+- Si tras agregar el header las columnas se desalinean, el problema casi nunca es el logo sino que la tabla no cumple el patrón de la sección anterior.
+
+### Fechas en PDF
+
+Ver regla global `.cursor/rules/formato-fechas-es.mdc`: `d/m/Y` en UI y PDFs.
+
+### Nuevos PDFs
+
+Antes de cerrar un PDF con columnas variables: comparar con `planilla-calificaciones-hoja.blade.php` o `acta-volante-coloquios.blade.php` y verificar en impresión real (Ctrl+F5 / sin caché del navegador).
+
+---
+
+## 9. Convenciones de documentación
 
 - Mantener la carpeta `docs/` actualizada con cada cambio significativo.
 - Cuando aparezcan nuevas preferencias/restricciones, agregarlas en este archivo.

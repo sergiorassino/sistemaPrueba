@@ -4,21 +4,95 @@ namespace App\Livewire\BoletinesSecundario;
 
 use App\Models\Curso;
 use App\Models\Matricula;
+use App\Support\BoletinSecundarioLoteParams;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
 /**
  * Boletines / informe de progreso escolar (nivel secundario):
- * elige curso y genera el PDF oficial por matrícula.
+ * elige curso, marca estudiantes y genera PDF individual o en lote.
  */
 class BoletinesSecundarioIndex extends Component
 {
     /** Curso seleccionado (`cursos.Id`) dentro del contexto de sesión. */
     public ?int $cursoId = null;
 
+    /** IDs de matrícula marcados (`matriculas.id` como string). */
+    public array $matriculasSeleccionadas = [];
+
     public function updatedCursoId(mixed $value): void
     {
         $this->cursoId = ((int) $value) > 0 ? (int) $value : null;
+        $this->matriculasSeleccionadas = [];
+    }
+
+    public function updatedMatriculasSeleccionadas(): void
+    {
+        $this->normalizarMatriculasSeleccionadas();
+    }
+
+    public function seleccionarTodasMatriculas(): void
+    {
+        $this->matriculasSeleccionadas = $this->matriculasDelCurso()
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->all();
+    }
+
+    public function quitarTodasMatriculas(): void
+    {
+        $this->matriculasSeleccionadas = [];
+    }
+
+    public function toggleSeleccionTodas(): void
+    {
+        if ($this->todasLasMatriculasMarcadas()) {
+            $this->quitarTodasMatriculas();
+        } else {
+            $this->seleccionarTodasMatriculas();
+        }
+    }
+
+    public function todasLasMatriculasMarcadas(): bool
+    {
+        $permitidos = $this->matriculasDelCurso()
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->sort()
+            ->values();
+
+        if ($permitidos->isEmpty()) {
+            return false;
+        }
+
+        $marcados = collect($this->matriculasSeleccionadas)
+            ->map(fn ($v) => (string) $v)
+            ->filter(fn ($v) => $v !== '')
+            ->sort()
+            ->values();
+
+        return $marcados->all() === $permitidos->all();
+    }
+
+    public function puedeGenerarPdfLote(): bool
+    {
+        return collect($this->matriculasSeleccionadas)
+            ->filter(fn ($v) => (int) $v > 0)
+            ->isNotEmpty();
+    }
+
+    protected function normalizarMatriculasSeleccionadas(): void
+    {
+        $allowed = $this->matriculasDelCurso()->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        $this->matriculasSeleccionadas = collect($this->matriculasSeleccionadas)
+            ->map(fn ($v) => (int) $v)
+            ->filter(fn ($id) => $id > 0 && in_array($id, $allowed, true))
+            ->unique()
+            ->sort()
+            ->values()
+            ->map(fn ($id) => (string) $id)
+            ->all();
     }
 
     /**
@@ -71,9 +145,34 @@ class BoletinesSecundarioIndex extends Component
 
     public function render()
     {
+        $matriculas = $this->matriculasDelCurso();
+        $cantidadSeleccionados = collect($this->matriculasSeleccionadas)
+            ->filter(fn ($v) => (int) $v > 0)
+            ->count();
+
+        $pdfLoteUrl = null;
+        if ($this->puedeGenerarPdfLote() && $this->cursoId) {
+            $ids = collect($this->matriculasSeleccionadas)
+                ->map(fn ($v) => (int) $v)
+                ->filter(fn ($id) => $id > 0)
+                ->unique()
+                ->values();
+
+            if ($ids->count() <= BoletinSecundarioLoteParams::MAX_MATRICULAS) {
+                $pdfLoteUrl = route('boletinesSecundario.pdfLote', [
+                    'curso' => (int) $this->cursoId,
+                    'matriculas' => $ids->implode(','),
+                ]);
+            }
+        }
+
         return view('livewire.boletines-secundario.index', [
             'cursos' => $this->cursos(),
-            'matriculas' => $this->matriculasDelCurso(),
+            'matriculas' => $matriculas,
+            'cantidadSeleccionados' => $cantidadSeleccionados,
+            'pdfLoteUrl' => $pdfLoteUrl,
+            'todasMarcadas' => $this->todasLasMatriculasMarcadas(),
+            'hayMatriculas' => $matriculas->isNotEmpty(),
         ])
             ->layout('layouts.app', ['pageTitle' => 'Boletines (secundario) v1.0']);
     }

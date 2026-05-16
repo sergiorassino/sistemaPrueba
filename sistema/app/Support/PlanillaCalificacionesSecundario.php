@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Curso;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -109,6 +110,124 @@ final class PlanillaCalificacionesSecundario
             'profesoresLinea' => self::profesoresLinea($materiaId),
             'ano' => $ctx->terlecAno(),
             'filas' => $filas,
+        ];
+    }
+
+    /**
+     * Materias del curso en el ciclo activo (orden de planilla).
+     *
+     * @return Collection<int, object{id: int, materia: string|null, abrev: string|null, ord: mixed}>
+     */
+    public static function materiasDelCurso(int $cursoId): Collection
+    {
+        $ctx = schoolCtx();
+
+        $cursoOk = Curso::query()
+            ->where('idNivel', $ctx->idNivel)
+            ->where('idTerlec', $ctx->idTerlec)
+            ->where('Id', $cursoId)
+            ->exists();
+
+        if (! $cursoOk) {
+            return collect();
+        }
+
+        return DB::table('materias')
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('idCursos', $cursoId)
+            ->orderBy('ord')
+            ->orderBy('id')
+            ->get(['id', 'materia', 'abrev', 'ord']);
+    }
+
+    /**
+     * @param  Collection<int, object{id: int}>  $materiasPermitidas  Orden de impresión
+     * @return list<int>
+     */
+    public static function resolverIdsMaterias(string $materiasParam, Collection $materiasPermitidas): array
+    {
+        $allowedById = $materiasPermitidas->keyBy(fn (object $m) => (int) $m->id);
+
+        $parsed = collect(explode(',', $materiasParam))
+            ->map(fn ($v) => (int) trim((string) $v))
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values();
+
+        $out = [];
+        foreach ($parsed as $id) {
+            if ($allowedById->has($id) && ! in_array($id, $out, true)) {
+                $out[] = $id;
+            }
+        }
+
+        if (count($out) > 200) {
+            return [];
+        }
+
+        $ordenados = [];
+        foreach ($materiasPermitidas as $m) {
+            $id = (int) $m->id;
+            if (in_array($id, $out, true)) {
+                $ordenados[] = $id;
+            }
+        }
+
+        return $ordenados;
+    }
+
+    /**
+     * Varias planillas (una hoja A4 por materia) en orden de materia del curso.
+     *
+     * @param  list<int>  $materiaIds
+     * @return array{
+     *     cursoLabel: string,
+     *     ano: int|null,
+     *     secciones: list<array{
+     *         materiaLabel: string,
+     *         profesoresLinea: string,
+     *         filas: list<array<string, mixed>>,
+     *         layoutFilas: array<string, float|int>
+     *     }>
+     * }
+     */
+    public static function buildSecciones(int $cursoId, array $materiaIds): array
+    {
+        if ($materiaIds === []) {
+            abort(404);
+        }
+
+        $secciones = [];
+        $cursoLabel = '';
+        $ano = null;
+
+        foreach ($materiaIds as $materiaId) {
+            if ($materiaId < 1) {
+                continue;
+            }
+            $data = self::build($cursoId, $materiaId);
+            if ($cursoLabel === '') {
+                $cursoLabel = $data['cursoLabel'];
+                $ano = $data['ano'];
+            }
+            $filas = $data['filas'];
+            $secciones[] = [
+                'materiaLabel' => $data['materiaLabel'],
+                'profesoresLinea' => $data['profesoresLinea'],
+                'filas' => $filas,
+                'layoutFilas' => self::metricasLayoutFilas(count($filas)),
+            ];
+        }
+
+        if ($secciones === []) {
+            abort(404);
+        }
+
+        return [
+            'cursoLabel' => $cursoLabel,
+            'ano' => $ano,
+            'secciones' => $secciones,
         ];
     }
 

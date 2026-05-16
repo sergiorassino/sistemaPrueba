@@ -35,6 +35,15 @@ final class CalificacionesColoquioSecundario
         };
     }
 
+    /** Texto del encabezado «Alumnos condición» en actas volantes. */
+    public static function tituloCondicionColoquio(string $periodo): string
+    {
+        return match (self::normalizarPeriodo($periodo)) {
+            self::PERIODO_FEBRERO => 'Coloquio de Febrero',
+            default => 'Coloquio de Diciembre',
+        };
+    }
+
     /**
      * @param  array<string, mixed>  $row  Fila `calificaciones` (ic01..ic28, tea, etc.)
      */
@@ -73,6 +82,45 @@ final class CalificacionesColoquioSecundario
         return $teaEnCurso
             || ((int) ($row['tea'] ?? 0)) === 1
             || self::tieneAlgunBloqueDesaprobado($row);
+    }
+
+    /**
+     * Si el alumno debe figurar en la grilla o contar para el select de materias.
+     *
+     * Criterio base: rinde coloquio (módulo con nota &lt; 7 o TEA). No se oculta por tener
+     * ya cargada una nota aprobatoria en Dic o Feb (puede editarse).
+     *
+     * En febrero no se listan quienes ya aprobaron diciembre (Dic ≥ 7): van a febrero solo
+     * quienes no cerraron en diciembre.
+     *
+     * @param  array<string, mixed>  $rowModulos  ic01..ic28 y tea (entero 0/1)
+     */
+    public static function apareceEnListadoColoquio(
+        string $periodo,
+        array $rowModulos,
+        string $dic,
+        bool $teaEnCurso,
+    ): bool {
+        if (! self::esElegible($rowModulos, $teaEnCurso)) {
+            return false;
+        }
+
+        if (self::normalizarPeriodo($periodo) === self::PERIODO_FEBRERO
+            && self::notaColoquioAprobada($dic)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /** Misma regla que la grilla: el select de materias sigue al período activo. */
+    public static function cuentaParaMateriaConCarga(
+        string $periodo,
+        array $rowModulos,
+        string $dic,
+        bool $teaEnCurso,
+    ): bool {
+        return self::apareceEnListadoColoquio($periodo, $rowModulos, $dic, $teaEnCurso);
     }
 
     public static function parseNotaColoquio(mixed $raw): ?float

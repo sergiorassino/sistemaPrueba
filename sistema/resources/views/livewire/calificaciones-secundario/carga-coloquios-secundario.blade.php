@@ -49,9 +49,13 @@
                 <label for="se-coloquio-materia" class="form-label">Materia</label>
                 <select id="se-coloquio-materia" wire:model.live="materiaId" class="form-select mt-1.5 w-full" @disabled(! $cursoId)>
                     <option value="">— Seleccione —</option>
-                    @foreach ($materias as $m)
+                    @forelse ($materias as $m)
                         <option value="{{ $m->id }}">{{ trim((string) ($m->materia ?? '')) !== '' ? $m->materia : ('ID ' . $m->id) }}</option>
-                    @endforeach
+                    @empty
+                        @if ($cursoId)
+                            <option value="" disabled>Sin materias con alumnos de coloquio en {{ $etiquetaPeriodo }}</option>
+                        @endif
+                    @endforelse
                 </select>
             </div>
         </div>

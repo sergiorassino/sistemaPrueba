@@ -108,6 +108,12 @@
             'icon' => 'clipboard',
         ];
         $dashboardLinks[] = [
+            'title' => 'Actas volantes de coloquio',
+            'hint' => 'PDF Dic / Feb · por materia',
+            'href' => route('calificacionesSecundario.actaVolanteColoquios'),
+            'icon' => 'doc',
+        ];
+        $dashboardLinks[] = [
             'title' => 'Planilla de calificaciones',
             'hint' => 'PDF por curso y materia',
             'href' => route('calificacionesSecundario.planilla'),

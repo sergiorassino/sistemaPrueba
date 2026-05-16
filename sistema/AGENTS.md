@@ -25,6 +25,10 @@ Detalle y matices: `docs/06-reglas-de-seguridad.md` sección **9**.
 
 No calcular promedios salvo en **carga manual** (`CargaCalificacionesSecundario`, al guardar `ic01..ic28` → `calif`). El resto del sistema solo **lee** `calificaciones.calif`. Detalle: `docs/05-preferencias-y-convenciones.md` §7.
 
+## PDFs (DomPDF — anchos de columna)
+
+Tablas con columnas de distinto ancho: **porcentaje inline en cada `th` y `td`** (`min-width:0; overflow:hidden`), tabla al **100%**, `table-layout: fixed`. No confiar solo en `colgroup`. Referencias y antipatrones: `docs/05-preferencias-y-convenciones.md` §8.
+
 ## Resto del baseline
 
 Seguridad, permisos, `schoolCtx`, Blade, etc.: `docs/06-reglas-de-seguridad.md` y las reglas en `.cursor/rules/` (por ejemplo `seguridad-php-mysql-laravel.mdc`, `preferencias-del-proyecto.mdc`).

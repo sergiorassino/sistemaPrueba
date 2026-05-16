@@ -460,6 +460,7 @@ class CargaCalificacionesSecundario extends Component
     /**
      * Recalcula y persiste `calif` en función de `ic01..ic28` ya guardados en BD.
      *
+     * Único punto del sistema que invoca `PromedioAnualCalificacionesSecundario::calcular()` (docs/05 §7).
      * Importante: relee desde DB para evitar inconsistencias si hubiera más de un update encadenado.
      */
     protected function syncPromedioAnual(int $id): void

@@ -51,6 +51,11 @@ Antes de trabajar en cualquier módulo, leer:
 - Toda consulta de datos se filtra por este contexto.
 - `ento.idTerlecVerNotas` determina el ciclo lectivo de autogestión.
 
+### Promedio de calificaciones (secundario)
+- No calcular promedios en planillas PDF, boletines, consultas ni importaciones.
+- Único cálculo autorizado: `CargaCalificacionesSecundario::syncPromedioAnual()` al guardar `ic01..ic28` → `calif`.
+- Ver `docs/05-preferencias-y-convenciones.md` §7.
+
 ### Identidad visual
 - Paleta en `/SE/PALETA COLORES LOGO.PNG`.
 - Primario: `#40848D` · Oscuro: `#333333` · Suave: `#C1D7DA`.

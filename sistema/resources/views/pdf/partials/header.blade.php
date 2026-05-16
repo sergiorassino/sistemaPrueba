@@ -46,7 +46,7 @@
     .pdf-header .insti { font-weight: 700; font-size: 12pt; line-height: 1.1; margin: 0; color: #111; }
     .pdf-header .line { font-size: 9pt; line-height: 1.15; margin: 2px 0 0 0; color: #111; }
     .pdf-header .mono { font-family: DejaVu Sans, sans-serif; letter-spacing: 0.02em; }
-    .pdf-header .ids { font-size: 8pt; }
+    .pdf-header .line.ids { font-size: 6.5pt; line-height: 1.1; }
 </style>
 
 <div class="pdf-header">

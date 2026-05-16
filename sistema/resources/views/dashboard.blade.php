@@ -102,14 +102,32 @@
             'icon' => 'clipboard',
         ];
         $dashboardLinks[] = [
+            'title' => 'Coloquios Dic / Feb',
+            'hint' => 'Recuperación · secundario',
+            'href' => route('calificacionesSecundario.coloquios'),
+            'icon' => 'clipboard',
+        ];
+        $dashboardLinks[] = [
+            'title' => 'Planilla de calificaciones',
+            'hint' => 'PDF por curso y materia',
+            'href' => route('calificacionesSecundario.planilla'),
+            'icon' => 'doc',
+        ];
+        $dashboardLinks[] = [
+            'title' => 'Planilla resumen',
+            'hint' => 'PDF curso completo · todas las materias',
+            'href' => route('calificacionesSecundario.planillaResumen'),
+            'icon' => 'doc',
+        ];
+        $dashboardLinks[] = [
             'title' => 'Consulta de calificaciones',
             'hint' => 'Secundario · PDF',
             'href' => route('calificacionesSecundario.consulta'),
             'icon' => 'doc',
         ];
         $dashboardLinks[] = [
-            'title' => 'Boletines',
-            'hint' => 'Informe de progreso escolar',
+            'title' => 'Boletines (secundario)',
+            'hint' => 'Informe de progreso escolar · v1.0',
             'href' => route('boletinesSecundario.index'),
             'icon' => 'doc',
         ];

@@ -91,6 +91,9 @@ El menú lateral y el dashboard enlazan **rutas fijas** y muestran u ocultan ít
 | **Legajos** | `App\Livewire\Abm\Legajos\*`, `LegajoForm` + `solapas_legajo` / `campos_legajo` | `abm.legajos`, `param.campos-listado-alumnos`, `param.solapas-legajo` |
 | **Seguimiento disciplinario** | `App\Livewire\Seguimiento\Disciplinario\*` | `seguimiento.disciplinario` |
 | **Calificaciones secundario** | `App\Livewire\Calificaciones\*` | `calificacionesSecundario.*` |
+| **Boletines secundario** | `App\Livewire\BoletinesSecundario\*`, `BoletinSecundarioPdfController` | `boletinesSecundario.index`, `boletinesSecundario.pdf` |
+
+Los boletines de **primario** e **inicial** serán módulos aparte (rutas, menú y tooltips con nivel explícito). Ver sección 6 de [05-preferencias-y-convenciones.md](05-preferencias-y-convenciones.md).
 
 ---
 

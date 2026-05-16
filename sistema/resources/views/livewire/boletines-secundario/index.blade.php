@@ -4,7 +4,7 @@
         <div class="se-hero-inner">
             <div class="min-w-0 space-y-2">
                 <p class="se-eyebrow">Boletines · Secundario</p>
-                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Boletines</h2>
+                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Boletines (secundario)</h2>
                 <p class="max-w-2xl text-sm text-white/80">
                     {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
                 </p>

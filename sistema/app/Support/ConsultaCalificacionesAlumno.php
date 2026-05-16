@@ -173,6 +173,22 @@ final class ConsultaCalificacionesAlumno
     }
 
     /**
+     * @return list<object{materia: string, curso: string, linea: string}>
+     */
+    public static function materiasAdeudadasParaLegajo(int $idLegajo, int $idTerlecActual, int $idNivel): array
+    {
+        return self::materiasAdeudadasCiclosAnteriores($idLegajo, $idTerlecActual, $idNivel);
+    }
+
+    /**
+     * @return list<object{etiqueta: string, fuente: string, total: float}>
+     */
+    public static function itemsBoletinParaMatriculaPublic(int $idMatricula, int $idTerlec): array
+    {
+        return self::itemsBoletinParaMatricula($idMatricula, $idTerlec);
+    }
+
+    /**
      * Materias marcadas como adeudadas (`apro = 1`) en ciclos lectivos anteriores al de la matrícula consultada.
      *
      * @return list<object{materia: string, curso: string, linea: string}>

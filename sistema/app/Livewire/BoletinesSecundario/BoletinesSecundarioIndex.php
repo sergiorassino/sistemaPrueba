@@ -75,6 +75,6 @@ class BoletinesSecundarioIndex extends Component
             'cursos' => $this->cursos(),
             'matriculas' => $this->matriculasDelCurso(),
         ])
-            ->layout('layouts.app', ['pageTitle' => 'Boletines (secundario)']);
+            ->layout('layouts.app', ['pageTitle' => 'Boletines (secundario) v1.0']);
     }
 }

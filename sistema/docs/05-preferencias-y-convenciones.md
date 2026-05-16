@@ -84,7 +84,63 @@ a todos los módulos. Ver [06-reglas-de-seguridad.md](06-reglas-de-seguridad.md)
 
 ---
 
-## 6. Convenciones de documentación
+## 6. Menú lateral, dashboard y módulos por nivel educativo
+
+Cuando un módulo aplica solo a **secundario**, **primario** o **inicial** (o existirán variantes por nivel, como boletines o calificaciones), debe quedar explícito en código, menú y documentación. No usar nombres genéricos ambiguos (`Boletines` a secas) si el alcance es de un solo nivel.
+
+### Sidebar (`resources/views/layouts/app.blade.php`)
+
+- Cada enlace del menú lleva atributo **`title`** (tooltip al pasar el mouse), con el mismo criterio que el resto del sistema:
+  - Nombre del módulo con **nivel entre paréntesis** cuando corresponda: `(secundario)`, `(primario)`, `(inicial)`.
+  - Descripción breve opcional separada por ` · `.
+  - **Versión del módulo al final:** `v1.0` (referencia visual; no implica conmutación por config).
+- Ejemplo actual: `title="Boletines (secundario) · Informe de progreso escolar v1.0"`.
+- El texto visible del ítem (`<span class="truncate">`) debe incluir el nivel si pronto coexistirán ítems homónimos (p. ej. `Boletines (secundario)` y, más adelante, `Boletines (primario)`).
+
+### Rutas, PHP y nombres
+
+- Namespaces, carpetas Livewire, prefijos de ruta y nombres de ruta (`boletinesSecundario.*`, `BoletinesSecundario\`, etc.) deben incluir el nivel.
+- Al agregar el mismo tipo de módulo para otro nivel: **ítem de menú y ruta propios**; no reutilizar un único enlace genérico.
+
+### Dashboard
+
+- `title` y `hint` en `dashboard.blade.php` deben alinear con el sidebar (nivel en el título; versión o alcance en el `hint` cuando aplique).
+
+### Referencia
+
+- Calificaciones secundario: tooltips `… (secundario) v1.0` en el grupo CALIFICACIONES.
+- Boletines secundario: `boletinesSecundario.index`, tooltip y etiqueta `Boletines (secundario)`.
+
+---
+
+## 7. Calificaciones — promedio anual (secundario)
+
+**Regla obligatoria:** no calcular promedios de calificaciones en ninguna parte del sistema salvo que se pida explícitamente en una tarea o decisión de producto documentada.
+
+### Único lugar autorizado (por ahora)
+
+- **Carga manual de calificaciones (secundario):** `Livewire/CalificacionesSecundario/CargaCalificacionesSecundario.php`
+- Al salir de un campo de módulo (`ic01`…`ic28`, blur/change), tras persistir la nota, se ejecuta `syncPromedioAnual()` y se guarda el resultado en `calificaciones.calif` (columna Pr. Final, solo lectura en la UI).
+- La lógica numérica vive en `App\Support\PromedioAnualCalificacionesSecundario::calcular()` y **solo** debe llamarse desde ese `syncPromedioAnual()`.
+
+### Qué no debe calcular promedios
+
+- Planilla PDF de calificaciones: mostrar `calif` de BD (vacío si no hay valor).
+- Boletines, consulta de calificaciones (alumno o personal), exportaciones e impresiones: leer `calif` persistido.
+- Sincronización GE/CIDI: importar `calif` del archivo; no recalcular desde `ic**`.
+- Cualquier vista, job o script nuevo: no inferir Pr. Final desde Eval/JIS salvo nueva autorización explícita.
+
+### Presentación sin promedio
+
+- En la planilla PDF se puede usar `PromedioAnualCalificacionesSecundario::bloqueDesaprobado()` solo para **resaltar** bloques desaprobados; no sustituye ni recalcula `calif`.
+
+### Extender el cálculo en el futuro
+
+Si se agrega otro flujo que deba calcular (p. ej. batch nocturno o otro nivel), documentarlo aquí y centralizar la llamada a `calcular()` — no duplicar fórmulas en Blade ni en importadores.
+
+---
+
+## 8. Convenciones de documentación
 
 - Mantener la carpeta `docs/` actualizada con cada cambio significativo.
 - Cuando aparezcan nuevas preferencias/restricciones, agregarlas en este archivo.

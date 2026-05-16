@@ -7,6 +7,8 @@ use App\Http\Controllers\Alumnos\PushController;
 use App\Http\Controllers\AntecedentesDisciplinariosPdfController;
 use App\Http\Controllers\BoletinesSecundario\BoletinSecundarioPdfController;
 use App\Http\Controllers\CalificacionesSecundario\ConsultaCalificacionesSecundarioPdfController;
+use App\Http\Controllers\CalificacionesSecundario\PlanillaCalificacionesPdfController;
+use App\Http\Controllers\CalificacionesSecundario\PlanillaResumenCalificacionesPdfController;
 use App\Http\Controllers\EstudiantesExcelController;
 use App\Http\Controllers\InformeInasistenciasPdfController;
 use App\Http\Controllers\LibroMatriculaPdfController;
@@ -31,6 +33,9 @@ use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
 use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
 use App\Livewire\Auth\Login;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
+use App\Livewire\CalificacionesSecundario\CargaColoquiosSecundario;
+use App\Livewire\CalificacionesSecundario\PlanillaCalificacionesSecundario;
+use App\Livewire\CalificacionesSecundario\PlanillaResumenCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
 use App\Livewire\BoletinesSecundario\BoletinesSecundarioIndex;
 use App\Livewire\CalificacionesSecundario\SincroGe;
@@ -180,6 +185,21 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/calificaciones-secundario/carga', CargaCalificacionesSecundario::class)
         ->middleware('permiso:2')
         ->name('calificacionesSecundario.carga');
+    Route::get('/calificaciones-secundario/coloquios', CargaColoquiosSecundario::class)
+        ->middleware('permiso:2')
+        ->name('calificacionesSecundario.coloquios');
+    Route::get('/calificaciones-secundario/planilla', PlanillaCalificacionesSecundario::class)
+        ->middleware('permiso:2')
+        ->name('calificacionesSecundario.planilla');
+    Route::get('/calificaciones-secundario/planilla/pdf', PlanillaCalificacionesPdfController::class)
+        ->middleware('permiso:2')
+        ->name('calificacionesSecundario.planilla.pdf');
+    Route::get('/calificaciones-secundario/planilla-resumen', PlanillaResumenCalificacionesSecundario::class)
+        ->middleware('permiso:2')
+        ->name('calificacionesSecundario.planillaResumen');
+    Route::get('/calificaciones-secundario/planilla-resumen/pdf', PlanillaResumenCalificacionesPdfController::class)
+        ->middleware('permiso:2')
+        ->name('calificacionesSecundario.planillaResumen.pdf');
     Route::get('/calificaciones-secundario/consulta', ConsultaCalificacionesSecundario::class)
         ->middleware('permiso:2')
         ->name('calificacionesSecundario.consulta');

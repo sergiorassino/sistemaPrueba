@@ -47,6 +47,16 @@
         .se-sidebar-groupbtn { color: var(--se-white-85); background: var(--se-white-05); border: 1px solid var(--se-sep); }
         .se-sidebar-groupbtn:hover { background: var(--se-hover-bg); }
         .se-sidebar-groupbtn.is-open { background: var(--se-white-10); }
+        /* Enlaces a módulos: un poco más anchos; grupos heredan Condensed del sidebar. */
+        .se-sidebar-link {
+            font-family: "Roboto", "Helvetica Neue", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+            font-stretch: normal;
+            min-width: 0;
+        }
+        .se-sidebar-link span.truncate {
+            min-width: 0;
+            flex: 1 1 0%;
+        }
         .se-sidebar-link { color: var(--se-white-85); }
         .se-sidebar-link:hover { background: var(--se-hover-bg); color: #fff; }
         .se-sidebar-link.is-active {
@@ -101,7 +111,7 @@
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.') || (str_starts_with($route ?? '', 'comunicaciones.') && tienePermiso(51) && tienePermiso(2))) ? 'true' : 'false' }},
         cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales') && tienePermiso(51) && tienePermiso(2)) ? 'true' : 'false' }},
-        calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.')) ? 'true' : 'false' }},
+        calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.') || str_starts_with($route ?? '', 'boletinesSecundario.')) ? 'true' : 'false' }},
         disciplinario: {{ str_starts_with($route ?? '', 'seguimiento.disciplinario') ? 'true' : 'false' }},
         inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') ? 'true' : 'false' }},
         comunicaciones: {{ (tienePermiso(51) && !tienePermiso(2) && (str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales')) ? 'true' : 'false' }},
@@ -443,7 +453,8 @@
                 <a href="{{ route('calificacionesSecundario.consulta') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.consulta',
+                       'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.consulta'
+                           || ($route ?? '') === 'calificacionesSecundario.consulta.pdf',
                    ])
                    title="Consulta de calificaciones (secundario) v1.0">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -452,21 +463,57 @@
                     </svg>
                     <span class="truncate">Consulta de calificaciones</span>
                 </a>
+                <a href="{{ route('boletinesSecundario.index') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'boletinesSecundario.'),
+                   ])
+                   title="Boletines (secundario) · Informe de progreso escolar v1.0">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="truncate">Boletines (secundario)</span>
+                </a>
+                <a href="{{ route('calificacionesSecundario.planilla') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.planilla'
+                           || ($route ?? '') === 'calificacionesSecundario.planilla.pdf',
+                   ])
+                   title="Planilla de calificaciones (secundario) v1.0">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="truncate">Planilla de calificaciones</span>
+                </a>
+                <a href="{{ route('calificacionesSecundario.planillaResumen') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.planillaResumen'
+                           || ($route ?? '') === 'calificacionesSecundario.planillaResumen.pdf',
+                   ])
+                   title="Planilla resumen de calificaciones (secundario)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    </svg>
+                    <span class="truncate">Planilla resumen</span>
+                </a>
+                <a href="{{ route('calificacionesSecundario.coloquios') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.coloquios',
+                   ])
+                   title="Carga de coloquios Dic / Feb (secundario)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="truncate">Carga de coloquios</span>
+                </a>
             </div>
-
-            <div class="mt-3"></div>
-            <a href="{{ route('boletinesSecundario.index') }}"
-               @class([
-                   'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md font-medium transition-colors',
-                   'is-active shadow-sm' => str_starts_with($route ?? '', 'boletinesSecundario.'),
-               ])
-               title="Boletines · Informe de progreso escolar">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                <span class="truncate">Boletines</span>
-            </a>
         @endif
 
         {{-- Comunicaciones (solo si no está ya en el menú Estudiantes) --}}

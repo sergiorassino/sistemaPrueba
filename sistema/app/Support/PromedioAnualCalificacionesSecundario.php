@@ -5,12 +5,18 @@ namespace App\Support;
 /**
  * Cálculo del promedio anual para nivel secundario según módulos (Eval 1..8 y JIS 1..2).
  *
- * Regla (pedida):
+ * Política del proyecto (docs/05 §7): `calcular()` solo debe invocarse desde
+ * `CargaCalificacionesSecundario::syncPromedioAnual()` al guardar `ic01..ic28`.
+ * Planillas PDF, boletines, consultas e importaciones leen `calif` tal cual está en BD.
+ *
+ * Regla de negocio:
  * - Por cada módulo se toma la MAYOR nota entre sus instancias (Eval: N/R1/R2, JIS: N/R).
  * - Se promedian solo los módulos que tienen al menos una nota numérica parseable.
  * - Si existe al menos un módulo con nota y alguno NO está aprobado, NO se escribe promedio (cadena vacía).
  * - Si todos los módulos con nota están aprobados, el promedio se representa como string con 2 decimales,
  *   salvo que sea 10 (en cuyo caso se muestra "10" sin decimales).
+ *
+ * `bloqueDesaprobado()` es solo presentación (resaltado en planilla PDF); no calcula ni persiste promedios.
  *
  * Nota: el umbral de aprobación por defecto es 7. Si en el futuro depende del nivel/institución,
  * centralizar la configuración aquí o inyectarla desde el caller.
@@ -20,6 +26,8 @@ final class PromedioAnualCalificacionesSecundario
     public const DEFAULT_NOTA_MINIMA_APROBACION = 7.0;
 
     /**
+     * Único caller permitido: `CargaCalificacionesSecundario::syncPromedioAnual()`.
+     *
      * @param  array<string, mixed>  $row  Debe incluir ic01..ic28 como strings (vacío si no hay dato)
      * @return array{promedio: string, aprobado: bool, modulos_con_nota: int, modulos_aprobados: int, modulos_totales: int}
      */
@@ -98,6 +106,115 @@ final class PromedioAnualCalificacionesSecundario
         ];
     }
 
+    /**
+     * Bloque desaprobado en planilla: hay al menos una nota numérica y ninguna alcanza el mínimo.
+     *
+     * @param  list<string>  $campos  Columnas del bloque (p. ej. ic01–ic03)
+     * @param  array<string, mixed>  $row
+     */
+    /**
+     * Celda de planilla resumen: mejor nota del módulo y estilo (rojo si &lt; mínimo, gris si hubo recuperatorio).
+     *
+     * @param  list<string>  $campos  Orden legacy: primera columna = nota inicial (N), siguientes = recuperatorios
+     * @param  array<string, mixed>  $row
+     * @return array{texto: string, rojo: bool, gris: bool}
+     */
+    public static function celdaMejorNotaModulo(array $campos, array $row, float $notaMinimaAprobacion = self::DEFAULT_NOTA_MINIMA_APROBACION): array
+    {
+        $vacío = ['texto' => '', 'rojo' => false, 'gris' => false];
+
+        if ($campos === []) {
+            return $vacío;
+        }
+
+        $porIndice = [];
+        foreach ($campos as $i => $c) {
+            $v = self::parseNota($row[$c] ?? null);
+            if ($v !== null) {
+                $porIndice[$i] = $v;
+            }
+        }
+
+        if ($porIndice === []) {
+            return $vacío;
+        }
+
+        $max = max($porIndice);
+        $notaInicial = self::parseNota($row[$campos[0]] ?? null);
+        $usoRecuperatorio = count($porIndice) > 1
+            || ($notaInicial === null && count($porIndice) > 0)
+            || ($notaInicial !== null && $notaInicial < $notaMinimaAprobacion && $max >= $notaMinimaAprobacion);
+
+        $gris = $usoRecuperatorio;
+        $rojo = $max < $notaMinimaAprobacion;
+
+        return [
+            'texto' => self::formatNotaCorta($max),
+            'rojo' => $rojo,
+            'gris' => $gris,
+        ];
+    }
+
+    /** Formato de promedio / nota para planillas (público; no recalcula promedios de módulos). */
+    public static function formatPromedioDisplay(mixed $raw): string
+    {
+        $s = trim((string) ($raw ?? ''));
+        if ($s === '') {
+            return '';
+        }
+
+        $n = str_replace(',', '.', $s);
+        if (! is_numeric($n)) {
+            return $s;
+        }
+
+        return self::formatNota((float) $n);
+    }
+
+    public static function bloqueDesaprobado(array $campos, array $row, float $notaMinimaAprobacion = self::DEFAULT_NOTA_MINIMA_APROBACION): bool
+    {
+        $presentes = [];
+        foreach ($campos as $c) {
+            $v = self::parseNota($row[$c] ?? null);
+            if ($v !== null) {
+                $presentes[] = $v;
+            }
+        }
+
+        if ($presentes === []) {
+            return false;
+        }
+
+        return max($presentes) < $notaMinimaAprobacion;
+    }
+
+    /**
+     * Módulos de la planilla impresa (N1..N8 y JIS), con columnas legacy asociadas.
+     *
+     * @return list<array{label: string, campos: list<string>, slots: int}>
+     */
+    public static function modulosPlanilla(): array
+    {
+        $out = [];
+        for ($n = 1; $n <= 8; $n++) {
+            $base = ($n - 1) * 3 + 1;
+            $out[] = [
+                'label' => 'N'.$n,
+                'campos' => [
+                    sprintf('ic%02d', $base),
+                    sprintf('ic%02d', $base + 1),
+                    sprintf('ic%02d', $base + 2),
+                ],
+                'slots' => 3,
+            ];
+        }
+
+        $out[] = ['label' => 'Jis1', 'campos' => ['ic25', 'ic26'], 'slots' => 3];
+        $out[] = ['label' => 'Jis2', 'campos' => ['ic27', 'ic28'], 'slots' => 3];
+
+        return $out;
+    }
+
     private static function parseNota(mixed $raw): ?float
     {
         if ($raw === null) {
@@ -124,6 +241,16 @@ final class PromedioAnualCalificacionesSecundario
         // Regla UI: 10 sin decimales; resto con 2 decimales fijos.
         if (abs($rounded - 10.0) < 1e-9) {
             return '10';
+        }
+
+        return number_format($rounded, 2, '.', '');
+    }
+
+    private static function formatNotaCorta(float $v): string
+    {
+        $rounded = round($v, 2, PHP_ROUND_HALF_UP);
+        if (abs($rounded - round($rounded)) < 1e-9) {
+            return (string) (int) round($rounded);
         }
 
         return number_format($rounded, 2, '.', '');

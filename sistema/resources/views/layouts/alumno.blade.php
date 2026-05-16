@@ -47,6 +47,16 @@
         .se-sidebar-groupbtn { color: var(--se-white-85); background: var(--se-white-05); border: 1px solid var(--se-sep); }
         .se-sidebar-groupbtn:hover { background: var(--se-hover-bg); }
         .se-sidebar-groupbtn.is-open { background: var(--se-white-10); }
+        /* Enlaces a módulos: un poco más anchos; grupos heredan Condensed del sidebar. */
+        .se-sidebar-link {
+            font-family: "Roboto", "Helvetica Neue", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+            font-stretch: normal;
+            min-width: 0;
+        }
+        .se-sidebar-link span.truncate {
+            min-width: 0;
+            flex: 1 1 0%;
+        }
         .se-sidebar-link { color: var(--se-white-85); }
         .se-sidebar-link:hover { background: var(--se-hover-bg); color: #fff; }
         .se-sidebar-link.is-active {

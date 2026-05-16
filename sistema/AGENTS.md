@@ -21,6 +21,10 @@ Si lo habitual en el entorno es aplicar migraciones con Artisan en lugar de SQL 
 
 Detalle y matices: `docs/06-reglas-de-seguridad.md` sección **9**.
 
+## Promedio de calificaciones (secundario)
+
+No calcular promedios salvo en **carga manual** (`CargaCalificacionesSecundario`, al guardar `ic01..ic28` → `calif`). El resto del sistema solo **lee** `calificaciones.calif`. Detalle: `docs/05-preferencias-y-convenciones.md` §7.
+
 ## Resto del baseline
 
 Seguridad, permisos, `schoolCtx`, Blade, etc.: `docs/06-reglas-de-seguridad.md` y las reglas en `.cursor/rules/` (por ejemplo `seguridad-php-mysql-laravel.mdc`, `preferencias-del-proyecto.mdc`).

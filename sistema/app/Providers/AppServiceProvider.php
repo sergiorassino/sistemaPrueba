@@ -6,6 +6,7 @@ use App\Auth\AlumnoUserProvider;
 use App\Auth\ProfesorUserProvider;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 
@@ -31,5 +32,7 @@ class AppServiceProvider extends ServiceProvider
         Auth::provider('alumno', function ($app, array $config) {
             return new AlumnoUserProvider();
         });
+
+        Paginator::defaultView('vendor.pagination.se');
     }
 }

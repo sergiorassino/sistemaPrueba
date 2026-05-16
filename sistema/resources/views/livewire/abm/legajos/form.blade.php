@@ -531,11 +531,15 @@
 
     {{-- ═══════════════════ MATRICULAS MODAL ═══════════════════ --}}
     @if ($showMatriculasModal)
-        <div class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-neutral-900/60 px-2 py-4 backdrop-blur-sm" x-data>
-            <div class="my-auto w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl" @click.stop>
-                <div class="sticky top-0 z-10 flex items-center justify-between border-b border-accent-200 bg-white px-6 py-4">
+        @teleport('body')
+        <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4" role="dialog" aria-modal="true"
+             aria-labelledby="legajo-modal-matriculas-titulo">
+            <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="closeMatriculas"></div>
+
+            <div class="relative z-10 my-auto flex w-full max-w-5xl max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),42rem)]" @click.stop>
+                <div class="flex shrink-0 items-center justify-between border-b border-accent-200 bg-white px-6 py-4">
                     <div>
-                        <h3 class="text-base font-bold text-neutral-900">Matrículas del estudiante</h3>
+                        <h3 id="legajo-modal-matriculas-titulo" class="text-base font-bold text-neutral-900">Matrículas del estudiante</h3>
                         <p class="mt-0.5 text-xs font-medium text-neutral-500">Nivel: {{ schoolCtx()->nivelNombre() }} · Año activo: {{ schoolCtx()->terlecAno() }}</p>
                     </div>
                     <button wire:click="closeMatriculas" class="text-gray-400 hover:text-gray-600">
@@ -545,12 +549,12 @@
                     </button>
                 </div>
 
-                <div class="flex items-center justify-between gap-3 px-6 py-4">
+                <div class="flex shrink-0 items-center justify-between gap-3 px-6 py-4">
                     <div class="se-pill">{{ $matriculasAlumno->count() }} registro(s)</div>
                     <button wire:click="openNuevaMatricula" class="btn-primary btn-sm">Nueva matrícula</button>
                 </div>
 
-                <div class="px-6 pb-6">
+                <div class="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
                     <div class="overflow-x-auto rounded-2xl border border-accent-200">
                         <table class="min-w-full border-collapse">
                             <thead class="bg-accent-50">
@@ -592,7 +596,7 @@
 
                 {{-- Matricula form (create/edit) --}}
                 @if ($showMatriculaForm)
-                    <div class="border-t border-accent-200 bg-accent-50/70 px-6 py-5">
+                    <div class="shrink-0 border-t border-accent-200 bg-accent-50/70 px-6 py-5">
                         <h4 class="mb-3 text-sm font-bold text-neutral-900">{{ $matriculaEditId ? 'Editar matrícula' : 'Nueva matrícula' }}</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div class="lg:col-span-2">
@@ -662,6 +666,7 @@
                 @endif
             </div>
         </div>
+        @endteleport
     @endif
 
     {{-- ═══════════════════ CONFIRM CAMBIO DE PLAN (MATRÍCULA) ═══════════════════ --}}
@@ -694,8 +699,10 @@
 
     {{-- ═══════════════════ CONFIRM DELETE MATRICULA ═══════════════════ --}}
     @if ($showMatriculaConfirm)
-        <div class="fixed inset-0 z-[60] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm">
-            <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl" @click.stop>
+        @teleport('body')
+        <div class="fixed inset-0 z-[95] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4" role="dialog" aria-modal="true">
+            <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="$set('showMatriculaConfirm', false)"></div>
+            <div class="relative z-10 my-auto w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5" @click.stop>
                 <div class="px-6 py-5">
                     <div class="flex items-start gap-3">
                         <div @class([
@@ -733,5 +740,6 @@
                 </div>
             </div>
         </div>
+        @endteleport
     @endif
 </div>

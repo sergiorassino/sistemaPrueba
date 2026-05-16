@@ -49,7 +49,11 @@
         </div>
         <label class="inline-flex cursor-pointer items-center gap-3 rounded-xl border border-accent-200 bg-accent-50 px-3 py-2 text-sm font-medium text-neutral-700">
             <input wire:model.live="soloMatricula" type="checkbox" class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
-            Solo matriculados año activo
+            Solo año actual
+        </label>
+        <label class="inline-flex cursor-pointer items-center gap-3 rounded-xl border border-accent-200 bg-accent-50 px-3 py-2 text-sm font-medium text-neutral-700">
+            <input wire:model.live="soloMiNivel" type="checkbox" class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+            Solo año actual de mi nivel
         </label>
     </div>
 
@@ -104,17 +108,17 @@
                                             @php
                                                 $nivelNombre = mb_strtolower(trim((string) ($mat->nivel?->nivel ?? '')));
                                                 $esCicloActivo = (int) ($mat->idTerlec ?? 0) === (int) schoolCtx()->idTerlec;
-                                                $nivelClases = match (true) {
-                                                    str_contains($nivelNombre, 'inicial') => 'border-green-300 bg-green-100 text-green-900',
-                                                    str_contains($nivelNombre, 'primar') => 'border-yellow-300 bg-yellow-100 text-yellow-900',
-                                                    str_contains($nivelNombre, 'secund') => 'border-sky-300 bg-sky-100 text-sky-900',
-                                                    default => 'border-accent-200 bg-accent-50 text-neutral-700',
+                                                $nivelClase = match (true) {
+                                                    str_contains($nivelNombre, 'inicial') => 'se-mat-nivel-inicial',
+                                                    str_contains($nivelNombre, 'primar') => 'se-mat-nivel-primario',
+                                                    str_contains($nivelNombre, 'secund') => 'se-mat-nivel-secundario',
+                                                    default => 'se-mat-nivel-default',
                                                 };
                                             @endphp
                                             <div @class([
-                                                'rounded-md border px-1.5 py-0.5 text-[10px] leading-tight shadow-sm',
-                                                $nivelClases,
-                                                'ring-1 ring-primary-500 ring-offset-1' => $esCicloActivo,
+                                                'se-mat-nivel-chip',
+                                                $nivelClase,
+                                                'se-mat-ciclo-activo' => $esCicloActivo,
                                             ])>
                                                 <div class="flex min-w-0 items-center gap-1">
                                                     <span class="shrink-0 font-mono font-bold tabular-nums">{{ $mat->terlec?->ano ?? '—' }}</span>
@@ -179,7 +183,7 @@
 
         @if ($legajos->hasPages())
             <div class="border-t border-accent-200 bg-accent-50/70 px-4 py-3">
-                {{ $legajos->links() }}
+                {{ $legajos->links('vendor.pagination.se') }}
             </div>
         @endif
     </div>

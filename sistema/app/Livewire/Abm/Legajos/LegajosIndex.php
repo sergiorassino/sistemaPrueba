@@ -15,6 +15,7 @@ class LegajosIndex extends Component
     // List state
     public string $search        = '';
     public bool   $soloMatricula = false;
+    public bool   $soloMiNivel    = false;
     public ?int   $focusId       = null;
 
     public bool   $showConfirm  = false;
@@ -34,6 +35,16 @@ class LegajosIndex extends Component
     }
 
     public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSoloMatricula(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSoloMiNivel(): void
     {
         $this->resetPage();
     }
@@ -112,6 +123,15 @@ class LegajosIndex extends Component
 
         if ($this->soloMatricula) {
             $query->whereHas('matriculas', fn ($q) => $q->where('idTerlec', $idTerlec));
+        }
+
+        if ($this->soloMiNivel) {
+            $idNivel = schoolCtx()->idNivel;
+            if ($idNivel) {
+                $query->whereHas('matriculas', fn ($q) => $q
+                    ->where('idTerlec', $idTerlec)
+                    ->where('idNivel', $idNivel));
+            }
         }
 
         $legajos  = $query->orderBy('apellido')->orderBy('nombre')->paginate(25);

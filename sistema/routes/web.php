@@ -5,6 +5,7 @@ use App\Http\Controllers\Alumnos\InformeInasistenciasController;
 use App\Http\Controllers\Alumnos\PushApiController;
 use App\Http\Controllers\Alumnos\PushController;
 use App\Http\Controllers\AntecedentesDisciplinariosPdfController;
+use App\Http\Controllers\BoletinesSecundario\BoletinSecundarioPdfController;
 use App\Http\Controllers\CalificacionesSecundario\ConsultaCalificacionesSecundarioPdfController;
 use App\Http\Controllers\EstudiantesExcelController;
 use App\Http\Controllers\InformeInasistenciasPdfController;
@@ -31,6 +32,7 @@ use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
 use App\Livewire\Auth\Login;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
+use App\Livewire\BoletinesSecundario\BoletinesSecundarioIndex;
 use App\Livewire\CalificacionesSecundario\SincroGe;
 use App\Livewire\Comunicaciones\BandejaGestion;
 use App\Livewire\Comunicaciones\BandejaRevision;
@@ -184,6 +186,14 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/calificaciones-secundario/consulta/pdf', ConsultaCalificacionesSecundarioPdfController::class)
         ->middleware('permiso:2')
         ->name('calificacionesSecundario.consulta.pdf');
+
+    // Boletines / informe de progreso escolar (nivel secundario)
+    Route::get('/boletines-secundario', BoletinesSecundarioIndex::class)
+        ->middleware('permiso:2')
+        ->name('boletinesSecundario.index');
+    Route::get('/boletines-secundario/pdf', BoletinSecundarioPdfController::class)
+        ->middleware('permiso:2')
+        ->name('boletinesSecundario.pdf');
 
     // Seguimiento disciplinario
     Route::get('/seguimiento/disciplinario', DisciplinarioIndex::class)

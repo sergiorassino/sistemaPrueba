@@ -313,6 +313,72 @@
         color: var(--color-primary-700);
         background-color: rgba(193, 215, 218, .28);
     }
+
+    .se-pagination-btn {
+        @apply inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold transition;
+        border-color: var(--color-accent-200);
+        color: var(--color-primary-700);
+        background-color: #fff;
+    }
+    .se-pagination-btn-nav:hover {
+        border-color: var(--color-primary-500);
+        background-color: rgba(193, 215, 218, 0.35);
+    }
+    .se-pagination-btn-nav:focus-visible {
+        @apply outline-none ring-2 ring-primary-500/40;
+    }
+    .se-pagination-btn-disabled {
+        @apply cursor-not-allowed opacity-45;
+        background-color: rgba(244, 248, 249, 0.9);
+        color: var(--color-neutral-400);
+    }
+    .se-pagination-page {
+        @apply inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-2 text-sm font-semibold transition;
+        border-color: transparent;
+        color: var(--color-primary-700);
+    }
+    .se-pagination-page:hover {
+        border-color: var(--color-accent-200);
+        background-color: rgba(193, 215, 218, 0.35);
+    }
+    .se-pagination-page-active {
+        border-color: var(--color-primary-500);
+        background-color: var(--color-primary-600);
+        color: #fff;
+    }
+    .se-pagination-ellipsis {
+        @apply inline-flex h-9 min-w-6 items-center justify-center px-1 text-sm text-neutral-400;
+    }
+
+    /* Chips de matrícula por nivel (listado de legajos) — fondos explícitos para buen contraste */
+    .se-mat-nivel-chip {
+        @apply rounded-md border px-1.5 py-0.5 text-[10px] leading-tight shadow-sm;
+    }
+  /* Inicial: verde lima (cálido); Secundario: azul celeste (frío) — evitar verde-azulado compartido */
+    .se-mat-nivel-inicial {
+        background-color: #ecfccb;
+        border-color: #bef264;
+        color: #3f6212;
+    }
+    .se-mat-nivel-primario {
+        background-color: #fef9c3;
+        border-color: #fde047;
+        color: #854d0e;
+    }
+    .se-mat-nivel-secundario {
+        background-color: #eff6ff;
+        border-color: #bfdbfe;
+        color: #1d4ed8;
+    }
+    .se-mat-nivel-default {
+        background-color: var(--color-accent-50);
+        border-color: var(--color-accent-200);
+        color: var(--color-neutral-700);
+    }
+    .se-mat-nivel-chip.se-mat-ciclo-activo {
+        box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--color-primary-500);
+    }
+
     .se-section-title {
         @apply text-sm font-bold uppercase tracking-[0.12em] text-neutral-500;
     }

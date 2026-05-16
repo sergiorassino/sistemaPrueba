@@ -108,6 +108,12 @@
             'icon' => 'doc',
         ];
         $dashboardLinks[] = [
+            'title' => 'Boletines',
+            'hint' => 'Informe de progreso escolar',
+            'href' => route('boletinesSecundario.index'),
+            'icon' => 'doc',
+        ];
+        $dashboardLinks[] = [
             'title' => 'Seguimiento disciplinario',
             'hint'  => 'Sanciones y antecedentes',
             'href'  => route('seguimiento.disciplinario'),

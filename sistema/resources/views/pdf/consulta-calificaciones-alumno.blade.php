@@ -67,6 +67,8 @@
         }
         .subtitulo { text-align: center; margin: 0 0 5px 0; font-size: 6.5pt; }
         .meta { margin: 0 0 5px 0; font-size: 6.5pt; line-height: 1.25; }
+        .meta strong.meta-alumno { font-size: 8.5pt; }
+        .meta strong.meta-curso { font-size: 6.5pt; font-weight: 700; }
 
         /* Tabla exterior: separación horizontal entre bloques redondeados */
         table.outer {
@@ -185,13 +187,81 @@
             letter-spacing: 0.02em;
         }
         .adeu-body { margin: 0; font-weight: 400; line-height: 1.02; text-align: left; }
+        /* Pie: texto (previas / ítems) a la izquierda; firmas a la derecha en la misma franja vertical */
+        .pie-footer { width: 100%; margin-top: 1.5mm; }
+        .pie-footer-tabla {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        .pie-footer-tabla td { vertical-align: bottom; padding: 0; border: 0; }
+        .pie-texto { width: 38%; text-align: left; padding-right: 3mm; }
+        .pie-firmas-cel { width: 62%; }
+        .pie-footer--solo-firmas .pie-firmas-cel { width: 100%; }
+        .disc--con-firmas { margin-top: 1.5mm; }
+        .adeu--con-firmas { margin-top: 1mm; }
+        .firma-bloque { margin: 0; padding: 0; }
+        .pie-firmas-cel .firma-bloque { width: 100%; }
+        .pie-footer--solo-firmas .firma-bloque {
+            padding-left: 50mm;
+            padding-right: 10mm;
+        }
+        .firma-tabla {
+            border-collapse: collapse;
+            width: auto;
+            table-layout: auto;
+        }
+        .firma-sep {
+            width: 40mm;
+            min-width: 40mm;
+            padding: 0;
+            border: 0;
+            font-size: 1pt;
+            line-height: 1;
+        }
+        .pie-firmas-cel .firma-tabla {
+            margin-left: auto;
+            margin-right: 40mm;
+        }
+        .pie-footer--solo-firmas .firma-tabla {
+            width: 100%;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .firma-tabla td {
+            width: auto;
+            vertical-align: top;
+            padding: 0;
+            border: 0;
+        }
+        .firma-linea {
+            border-bottom: 0.55pt dotted #333;
+            height: 7mm;
+            width: 65mm;
+            min-width: 65mm;
+            display: block;
+            margin: 0 auto;
+        }
+        .firma-label {
+            font-size: 6pt;
+            text-align: center;
+            margin: 1px 0 0 0;
+            line-height: 1.15;
+            font-weight: 400;
+            width: 65mm;
+        }
     </style>
 </head>
 <body>
+@php
+    $tituloDocumento = $tituloDocumento ?? 'Consulta de Calificaciones';
+    $mostrarMarcaAgua = $mostrarMarcaAgua ?? true;
+    $mostrarFirmas = $mostrarFirmas ?? false;
+@endphp
 <div class="layer">
     @include('pdf.partials.header', ['header' => $pdfHeader ?? null])
 
-    <p class="titulo">Consulta de Calificaciones</p>
+    <p class="titulo">{{ $tituloDocumento }}</p>
     <p class="subtitulo">
         @if (! empty($consulta['anoLectivo']))
             Ciclo lectivo {{ $consulta['anoLectivo'] }}
@@ -199,12 +269,12 @@
     </p>
 
     <p class="meta">
-        <strong>{{ $consulta['alumnoLinea'] }}</strong>
+        <strong class="meta-alumno">{{ $consulta['alumnoLinea'] }}</strong>
         @if (trim($consulta['dni']) !== '')
             &nbsp;·&nbsp;D.N.I. {{ $consulta['dni'] }}
         @endif
         @if (trim($consulta['cursoLabel']) !== '')
-            &nbsp;·&nbsp;{{ $consulta['cursoLabel'] }}
+            &nbsp;·&nbsp;<strong class="meta-curso">{{ $consulta['cursoLabel'] }}</strong>
         @endif
     </p>
 
@@ -331,25 +401,26 @@
         @endforelse
         </tbody>
     </table>
+    @if ($mostrarMarcaAgua)
     <div class="wm-overlay">
         <div class="wm">SIN VALOR LEGAL</div>
     </div>
+    @endif
     </div>
 
     @php
         $adeudadas = $consulta['materias_adeudadas'] ?? [];
+        $itemsBoletin = $consulta['items_boletin'] ?? [];
+        $hayPieTexto = count($adeudadas) > 0 || count($itemsBoletin) > 0;
     @endphp
-    @if (count($adeudadas) > 0)
+    @if (! $mostrarFirmas && count($adeudadas) > 0)
         <div class="adeu">
             <p class="adeu-title">MATERIAS PREVIAS:</p>
             <p class="adeu-body">@foreach ($adeudadas as $a){{ $a->linea }}@if (! $loop->last) - @endif@endforeach</p>
         </div>
     @endif
 
-    @php
-        $itemsBoletin = $consulta['items_boletin'] ?? [];
-    @endphp
-    @if (count($itemsBoletin) > 0)
+    @if (! $mostrarFirmas && count($itemsBoletin) > 0)
         <div class="disc">
             @foreach ($itemsBoletin as $it)
                 @php
@@ -364,6 +435,59 @@
                 @endphp
                 <p @class(['disc-item-tight' => $itemTight])><span class="disc-lbl">{{ $it->etiqueta }}:</span> @if ($mostrar){{ $txt }}@else{{ $blank }}@endif</p>
             @endforeach
+        </div>
+    @endif
+
+    @if ($mostrarFirmas)
+        <div @class(['pie-footer', 'pie-footer--solo-firmas' => ! $hayPieTexto])>
+            <table class="pie-footer-tabla" cellspacing="0" cellpadding="0">
+                <tr>
+                    @if ($hayPieTexto)
+                    <td class="pie-texto" valign="top">
+                        @if (count($adeudadas) > 0)
+                            <div class="adeu adeu--con-firmas">
+                                <p class="adeu-title">MATERIAS PREVIAS:</p>
+                                <p class="adeu-body">@foreach ($adeudadas as $a){{ $a->linea }}@if (! $loop->last) - @endif@endforeach</p>
+                            </div>
+                        @endif
+                        @if (count($itemsBoletin) > 0)
+                            <div class="disc disc--con-firmas">
+                                @foreach ($itemsBoletin as $it)
+                                    @php
+                                        $t = (float) ($it->total ?? 0);
+                                        $fuente = (string) ($it->fuente ?? '');
+                                        $esInas = ($fuente === 'inasistencias');
+                                        $itemTight = in_array($fuente, ['inasistencias', 'sanciones'], true);
+                                        $mostrarItem = $esInas ? (abs($t) >= 0.005) : ((int) round($t) !== 0);
+                                        $txt = $esInas
+                                            ? number_format($t, 2, ',', '')
+                                            : (string) (int) round($t);
+                                    @endphp
+                                    <p @class(['disc-item-tight' => $itemTight])><span class="disc-lbl">{{ $it->etiqueta }}:</span> @if ($mostrarItem){{ $txt }}@else{{ $blank }}@endif</p>
+                                @endforeach
+                            </div>
+                        @endif
+                    </td>
+                    @endif
+                    <td class="pie-firmas-cel" valign="bottom">
+                        <div class="firma-bloque">
+                            <table class="firma-tabla" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td class="firma-cel">
+                                        <div class="firma-linea"></div>
+                                        <p class="firma-label">Firma Padre / Madre / Tutor</p>
+                                    </td>
+                                    <td class="firma-sep">&nbsp;</td>
+                                    <td class="firma-cel">
+                                        <div class="firma-linea"></div>
+                                        <p class="firma-label">Firma Directivo</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
     @endif
 

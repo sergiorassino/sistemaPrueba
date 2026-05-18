@@ -15,9 +15,6 @@ class HorariosCargaIndex extends Component
 
     public ?int $cursoId = null;
 
-    /** @var array<string, bool> */
-    public array $celdas = [];
-
     public ?string $avisoConflicto = null;
 
     /*
@@ -37,14 +34,12 @@ class HorariosCargaIndex extends Component
         $this->profesorId = null;
         $this->materiaId = null;
         $this->cursoId = null;
-        $this->celdas = [];
     }
 
     public function updatedProfesorId(): void
     {
         $this->materiaId = null;
         $this->cursoId = null;
-        $this->celdas = [];
         $this->avisoConflicto = null;
         // $this->diagnosticoUltimaCeldaSql = null;
     }
@@ -63,20 +58,9 @@ class HorariosCargaIndex extends Component
     protected function recargarGrilla(): void
     {
         $this->avisoConflicto = null;
-        if (! $this->puedeEditarGrilla()) {
-            $this->celdas = [];
-
-            return;
-        }
-
-        $this->celdas = HorariosProfesores::celdasMarcadas(
-            (int) $this->profesorId,
-            (int) $this->materiaId,
-            (int) $this->cursoId,
-        );
     }
 
-    public function alternarCelda(string $dia, int $hora): void
+    public function alternarCelda(string $dia, int $hora, int $indiceBloqueHorario = 0): void
     {
         $this->avisoConflicto = null;
 
@@ -88,6 +72,7 @@ class HorariosCargaIndex extends Component
             (int) $this->profesorId,
             (int) $this->materiaId,
             (int) $this->cursoId,
+            max(0, min(1, $indiceBloqueHorario)),
         );
         $key = HorariosProfesores::celdaKeyLegacy($dia, $hora);
         $marcar = ! ($marcadas[$key] ?? false);
@@ -99,16 +84,8 @@ class HorariosCargaIndex extends Component
             $dia,
             $hora,
             $marcar,
+            max(0, min(1, $indiceBloqueHorario)),
         );
-
-        // $this->diagnosticoUltimaCeldaSql = HorariosProfesores::textoDepuracionSqlAlternarUltimaAccion(
-        //     (int) $this->profesorId,
-        //     (int) $this->materiaId,
-        //     (int) $this->cursoId,
-        //     $dia,
-        //     $hora,
-        //     $marcar,
-        // );
 
         if (! $res['ok']) {
             $this->avisoConflicto = $res['mensaje'] ?? 'No se pudo actualizar el horario.';
@@ -161,30 +138,47 @@ class HorariosCargaIndex extends Component
             ]);
     }
 
+    /**
+     * @return list<array{indice:int, etiqueta:string, celdas: array<string, bool>}>
+     */
+    protected function grillasCarga(): array
+    {
+        if (! $this->puedeEditarGrilla()) {
+            return [];
+        }
+
+        $asig = $this->asignaciones()->first(
+            fn ($a) => (int) ($a->idMateria ?? 0) === (int) ($this->materiaId ?? 0),
+        );
+        if (! $asig) {
+            return [];
+        }
+        $segmentos = HorariosProfesores::segmentosCargaHorarioDesdeTurnoNorm((int) $asig->idTurnoClase);
+        $out = [];
+        foreach ($segmentos as $seg) {
+            $idx = (int) $seg['indice'];
+            $out[] = [
+                'indice' => $idx,
+                'etiqueta' => (string) ($seg['etiqueta'] ?? ''),
+                'celdas' => HorariosProfesores::celdasMarcadas(
+                    (int) $this->profesorId,
+                    (int) $this->materiaId,
+                    (int) $this->cursoId,
+                    $idx,
+                ),
+            ];
+        }
+
+        return $out;
+    }
+
     public function render()
     {
         $asignacionActual = $this->asignaciones()->first(
             fn ($a) => (int) ($a->idMateria ?? 0) === (int) ($this->materiaId ?? 0),
         );
 
-        $celdasMarcadas = $this->puedeEditarGrilla()
-            ? HorariosProfesores::celdasMarcadas(
-                (int) $this->profesorId,
-                (int) $this->materiaId,
-                (int) $this->cursoId,
-            )
-            : [];
-
         $consultaSqlDepuracion = '';
-        // $consultaSqlDepuracion = HorariosProfesores::textoDepuracionSqlCargaHorarios(
-        //     $this->profesorId,
-        //     $this->materiaId,
-        //     $this->cursoId,
-        // );
-        // $ult = trim((string) ($this->diagnosticoUltimaCeldaSql ?? ''));
-        // if ($ult !== '') {
-        //     $consultaSqlDepuracion .= "\n\n".$ult;
-        // }
 
         return view('livewire.horarios.horarios-carga-index', [
             'profesores' => $this->profesores(),
@@ -192,7 +186,7 @@ class HorariosCargaIndex extends Component
             'dias' => HorariosProfesores::diasActivosLegacy(),
             'horas' => range(1, HorariosProfesores::HORAS_POR_TURNO),
             'asignacionActual' => $asignacionActual,
-            'celdasMarcadas' => $celdasMarcadas,
+            'grillasCarga' => $this->grillasCarga(),
             'consultaSqlDepuracion' => $consultaSqlDepuracion,
         ])->layout('layouts.app', ['pageTitle' => 'Carga de horarios']);
     }

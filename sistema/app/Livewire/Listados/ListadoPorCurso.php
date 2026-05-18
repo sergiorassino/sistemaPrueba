@@ -38,7 +38,7 @@ class ListadoPorCurso extends Component
 
     public function render()
     {
-        $cursos = $this->queryCursos()->get(['Id', 'cursec', 'orden', 'idCurPlan', 'turno', 'c', 's']);
+        $cursos = $this->queryCursos()->with('turnoClase')->get(['Id', 'cursec', 'orden', 'idCurPlan', 'c', 's', 'idTurnoClase']);
 
         $idsElegidosSet = collect($this->cursosElegidos)
             ->map(fn ($v) => (string) $v)
@@ -67,7 +67,7 @@ class ListadoPorCurso extends Component
             return;
         }
 
-        $cursos = $this->queryCursos()->get(['Id', 'cursec', 'orden', 'idCurPlan', 'turno', 'c', 's']);
+        $cursos = $this->queryCursos()->with('turnoClase')->get(['Id', 'cursec', 'orden', 'idCurPlan', 'c', 's', 'idTurnoClase']);
         $ya = collect($this->cursosElegidos)->map(fn ($v) => (string) $v)->flip();
 
         foreach ($cursos as $c) {
@@ -101,7 +101,7 @@ class ListadoPorCurso extends Component
     /** Pasa todos los cursos disponibles a la derecha. */
     public function pasarTodosADerecha(): void
     {
-        $cursos = $this->queryCursos()->get(['Id', 'cursec', 'orden', 'idCurPlan', 'turno', 'c', 's']);
+        $cursos = $this->queryCursos()->with('turnoClase')->get(['Id', 'cursec', 'orden', 'idCurPlan', 'c', 's', 'idTurnoClase']);
         $ya = collect($this->cursosElegidos)->map(fn ($v) => (string) $v)->flip();
 
         foreach ($cursos as $c) {

@@ -30,13 +30,27 @@ class HorarioCursoPdfController extends Controller
             ->where('idNivel', $ctx->idNivel)
             ->where('idTerlec', $ctx->idTerlec)
             ->where('Id', $cursoId)
-            ->first(['Id', 'cursec', 'orden', 'idCurPlan', 'turno', 'c', 's']);
+            ->first(['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's']);
 
         if (! $curso) {
             abort(404);
         }
 
-        $turnos = HorariosProfesores::turnosParaImpresionCurso($curso);
+        $activos = HorariosProfesores::turnosActivos();
+        $forzado = (int) $request->query('turno', 0);
+        if ($forzado > 0 && in_array($forzado, $activos, true)) {
+            if (HorariosProfesores::esTurnoClaseDobleJornada($forzado)) {
+                [$ma, $ta] = HorariosProfesores::idsTurnoClaseBandasMananaTarde();
+                $turnos = array_values(array_filter([$ma, $ta], fn (int $t) => in_array($t, $activos, true)));
+                if ($turnos === []) {
+                    $turnos = [$ma, $ta];
+                }
+            } else {
+                $turnos = [$forzado];
+            }
+        } else {
+            $turnos = HorariosProfesores::turnosParaImpresionCurso($curso);
+        }
         $paginas = [];
         foreach ($turnos as $idTurnoClase) {
             $paginas[] = [

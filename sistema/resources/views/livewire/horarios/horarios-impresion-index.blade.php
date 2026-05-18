@@ -5,7 +5,7 @@
                 <p class="se-eyebrow">Horarios</p>
                 <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Impresión de horarios</h2>
                 <p class="max-w-2xl text-sm text-white/80">
-                    PDF A4 apaisado: una hoja por turno activo del establecimiento.
+                    PDF A4 apaisado: una hoja por turno. Si su curso no tiene el turno bien cargado, elija el turno del PDF abajo.
                 </p>
             </div>
             <a href="{{ route('dashboard') }}"
@@ -47,6 +47,22 @@
                         <option value="{{ $p->id }}">{{ $p->label }}</option>
                     @endforeach
                 </select>
+            </div>
+        @endif
+
+        @if (count($turnosPdf) > 1)
+            <div class="border-t border-accent-100 pt-4">
+                <label for="imp-turno-pdf" class="se-section-title">Turno del PDF (opcional)</label>
+                <select id="imp-turno-pdf" wire:model.live="pdfTurnoClase" class="form-select mt-2 w-full max-w-md">
+                    <option value="">Automático según curso o docente</option>
+                    @foreach ($turnosPdf as $tid)
+                        <option value="{{ $tid }}">{{ \App\Support\HorariosProfesores::nombreTurnoClase($tid) }}</option>
+                    @endforeach
+                </select>
+                <p class="mt-2 max-w-xl text-xs text-neutral-600">
+                    Si el PDF de un turno sale vacío o con horas que no corresponden, el curso puede no tener bien definido el turno en <strong>ABM → Cursos</strong>.
+                    Elija aquí el turno del PDF para forzar reloj y filtro, o asigne el turno al curso en ABM (campo enlazado a <strong>turnos_clase</strong>).
+                </p>
             </div>
         @endif
     </div>

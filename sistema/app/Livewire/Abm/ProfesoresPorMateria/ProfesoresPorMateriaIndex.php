@@ -363,7 +363,8 @@ TXT;
             ->where('idTerlec', $ctx->idTerlec)
             ->orderByRaw('COALESCE(orden, 9999) asc')
             ->orderBy('Id')
-            ->get(['Id', 'cursec', 'c', 's', 'turno']);
+            ->with('turnoClase')
+            ->get(['Id', 'cursec', 'c', 's', 'idTurnoClase']);
 
         $materias = $this->materiasQuery()
             ->orderBy('ord')

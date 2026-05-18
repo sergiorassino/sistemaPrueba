@@ -41,7 +41,7 @@
                 @foreach ($cursos as $c)
                     @php
                         $label = trim((string) ($c->cursec ?? ''));
-                        $extra = collect([$c->c ?? null, $c->s ?? null, $c->turno ?? null])
+                        $extra = collect([$c->c ?? null, $c->s ?? null, $c->turnoClase?->nombre ?? null])
                             ->filter(fn ($v) => $v !== null && trim((string) $v) !== '')
                             ->implode(' ');
                         $display = $label !== '' ? $label : ('Curso ' . $c->Id);

@@ -24,12 +24,17 @@
     <div class="se-card px-5 py-5 space-y-5">
         <div>
             <p class="se-section-title">Turnos del establecimiento</p>
-            <p class="mt-1 text-sm text-neutral-600">Mañana, tarde y/o noche. Cada turno tiene 10 horas de clase.</p>
+            <p class="mt-1 text-sm text-neutral-600">
+                Marque las jornadas del establecimiento (mañana, tarde, vespertino, noche, etc.).
+                El turno compuesto «Mañana/Tarde» no se lista aquí: se asigna solo al curso en <strong>ABM → Cursos</strong>.
+                Cada turno activo tiene 10 horas de clase en el reloj.
+            </p>
             <div class="mt-3 flex flex-wrap gap-4">
-                @foreach ($turnosClase as $turno)
-                    <label class="inline-flex items-center gap-2 text-sm font-medium text-neutral-800">
+                @foreach ($turnosClaseEstablecimiento as $turno)
+                    <label class="inline-flex items-center gap-2 text-sm font-medium text-neutral-800"
+                           wire:key="hc-turno-{{ $turno->id }}">
                         <input type="checkbox" class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
-                               wire:model="turnosMarcados.{{ $turno->id }}">
+                               wire:model.live="turnosMarcados.{{ $turno->id }}">
                         {{ $turno->nombre }}
                     </label>
                 @endforeach
@@ -41,9 +46,10 @@
             <p class="se-section-title">Días de clase</p>
             <div class="mt-3 flex flex-wrap gap-3">
                 @foreach ($dias as $id => $label)
-                    <label class="inline-flex items-center gap-2 text-sm font-medium text-neutral-800">
+                    <label class="inline-flex items-center gap-2 text-sm font-medium text-neutral-800"
+                           wire:key="hc-dia-{{ $id }}">
                         <input type="checkbox" class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
-                               wire:model="diasMarcados.{{ $id }}">
+                               wire:model.live="diasMarcados.{{ $id }}">
                         {{ $label }}
                     </label>
                 @endforeach
@@ -59,6 +65,12 @@
 
     <div class="se-card px-5 py-5 space-y-4">
         <p class="se-section-title">Horario reloj (primera columna del impreso)</p>
+        <p class="text-sm text-neutral-600">
+            En <code class="rounded bg-accent-100 px-1">reloj</code> cada turno tiene sus filas con
+            <code class="rounded bg-accent-100 px-1">orden</code> de <strong>1 a 10</strong> y el turno se indica con
+            <code class="rounded bg-accent-100 px-1">idTurnoClase</code> (no se usan órdenes 11–20 / 21–30 en filas nuevas).
+            La carga en <code class="rounded bg-accent-100 px-1">horarios26</code> sigue usando <code class="rounded bg-accent-100 px-1">idHora</code> 1–30 según el turno del curso.
+        </p>
         <div class="flex flex-wrap items-end gap-4">
             <div>
                 <label for="turno-reloj" class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Turno</label>
@@ -98,6 +110,28 @@
             Guardar horario reloj
         </button>
     </div>
+
+    @if ($mostrarPanelSqlDepuracion)
+        <div class="se-card overflow-hidden border-dashed border-primary-400/40 bg-accent-50/60">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-accent-200 px-4 py-2.5">
+                <h3 class="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-600">
+                    Consultas SQL · configuración de horarios (referencia)
+                </h3>
+                <button type="button" wire:click="$set('mostrarPanelSqlDepuracion', false)"
+                        class="rounded-lg border border-accent-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-neutral-600 hover:bg-accent-50">
+                    Ocultar
+                </button>
+            </div>
+            <pre class="max-h-[28rem] overflow-auto whitespace-pre-wrap break-words px-4 py-3 font-mono text-[10px] leading-relaxed text-neutral-800 sm:text-[11px]">{{ $consultaSqlDepuracion ?? '' }}</pre>
+        </div>
+    @else
+        <div class="flex justify-center">
+            <button type="button" wire:click="$set('mostrarPanelSqlDepuracion', true)"
+                    class="text-sm font-semibold text-primary-700 hover:underline">
+                Mostrar consultas SQL (referencia)
+            </button>
+        </div>
+    @endif
 
     <div class="flex flex-wrap gap-3">
         <a href="{{ route('horarios.carga') }}" class="text-sm font-semibold text-primary-700 hover:underline">Carga de horarios →</a>

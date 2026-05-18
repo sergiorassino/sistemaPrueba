@@ -82,7 +82,7 @@ class PlanillaCalificacionesSecundario extends Component
             ->where('idTerlec', $ctx->idTerlec)
             ->orderByRaw('COALESCE(orden, 9999) asc')
             ->orderBy('Id')
-            ->get(['Id', 'cursec', 'orden', 'idCurPlan', 'turno', 'c', 's']);
+            ->get(['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's']);
     }
 
     /**

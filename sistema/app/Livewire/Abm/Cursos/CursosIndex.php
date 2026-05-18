@@ -8,6 +8,8 @@ use App\Models\Matplan;
 use App\Models\Nivel;
 use App\Models\Plan;
 use App\Models\Terlec;
+use App\Models\TurnoClase;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
@@ -46,7 +48,7 @@ class CursosIndex extends Component
             'cursec' => (string) ($curso->cursec ?? ''),
             'c' => (string) ($curso->c ?? ''),
             's' => (string) ($curso->s ?? ''),
-            'turno' => (string) ($curso->turno ?? ''),
+            'idTurnoClase' => $curso->idTurnoClase !== null && (int) $curso->idTurnoClase > 0 ? (int) $curso->idTurnoClase : null,
         ];
 
         $this->resetValidation();
@@ -72,6 +74,8 @@ class CursosIndex extends Component
             ->pluck('id')
             ->all();
 
+        $turnoIds = TurnoClase::query()->orderBy('orden')->orderBy('id')->pluck('id')->map(fn ($x) => (int) $x)->all();
+
         return [
             "draft.$id.orden" => ['nullable', 'integer', 'min:0', 'max:999'],
             "draft.$id.idCurPlan" => ['required', 'integer', Rule::in($curplanIds)],
@@ -80,7 +84,7 @@ class CursosIndex extends Component
             "draft.$id.cursec" => ['nullable', 'string', 'max:30'],
             "draft.$id.c" => ['nullable', 'string', 'max:1'],
             "draft.$id.s" => ['nullable', 'string', 'max:1'],
-            "draft.$id.turno" => ['nullable', 'string', 'max:20'],
+            "draft.$id.idTurnoClase" => ['nullable', 'integer', Rule::in($turnoIds)],
         ];
     }
 
@@ -92,6 +96,10 @@ class CursosIndex extends Component
             return;
         }
         RateLimiter::hit($key, 60);
+
+        if (isset($this->draft[$id]['idTurnoClase']) && $this->draft[$id]['idTurnoClase'] === '') {
+            $this->draft[$id]['idTurnoClase'] = null;
+        }
 
         $this->validate($this->rowRules($id));
 
@@ -180,21 +188,46 @@ class CursosIndex extends Component
                 $rawCursec = $d['cursec'] ?? null;
                 $rawC = $d['c'] ?? null;
                 $rawS = $d['s'] ?? null;
-                $rawTurno = $d['turno'] ?? null;
+                $rawIdTurno = $d['idTurnoClase'] ?? null;
+                $idTurnoClase = ($rawIdTurno === '' || $rawIdTurno === null) ? null : (int) $rawIdTurno;
+                if ($idTurnoClase !== null && $idTurnoClase <= 0) {
+                    $idTurnoClase = null;
+                }
 
                 $payload = [
                     'orden' => ($rawOrden === '' || $rawOrden === null) ? null : (int) $rawOrden,
                     'cursec' => trim((string) $rawCursec) !== '' ? trim((string) $rawCursec) : null,
                     'c' => trim((string) $rawC) !== '' ? trim((string) $rawC) : null,
                     's' => trim((string) $rawS) !== '' ? trim((string) $rawS) : null,
-                    'turno' => trim((string) $rawTurno) !== '' ? trim((string) $rawTurno) : null,
+                    'idTurnoClase' => $idTurnoClase,
                 ];
 
                 $curso->update($payload);
             });
+        } catch (QueryException $e) {
+            report($e);
+            $sqlState = (string) ($e->errorInfo[0] ?? '');
+            $errno = (int) ($e->errorInfo[1] ?? 0);
+            $msg = 'No se pudo guardar el curso en la base de datos.';
+            if ($errno === 1452 || str_contains(mb_strtolower($e->getMessage()), 'foreign key constraint')) {
+                $msg = 'No se pudo guardar: el turno elegido no existe en la tabla turnos_clase (restricción de clave foránea). Verifique que existan los ids 1–3 en turnos_clase.';
+            } elseif ($errno === 1265 || str_contains(mb_strtolower($e->getMessage()), 'data truncated')) {
+                $msg = 'No se pudo guardar: un valor no coincide con el tipo o longitud esperada en la base de datos.';
+            } elseif ($errno === 1366) {
+                $msg = 'No se pudo guardar: valor incorrecto para una columna (codificación o tipo). Revise idTurnoClase y demás campos del curso.';
+            }
+            if (config('app.debug')) {
+                $msg .= ' ['.$sqlState.' / '.$errno.'] '.$e->getMessage();
+            }
+            session()->flash('error', $msg);
+            return;
         } catch (\Throwable $e) {
             report($e);
-            session()->flash('error', 'No se pudo guardar el curso por dependencias u otro error. No se aplicaron cambios.');
+            $msg = 'No se pudo guardar el curso por dependencias u otro error. No se aplicaron cambios.';
+            if (config('app.debug')) {
+                $msg .= ' '.$e->getMessage();
+            }
+            session()->flash('error', $msg);
             return;
         }
 
@@ -239,7 +272,7 @@ class CursosIndex extends Component
                 'cursec' => null,
                 'c' => null,
                 's' => null,
-                'turno' => null,
+                'idTurnoClase' => null,
             ]);
 
             $matplan = Matplan::query()
@@ -335,7 +368,7 @@ class CursosIndex extends Component
         $ctx = schoolCtx();
 
         $cursos = Curso::query()
-            ->with(['curplan.plan', 'terlec', 'nivel'])
+            ->with(['curplan.plan', 'terlec', 'nivel', 'turnoClase'])
             ->where('idNivel', $ctx->idNivel)
             ->where('idTerlec', $ctx->idTerlec)
             ->orderByRaw('COALESCE(orden, 9999) asc')
@@ -363,7 +396,12 @@ class CursosIndex extends Component
             ->orderBy('id')
             ->get(['id', 'nivel', 'abrev']);
 
-        return view('livewire.abm.cursos.index', compact('cursos', 'curplanes', 'terlecs', 'niveles'))
+        $turnosClase = TurnoClase::query()
+            ->orderBy('orden')
+            ->orderBy('id')
+            ->get(['id', 'nombre', 'codigo']);
+
+        return view('livewire.abm.cursos.index', compact('cursos', 'curplanes', 'terlecs', 'niveles', 'turnosClase'))
             ->layout('layouts.app', ['pageTitle' => 'Gestión de Cursos / Grados / Salas']);
     }
 }

@@ -206,6 +206,7 @@ final class ConsultaCalificacionesAlumno
             })
             ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
             ->leftJoin('curplan as cp', 'cp.id', '=', 'cu.idCurPlan')
+            ->leftJoin('turnos_clase as tc', 'tc.id', '=', 'cu.idTurnoClase')
             ->leftJoin('terlec as t', 't.id', '=', 'c.idTerlec')
             ->where('c.idLegajos', $idLegajo)
             ->where('c.apro', 1)
@@ -217,7 +218,7 @@ final class ConsultaCalificacionesAlumno
                 'm.materia',
                 'cu.cursec',
                 'cp.curPlanCurso',
-                'cu.turno',
+                'tc.nombre as turnoClaseNombre',
                 'cu.c',
                 'cu.s',
             ])
@@ -254,7 +255,7 @@ final class ConsultaCalificacionesAlumno
         }
 
         $nombrePlan = trim((string) ($r->curPlanCurso ?? ''));
-        $extras = collect([$r->turno ?? '', $r->c ?? '', $r->s ?? ''])
+        $extras = collect([$r->turnoClaseNombre ?? '', $r->c ?? '', $r->s ?? ''])
             ->map(fn ($v) => trim((string) $v))
             ->filter()
             ->values();

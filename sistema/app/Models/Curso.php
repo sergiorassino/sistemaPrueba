@@ -13,8 +13,13 @@ class Curso extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'orden', 'idCurPlan', 'idTerlec', 'idNivel', 'cursec', 'c', 's', 'turno',
+        'orden', 'idCurPlan', 'idTerlec', 'idNivel', 'cursec', 'c', 's', 'idTurnoClase',
     ];
+
+    public function turnoClase()
+    {
+        return $this->belongsTo(TurnoClase::class, 'idTurnoClase', 'id');
+    }
 
     public function nivel()
     {
@@ -43,7 +48,18 @@ class Curso extends Model
 
         $nombrePlan = trim((string) ($this->curplan?->curPlanCurso ?? ''));
 
-        $extras = collect([$this->turno, $this->c, $this->s])
+        $turnoLabel = null;
+        if ((int) ($this->idTurnoClase ?? 0) > 0) {
+            if (! $this->relationLoaded('turnoClase')) {
+                $this->load('turnoClase');
+            }
+            $turnoLabel = trim((string) ($this->turnoClase?->nombre ?? ''));
+        }
+        if ($turnoLabel === '') {
+            $turnoLabel = null;
+        }
+
+        $extras = collect([$turnoLabel, $this->c, $this->s])
             ->map(fn ($v) => trim((string) $v))
             ->filter()
             ->values();

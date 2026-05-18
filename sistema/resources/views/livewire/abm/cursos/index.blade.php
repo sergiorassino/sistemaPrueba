@@ -153,15 +153,19 @@
                         @endif
                     </div>
 
-                    {{-- turno --}}
-                    <div class="gf-td w-36">
+                    {{-- turno (catálogo turnos_clase) --}}
+                    <div class="gf-td w-40">
                         @if ($editingId === $c->Id)
-                            <input type="text" maxlength="20"
-                                   wire:model.defer="draft.{{ $c->Id }}.turno"
-                                   class="gf-inline text-neutral-700 @error('draft.'.$c->Id.'.turno') ring-2 ring-red-400 @enderror">
-                            @error('draft.'.$c->Id.'.turno') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                            <select wire:model.defer="draft.{{ $c->Id }}.idTurnoClase"
+                                    class="gf-inline-select text-neutral-800 @error('draft.'.$c->Id.'.idTurnoClase') ring-2 ring-red-400 @enderror">
+                                <option value="">—</option>
+                                @foreach ($turnosClase as $tc)
+                                    <option value="{{ $tc->id }}">{{ $tc->nombre }}</option>
+                                @endforeach
+                            </select>
+                            @error('draft.'.$c->Id.'.idTurnoClase') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                         @else
-                            <div class="text-neutral-700">{{ $c->turno ?? '—' }}</div>
+                            <div class="text-neutral-700">{{ $c->turnoClase?->nombre ?? '—' }}</div>
                         @endif
                     </div>
 

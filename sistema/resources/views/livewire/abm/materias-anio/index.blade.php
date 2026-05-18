@@ -44,7 +44,8 @@
                 @foreach ($cursos as $c)
                     @php
                         $label = trim((string) ($c->cursec ?? ''));
-                        $extra = collect([$c->c ?? null, $c->s ?? null, $c->turno ?? null])->filter(fn ($v) => $v !== null && trim((string) $v) !== '')->implode(' ');
+                        $turnoEtq = $c->turnoClase?->nombre;
+                        $extra = collect([$c->c ?? null, $c->s ?? null, $turnoEtq])->filter(fn ($v) => $v !== null && trim((string) $v) !== '')->implode(' ');
                         $display = $label !== '' ? $label : ('Curso ' . $c->Id);
                     @endphp
                     <option value="{{ $c->Id }}">

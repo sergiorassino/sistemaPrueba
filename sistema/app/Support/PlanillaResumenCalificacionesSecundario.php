@@ -37,7 +37,7 @@ final class PlanillaResumenCalificacionesSecundario
             ->where('idNivel', $ctx->idNivel)
             ->where('idTerlec', $ctx->idTerlec)
             ->where('Id', $cursoId)
-            ->first(['Id', 'cursec', 'orden', 'idCurPlan', 'turno', 'c', 's']);
+            ->first(['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's']);
 
         if (! $curso) {
             abort(404);

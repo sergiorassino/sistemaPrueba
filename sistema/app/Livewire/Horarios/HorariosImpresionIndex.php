@@ -24,19 +24,47 @@ class HorariosImpresionIndex extends Component
 
     public ?int $profesorId = null;
 
+    /** Si no es null, el PDF usa este turnos_clase (debe estar activo en configuración). */
+    public ?int $pdfTurnoClase = null;
+
     public function updatedModo(): void
     {
         $this->cursoId = null;
         $this->profesorId = null;
+        $this->pdfTurnoClase = null;
+    }
+
+    public function updatedCursoId(): void
+    {
+        $this->pdfTurnoClase = null;
+    }
+
+    public function updatedProfesorId(): void
+    {
+        $this->pdfTurnoClase = null;
+    }
+
+    public function updatedPdfTurnoClase(mixed $value): void
+    {
+        if ($value === null || $value === '' || (int) $value <= 0) {
+            $this->pdfTurnoClase = null;
+        } else {
+            $this->pdfTurnoClase = (int) $value;
+        }
     }
 
     public function pdfUrl(): ?string
     {
+        $extra = [];
+        if ($this->pdfTurnoClase !== null && $this->pdfTurnoClase > 0) {
+            $extra['turno'] = $this->pdfTurnoClase;
+        }
+
         if ($this->modo === 'curso' && ($this->cursoId ?? 0) > 0) {
-            return route('horarios.pdf.curso', ['curso' => $this->cursoId]);
+            return route('horarios.pdf.curso', array_merge(['curso' => $this->cursoId], $extra));
         }
         if ($this->modo === 'profesor' && ($this->profesorId ?? 0) > 0) {
-            return route('horarios.pdf.profesor', ['profesor' => $this->profesorId]);
+            return route('horarios.pdf.profesor', array_merge(['profesor' => $this->profesorId], $extra));
         }
 
         return null;
@@ -54,7 +82,7 @@ class HorariosImpresionIndex extends Component
             ->where('idTerlec', $ctx->idTerlec)
             ->orderBy('orden')
             ->orderBy('cursec')
-            ->get(['Id', 'cursec', 'orden', 'idCurPlan', 'turno', 'c', 's']);
+            ->get(['Id', 'cursec', 'orden', 'idCurPlan', 'c', 's', 'idTurnoClase']);
     }
 
     /**
@@ -94,6 +122,7 @@ class HorariosImpresionIndex extends Component
             'cursos' => $this->cursos(),
             'profesores' => $this->profesores(),
             'pdfUrl' => $this->pdfUrl(),
+            'turnosPdf' => HorariosProfesores::turnosActivos(),
             'consultaSqlImpresionCurso' => $consultaSqlImpresionCurso,
         ])->layout('layouts.app', ['pageTitle' => 'Impresión de horarios']);
     }

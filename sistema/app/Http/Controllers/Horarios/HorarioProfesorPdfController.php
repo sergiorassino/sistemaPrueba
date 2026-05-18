@@ -38,7 +38,14 @@ class HorarioProfesorPdfController extends Controller
         }
 
         $nombre = trim(((string) $prof->apellido).', '.((string) $prof->nombre));
-        $turnos = HorariosProfesores::turnosParaImpresionProfesor($profesorId);
+
+        $activos = HorariosProfesores::turnosActivos();
+        $forzado = (int) $request->query('turno', 0);
+        if ($forzado > 0 && in_array($forzado, $activos, true)) {
+            $turnos = [$forzado];
+        } else {
+            $turnos = HorariosProfesores::turnosParaImpresionProfesor($profesorId);
+        }
 
         $paginas = [];
         foreach ($turnos as $idTurnoClase) {

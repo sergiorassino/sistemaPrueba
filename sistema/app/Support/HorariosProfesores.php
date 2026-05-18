@@ -17,6 +17,14 @@ final class HorariosProfesores
 {
     public const HORAS_POR_TURNO = 10;
 
+    /**
+     * Bloques de 10 h en `horarios26.idHora` (1–10, 11–20, 21–30 según turno en catálogo).
+     * La tabla `reloj` usa siempre `orden` 1–10 por fila; el turno va en `idTurnoClase`.
+     */
+    public const BLOQUES_HORARIO_LEGACY = 3;
+
+    public const HORAS_RELOJ_MAX_LEGACY = 30;
+
     /** @var Collection<int, TurnoClase>|null */
     private static ?Collection $catalogoTurnosClaseCache = null;
 
@@ -114,8 +122,10 @@ final class HorariosProfesores
      */
     public static function turnosActivos(?int $idNivel = null): array
     {
-        $validos = self::catalogoTurnosClase()->pluck('id')->map(fn ($id) => (int) $id)->all();
-        $default = $validos !== [] ? [$validos[0]] : [1];
+        $catalogo = self::catalogoTurnosClase();
+        $validos = $catalogo->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $soloMadre = array_values(array_filter($validos, fn (int $t) => ! self::esTurnoClaseDobleJornada($t)));
+        $default = $soloMadre !== [] ? [$soloMadre[0]] : [1];
 
         $idNivel = $idNivel ?? (int) (schoolCtx()->idNivel ?? 0);
         if ($idNivel <= 0) {
@@ -127,6 +137,7 @@ final class HorariosProfesores
 
         $parsed = self::parseIdsList($raw, $validos);
         $parsed = array_values(array_intersect($parsed, $validos));
+        $parsed = array_values(array_filter($parsed, fn (int $t) => ! self::esTurnoClaseDobleJornada($t)));
 
         return $parsed !== [] ? $parsed : $default;
     }
@@ -144,7 +155,7 @@ final class HorariosProfesores
         $row = HorariosConfig::query()->find($idNivel);
         $raw = trim((string) ($row?->dias_activos ?? '1,2,3,4,5'));
 
-        return self::parseIdsList($raw, [1, 2, 3, 4, 5]);
+        return self::parseIdsList($raw, array_keys(self::DIAS));
     }
 
     /**
@@ -208,11 +219,13 @@ final class HorariosProfesores
             self::parseIdsList(implode(',', $turnos), $validosTurnos),
             $validosTurnos,
         ));
+        $turnos = array_values(array_filter($turnos, fn (int $t) => ! self::esTurnoClaseDobleJornada($t)));
         if ($turnos === []) {
-            $turnos = [$validosTurnos[0] ?? 1];
+            $solo = array_values(array_filter($validosTurnos, fn (int $t) => ! self::esTurnoClaseDobleJornada($t)));
+            $turnos = $solo !== [] ? [$solo[0]] : [1];
         }
 
-        $dias = self::parseIdsList(implode(',', $dias), [1, 2, 3, 4, 5]);
+        $dias = self::parseIdsList(implode(',', $dias), array_keys(self::DIAS));
 
         HorariosConfig::query()->updateOrCreate(
             ['idNivel' => $idNivel],
@@ -224,7 +237,141 @@ final class HorariosProfesores
     }
 
     /**
-     * @return array<int, string> orden => texto reloj
+     * Posición 0..2 del bloque (mañana / tarde / noche) según el turno en el catálogo ordenado.
+     */
+    public static function indiceBloqueTurnoClase(int $idTurnoClase): int
+    {
+        $ids = self::catalogoTurnosClase()->pluck('id')->map(fn ($x) => (int) $x)->values()->all();
+        $pos = array_search($idTurnoClase, $ids, true);
+
+        return $pos === false ? 0 : min((int) $pos, self::BLOQUES_HORARIO_LEGACY - 1);
+    }
+
+    /** Offset 0, 10 o 20 solo para `horarios26.idHora` (bloques 1–30). No aplica a `reloj.orden`. */
+    public static function baseHoraLegacyPorTurnoClase(int $idTurnoClase): int
+    {
+        return self::indiceBloqueTurnoClase($idTurnoClase) * self::HORAS_POR_TURNO;
+    }
+
+    /**
+     * Valor `idHora` en BD (1..30): bloque del turno + módulo 1..10 de la grilla.
+     */
+    public static function idHoraLegacyDesdeTurnoYSlot(int $idTurnoClase, int $slot): int
+    {
+        $slot = max(1, min(self::HORAS_POR_TURNO, $slot));
+
+        return self::baseHoraLegacyPorTurnoClase($idTurnoClase) + $slot;
+    }
+
+    /** Módulo 1..10 a partir de `idHora` legacy 1..30. */
+    public static function slotDesdeIdHoraLegacy(int $idHora): int
+    {
+        if ($idHora < 1 || $idHora > self::HORAS_RELOJ_MAX_LEGACY) {
+            return 0;
+        }
+
+        return (($idHora - 1) % self::HORAS_POR_TURNO) + 1;
+    }
+
+    /** Índice de bloque 0..2 desde `idHora` 1..30; -1 si fuera de rango. */
+    public static function indiceBloqueDesdeIdHoraLegacy(int $idHora): int
+    {
+        if ($idHora < 1 || $idHora > self::HORAS_RELOJ_MAX_LEGACY) {
+            return -1;
+        }
+
+        return intdiv($idHora - 1, self::HORAS_POR_TURNO);
+    }
+
+    /**
+     * Turno "doble" (ej. Mañana/Tarde): el curso cursa dos bandas de idHora; el FK en `cursos` apunta al turno compuesto.
+     */
+    public static function esTurnoClaseDobleJornada(int $idTurnoClase): bool
+    {
+        if ($idTurnoClase <= 0) {
+            return false;
+        }
+        $row = self::catalogoTurnosClase()->firstWhere('id', $idTurnoClase);
+        if ($row === null) {
+            return false;
+        }
+        $codigo = mb_strtolower(preg_replace('/[\s_\-]+/', '_', trim((string) ($row->codigo ?? ''))));
+        $nombre = mb_strtolower(trim((string) ($row->nombre ?? '')));
+        if (in_array($codigo, ['manana_tarde', 'mananatarde', 'myt', 'doble_jornada', 'doble'], true)) {
+            return true;
+        }
+        if ((str_contains($nombre, 'mañana') || str_contains($nombre, 'manana')) && str_contains($nombre, 'tarde')) {
+            return true;
+        }
+
+        return (int) $row->id === 4;
+    }
+
+    /**
+     * Turnos que el establecimiento activa en «Configuración de horarios» (jornadas madre).
+     * No incluye turnos compuestos (p. ej. Mañana/Tarde): esos solo se asignan al curso en ABM.
+     *
+     * @return Collection<int, TurnoClase>
+     */
+    public static function turnosClaseParaConfiguracionEstablecimiento(): Collection
+    {
+        return self::catalogoTurnosClase()
+            ->filter(fn ($t) => ! self::esTurnoClaseDobleJornada((int) $t->id))
+            ->values();
+    }
+
+    /**
+     * Dos ids de `turnos_clase` para bloques 0 y 1 de `idHora` (excluido el turno compuesto).
+     *
+     * @return array{0:int, 1:int}
+     */
+    public static function idsTurnoClaseBandasMananaTarde(): array
+    {
+        $simple = self::catalogoTurnosClase()
+            ->filter(fn ($t) => ! self::esTurnoClaseDobleJornada((int) $t->id))
+            ->sortBy(fn ($t) => [(int) ($t->orden ?? 0), (int) $t->id])
+            ->values();
+
+        return [
+            (int) ($simple->get(0)->id ?? 1),
+            (int) ($simple->get(1)->id ?? 2),
+        ];
+    }
+
+    /**
+     * @return list<array{indice:int, etiqueta:string}>
+     */
+    public static function segmentosCargaHorarioDesdeTurnoNorm(int $idTurnoClaseNorm): array
+    {
+        if (! self::esTurnoClaseDobleJornada($idTurnoClaseNorm)) {
+            return [['indice' => 0, 'etiqueta' => '']];
+        }
+        [$ma, $ta] = self::idsTurnoClaseBandasMananaTarde();
+
+        return [
+            ['indice' => 0, 'etiqueta' => self::nombreTurnoClase($ma)],
+            ['indice' => 1, 'etiqueta' => self::nombreTurnoClase($ta)],
+        ];
+    }
+
+    public static function cursoVisualizadoEnTurnoImpresion(?int $idTurnoClaseCursoFk, int $idTurnoPagina): bool
+    {
+        $idNorm = self::idTurnoClaseParaCurso($idTurnoClaseCursoFk !== null && $idTurnoClaseCursoFk > 0 ? $idTurnoClaseCursoFk : null);
+        if (self::esTurnoClaseDobleJornada($idNorm)) {
+            [$ma, $ta] = self::idsTurnoClaseBandasMananaTarde();
+
+            return $idTurnoPagina === $ma || $idTurnoPagina === $ta;
+        }
+
+        return $idNorm === $idTurnoPagina;
+    }
+
+    /**
+     * Horas reloj del turno: `reloj.orden` siempre 1..10; el turno es `idTurnoClase`.
+     * Sin columna `idTurnoClase`, una sola grilla 1..10 por nivel.
+     * Compatibilidad lectura: filas antiguas con `orden` 11–30 por bloque y `NULL` en orden 1–10 solo 1.er turno.
+     *
+     * @return array<int, string> clave 1..10 => texto
      */
     public static function relojPorTurnoClase(int $idTurnoClase, ?int $idNivel = null): array
     {
@@ -243,64 +390,114 @@ final class HorariosProfesores
             $cols[] = 'idTurnoClase';
         }
 
-        $baseReloj = fn () => DB::table('reloj')
-            ->where('idNivel', $idNivel)
-            ->whereBetween('orden', [1, self::HORAS_POR_TURNO]);
-
-        if (self::relojTieneTurnoClase()) {
-            foreach ($baseReloj()->where('idTurnoClase', $idTurnoClase)->orderBy('orden')->get($cols) as $r) {
+        if (! self::relojTieneTurnoClase()) {
+            foreach (
+                DB::table('reloj')
+                    ->where('idNivel', $idNivel)
+                    ->whereBetween('orden', [1, self::HORAS_POR_TURNO])
+                    ->orderBy('orden')
+                    ->get($cols) as $r
+            ) {
                 $orden = (int) ($r->orden ?? 0);
                 if ($orden >= 1 && $orden <= self::HORAS_POR_TURNO) {
                     $out[$orden] = trim((string) ($r->horario ?? ''));
                 }
             }
 
-            foreach ($baseReloj()->whereNull('idTurnoClase')->orderBy('orden')->get($cols) as $r) {
+            return $out;
+        }
+
+        foreach (
+            DB::table('reloj')
+                ->where('idNivel', $idNivel)
+                ->where('idTurnoClase', $idTurnoClase)
+                ->whereBetween('orden', [1, self::HORAS_POR_TURNO])
+                ->orderBy('orden')
+                ->get($cols) as $r
+        ) {
+            $orden = (int) ($r->orden ?? 0);
+            if ($orden >= 1 && $orden <= self::HORAS_POR_TURNO) {
+                $out[$orden] = trim((string) ($r->horario ?? ''));
+            }
+        }
+
+        if (self::indiceBloqueTurnoClase($idTurnoClase) === 0) {
+            foreach (
+                DB::table('reloj')
+                    ->where('idNivel', $idNivel)
+                    ->whereBetween('orden', [1, self::HORAS_POR_TURNO])
+                    ->whereNull('idTurnoClase')
+                    ->orderBy('orden')
+                    ->get($cols) as $r
+            ) {
                 $orden = (int) ($r->orden ?? 0);
                 if ($orden < 1 || $orden > self::HORAS_POR_TURNO || $out[$orden] !== '') {
                     continue;
                 }
                 $out[$orden] = trim((string) ($r->horario ?? ''));
             }
-
-            return $out;
         }
 
-        foreach ($baseReloj()->orderBy('orden')->get($cols) as $r) {
+        $base = self::baseHoraLegacyPorTurnoClase($idTurnoClase);
+        foreach (
+            DB::table('reloj')
+                ->where('idNivel', $idNivel)
+                ->whereBetween('orden', [$base + 1, $base + self::HORAS_POR_TURNO])
+                ->where(function ($w) use ($idTurnoClase) {
+                    $w->where('idTurnoClase', $idTurnoClase)->orWhereNull('idTurnoClase');
+                })
+                ->orderBy('orden')
+                ->get($cols) as $r
+        ) {
             $orden = (int) ($r->orden ?? 0);
-            if ($orden < 1 || $orden > self::HORAS_POR_TURNO) {
+            $slot = $orden - $base;
+            if ($slot < 1 || $slot > self::HORAS_POR_TURNO || $out[$slot] !== '') {
                 continue;
             }
-            if ($out[$orden] === '') {
-                $out[$orden] = trim((string) ($r->horario ?? ''));
-            }
+            $out[$slot] = trim((string) ($r->horario ?? ''));
         }
 
         return $out;
     }
 
     /**
-     * @param  array<int, string>  $horas  clave 1..10
+     * @param  array<int, string>  $horas  clave 1..10 (módulos del turno)
      */
     public static function guardarReloj(int $idNivel, int $idTurnoClase, array $horas): void
     {
         for ($h = 1; $h <= self::HORAS_POR_TURNO; $h++) {
+            $orden = $h;
             $texto = trim((string) ($horas[$h] ?? ''));
-            $q = DB::table('reloj')
-                ->where('idNivel', $idNivel)
-                ->where('orden', $h);
 
             if (self::relojTieneTurnoClase()) {
-                $q->where('idTurnoClase', $idTurnoClase);
+                $existing = DB::table('reloj')
+                    ->where('idNivel', $idNivel)
+                    ->where('orden', $orden)
+                    ->where('idTurnoClase', $idTurnoClase)
+                    ->first(['id']);
+                if (! $existing && self::indiceBloqueTurnoClase($idTurnoClase) === 0) {
+                    $existing = DB::table('reloj')
+                        ->where('idNivel', $idNivel)
+                        ->where('orden', $orden)
+                        ->whereNull('idTurnoClase')
+                        ->first(['id']);
+                }
+            } else {
+                $existing = DB::table('reloj')
+                    ->where('idNivel', $idNivel)
+                    ->where('orden', $orden)
+                    ->first(['id']);
             }
 
-            $existing = $q->first(['id']);
-
             if ($existing) {
-                DB::table('reloj')->where('id', $existing->id)->update(['horario' => $texto]);
+                $upd = ['horario' => $texto];
+                if (self::relojTieneTurnoClase()) {
+                    $upd['idTurnoClase'] = $idTurnoClase;
+                }
+                DB::table('reloj')->where('id', $existing->id)->update($upd);
             } elseif ($texto !== '') {
                 $payload = [
-                    'orden' => $h,
+                    'orden' => $orden,
                     'idNivel' => $idNivel,
                     'horario' => $texto,
                 ];
@@ -315,7 +512,7 @@ final class HorariosProfesores
     /**
      * Asignaciones PPC del docente en el ciclo activo.
      *
-     * @return Collection<int, object{idMateria:int, idCursos:int, materia:string, cursoLabel:string}>
+     * @return Collection<int, object{idMateria:int, idCursos:int, materia:string, cursoLabel:string, idTurnoClase:int, idTurnoClaseCursoFk:int, cursoTieneTurnoEnAbm:bool, esTurnoDobleJornada:bool}>
      */
     public static function asignacionesProfesor(int $idProfesor): Collection
     {
@@ -339,16 +536,17 @@ final class HorariosProfesores
                 'm.materia as materia',
                 'c.cursec',
                 'c.orden',
-                'c.turno',
+                'c.idTurnoClase',
                 'c.c',
                 'c.s',
                 'c.idCurPlan',
             ])
             ->map(function ($r) {
+                $idFk = isset($r->idTurnoClase) && (int) $r->idTurnoClase > 0 ? (int) $r->idTurnoClase : null;
                 $curso = new Curso([
                     'cursec' => $r->cursec,
                     'orden' => $r->orden,
-                    'turno' => $r->turno,
+                    'idTurnoClase' => $idFk,
                     'c' => $r->c,
                     's' => $r->s,
                     'idCurPlan' => $r->idCurPlan,
@@ -359,28 +557,46 @@ final class HorariosProfesores
                     'idCursos' => (int) $r->idCursos,
                     'materia' => trim((string) ($r->materia ?? '')),
                     'cursoLabel' => $curso->nombreParaListado(),
-                    'idTurnoClase' => self::inferirTurnoClaseDesdeCurso((string) ($r->turno ?? '')),
+                    'idTurnoClase' => self::idTurnoClaseParaCurso($idFk),
+                    'idTurnoClaseCursoFk' => (int) ($r->idTurnoClase ?? 0),
+                    'cursoTieneTurnoEnAbm' => $idFk !== null,
+                    'esTurnoDobleJornada' => self::esTurnoClaseDobleJornada(self::idTurnoClaseParaCurso($idFk)),
                 ];
             });
     }
 
     /**
+     * @param  int  $indiceBloqueHorario  0 = 1.ª banda idHora (mañana), 1 = 2.ª (tarde). Solo aplica si el turno del curso es doble jornada.
      * @return array<string, bool> clave "{lun}-{hora}" (códigos legacy, sin 1..7)
      */
-    public static function celdasMarcadas(int $idProfesor, int $idMateria, int $idCurso): array
-    {
+    public static function celdasMarcadas(
+        int $idProfesor,
+        int $idMateria,
+        int $idCurso,
+        int $indiceBloqueHorario = 0,
+    ): array {
         $rows = self::queryHorarios26Carga($idProfesor, $idMateria, $idCurso)->get([
             'h.idDia as idDia',
             'h.idHora as idHora',
         ]);
 
+        $idTcCurso = self::idTurnoClaseParaCurso((int) (DB::table('cursos')->where('Id', $idCurso)->value('idTurnoClase') ?? 0) ?: null);
+        $bloqueEsperado = self::esTurnoClaseDobleJornada($idTcCurso)
+            ? max(0, min(1, $indiceBloqueHorario))
+            : self::indiceBloqueTurnoClase($idTcCurso);
+
         $activos = array_flip(self::diasActivosLegacy());
         $out = [];
         foreach ($rows as $r) {
             $diaCanon = self::normalizarIdDiaCanonico((string) ($r->idDia ?? ''));
-            $hora = self::normalizarHoraLegacy((int) ($r->idHora ?? 0));
-            if ($diaCanon !== null && $hora > 0 && isset($activos[$diaCanon])) {
-                $out[self::celdaKeyLegacy($diaCanon, $hora)] = true;
+            $idHora = (int) ($r->idHora ?? 0);
+            $bloqueHora = self::indiceBloqueDesdeIdHoraLegacy($idHora);
+            if ($bloqueHora !== $bloqueEsperado) {
+                continue;
+            }
+            $slot = self::slotDesdeIdHoraLegacy($idHora);
+            if ($diaCanon !== null && $slot > 0 && isset($activos[$diaCanon])) {
+                $out[self::celdaKeyLegacy($diaCanon, $slot)] = true;
             }
         }
 
@@ -388,6 +604,8 @@ final class HorariosProfesores
     }
 
     /**
+     * @param  int  $hora  Módulo 1..10 de la banda (idHora 1–10 o 11–20 según turno efectivo).
+     * @param  int  $indiceBloqueHorario  0 mañana / 1 tarde cuando el curso es doble jornada.
      * @return array{ok:bool, mensaje?:string}
      */
     public static function alternarCelda(
@@ -397,6 +615,7 @@ final class HorariosProfesores
         string $diaLegacy,
         int $hora,
         bool $marcar,
+        int $indiceBloqueHorario = 0,
     ): array {
         $diaCanon = self::normalizarIdDiaCanonico($diaLegacy);
         $activos = array_flip(self::diasActivosLegacy());
@@ -409,22 +628,30 @@ final class HorariosProfesores
             return ['ok' => false, 'mensaje' => 'El docente no está asignado a esa materia y curso.'];
         }
 
-        $diaNum = self::diaNumeroDesdeLegacy($diaCanon);
+        $idTcCurso = self::idTurnoClaseParaCurso((int) (DB::table('cursos')->where('Id', $idCurso)->value('idTurnoClase') ?? 0) ?: null);
+        if (self::esTurnoClaseDobleJornada($idTcCurso)) {
+            $bandas = self::idsTurnoClaseBandasMananaTarde();
+            $idx = max(0, min(1, $indiceBloqueHorario));
+            $idTurnoParaHora = $bandas[$idx];
+        } else {
+            $idTurnoParaHora = $idTcCurso;
+        }
+        $idHoraLegacy = self::idHoraLegacyDesdeTurnoYSlot($idTurnoParaHora, $hora);
 
         $qExist = self::queryHorarios26CargaSinAlias($idProfesor, $idMateria, $idCurso);
         self::aplicarFiltroIdDiaCanonicoEnQuery($qExist, 'idDia', $diaCanon);
-        $existente = $qExist->where('idHora', $hora)->first(['id']);
+        $existente = $qExist->where('idHora', $idHoraLegacy)->first(['id']);
 
         if ($marcar) {
             if ($existente) {
                 return ['ok' => true];
             }
 
-            $conflicto = self::conflictoCurso($idCurso, $diaNum, $hora, $idMateria);
-            if ($conflicto !== null) {
+            $conflictoDocente = self::conflictoProfesorOtroCurso($idProfesor, $idCurso, $diaCanon, $idHoraLegacy);
+            if ($conflictoDocente !== null) {
                 return [
                     'ok' => false,
-                    'mensaje' => 'En ese horario el curso ya tiene asignada «'.$conflicto.'».',
+                    'mensaje' => 'En ese horario el docente ya figura con '.$conflictoDocente.'.',
                 ];
             }
 
@@ -432,7 +659,7 @@ final class HorariosProfesores
                 'idProfesores' => $idProfesor,
                 'idMaterias' => $idMateria,
                 'idDia' => $diaCanon,
-                'idHora' => $hora,
+                'idHora' => $idHoraLegacy,
                 'idCursos' => $idCurso,
             ]);
 
@@ -441,36 +668,62 @@ final class HorariosProfesores
 
         $qDel = self::queryHorarios26CargaSinAlias($idProfesor, $idMateria, $idCurso);
         self::aplicarFiltroIdDiaCanonicoEnQuery($qDel, 'idDia', $diaCanon);
-        $qDel->where('idHora', $hora)->delete();
+        $qDel->where('idHora', $idHoraLegacy)->delete();
 
         return ['ok' => true];
     }
 
-    public static function conflictoCurso(int $idCurso, int $dia, int $hora, ?int $excluirMateria = null): ?string
-    {
-        $idsMat = self::idsMateriasCursoNivel($idCurso);
+    /**
+     * Mismo docente, mismo día y mismo {@see horarios26.idHora} (reloj del turno) en un curso distinto al que se está cargando.
+     * No valida superposiciones dentro del mismo curso (p. ej. cátedra compartida).
+     */
+    private static function conflictoProfesorOtroCurso(
+        int $idProfesor,
+        int $idCursoActual,
+        string $diaCanon,
+        int $idHoraLegacy,
+    ): ?string {
+        $ctx = schoolCtx();
         $q = DB::table('horarios26 as h')
-            ->leftJoin('materias as m', 'm.id', '=', 'h.idMaterias');
-        self::aplicarFiltroHorarios26Curso($q, $idCurso, $idsMat);
-        self::aplicarFiltroDiaLegacyEnQuery($q, 'h.idDia', [$dia]);
-        $q->where('h.idHora', $hora);
+            ->join('cursos as c', 'c.Id', '=', 'h.idCursos')
+            ->leftJoin('materias as m', 'm.id', '=', 'h.idMaterias')
+            ->where('h.idProfesores', $idProfesor)
+            ->where('h.idHora', $idHoraLegacy)
+            ->where('h.idCursos', '!=', $idCursoActual)
+            ->where('c.idNivel', (int) $ctx->idNivel)
+            ->where('c.idTerlec', (int) $ctx->idTerlec);
+        self::aplicarFiltroIdDiaCanonicoEnQuery($q, 'h.idDia', $diaCanon);
 
-        if ($excluirMateria !== null && $excluirMateria > 0) {
-            $excluir = self::idsMateriasEquivalentes($excluirMateria, $idCurso);
-            if ($excluir !== []) {
-                $q->whereNotIn('h.idMaterias', $excluir);
-            }
-        }
-
-        $row = $q->value('m.materia');
-
+        $row = $q->first([
+            'm.materia as materia',
+            'c.cursec',
+            'c.orden',
+            'c.idTurnoClase',
+            'c.c',
+            'c.s',
+            'c.idCurPlan',
+        ]);
         if ($row === null) {
             return null;
         }
 
-        $nombre = trim((string) $row);
+        $idFk = isset($row->idTurnoClase) && (int) $row->idTurnoClase > 0 ? (int) $row->idTurnoClase : null;
+        $curso = new Curso([
+            'cursec' => $row->cursec,
+            'orden' => $row->orden,
+            'idTurnoClase' => $idFk,
+            'c' => $row->c,
+            's' => $row->s,
+            'idCurPlan' => $row->idCurPlan,
+        ]);
+        $cursoLabel = $curso->nombreParaListado();
+        $mat = trim((string) ($row->materia ?? ''));
 
-        return $nombre !== '' ? $nombre : 'otra materia';
+        if ($mat === '') {
+            return '«'.$cursoLabel.'»';
+        }
+
+        return '«'.$mat.'» en '.$cursoLabel;
     }
 
     /**
@@ -490,11 +743,13 @@ final class HorariosProfesores
         $celdas = [];
 
         $idsMat = self::idsMateriasSoloEsteCurso($idCurso);
+        $base = self::baseHoraLegacyPorTurnoClase($idTurnoClase);
         $q26 = DB::table('horarios26 as h')
             ->leftJoin('materias as m', 'm.id', '=', 'h.idMaterias')
             ->leftJoin('profesores as p', 'p.id', '=', 'h.idProfesores');
         self::aplicarFiltroHorarios26GrillaSoloEsteCurso($q26, $idCurso, $idsMat);
         self::aplicarFiltroDiasLegacyEnQuery($q26, 'h.idDia', $dias);
+        $q26->whereBetween('h.idHora', [$base + 1, $base + self::HORAS_POR_TURNO]);
 
         foreach ($q26->orderBy('h.idHora')->orderBy('m.materia')->get([
             'h.idDia',
@@ -519,6 +774,7 @@ final class HorariosProfesores
                 ->leftJoin('materias as m', 'm.id', '=', 'h.idMaterias')
                 ->whereIn('h.idMaterias', $idsMat);
             self::aplicarFiltroDiasLegacyEnQuery($qH, 'h.idDia', $dias);
+            $qH->whereBetween('h.idHora', [$base + 1, $base + self::HORAS_POR_TURNO]);
 
             foreach ($qH->orderBy('h.idHora')->orderBy('m.materia')->get([
                 'h.idDia',
@@ -543,6 +799,76 @@ final class HorariosProfesores
             'reloj' => self::relojPorTurnoClase($idTurnoClase),
             'celdas' => $celdas,
         ];
+    }
+
+    /**
+     * Otros docentes con fila en {@see horarios26} para el mismo módulo (cátedra compartida).
+     * Devuelve texto listo para el sufijo en PDF (apellido, nombre con formato homogéneo al horario por curso).
+     */
+    private static function textoProfesoresCompartenCatedraEnCelda(
+        int $idProfesorActual,
+        int $idMateria,
+        int $idCurso,
+        string $idDiaLegacy,
+        int $idHoraLegacy,
+    ): string {
+        if ($idProfesorActual <= 0 || $idMateria <= 0 || $idHoraLegacy <= 0) {
+            return '';
+        }
+
+        $diaCanon = self::normalizarIdDiaCanonico($idDiaLegacy);
+        if ($diaCanon === null) {
+            return '';
+        }
+
+        $ctx = schoolCtx();
+        $idsMat = self::idsMateriasEquivalentes($idMateria, $idCurso);
+        if ($idsMat === []) {
+            return '';
+        }
+
+        $q = DB::table('horarios26 as h')
+            ->join('materias as m', 'm.id', '=', 'h.idMaterias')
+            ->join('profesores as p', 'p.id', '=', 'h.idProfesores')
+            ->where('h.idProfesores', '!=', $idProfesorActual)
+            ->where('h.idHora', $idHoraLegacy)
+            ->whereIn('h.idMaterias', $idsMat)
+            ->where('m.idNivel', (int) $ctx->idNivel)
+            ->where('m.idTerlec', (int) $ctx->idTerlec);
+
+        if ($idCurso > 0) {
+            $q->where(function ($w) use ($idCurso) {
+                $w->where('h.idCursos', $idCurso)
+                    ->orWhere(function ($z) use ($idCurso) {
+                        $z->where(function ($y) {
+                            $y->whereNull('h.idCursos')->orWhere('h.idCursos', 0);
+                        })->where('m.idCursos', $idCurso);
+                    });
+            });
+        }
+
+        self::aplicarFiltroIdDiaCanonicoEnQuery($q, 'h.idDia', $diaCanon);
+
+        $nombres = [];
+        $vistos = [];
+        foreach ($q->orderBy('p.apellido')->orderBy('p.nombre')->get(['p.id', 'p.apellido', 'p.nombre']) as $row) {
+            $pid = (int) ($row->id ?? 0);
+            if ($pid <= 0 || isset($vistos[$pid])) {
+                continue;
+            }
+            $vistos[$pid] = true;
+            $s = trim(((string) ($row->apellido ?? '')).', '.((string) ($row->nombre ?? '')));
+            $s = trim($s, ', ');
+            if ($s !== '') {
+                $nombres[] = $s;
+            }
+        }
+
+        if ($nombres === []) {
+            return '';
+        }
+
+        return self::nombreProfesorImpresionCursoPdf(implode(' / ', $nombres));
     }
 
     /**
@@ -581,7 +907,7 @@ final class HorariosProfesores
             'm.idCursos as materiaIdCurso',
             'c.cursec',
             'c.orden',
-            'c.turno',
+            'c.idTurnoClase',
             'c.c',
             'c.s',
             'c.idCurPlan',
@@ -589,17 +915,26 @@ final class HorariosProfesores
             $idCursoFila = (int) ($r->idCursos ?? 0) > 0
                 ? (int) $r->idCursos
                 : (int) ($r->materiaIdCurso ?? 0);
-            $turnoTexto = (string) ($r->turno ?? '');
-            if ($turnoTexto === '' && $idCursoFila > 0) {
-                $turnoTexto = (string) (DB::table('cursos')->where('Id', $idCursoFila)->value('turno') ?? '');
+            $idTcFk = (int) ($r->idTurnoClase ?? 0);
+            if ($idTcFk === 0 && $idCursoFila > 0) {
+                $rowC = DB::table('cursos')->where('Id', $idCursoFila)->first(['idTurnoClase']);
+                if ($rowC !== null) {
+                    $idTcFk = (int) ($rowC->idTurnoClase ?? 0);
+                }
             }
-            if ($filtrarTurno && self::inferirTurnoClaseDesdeCurso($turnoTexto) !== $idTurnoClase) {
-                continue;
+            if ($filtrarTurno) {
+                $idH = (int) ($r->idHora ?? 0);
+                if (self::indiceBloqueDesdeIdHoraLegacy($idH) !== self::indiceBloqueTurnoClase($idTurnoClase)) {
+                    continue;
+                }
+                if (! self::cursoVisualizadoEnTurnoImpresion($idTcFk > 0 ? $idTcFk : null, $idTurnoClase)) {
+                    continue;
+                }
             }
             $curso = new Curso([
                 'cursec' => $r->cursec,
                 'orden' => $r->orden,
-                'turno' => $r->turno ?: $turnoTexto,
+                'idTurnoClase' => $idTcFk > 0 ? $idTcFk : null,
                 'c' => $r->c,
                 's' => $r->s,
                 'idCurPlan' => $r->idCurPlan,
@@ -611,7 +946,15 @@ final class HorariosProfesores
             if ($mat !== '') {
                 $linea .= ' — '.$mat;
             }
-            self::agregarLineaGrilla($celdas, (string) ($r->idDia ?? ''), (int) ($r->idHora ?? 0), $linea, '');
+            $coDocentes = self::textoProfesoresCompartenCatedraEnCelda(
+                $idProfesor,
+                (int) ($r->idMaterias ?? 0),
+                $idCursoFila,
+                (string) ($r->idDia ?? ''),
+                (int) ($r->idHora ?? 0),
+            );
+            $sufijoCoDocente = $coDocentes !== '' ? '(Con '.$coDocentes.')' : '';
+            self::agregarLineaGrilla($celdas, (string) ($r->idDia ?? ''), (int) ($r->idHora ?? 0), $linea, $sufijoCoDocente);
         }
 
         return [
@@ -649,14 +992,25 @@ final class HorariosProfesores
         }
 
         $asignaciones = self::asignacionesProfesor($idProfesor);
-        $turnosCurso = $asignaciones->pluck('idTurnoClase')->unique()->filter()->values()->all();
+        $expandidos = [];
+        foreach ($asignaciones->pluck('idTurnoClase')->unique()->filter() as $tid) {
+            $tid = (int) $tid;
+            if (self::esTurnoClaseDobleJornada($tid)) {
+                foreach (self::idsTurnoClaseBandasMananaTarde() as $x) {
+                    $expandidos[] = (int) $x;
+                }
+            } else {
+                $expandidos[] = $tid;
+            }
+        }
+        $expandidos = array_values(array_unique($expandidos));
         $fallback = self::catalogoTurnosClase()->pluck('id')->map(fn ($id) => (int) $id)->first() ?? 1;
 
-        return array_values(array_intersect($activos, $turnosCurso ?: [$fallback]));
+        return array_values(array_intersect($activos, $expandidos !== [] ? $expandidos : [$fallback]));
     }
 
     /**
-     * Si la grilla por turno queda vacía, reintenta sin filtrar turno (datos legacy).
+     * Si la grilla por turno queda vacía, reintenta sin filtrar por id de turno (para casos con idTurnoClase no acotado).
      */
     public static function grillaProfesorParaImpresion(int $idProfesor, int $idTurnoClase): array
     {
@@ -674,9 +1028,18 @@ final class HorariosProfesores
     public static function turnosParaImpresionCurso(Curso $curso): array
     {
         $activos = self::turnosActivos();
-        $turnoCurso = self::inferirTurnoClaseDesdeCurso((string) ($curso->turno ?? ''));
+        $fk = isset($curso->idTurnoClase) && (int) $curso->idTurnoClase > 0 ? (int) $curso->idTurnoClase : null;
+        $idNorm = self::idTurnoClaseParaCurso($fk);
 
-        return array_values(array_filter($activos, fn (int $t) => $t === $turnoCurso)) ?: [$turnoCurso];
+        if (self::esTurnoClaseDobleJornada($idNorm)) {
+            [$ma, $ta] = self::idsTurnoClaseBandasMananaTarde();
+            $pair = array_values(array_unique([$ma, $ta]));
+            $out = array_values(array_filter($pair, fn (int $t) => in_array($t, $activos, true)));
+
+            return $out !== [] ? $out : $pair;
+        }
+
+        return array_values(array_filter($activos, fn (int $t) => $t === $idNorm)) ?: [$idNorm];
     }
 
     /**
@@ -698,7 +1061,7 @@ final class HorariosProfesores
             ->where('idNivel', $ctx->idNivel)
             ->where('idTerlec', $ctx->idTerlec)
             ->where('Id', $idCurso)
-            ->first(['Id', 'cursec', 'orden', 'idCurPlan', 'turno', 'c', 's']);
+            ->first(['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's']);
 
         if (! $curso) {
             return "El curso {$idCurso} no pertenece al nivel/ciclo lectivo de la sesión.";
@@ -707,6 +1070,7 @@ final class HorariosProfesores
         $idC = abs((int) $curso->Id);
         $turnos = self::turnosParaImpresionCurso($curso);
         $turnosTxt = implode(', ', array_map(fn ($t) => (string) abs((int) $t), $turnos));
+        $idTurnoEjemplo = (int) ($turnos[0] ?? 1);
 
         $idsMat = self::idsMateriasSoloEsteCurso($idCurso);
         $listaIn = $idsMat === [] ? '(sin ids; la grilla horarios26 no devolverá filas con el filtro actual)' : implode(', ', array_map(fn ($id) => (string) abs((int) $id), $idsMat));
@@ -714,7 +1078,7 @@ final class HorariosProfesores
         $valida = <<<SQL
 ── 1) Validación del curso (mismo criterio que HorarioCursoPdfController) ──
 
-SELECT Id, cursec, orden, idCurPlan, turno, c, s
+SELECT Id, cursec, orden, idCurPlan, idTurnoClase, c, s
   FROM cursos
  WHERE Id = {$idC}
    AND idNivel = {$idNivel}
@@ -783,19 +1147,23 @@ SQL;
         $reloj = <<<SQL
 
 ── 5) Reloj de horas (por hoja PDF; un pdf por turno en: {$turnosTxt}) ──
+`reloj.orden` siempre 1–10 por nivel; el turno se filtra con `idTurnoClase`.
+Ejemplo para el primer turno imprimible de este curso: idTurnoClase = {$idTurnoEjemplo}.
 
-SELECT orden, horario
+SELECT orden, horario, idTurnoClase
   FROM reloj
  WHERE idNivel = {$idNivel}
    AND orden BETWEEN 1 AND 10
-   AND (idTurnoClase = <id del turno de la página> OR idTurnoClase IS NULL)
+   AND idTurnoClase = {$idTurnoEjemplo}
  ORDER BY orden
+
+(Si no existe la columna `idTurnoClase`, usar solo idNivel y orden 1–10. Lectura en app: ver relojPorTurnoClase() por compat. con `orden` 11–30 antiguo.)
 
 SQL;
 
         $notaTurno = <<<TXT
 
-── Nota ── Turnos imprimibles derivados del curso (método turnosParaImpresionCurso): columna cursos.turno → id turnos_clase.
+── Nota ── Turnos imprimibles derivados del curso: `cursos.idTurnoClase` → catálogo `turnos_clase`.
 IDs turno en esta vista: {$turnosTxt}.
 
 TXT;
@@ -804,7 +1172,25 @@ TXT;
     }
 
     /**
-     * Mapea cursos.turno (texto libre) al id de turnos_clase.
+     * Resuelve el id de {@see TurnoClase} del curso: solo FK `cursos.idTurnoClase` validado contra el catálogo;
+     * si falta o es inválido, el primer id del catálogo.
+     */
+    public static function idTurnoClaseParaCurso(?int $idTurnoClaseFk): int
+    {
+        $id = (int) ($idTurnoClaseFk ?? 0);
+        $catalogo = self::catalogoTurnosClase();
+        $validos = $catalogo->pluck('id')->map(fn ($x) => (int) $x)->all();
+        if ($id > 0 && in_array($id, $validos, true)) {
+            return $id;
+        }
+
+        return (int) ($catalogo->first()->id ?? 1);
+    }
+
+    /**
+     * Reservado para migraciones que copian texto antiguo de turno a idTurnoClase.
+     *
+     * @internal
      */
     public static function inferirTurnoClaseDesdeCurso(string $turnoTexto): int
     {
@@ -814,6 +1200,19 @@ TXT;
 
         if ($t === '') {
             return $fallback;
+        }
+
+        // Error tipográfico frecuente
+        if (str_contains($t, 'trarde')) {
+            $t = str_replace('trarde', 'tarde', $t);
+        }
+
+        // Abreviaturas habituales (p. ej. TM / TT en listados de curso)
+        if (preg_match('/\b(tt|t\.?\s*t\.?)\b/u', $t)) {
+            return (int) ($catalogo->firstWhere('codigo', 'tarde')->id ?? $fallback);
+        }
+        if (preg_match('/\b(tm|t\.?\s*m\.?|t/m)\b/u', $t)) {
+            return (int) ($catalogo->firstWhere('codigo', 'manana')->id ?? $fallback);
         }
 
         foreach ($catalogo as $turno) {
@@ -1180,7 +1579,7 @@ TXT;
         }
 
         $ref = DB::table('cursos')->where('Id', $idCurso)->first([
-            'idNivel', 'idTerlec', 'cursec', 'orden', 'c', 's', 'idCurPlan', 'turno',
+            'idNivel', 'idTerlec', 'cursec', 'orden', 'c', 's', 'idCurPlan', 'idTurnoClase',
         ]);
         if ($ref === null) {
             return [$idCurso];
@@ -1196,9 +1595,9 @@ TXT;
         $cursec = trim((string) ($ref->cursec ?? ''));
         if ($cursec !== '') {
             $q->where('cursec', $cursec);
-            $turno = trim((string) ($ref->turno ?? ''));
-            if ($turno !== '') {
-                $q->where('turno', $turno);
+            $idTcRef = (int) ($ref->idTurnoClase ?? 0);
+            if ($idTcRef > 0) {
+                $q->where('idTurnoClase', $idTcRef);
             }
         } else {
             if ((int) ($ref->idCurPlan ?? 0) > 0) {
@@ -1207,10 +1606,15 @@ TXT;
             if ($ref->orden !== null && $ref->orden !== '') {
                 $q->where('orden', $ref->orden);
             }
-            foreach (['c', 's', 'turno'] as $col) {
-                $val = trim((string) ($ref->{$col} ?? ''));
-                if ($val !== '') {
-                    $q->where($col, $val);
+            $idTcRef = (int) ($ref->idTurnoClase ?? 0);
+            if ($idTcRef > 0) {
+                $q->where('idTurnoClase', $idTcRef);
+            } else {
+                foreach (['c', 's'] as $col) {
+                    $val = trim((string) ($ref->{$col} ?? ''));
+                    if ($val !== '') {
+                        $q->where($col, $val);
+                    }
                 }
             }
         }
@@ -1436,11 +1840,6 @@ TXT;
         return $s === '' ? '' : mb_convert_case($s, MB_CASE_TITLE, 'UTF-8');
     }
 
-    private static function aplicarFiltroDiaLegacyEnQuery(Builder $q, string $column, array $diasNumeros): void
-    {
-        self::aplicarFiltroDiasLegacyEnQuery($q, $column, $diasNumeros);
-    }
-
     private static function aplicarFiltroIdDiaCanonicoEnQuery(Builder $q, string $column, string $diaCanon): void
     {
         $diaNum = self::diaNumeroDesdeLegacy($diaCanon);
@@ -1475,8 +1874,8 @@ TXT;
 
     private static function normalizarHoraLegacy(int $hora): int
     {
-        if ($hora >= 1 && $hora <= self::HORAS_POR_TURNO) {
-            return $hora;
+        if ($hora >= 1 && $hora <= self::HORAS_RELOJ_MAX_LEGACY) {
+            return self::slotDesdeIdHoraLegacy($hora);
         }
         if ($hora >= 0 && $hora < self::HORAS_POR_TURNO) {
             return $hora + 1;
@@ -1611,6 +2010,98 @@ TXT;
     }
 
     /**
+     * Texto SQL / notas del módulo «Configuración de horarios» (`horarios_config`, `reloj`).
+     * Ligero: no arma listas IN grandes; solo contexto de sesión y turno de reloj elegido.
+     * Convención: `docs/05-preferencias-y-convenciones.md` §10.
+     */
+    public static function textoDepuracionSqlConfigHorarios(int $idTurnoReloj): string
+    {
+        $ctx = schoolCtx();
+        $idNivel = abs((int) $ctx->idNivel);
+        $idTerlec = abs((int) $ctx->idTerlec);
+        if ($idNivel <= 0) {
+            return 'Nivel no definido en el contexto de sesión (schoolCtx).';
+        }
+
+        $idTurno = self::idTurnoClaseParaCurso($idTurnoReloj > 0 ? $idTurnoReloj : null);
+        $nombreTurno = self::nombreTurnoClase($idTurno);
+        $relojTieneTc = self::relojTieneTurnoClase() ? 'sí' : 'no';
+
+        $turnosTxt = implode(', ', array_map(fn ($t) => (string) abs((int) $t), self::turnosActivos()));
+        $diasTxt = implode(', ', array_map(fn ($d) => (string) abs((int) $d), self::diasActivos()));
+
+        $catIds = self::catalogoTurnosClase()->pluck('id')->map(fn ($x) => (string) abs((int) $x))->implode(', ');
+
+        $sqlRelojLectura = '';
+        if ($relojTieneTc === 'sí') {
+            $sqlRelojLectura = <<<SQL
+
+SELECT orden, horario, idTurnoClase
+  FROM reloj
+ WHERE idNivel = {$idNivel}
+   AND orden BETWEEN 1 AND 10
+   AND idTurnoClase = {$idTurno}
+ ORDER BY orden
+
+(El código también lee filas antiguas `orden` 11–30 y `idTurnoClase` NULL en 1–10 solo primer turno — ver relojPorTurnoClase().)
+SQL;
+        } else {
+            $sqlRelojLectura = <<<SQL
+
+SELECT orden, horario
+  FROM reloj
+ WHERE idNivel = {$idNivel}
+   AND orden BETWEEN 1 AND 10
+ ORDER BY orden
+SQL;
+        }
+
+        return <<<TXT
+── Configuración de horarios (pantalla ABM config) ──
+Contexto sesión: idNivel={$idNivel}, idTerlec={$idTerlec} (ciclo lectivo autogestión).
+
+── 1) Lectura `horarios_config` (turnos y días activos del nivel) ──
+(MySQL: clave idNivel.)
+
+SELECT idNivel, turnos_activos, dias_activos
+  FROM horarios_config
+ WHERE idNivel = {$idNivel}
+ LIMIT 1
+
+── 2) Catálogo `turnos_clase` (define bloques de `horarios26.idHora` 1–30; en `reloj` solo importa id + FK) ──
+IDs en catálogo: {$catIds}
+
+SELECT id, codigo, nombre, orden
+  FROM turnos_clase
+ ORDER BY orden, id
+
+── 3) Lectura `reloj` para el turno seleccionado en el formulario ──
+Turno normalizado: id={$idTurno} ({$nombreTurno}).
+`reloj.orden` siempre 1..10 por nivel; discriminación por `idTurnoClase`.
+Tabla `reloj` tiene columna `idTurnoClase`: {$relojTieneTc}.
+{$sqlRelojLectura}
+
+── 4) Guardar turnos y días (updateOrCreate en Laravel) ──
+
+INSERT INTO horarios_config (idNivel, turnos_activos, dias_activos)
+VALUES ({$idNivel}, '<ids csv turnos>', '<ids csv días>')
+ON DUPLICATE KEY UPDATE
+  turnos_activos = VALUES(turnos_activos),
+  dias_activos = VALUES(dias_activos);
+
+── 5) Guardar horario reloj (por cada módulo 1..10 del turno) ──
+UPDATE reloj SET horario = '<texto>', idTurnoClase = {$idTurno}
+ WHERE idNivel = {$idNivel} AND orden = <1..10> AND idTurnoClase = {$idTurno}
+INSERT … (orden 1..10, idNivel, horario, idTurnoClase) si no hay fila y el texto no es vacío.
+
+── Referencia resuelta en esta sesión ──
+turnosActivos(): {$turnosTxt}
+diasActivos(): {$diasTxt}
+
+TXT;
+    }
+
+    /**
      * Cadena textual con SQL representative del módulo «Carga de horarios» para depuración en pantalla.
      * Solo ids enteros (contexto sesión / formulario); no exponer entrada cruda libre sin validar antes.
      * Ejecuta trabajo pesado cuando la grilla está armada (helpers IN / listas): no invocar con depuración apagada.
@@ -1656,7 +2147,7 @@ SQL;
 
 ── Materias/Cursos disponibles para el docente (asignaciones PPC seleccionadas) ──
 
-SELECT ppc.idMateria, m.idCursos AS idCursos, m.materia, c.cursec, c.orden, c.turno, c.c, c.s, c.idCurPlan
+SELECT ppc.idMateria, m.idCursos AS idCursos, m.materia, c.cursec, c.orden, c.idTurnoClase, c.c, c.s, c.idCurPlan
 FROM ppc AS ppc
 INNER JOIN materias AS m ON m.id = ppc.idMateria
 INNER JOIN cursos AS c ON c.Id = m.idCursos
@@ -1703,19 +2194,20 @@ WHERE h.idProfesores = {$idProf}
 
 SQL;
 
-        $idsConflicto = self::idsMateriasCursoNivel($idC);
-        $listaConf = $idsConflicto === [] ? '0' : implode(', ', array_map(fn ($id) => (string) abs((int) $id), $idsConflicto));
-
         $conflicto = <<<SQL
 
-── Al intentar marcar celda nueva: ¿curso ya tiene otra materia en ese día/hora? (conflicto; OR idCursos o idMaterias IN…) ──
-Nota interna del sistema: combinación `(h.idCursos = {$idC}) OR (h.idMaterias IN (...))`.
+── Al intentar marcar celda nueva: ¿el mismo docente ya tiene hora en otro curso? (mismo idDia + idHora; idCursos distinto) ──
 
-SELECT m.materia
+SELECT m.materia, c.cursec, …
 FROM horarios26 AS h
+INNER JOIN cursos AS c ON c.Id = h.idCursos
 LEFT JOIN materias AS m ON m.id = h.idMaterias
-WHERE ( (h.idCursos = {$idC}) OR (h.idMaterias IN ({$listaConf})) )
-  AND día/hora igual a la celda pulsada …
+WHERE h.idProfesores = {$idProf}
+  AND h.idCursos <> {$idC}
+  AND h.idHora = (según módulo pulsado y turno del curso)
+  AND c.idNivel = {$idNivel}
+  AND c.idTerlec = {$idTerlec}
+  AND día igual a la celda pulsada …
 LIMIT 1
 
 SQL;
@@ -1735,6 +2227,7 @@ SQL;
         string $diaLegacyPasadoPorLivewire,
         int $hora,
         bool $queriaMarcarCelda,
+        int $indiceBloqueHorario = 0,
     ): string {
         $diaCanon = self::normalizarIdDiaCanonico(trim($diaLegacyPasadoPorLivewire));
         $diaCanon = $diaCanon !== null ? addslashes($diaCanon) : addslashes(trim($diaLegacyPasadoPorLivewire));
@@ -1745,11 +2238,21 @@ SQL;
         $idsMat = self::idsMateriasParaCarga($idMat, $idC, $idProf);
         $listaIn = $idsMat === [] ? '0' : implode(', ', array_map(fn ($id) => (string) abs((int) $id), $idsMat));
 
+        $idTcCurso = self::idTurnoClaseParaCurso((int) (DB::table('cursos')->where('Id', $idC)->value('idTurnoClase') ?? 0) ?: null);
+        if (self::esTurnoClaseDobleJornada($idTcCurso)) {
+            $bandas = self::idsTurnoClaseBandasMananaTarde();
+            $idx = max(0, min(1, $indiceBloqueHorario));
+            $idTurnoParaHora = $bandas[$idx];
+        } else {
+            $idTurnoParaHora = $idTcCurso;
+        }
+        $idHoraBd = self::idHoraLegacyDesdeTurnoYSlot($idTurnoParaHora, $horaNorm);
+
         $existeSql = <<<SQL
 SELECT id FROM horarios26
  WHERE idProfesores = {$idProf}
    AND idMaterias IN ({$listaIn})
-   AND idHora = {$horaNorm}
+   AND idHora = {$idHoraBd}
    AND (LOWER(TRIM(idDia)) en variantes día según día «{$diaCanon}» como en Laravel)
 LIMIT 1
 SQL;
@@ -1758,9 +2261,10 @@ SQL;
             $ins = <<<SQL
 
 ── INSERT al marcar (si no existe y no hay conflicto) ──
+Nota: {$horaNorm} = módulo 1..10 en pantalla; `idHora` en BD = {$idHoraBd} (bloque mañana/tarde/noche).
 
 INSERT INTO horarios26 (idProfesores, idMaterias, idDia, idHora, idCursos)
-VALUES ({$idProf}, {$idMat}, '{$diaCanon}', {$horaNorm}, {$idC})
+VALUES ({$idProf}, {$idMat}, '{$diaCanon}', {$idHoraBd}, {$idC})
 
 SQL;
 
@@ -1774,7 +2278,7 @@ SQL;
 DELETE FROM horarios26
  WHERE idProfesores = {$idProf}
    AND idMaterias IN ({$listaIn})
-   AND idHora = {$horaNorm}
+   AND idHora = {$idHoraBd}
    AND (LOWER(TRIM(idDia)) … día «{$diaCanon}»)
 
 SQL;

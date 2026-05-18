@@ -19,20 +19,25 @@ class HorariosConfigIndex extends Component
     /** @var array<int, string> */
     public array $relojHoras = [];
 
+    public bool $mostrarPanelSqlDepuracion = false;
+
     public function mount(): void
     {
         $turnos = HorariosProfesores::turnosActivos();
         $dias = HorariosProfesores::diasActivos();
+        $turnosActivos = array_map('intval', $turnos);
+        $diasActivos = array_map('intval', $dias);
 
         $this->turnosMarcados = [];
-        foreach (HorariosProfesores::catalogoTurnosClase() as $turno) {
+        foreach (HorariosProfesores::turnosClaseParaConfiguracionEstablecimiento() as $turno) {
             $id = (int) $turno->id;
-            $this->turnosMarcados[$id] = in_array($id, $turnos, true);
+            $this->turnosMarcados[$id] = in_array($id, $turnosActivos, true);
         }
 
         $this->diasMarcados = [];
         foreach (array_keys(HorariosProfesores::DIAS) as $id) {
-            $this->diasMarcados[$id] = in_array($id, $dias, true);
+            $num = (int) $id;
+            $this->diasMarcados[$num] = in_array($num, $diasActivos, true);
         }
 
         $this->turnoReloj = $turnos[0] ?? 1;
@@ -69,19 +74,21 @@ class HorariosConfigIndex extends Component
             abort(403);
         }
 
-        $turnos = collect($this->turnosMarcados)
-            ->filter(fn ($v) => $v)
-            ->keys()
-            ->map(fn ($k) => (int) $k)
-            ->values()
-            ->all();
+        $turnos = [];
+        foreach (HorariosProfesores::turnosClaseParaConfiguracionEstablecimiento() as $turno) {
+            $id = (int) $turno->id;
+            if (! empty($this->turnosMarcados[$id] ?? $this->turnosMarcados[(string) $id] ?? false)) {
+                $turnos[] = $id;
+            }
+        }
 
-        $dias = collect($this->diasMarcados)
-            ->filter(fn ($v) => $v)
-            ->keys()
-            ->map(fn ($k) => (int) $k)
-            ->values()
-            ->all();
+        $dias = [];
+        foreach (array_keys(HorariosProfesores::DIAS) as $id) {
+            $num = (int) $id;
+            if (! empty($this->diasMarcados[$num] ?? $this->diasMarcados[(string) $num] ?? false)) {
+                $dias[] = $num;
+            }
+        }
 
         if ($turnos === []) {
             $this->addError('turnosMarcados', 'Debe haber al menos un turno activo.');
@@ -133,10 +140,16 @@ class HorariosConfigIndex extends Component
 
     public function render()
     {
+        $consultaSqlDepuracion = '';
+        if ($this->mostrarPanelSqlDepuracion) {
+            $consultaSqlDepuracion = HorariosProfesores::textoDepuracionSqlConfigHorarios((int) $this->turnoReloj);
+        }
+
         return view('livewire.horarios.horarios-config-index', [
-            'turnosClase' => HorariosProfesores::catalogoTurnosClase(),
+            'turnosClaseEstablecimiento' => HorariosProfesores::turnosClaseParaConfiguracionEstablecimiento(),
             'dias' => HorariosProfesores::DIAS,
             'turnosActivos' => HorariosProfesores::turnosActivos(),
+            'consultaSqlDepuracion' => $consultaSqlDepuracion,
         ])->layout('layouts.app', ['pageTitle' => 'Configuración de horarios']);
     }
 }

@@ -98,7 +98,7 @@ class InasistenciasIndex extends Component
             ->where('idTerlec', schoolCtx()->idTerlec)
             ->orderBy('orden')
             ->orderBy('cursec')
-            ->get(['Id', 'cursec', 'orden', 'turno', 'c', 's']);
+            ->get(['Id', 'cursec', 'orden', 'idTurnoClase', 'c', 's']);
     }
 
     /** @return Collection<int, object> */

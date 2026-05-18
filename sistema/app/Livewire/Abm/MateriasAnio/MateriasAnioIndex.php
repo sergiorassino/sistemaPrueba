@@ -402,7 +402,8 @@ class MateriasAnioIndex extends Component
             ->where('idTerlec', $ctx->idTerlec)
             ->orderByRaw('COALESCE(orden, 9999) asc')
             ->orderBy('Id')
-            ->get(['Id', 'cursec', 'c', 's', 'turno', 'idCurPlan']);
+            ->with('turnoClase')
+            ->get(['Id', 'cursec', 'c', 's', 'idCurPlan', 'idTurnoClase']);
 
         $planesIds = Plan::query()
             ->where('idNivel', $ctx->idNivel)

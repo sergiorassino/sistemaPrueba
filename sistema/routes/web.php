@@ -13,6 +13,7 @@ use App\Http\Controllers\CalificacionesSecundario\ActaVolanteColoquiosPdfControl
 use App\Http\Controllers\CalificacionesSecundario\PlanillaResumenCalificacionesPdfController;
 use App\Http\Controllers\EstudiantesExcelController;
 use App\Http\Controllers\InformeInasistenciasPdfController;
+use App\Http\Controllers\ParteDiarioPreceptorPdfController;
 use App\Http\Controllers\LibroMatriculaPdfController;
 use App\Http\Controllers\ListadoCursoPdfController;
 use App\Http\Controllers\Push\SuscribirController;
@@ -64,6 +65,7 @@ use App\Livewire\Horarios\HorariosCargaIndex;
 use App\Livewire\Horarios\HorariosConfigIndex;
 use App\Livewire\Horarios\HorariosImpresionIndex;
 use App\Livewire\Seguimiento\Inasistencias\InasistenciasIndex;
+use App\Livewire\Seguimiento\Inasistencias\PartesDiariosIndex;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
 use Illuminate\Support\Facades\Auth;
@@ -292,4 +294,11 @@ Route::middleware(['auth', 'school.context'])->group(function () {
         ->middleware('permiso:2')
         ->whereNumber('idMatricula')
         ->name('seguimiento.inasistencias.informe.pdf');
+
+    Route::get('/seguimiento/partes-diarios', PartesDiariosIndex::class)
+        ->middleware('permiso:2')
+        ->name('seguimiento.partes-diarios');
+    Route::get('/seguimiento/partes-diarios/pdf', ParteDiarioPreceptorPdfController::class)
+        ->middleware('permiso:2')
+        ->name('seguimiento.partes-diarios.pdf');
 });

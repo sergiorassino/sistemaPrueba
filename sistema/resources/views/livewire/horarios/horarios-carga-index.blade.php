@@ -56,7 +56,7 @@
             @if (! empty($asignacionActual->esTurnoDobleJornada ?? false))
                 <p class="rounded-lg border border-primary-200 bg-primary-50/80 px-3 py-2 text-sm text-neutral-900">
                     Este curso tiene <strong>doble jornada</strong> (mañana y tarde). Cargue el horario en las dos grillas:
-                    módulos 1–10 en cada una se guardan como <code class="rounded bg-white/80 px-1 text-xs">idHora</code> 1–10 y 11–20 respectivamente.
+                    en cada una el módulo es <code class="rounded bg-white/80 px-1 text-xs">idHora</code> 1–10 con distinto <code class="rounded bg-white/80 px-1 text-xs">idTurnoClase</code>.
                 </p>
             @endif
             @if (! ($asignacionActual->cursoTieneTurnoEnAbm ?? false))
@@ -66,9 +66,6 @@
             @endif
         @endif
     </div>
-
-    {{--
-    Panel depuración SQL — desactivado junto con HorariosCargaIndex (no ejecutar textoDepuracionSql* sin mostrar).
 
     @if ($this->mostrarPanelSqlDepuracion)
         <div class="se-card overflow-hidden border-dashed border-primary-400/40 bg-accent-50/60">
@@ -91,7 +88,6 @@
             </button>
         </div>
     @endif
-    --}}
 
     @if ($avisoConflicto)
         <div class="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="alert">

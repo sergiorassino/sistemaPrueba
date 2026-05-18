@@ -69,7 +69,7 @@
             En <code class="rounded bg-accent-100 px-1">reloj</code> cada turno tiene sus filas con
             <code class="rounded bg-accent-100 px-1">orden</code> de <strong>1 a 10</strong> y el turno se indica con
             <code class="rounded bg-accent-100 px-1">idTurnoClase</code> (no se usan órdenes 11–20 / 21–30 en filas nuevas).
-            La carga en <code class="rounded bg-accent-100 px-1">horarios26</code> sigue usando <code class="rounded bg-accent-100 px-1">idHora</code> 1–30 según el turno del curso.
+            La carga en <code class="rounded bg-accent-100 px-1">horarios26</code> usa <code class="rounded bg-accent-100 px-1">idHora</code> 1–10 y <code class="rounded bg-accent-100 px-1">idTurnoClase</code> (como <code class="rounded bg-accent-100 px-1">reloj</code> y <code class="rounded bg-accent-100 px-1">cursos</code>).
         </p>
         <div class="flex flex-wrap items-end gap-4">
             <div>

@@ -44,7 +44,12 @@
         .se-sidebar-sep { border-color: var(--se-sep); }
         .se-sidebar-iconbtn { color: var(--se-white-85); }
         .se-sidebar-iconbtn:hover { background: var(--se-hover-bg); color: #fff; }
-        .se-sidebar-groupbtn { color: var(--se-white-85); background: var(--se-white-05); border: 1px solid var(--se-sep); }
+        .se-sidebar-groupbtn {
+            color: rgba(255, 255, 255, 0.95);
+            background: var(--se-white-05);
+            border: 1px solid var(--se-sep);
+            text-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);
+        }
         .se-sidebar-groupbtn:hover { background: var(--se-hover-bg); }
         .se-sidebar-groupbtn.is-open { background: var(--se-white-10); }
         /* Enlaces a módulos: un poco más anchos; grupos heredan Condensed del sidebar. */
@@ -106,14 +111,15 @@
     sidebarCollapsed: false,
     _sidebarPeekTimer: null,
     groups: {
-        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'param.') || ($route ?? '') === 'push.suscribir') ? 'true' : 'false' }},
+        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'param.') || ($route ?? '') === 'push.suscribir') ? 'true' : 'false' }},
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
-        cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'abm.profesores-por-materia')) ? 'true' : 'false' }},
+        cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.') || (str_starts_with($route ?? '', 'comunicaciones.') && tienePermiso(51) && tienePermiso(2))) ? 'true' : 'false' }},
         cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales') && tienePermiso(51) && tienePermiso(2)) ? 'true' : 'false' }},
         calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.') || str_starts_with($route ?? '', 'boletinesSecundario.')) ? 'true' : 'false' }},
         disciplinario: {{ str_starts_with($route ?? '', 'seguimiento.disciplinario') ? 'true' : 'false' }},
-        inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') ? 'true' : 'false' }},
+        inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') || str_starts_with($route ?? '', 'seguimiento.partes-diarios') ? 'true' : 'false' }},
+        docentes: {{ str_starts_with($route ?? '', 'abm.profesores-por-materia') ? 'true' : 'false' }},
         horarios: {{ str_starts_with($route ?? '', 'horarios.') ? 'true' : 'false' }},
         comunicaciones: {{ (tienePermiso(51) && !tienePermiso(2) && (str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales')) ? 'true' : 'false' }},
     },
@@ -255,7 +261,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">Estudiantes</span>
+                <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 flex-1 truncate text-center">Estudiantes</span>
                 <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                      :class="groups.students ? 'rotate-180' : ''"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -331,7 +337,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">CUADERNO DE COMUNICADOS</span>
+                <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 flex-1 truncate text-center">CUADERNO DE COMUNICADOS</span>
                 <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                      :class="groups.cuadernoComunicados ? 'rotate-180' : ''"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -415,7 +421,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">CALIFICACIONES</span>
+                <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 flex-1 truncate text-center">CALIFICACIONES</span>
                 <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                      :class="groups.calificacionesSec ? 'rotate-180' : ''"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -542,7 +548,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3-3-3z"/>
                 </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">COMUNICACIONES</span>
+                <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 flex-1 truncate text-center">COMUNICACIONES</span>
                 <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                      :class="groups.comunicaciones ? 'rotate-180' : ''"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -623,7 +629,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">SEGUIMIENTO DISCIPLINARIO</span>
+                <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 flex-1 truncate text-center">SEGUIMIENTO DISCIPLINARIO</span>
                 <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                      :class="groups.disciplinario ? 'rotate-180' : ''"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -650,19 +656,19 @@
             </div>
         @endif
 
-        {{-- Inasistencias estudiantes --}}
+        {{-- Asistencia estudiantes --}}
         @if(tienePermiso(2))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
                     :class="(groups.inasistenciasEstudiantes && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('inasistenciasEstudiantes')"
-                    title="Inasistencias estudiantes v1.0">
+                    title="Asistencia estudiantes v1.0">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">INASISTENCIAS ESTUDIANTES</span>
+                <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 flex-1 truncate text-center">ASISTENCIA ESTUDIANTES</span>
                 <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                      :class="groups.inasistenciasEstudiantes ? 'rotate-180' : ''"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -686,6 +692,61 @@
                     </svg>
                     <span class="truncate">Gestión de Inasistencias del Estudiante</span>
                 </a>
+                <a href="{{ route('seguimiento.partes-diarios') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'seguimiento.partes-diarios'),
+                   ])
+                   title="Parte diario del preceptor (PDF por curso(s) y fecha)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="truncate">Parte diario del preceptor</span>
+                </a>
+            </div>
+        @endif
+
+        {{-- Docentes --}}
+        @if(tienePermiso(1))
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    :class="(groups.docentes && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('docentes')"
+                    title="Docentes v1.0">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 14l9-5-9-5-9 5 9 5z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 14l9-5v8a2 2 0 01-9 5v0a2 2 0 01-9-5V9l9 5"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 flex-1 truncate text-center">DOCENTES</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.docentes ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <div class="mt-1 space-y-0.5 pl-1"
+                 x-show="groups.docentes && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                <a href="{{ route('abm.profesores-por-materia') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.profesores-por-materia'),
+                   ])
+                   title="Asignación de profesores por materia y curso · ppc · v1.0">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 14l9-5-9-5-9 5 9 5z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 14l9-5v8a2 2 0 01-9 5v0a2 2 0 01-9-5V9l9 5"/>
+                    </svg>
+                    <span class="truncate">Asignación de Profesores por Materia y Curso</span>
+                </a>
             </div>
         @endif
 
@@ -701,7 +762,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">HORARIOS</span>
+                <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 flex-1 truncate text-center">HORARIOS</span>
                 <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                      :class="groups.horarios ? 'rotate-180' : ''"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -770,7 +831,7 @@
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
                 </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">Configuración</span>
+                <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 flex-1 truncate text-center">Configuración</span>
                 <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                      :class="groups.config ? 'rotate-180' : ''"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -904,7 +965,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
                     </svg>
-                    <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">GESTIÓN DE PLANES Y CURSOS MODELO</span>
+                    <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 flex-1 truncate text-center">GESTIÓN DE PLANES Y CURSOS MODELO</span>
                     <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                          :class="groups.planesCursos ? 'rotate-180' : ''"
                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -953,7 +1014,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
                     </svg>
-                    <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1 text-left">GESTION DE CURSOS Y MATERIAS DEL AÑO</span>
+                    <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 flex-1 truncate text-center">GESTION DE CURSOS Y MATERIAS DEL AÑO</span>
                     <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                          :class="groups.cursosMateriasAno ? 'rotate-180' : ''"
                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -989,21 +1050,6 @@
                                   d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                         </svg>
                         <span class="truncate">Gestión de asignaturas del año</span>
-                    </a>
-
-                    <a href="{{ route('abm.profesores-por-materia') }}"
-                       @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                           'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.profesores-por-materia'),
-                       ])
-                       title="Profesores por materia · ppc · v1.0">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M12 14l9-5-9-5-9 5 9 5z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M12 14l9-5v8a2 2 0 01-9 5v0a2 2 0 01-9-5V9l9 5"/>
-                        </svg>
-                        <span class="truncate">Docentes por materia (ppc)</span>
                     </a>
                 </div>
 

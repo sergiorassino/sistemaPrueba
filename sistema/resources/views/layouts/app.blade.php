@@ -119,7 +119,7 @@
         calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.') || str_starts_with($route ?? '', 'boletinesSecundario.')) ? 'true' : 'false' }},
         disciplinario: {{ str_starts_with($route ?? '', 'seguimiento.disciplinario') ? 'true' : 'false' }},
         inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') || str_starts_with($route ?? '', 'seguimiento.partes-diarios') ? 'true' : 'false' }},
-        docentes: {{ str_starts_with($route ?? '', 'abm.profesores-por-materia') ? 'true' : 'false' }},
+        docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.legajos-profesor')) ? 'true' : 'false' }},
         horarios: {{ str_starts_with($route ?? '', 'horarios.') ? 'true' : 'false' }},
         comunicaciones: {{ (tienePermiso(51) && !tienePermiso(2) && (str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales')) ? 'true' : 'false' }},
     },
@@ -733,6 +733,19 @@
                  x-show="groups.docentes && !sidebarCollapsed"
                  x-collapse
                  x-cloak>
+                <a href="{{ route('abm.legajos-profesor') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.legajos-profesor'),
+                   ])
+                   title="Legajos del docente v1.0">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    <span class="truncate">Legajos del docente</span>
+                </a>
+
                 <a href="{{ route('abm.profesores-por-materia') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -893,6 +906,32 @@
                               d="M3 10h18M3 6h18M3 14h10M3 18h10"/>
                     </svg>
                     <span class="truncate">Solapas del Legajo</span>
+                </a>
+
+                <a href="{{ route('param.campos-legajo-profesor') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'param.campos-legajo-profesor'),
+                   ])
+                   title="Campos activos (Legajo del docente) v1.0">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                    <span class="truncate">Campos activos (Legajo del docente)</span>
+                </a>
+
+                <a href="{{ route('param.solapas-legajo-profesor') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'param.solapas-legajo-profesor'),
+                   ])
+                   title="Solapas del Legajo del docente v1.0">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 10h18M3 6h18M3 14h10M3 18h10"/>
+                    </svg>
+                    <span class="truncate">Solapas del Legajo del docente</span>
                 </a>
 
                 <a href="{{ route('param.parametros-sistema') }}"

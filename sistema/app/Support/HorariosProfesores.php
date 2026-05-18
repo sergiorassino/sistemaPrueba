@@ -28,6 +28,24 @@ final class HorariosProfesores
     /** @var Collection<int, TurnoClase>|null */
     private static ?Collection $catalogoTurnosClaseCache = null;
 
+    /** @var array<string, array{dias: list<int>, horas: list<int>, reloj: array<int, string>, celdas: array<string, list<string>>}> */
+    private static array $grillaProfesorCache = [];
+
+    /** @var array<string, bool> */
+    private static array $profesorTieneCeldasCache = [];
+
+    /** @var array<int, list<int>> */
+    private static array $idsMateriasPermitidasProfesorCache = [];
+
+    /** @var array<int, Collection> */
+    private static array $asignacionesProfesorCache = [];
+
+    /** @var array<string, string> */
+    private static array $coDocenteCeldaCache = [];
+
+    /** En PDF de muchos docentes no se retienen grillas en memoria estática. */
+    private static bool $impresionPdfMasivaProfesores = false;
+
     /** @var array<int, string> */
     public const DIAS = [
         1 => 'Lunes',
@@ -640,9 +658,13 @@ final class HorariosProfesores
      */
     public static function asignacionesProfesor(int $idProfesor): Collection
     {
+        if (isset(self::$asignacionesProfesorCache[$idProfesor])) {
+            return self::$asignacionesProfesorCache[$idProfesor];
+        }
+
         $ctx = schoolCtx();
 
-        return DB::table('ppc as ppc')
+        self::$asignacionesProfesorCache[$idProfesor] = DB::table('ppc as ppc')
             ->join('materias as m', 'm.id', '=', 'ppc.idMateria')
             ->join('cursos as c', 'c.Id', '=', 'm.idCursos')
             ->where('ppc.idProfesor', $idProfesor)
@@ -687,6 +709,8 @@ final class HorariosProfesores
                     'esTurnoDobleJornada' => self::esTurnoClaseDobleJornada(self::idTurnoClaseParaCurso($idFk)),
                 ];
             });
+
+        return self::$asignacionesProfesorCache[$idProfesor];
     }
 
     /**
@@ -988,15 +1012,20 @@ final class HorariosProfesores
             return '';
         }
 
+        $cacheKey = implode(':', [$idProfesorActual, $idMateria, $idCurso, $idDiaLegacy, $slot, $idTurnoClase]);
+        if (! self::$impresionPdfMasivaProfesores && array_key_exists($cacheKey, self::$coDocenteCeldaCache)) {
+            return self::$coDocenteCeldaCache[$cacheKey];
+        }
+
         $diaCanon = self::normalizarIdDiaCanonico($idDiaLegacy);
         if ($diaCanon === null) {
-            return '';
+            return self::cacheCoDocenteCelda($cacheKey, '');
         }
 
         $ctx = schoolCtx();
         $idsMat = self::idsMateriasEquivalentes($idMateria, $idCurso);
         if ($idsMat === []) {
-            return '';
+            return self::cacheCoDocenteCelda($cacheKey, '');
         }
 
         $q = DB::table('horarios26 as h')
@@ -1044,10 +1073,19 @@ final class HorariosProfesores
         }
 
         if ($nombres === []) {
-            return '';
+            return self::cacheCoDocenteCelda($cacheKey, '');
         }
 
-        return self::nombreProfesorImpresionCursoPdf(implode(' / ', $nombres));
+        return self::cacheCoDocenteCelda($cacheKey, self::nombreProfesorImpresionCursoPdf(implode(' / ', $nombres)));
+    }
+
+    private static function cacheCoDocenteCelda(string $cacheKey, string $valor): string
+    {
+        if (! self::$impresionPdfMasivaProfesores) {
+            self::$coDocenteCeldaCache[$cacheKey] = $valor;
+        }
+
+        return $valor;
     }
 
     /**
@@ -1060,8 +1098,30 @@ final class HorariosProfesores
      *     celdas: array<string, list<string>>
      * }
      */
+    public static function modoImpresionPdfMasivaProfesores(bool $activo = true): void
+    {
+        self::$impresionPdfMasivaProfesores = $activo;
+        if ($activo) {
+            self::$grillaProfesorCache = [];
+        }
+    }
+
+    public static function limpiarCachesRequestHorarios(): void
+    {
+        self::$grillaProfesorCache = [];
+        self::$profesorTieneCeldasCache = [];
+        self::$idsMateriasPermitidasProfesorCache = [];
+        self::$asignacionesProfesorCache = [];
+        self::$coDocenteCeldaCache = [];
+    }
+
     public static function grillaProfesor(int $idProfesor, int $idTurnoClase, bool $filtrarTurno = true): array
     {
+        $cacheKey = $idProfesor.':'.$idTurnoClase.':'.($filtrarTurno ? '1' : '0');
+        if (! self::$impresionPdfMasivaProfesores && isset(self::$grillaProfesorCache[$cacheKey])) {
+            return self::$grillaProfesorCache[$cacheKey];
+        }
+
         $dias = self::diasActivos();
         $horas = range(1, self::HORAS_POR_TURNO);
         $celdas = [];
@@ -1095,13 +1155,29 @@ final class HorariosProfesores
             $colsProf[] = 'h.idTurnoClase as horarioIdTurnoClase';
         }
 
-        foreach ($q->orderBy('h.idHora')->orderBy('c.orden')->get($colsProf) as $r) {
+        $rows = $q->orderBy('h.idHora')->orderBy('c.orden')->get($colsProf);
+        $cursoIdsSinTurno = [];
+        foreach ($rows as $r) {
+            $idCursoFila = (int) ($r->idCursos ?? 0) > 0
+                ? (int) $r->idCursos
+                : (int) ($r->materiaIdCurso ?? 0);
+            if ((int) ($r->idTurnoClase ?? 0) === 0 && $idCursoFila > 0) {
+                $cursoIdsSinTurno[$idCursoFila] = true;
+            }
+        }
+        $turnoPorCursoId = $cursoIdsSinTurno !== []
+            ? DB::table('cursos')->whereIn('Id', array_keys($cursoIdsSinTurno))->get([
+                'Id', 'cursec', 'orden', 'idTurnoClase', 'c', 's', 'idCurPlan',
+            ])->keyBy('Id')
+            : collect();
+
+        foreach ($rows as $r) {
             $idCursoFila = (int) ($r->idCursos ?? 0) > 0
                 ? (int) $r->idCursos
                 : (int) ($r->materiaIdCurso ?? 0);
             $idTcFk = (int) ($r->idTurnoClase ?? 0);
             if ($idTcFk === 0 && $idCursoFila > 0) {
-                $rowC = DB::table('cursos')->where('Id', $idCursoFila)->first(['idTurnoClase']);
+                $rowC = $turnoPorCursoId->get($idCursoFila);
                 if ($rowC !== null) {
                     $idTcFk = (int) ($rowC->idTurnoClase ?? 0);
                 }
@@ -1142,12 +1218,18 @@ final class HorariosProfesores
             self::agregarLineaGrilla($celdas, (string) ($r->idDia ?? ''), $interp['slot'], $linea, $sufijoCoDocente);
         }
 
-        return [
+        $grilla = [
             'dias' => $dias,
             'horas' => $horas,
             'reloj' => self::relojPorTurnoClase($idTurnoClase),
             'celdas' => $celdas,
         ];
+
+        if (! self::$impresionPdfMasivaProfesores) {
+            self::$grillaProfesorCache[$cacheKey] = $grilla;
+        }
+
+        return $grilla;
     }
 
     /**
@@ -1160,8 +1242,7 @@ final class HorariosProfesores
         $activos = self::turnosActivos();
         $conDatos = [];
         foreach ($activos as $t) {
-            $g = self::grillaProfesor($idProfesor, $t, true);
-            if ($g['celdas'] !== []) {
+            if (self::profesorTieneCeldasEnTurno($idProfesor, $t, true)) {
                 $conDatos[] = $t;
             }
         }
@@ -1170,8 +1251,7 @@ final class HorariosProfesores
         }
 
         foreach ($activos as $t) {
-            $g = self::grillaProfesor($idProfesor, $t, false);
-            if ($g['celdas'] !== []) {
+            if (self::profesorTieneCeldasEnTurno($idProfesor, $t, false)) {
                 return [$t];
             }
         }
@@ -1199,12 +1279,86 @@ final class HorariosProfesores
      */
     public static function grillaProfesorParaImpresion(int $idProfesor, int $idTurnoClase): array
     {
-        $g = self::grillaProfesor($idProfesor, $idTurnoClase, true);
-        if ($g['celdas'] !== []) {
-            return $g;
+        if (self::profesorTieneCeldasEnTurno($idProfesor, $idTurnoClase, true)) {
+            return self::grillaProfesor($idProfesor, $idTurnoClase, true);
         }
 
         return self::grillaProfesor($idProfesor, $idTurnoClase, false);
+    }
+
+    /**
+     * Indica si el docente tiene al menos una celda en la grilla del turno (sin armar la grilla completa).
+     */
+    public static function profesorTieneCeldasEnTurno(int $idProfesor, int $idTurnoClase, bool $filtrarTurno = true): bool
+    {
+        $cacheKey = $idProfesor.':'.$idTurnoClase.':'.($filtrarTurno ? '1' : '0');
+        if (array_key_exists($cacheKey, self::$profesorTieneCeldasCache)) {
+            return self::$profesorTieneCeldasCache[$cacheKey];
+        }
+
+        $idsMat = self::idsMateriasPermitidasImpresionProfesor($idProfesor);
+        if ($idsMat === []) {
+            return self::$profesorTieneCeldasCache[$cacheKey] = false;
+        }
+
+        $dias = self::diasActivos();
+        $q = DB::table('horarios26 as h')
+            ->leftJoin('materias as m', 'm.id', '=', 'h.idMaterias')
+            ->leftJoin('cursos as c', function ($join) {
+                $join->on('c.Id', '=', 'm.idCursos');
+            })
+            ->where('h.idProfesores', $idProfesor);
+        self::aplicarFiltroHorarios26ProfesorSoloMateriasAsignadas($q, $idsMat);
+        self::aplicarFiltroDiasLegacyEnQuery($q, 'h.idDia', $dias);
+
+        $cols = [
+            'h.idDia',
+            'h.idHora',
+            'h.idMaterias',
+            'h.idCursos',
+            'm.idCursos as materiaIdCurso',
+            'c.idTurnoClase',
+        ];
+        if (self::horarios26UsaIdTurnoClase()) {
+            $cols[] = 'h.idTurnoClase as horarioIdTurnoClase';
+        }
+
+        $rows = $q->orderBy('h.idHora')->limit(400)->get($cols);
+        $cursoIdsPendientes = [];
+        foreach ($rows as $r) {
+            $idCursoFila = (int) ($r->idCursos ?? 0) > 0
+                ? (int) $r->idCursos
+                : (int) ($r->materiaIdCurso ?? 0);
+            if ((int) ($r->idTurnoClase ?? 0) === 0 && $idCursoFila > 0) {
+                $cursoIdsPendientes[$idCursoFila] = true;
+            }
+        }
+        $turnoPorCurso = $cursoIdsPendientes !== []
+            ? DB::table('cursos')->whereIn('Id', array_keys($cursoIdsPendientes))->pluck('idTurnoClase', 'Id')
+            : collect();
+
+        foreach ($rows as $r) {
+            $idCursoFila = (int) ($r->idCursos ?? 0) > 0
+                ? (int) $r->idCursos
+                : (int) ($r->materiaIdCurso ?? 0);
+            $idTcFk = (int) ($r->idTurnoClase ?? 0);
+            if ($idTcFk === 0 && $idCursoFila > 0) {
+                $idTcFk = (int) ($turnoPorCurso[$idCursoFila] ?? 0);
+                $r->idTurnoClase = $idTcFk;
+            }
+            if ($filtrarTurno) {
+                if (! self::filaHorarios26CoincideTurno($r, $idTurnoClase, $idCursoFila > 0 ? $idCursoFila : null)) {
+                    continue;
+                }
+                if (! self::cursoVisualizadoEnTurnoImpresion($idTcFk > 0 ? $idTcFk : null, $idTurnoClase)) {
+                    continue;
+                }
+            }
+
+            return self::$profesorTieneCeldasCache[$cacheKey] = true;
+        }
+
+        return self::$profesorTieneCeldasCache[$cacheKey] = false;
     }
 
     /**
@@ -1865,6 +2019,10 @@ TXT;
      */
     private static function idsMateriasPermitidasImpresionProfesor(int $idProfesor): array
     {
+        if (isset(self::$idsMateriasPermitidasProfesorCache[$idProfesor])) {
+            return self::$idsMateriasPermitidasProfesorCache[$idProfesor];
+        }
+
         $ids = [];
         foreach (self::asignacionesProfesor($idProfesor) as $a) {
             $idM = (int) ($a->idMateria ?? 0);
@@ -1879,7 +2037,7 @@ TXT;
             }
         }
 
-        return array_values($ids);
+        return self::$idsMateriasPermitidasProfesorCache[$idProfesor] = array_values($ids);
     }
 
     /**

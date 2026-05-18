@@ -62,8 +62,8 @@
     @endphp
     <div class="pagina">
         @include('pdf.partials.header', ['header' => $pdfHeader ?? null])
-        <p class="titulo">{{ $titulo }}</p>
-        <p class="subtitulo">{{ $subtitulo }}</p>
+        <p class="titulo">{{ $pagina['titulo'] ?? $titulo }}</p>
+        <p class="subtitulo">{{ $pagina['subtitulo'] ?? $subtitulo }}</p>
         <p class="turno">Turno {{ $pagina['tituloTurno'] ?? '' }}</p>
 
         <table class="horario">

@@ -32,37 +32,43 @@
                             Marcá uno o más cursos. Cada curso genera su propia hoja en el mismo PDF.
                         </p>
                     </div>
-                    <span class="se-pill tabular-nums">
-                        {{ $cantidadSeleccionados }} de {{ $cursos->count() }} seleccionados
-                    </span>
+                    @if ($cursos->isNotEmpty())
+                        <span class="se-pill tabular-nums">
+                            {{ $cantidadSeleccionados }} de {{ $cursos->count() }} seleccionados
+                        </span>
+                    @endif
                 </div>
 
-                <div class="mt-4 flex flex-wrap gap-2">
+                <div class="mt-4 flex flex-wrap items-center gap-2">
                     <button type="button"
-                            wire:click="seleccionarTodosCursos"
-                            class="inline-flex items-center rounded-lg border border-accent-200 bg-white px-3 py-1.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                        Todos
+                            wire:click="abrirModalCurso"
+                            @disabled($cursos->isEmpty())
+                            class="inline-flex items-center justify-center rounded-xl border border-primary-500 bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                        Elegir cursos…
                     </button>
-                    <button type="button"
-                            wire:click="quitarTodosCursos"
-                            class="inline-flex items-center rounded-lg border border-accent-200 bg-white px-3 py-1.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                        Ninguno
-                    </button>
+                    @if ($cursos->isEmpty())
+                        <span class="text-sm text-neutral-600">No hay cursos en este nivel y ciclo lectivo.</span>
+                    @elseif ($cantidadSeleccionados > 0)
+                        <button type="button"
+                                wire:click="quitarTodosCursos"
+                                class="inline-flex items-center rounded-lg border border-accent-200 bg-white px-3 py-1.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                            Quitar todos
+                        </button>
+                    @endif
                 </div>
 
-                @if ($cursos->isEmpty())
-                    <p class="mt-4 text-sm text-neutral-600">No hay cursos en este nivel y ciclo lectivo.</p>
-                @else
-                    <div class="mt-4 max-h-72 overflow-y-auto rounded-xl border border-accent-200 bg-accent-50/30 p-3">
-                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                            @foreach ($cursos as $c)
-                                <label class="inline-flex cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-2 py-1.5 text-sm text-neutral-800 transition hover:border-accent-200 hover:bg-white">
-                                    <input type="checkbox"
-                                           class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
-                                           wire:model.live="cursosSeleccionados"
-                                           value="{{ $c->Id }}">
-                                    <span class="font-medium">{{ $c->nombreParaListado() }}</span>
-                                </label>
+                @if (! empty($cursosSeleccionados))
+                    <div class="mt-3 rounded-lg border border-accent-200 bg-white px-2 py-1.5">
+                        <p class="text-[9px] font-semibold uppercase tracking-wide text-neutral-500">Cursos seleccionados</p>
+                        <div class="mt-1 max-h-24 overflow-y-auto text-[10px] leading-snug text-neutral-800">
+                            @foreach ($cursosSeleccionados as $c)
+                                <span class="mr-2 inline-flex max-w-full items-baseline gap-0.5 align-top">
+                                    <span class="break-words">{{ $c['label'] }}</span>
+                                    <button type="button"
+                                            wire:click="removeCurso({{ $c['id'] }})"
+                                            class="shrink-0 text-neutral-400 hover:text-red-600"
+                                            title="Quitar">×</button>
+                                </span>
                             @endforeach
                         </div>
                     </div>
@@ -124,4 +130,73 @@
             </div>
         </div>
     </div>
+
+    @teleport('body')
+        <div>
+            @if ($modalCursoAbierto)
+                <div class="fixed inset-0 z-[90] flex items-center justify-center px-4 py-3 sm:px-6 sm:py-4" role="dialog" aria-modal="true"
+                     aria-labelledby="pd-modal-curso-titulo">
+                    <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarModalCurso"></div>
+
+                    <div class="relative z-10 flex w-full max-w-lg max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),30rem)]">
+                        <div class="border-b border-accent-200 bg-accent-50/60 px-4 py-2.5 sm:px-5 sm:py-3">
+                            <p id="pd-modal-curso-titulo" class="text-sm font-bold text-neutral-900">Elegir cursos</p>
+                            <p class="mt-0.5 text-[11px] leading-snug text-neutral-600">
+                                Marcá uno o varios cursos del ciclo lectivo actual. Las selecciones fuera de la vista se mantienen al confirmar.
+                            </p>
+                        </div>
+
+                        <div class="border-b border-accent-100 bg-white px-4 py-2 sm:px-5 sm:py-2.5">
+                            <label for="pd-modal-curso-filtro" class="form-label">Filtrar por nombre</label>
+                            <input id="pd-modal-curso-filtro"
+                                   type="text"
+                                   wire:model.live.debounce.300ms="modalCursoFiltro"
+                                   placeholder="Texto del curso…"
+                                   class="form-input mt-1.5" />
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                <button type="button"
+                                        wire:click="modalCursoSeleccionarTodosVisibles"
+                                        class="inline-flex rounded-lg border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-800 transition hover:bg-accent-50">
+                                    Marcar visibles
+                                </button>
+                                <button type="button"
+                                        wire:click="modalCursoQuitarVisibles"
+                                        class="inline-flex rounded-lg border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 transition hover:bg-accent-50">
+                                    Desmarcar visibles
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="min-h-0 flex-1 overflow-y-auto px-4 py-1 sm:px-5">
+                            @forelse ($modalCursoLista as $c)
+                                <label wire:key="pd-modal-curso-{{ $c['id'] }}"
+                                       class="flex cursor-pointer items-center gap-2 border-b border-accent-100 py-1 last:border-b-0 hover:bg-accent-50/60">
+                                    <input type="checkbox"
+                                           wire:model="modalCursoMarcados"
+                                           value="{{ $c['id'] }}"
+                                           class="rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
+                                    <span class="text-sm font-semibold leading-tight text-neutral-900">{{ $c['label'] }}</span>
+                                </label>
+                            @empty
+                                <p class="py-8 text-center text-sm text-neutral-500">No hay cursos que coincidan con el filtro.</p>
+                            @endforelse
+                        </div>
+
+                        <div class="flex flex-col gap-2 border-t border-accent-200 bg-accent-50/40 px-4 py-2.5 sm:flex-row sm:justify-end sm:px-5 sm:py-3">
+                            <button type="button"
+                                    wire:click="cerrarModalCurso"
+                                    class="inline-flex w-full items-center justify-center rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-800 shadow-sm transition hover:bg-accent-50 sm:w-auto">
+                                Cancelar
+                            </button>
+                            <button type="button"
+                                    wire:click="aplicarModalCurso"
+                                    class="inline-flex w-full items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto">
+                                Aplicar selección
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+    @endteleport
 </div>

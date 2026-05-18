@@ -25,6 +25,8 @@ use App\Livewire\Abm\Curplan\CurplanIndex;
 use App\Livewire\Abm\Cursos\CursosIndex;
 use App\Livewire\Abm\Legajos\LegajoForm;
 use App\Livewire\Abm\Legajos\LegajosIndex;
+use App\Livewire\Abm\LegajosProfesor\LegajoProfesorForm;
+use App\Livewire\Abm\LegajosProfesor\LegajosProfesorIndex;
 use App\Livewire\Abm\MateriasAnio\MateriasAnioIndex;
 use App\Livewire\Abm\ProfesoresPorMateria\ProfesoresPorMateriaIndex;
 use App\Livewire\Abm\Niveles\NivelesIndex;
@@ -54,9 +56,11 @@ use App\Livewire\Comunicaciones\NuevoComunicado;
 use App\Livewire\Listados\LibroMatricula;
 use App\Livewire\Listados\ListadoPorCurso;
 use App\Livewire\Parametrizacion\CamposLegajoIndex;
+use App\Livewire\Parametrizacion\CamposProfesorIndex;
 use App\Livewire\Parametrizacion\ComCanalesIndex;
 use App\Livewire\Parametrizacion\ParametrosSistemaForm;
 use App\Livewire\Parametrizacion\SolapaLegajoIndex;
+use App\Livewire\Parametrizacion\SolapaLegajoProfesorIndex;
 use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
 use App\Livewire\Seguimiento\Disciplinario\DisciplinarioIndex;
 use App\Livewire\Seguimiento\Disciplinario\SancionForm;
@@ -176,12 +180,22 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/parametrizacion/solapas-legajo', SolapaLegajoIndex::class)
         ->middleware('permiso:1')
         ->name('param.solapas-legajo');
+    Route::get('/parametrizacion/campos-legajo-profesor', CamposProfesorIndex::class)
+        ->middleware('permiso:1')
+        ->name('param.campos-legajo-profesor');
+    Route::get('/parametrizacion/solapas-legajo-profesor', SolapaLegajoProfesorIndex::class)
+        ->middleware('permiso:1')
+        ->name('param.solapas-legajo-profesor');
     Route::get('/parametrizacion/com-canales', ComCanalesIndex::class)
         ->middleware('permiso:53')
         ->name('param.com-canales');
     Route::get('/abm/legajos', LegajosIndex::class)->middleware('permiso:2')->name('abm.legajos');
     Route::get('/abm/legajos/nuevo', LegajoForm::class)->middleware('permiso:2')->name('abm.legajos.create');
     Route::get('/abm/legajos/{id}/editar', LegajoForm::class)->middleware('permiso:2')->whereNumber('id')->name('abm.legajos.edit');
+
+    Route::get('/abm/legajos-profesor', LegajosProfesorIndex::class)->middleware('permiso:1')->name('abm.legajos-profesor');
+    Route::get('/abm/legajos-profesor/nuevo', LegajoProfesorForm::class)->middleware('permiso:1')->name('abm.legajos-profesor.create');
+    Route::get('/abm/legajos-profesor/{id}/editar', LegajoProfesorForm::class)->middleware('permiso:1')->whereNumber('id')->name('abm.legajos-profesor.edit');
 
     Route::get('/listados/por-curso', ListadoPorCurso::class)->middleware('permiso:2')->name('listados.por-curso');
     Route::get('/listados/por-curso/listado', ListadoCursoPdfController::class)->middleware('permiso:2')->name('listados.por-curso.pdf');

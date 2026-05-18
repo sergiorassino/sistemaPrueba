@@ -20,28 +20,56 @@ class HorariosImpresionIndex extends Component
     /** curso|profesor */
     public string $modo = 'curso';
 
-    public ?int $cursoId = null;
+    /** @var list<array{id:int, label:string}> */
+    public array $cursosSeleccionados = [];
 
-    public ?int $profesorId = null;
+    /** @var list<array{id:int, label:string}> */
+    public array $profesoresSeleccionados = [];
 
     /** Si no es null, el PDF usa este turnos_clase (debe estar activo en configuración). */
     public ?int $pdfTurnoClase = null;
 
+    public bool $modalCursoAbierto = false;
+
+    public string $modalCursoFiltro = '';
+
+    /** @var list<array{id:int, label:string}> */
+    public array $modalCursoLista = [];
+
+    /** @var list<int|string> */
+    public array $modalCursoMarcados = [];
+
+    public bool $modalProfesorAbierto = false;
+
+    public string $modalProfesorFiltro = '';
+
+    /** @var list<array{id:int, label:string}> */
+    public array $modalProfesorLista = [];
+
+    /** @var list<int|string> */
+    public array $modalProfesorMarcados = [];
+
     public function updatedModo(): void
     {
-        $this->cursoId = null;
-        $this->profesorId = null;
+        $this->cursosSeleccionados = [];
+        $this->profesoresSeleccionados = [];
         $this->pdfTurnoClase = null;
+        $this->cerrarModalCurso();
+        $this->cerrarModalProfesor();
     }
 
-    public function updatedCursoId(): void
+    public function updatedModalCursoFiltro(): void
     {
-        $this->pdfTurnoClase = null;
+        if ($this->modalCursoAbierto) {
+            $this->recargarModalCursoLista();
+        }
     }
 
-    public function updatedProfesorId(): void
+    public function updatedModalProfesorFiltro(): void
     {
-        $this->pdfTurnoClase = null;
+        if ($this->modalProfesorAbierto) {
+            $this->recargarModalProfesorLista();
+        }
     }
 
     public function updatedPdfTurnoClase(mixed $value): void
@@ -53,6 +81,146 @@ class HorariosImpresionIndex extends Component
         }
     }
 
+    public function abrirModalCurso(): void
+    {
+        $this->modalCursoAbierto = true;
+        $this->modalCursoFiltro = '';
+        $this->modalCursoMarcados = array_map(fn (array $c) => (int) $c['id'], $this->cursosSeleccionados);
+        $this->recargarModalCursoLista();
+    }
+
+    public function cerrarModalCurso(): void
+    {
+        $this->modalCursoAbierto = false;
+    }
+
+    public function aplicarModalCurso(): void
+    {
+        $labelsPorId = collect($this->modalCursoLista)->keyBy('id');
+        $prev = collect($this->cursosSeleccionados)->keyBy('id');
+        $out = [];
+        foreach (array_unique(array_map('intval', $this->modalCursoMarcados)) as $id) {
+            if ($id <= 0) {
+                continue;
+            }
+            $fromLista = $labelsPorId->get($id);
+            if ($fromLista !== null) {
+                $out[] = ['id' => $id, 'label' => (string) $fromLista['label']];
+
+                continue;
+            }
+            $fromPrev = $prev->get($id);
+            if ($fromPrev !== null) {
+                $out[] = ['id' => $id, 'label' => (string) $fromPrev['label']];
+            }
+        }
+        $this->cursosSeleccionados = $out;
+        $this->pdfTurnoClase = null;
+        $this->modalCursoAbierto = false;
+    }
+
+    public function modalCursoSeleccionarTodosVisibles(): void
+    {
+        $ids = array_map(fn (array $r) => (int) $r['id'], $this->modalCursoLista);
+        $this->modalCursoMarcados = array_values(array_unique(array_merge(
+            array_map('intval', $this->modalCursoMarcados),
+            $ids
+        )));
+    }
+
+    public function modalCursoQuitarVisibles(): void
+    {
+        $vis = array_flip(array_map(fn (array $r) => (int) $r['id'], $this->modalCursoLista));
+        $this->modalCursoMarcados = array_values(array_filter(
+            array_map('intval', $this->modalCursoMarcados),
+            fn (int $id) => ! isset($vis[$id])
+        ));
+    }
+
+    public function removeCurso(int $id): void
+    {
+        $this->cursosSeleccionados = array_values(
+            array_filter($this->cursosSeleccionados, fn (array $c) => (int) $c['id'] !== $id)
+        );
+        $this->pdfTurnoClase = null;
+    }
+
+    public function quitarTodosCursos(): void
+    {
+        $this->cursosSeleccionados = [];
+        $this->pdfTurnoClase = null;
+    }
+
+    public function abrirModalProfesor(): void
+    {
+        $this->modalProfesorAbierto = true;
+        $this->modalProfesorFiltro = '';
+        $this->modalProfesorMarcados = array_map(fn (array $d) => (int) $d['id'], $this->profesoresSeleccionados);
+        $this->recargarModalProfesorLista();
+    }
+
+    public function cerrarModalProfesor(): void
+    {
+        $this->modalProfesorAbierto = false;
+    }
+
+    public function aplicarModalProfesor(): void
+    {
+        $labelsPorId = collect($this->modalProfesorLista)->keyBy('id');
+        $prev = collect($this->profesoresSeleccionados)->keyBy('id');
+        $out = [];
+        foreach (array_unique(array_map('intval', $this->modalProfesorMarcados)) as $id) {
+            if ($id <= 0) {
+                continue;
+            }
+            $fromLista = $labelsPorId->get($id);
+            if ($fromLista !== null) {
+                $out[] = ['id' => $id, 'label' => (string) $fromLista['label']];
+
+                continue;
+            }
+            $fromPrev = $prev->get($id);
+            if ($fromPrev !== null) {
+                $out[] = ['id' => $id, 'label' => (string) $fromPrev['label']];
+            }
+        }
+        $this->profesoresSeleccionados = $out;
+        $this->pdfTurnoClase = null;
+        $this->modalProfesorAbierto = false;
+    }
+
+    public function modalProfesorSeleccionarTodosVisibles(): void
+    {
+        $ids = array_map(fn (array $r) => (int) $r['id'], $this->modalProfesorLista);
+        $this->modalProfesorMarcados = array_values(array_unique(array_merge(
+            array_map('intval', $this->modalProfesorMarcados),
+            $ids
+        )));
+    }
+
+    public function modalProfesorQuitarVisibles(): void
+    {
+        $vis = array_flip(array_map(fn (array $r) => (int) $r['id'], $this->modalProfesorLista));
+        $this->modalProfesorMarcados = array_values(array_filter(
+            array_map('intval', $this->modalProfesorMarcados),
+            fn (int $id) => ! isset($vis[$id])
+        ));
+    }
+
+    public function removeProfesor(int $id): void
+    {
+        $this->profesoresSeleccionados = array_values(
+            array_filter($this->profesoresSeleccionados, fn (array $d) => (int) $d['id'] !== $id)
+        );
+        $this->pdfTurnoClase = null;
+    }
+
+    public function quitarTodosProfesores(): void
+    {
+        $this->profesoresSeleccionados = [];
+        $this->pdfTurnoClase = null;
+    }
+
     public function pdfUrl(): ?string
     {
         $extra = [];
@@ -60,11 +228,15 @@ class HorariosImpresionIndex extends Component
             $extra['turno'] = $this->pdfTurnoClase;
         }
 
-        if ($this->modo === 'curso' && ($this->cursoId ?? 0) > 0) {
-            return route('horarios.pdf.curso', array_merge(['curso' => $this->cursoId], $extra));
+        if ($this->modo === 'curso' && $this->cursosSeleccionados !== []) {
+            $ids = implode(',', array_map(fn (array $c) => (int) $c['id'], $this->cursosSeleccionados));
+
+            return route('horarios.pdf.curso', array_merge(['cursos' => $ids], $extra));
         }
-        if ($this->modo === 'profesor' && ($this->profesorId ?? 0) > 0) {
-            return route('horarios.pdf.profesor', array_merge(['profesor' => $this->profesorId], $extra));
+        if ($this->modo === 'profesor' && $this->profesoresSeleccionados !== []) {
+            $ids = implode(',', array_map(fn (array $d) => (int) $d['id'], $this->profesoresSeleccionados));
+
+            return route('horarios.pdf.profesor', array_merge(['profesores' => $ids], $extra));
         }
 
         return null;
@@ -94,6 +266,9 @@ class HorariosImpresionIndex extends Component
         $idNivel = (int) ($ctx->idNivel ?? 0);
 
         return DB::table('profesores as p')
+            ->where(function ($w) {
+                $w->whereNull('p.IdTipoProf')->orWhere('p.IdTipoProf', '<>', 1);
+            })
             ->whereExists(function ($q) use ($idNivel, $ctx) {
                 $q->selectRaw('1')
                     ->from('ppc')
@@ -111,11 +286,47 @@ class HorariosImpresionIndex extends Component
             ]);
     }
 
+    private function recargarModalCursoLista(): void
+    {
+        $lista = $this->cursos()->map(fn (Curso $c) => [
+            'id' => (int) $c->Id,
+            'label' => $c->nombreParaListado(),
+        ])->values()->all();
+
+        $f = mb_strtolower(trim($this->modalCursoFiltro));
+        if ($f !== '') {
+            $lista = array_values(array_filter(
+                $lista,
+                fn (array $c) => str_contains(mb_strtolower((string) ($c['label'] ?? '')), $f)
+            ));
+        }
+
+        $this->modalCursoLista = $lista;
+    }
+
+    private function recargarModalProfesorLista(): void
+    {
+        $lista = $this->profesores()->map(fn ($p) => [
+            'id' => (int) $p->id,
+            'label' => (string) $p->label,
+        ])->values()->all();
+
+        $f = mb_strtolower(trim($this->modalProfesorFiltro));
+        if ($f !== '') {
+            $lista = array_values(array_filter(
+                $lista,
+                fn (array $p) => str_contains(mb_strtolower((string) ($p['label'] ?? '')), $f)
+            ));
+        }
+
+        $this->modalProfesorLista = $lista;
+    }
+
     public function render()
     {
         $consultaSqlImpresionCurso = '';
-        // if ($this->modo === 'curso' && ($this->cursoId ?? 0) > 0) {
-        //     $consultaSqlImpresionCurso = HorariosProfesores::textoDepuracionSqlImpresionHorarioCurso((int) $this->cursoId);
+        // if ($this->modo === 'curso' && count($this->cursosSeleccionados) > 0) {
+        //     $consultaSqlImpresionCurso = HorariosProfesores::textoDepuracionSqlImpresionHorarioCurso((int) $this->cursosSeleccionados[0]['id']);
         // }
 
         return view('livewire.horarios.horarios-impresion-index', [
@@ -124,6 +335,8 @@ class HorariosImpresionIndex extends Component
             'pdfUrl' => $this->pdfUrl(),
             'turnosPdf' => HorariosProfesores::turnosActivos(),
             'consultaSqlImpresionCurso' => $consultaSqlImpresionCurso,
+            'cantidadCursosSeleccionados' => count($this->cursosSeleccionados),
+            'cantidadProfesoresSeleccionados' => count($this->profesoresSeleccionados),
         ])->layout('layouts.app', ['pageTitle' => 'Impresión de horarios']);
     }
 }

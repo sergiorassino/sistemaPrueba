@@ -16,6 +16,8 @@ use App\Http\Controllers\InformeInasistenciasPdfController;
 use App\Http\Controllers\LibroMatriculaPdfController;
 use App\Http\Controllers\ListadoCursoPdfController;
 use App\Http\Controllers\Push\SuscribirController;
+use App\Http\Controllers\Horarios\HorarioCursoPdfController;
+use App\Http\Controllers\Horarios\HorarioProfesorPdfController;
 use App\Http\Controllers\SancionComunicadoPdfController;
 use App\Livewire\Abm\Curplan\CurplanForm;
 use App\Livewire\Abm\Curplan\CurplanIndex;
@@ -23,6 +25,7 @@ use App\Livewire\Abm\Cursos\CursosIndex;
 use App\Livewire\Abm\Legajos\LegajoForm;
 use App\Livewire\Abm\Legajos\LegajosIndex;
 use App\Livewire\Abm\MateriasAnio\MateriasAnioIndex;
+use App\Livewire\Abm\ProfesoresPorMateria\ProfesoresPorMateriaIndex;
 use App\Livewire\Abm\Niveles\NivelesIndex;
 use App\Livewire\Abm\Planes\PlanesForm;
 use App\Livewire\Abm\Planes\PlanesIndex;
@@ -57,6 +60,9 @@ use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
 use App\Livewire\Seguimiento\Disciplinario\DisciplinarioIndex;
 use App\Livewire\Seguimiento\Disciplinario\SancionForm;
 use App\Livewire\Seguimiento\Inasistencias\InasistenciaForm;
+use App\Livewire\Horarios\HorariosCargaIndex;
+use App\Livewire\Horarios\HorariosConfigIndex;
+use App\Livewire\Horarios\HorariosImpresionIndex;
 use App\Livewire\Seguimiento\Inasistencias\InasistenciasIndex;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
@@ -155,9 +161,13 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/abm/curplan/nuevo', CurplanForm::class)->middleware('permiso:1')->name('abm.curplan.create');
     Route::get('/abm/curplan/{id}/editar', CurplanForm::class)->middleware('permiso:1')->whereNumber('id')->name('abm.curplan.edit');
     Route::get('/abm/materias-anio', MateriasAnioIndex::class)->middleware('permiso:1')->name('abm.materias-anio');
+    Route::get('/abm/profesores-por-materia', ProfesoresPorMateriaIndex::class)->middleware('permiso:1')->name('abm.profesores-por-materia');
     Route::get('/parametrizacion/parametros-sistema', ParametrosSistemaForm::class)
         ->middleware('permiso:1')
         ->name('param.parametros-sistema');
+    Route::get('/horarios/configuracion', HorariosConfigIndex::class)
+        ->middleware('permiso:1')
+        ->name('horarios.config');
     Route::get('/parametrizacion/campos-legajo', CamposLegajoIndex::class)
         ->middleware('permiso:1')
         ->name('param.campos-listado-alumnos'); // nombre conservado para no romper enlaces existentes
@@ -180,6 +190,19 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/listados/libro-matricula/pdf', LibroMatriculaPdfController::class)
         ->middleware('permiso:2')
         ->name('listados.libro-matricula.pdf');
+
+    Route::get('/horarios/carga', HorariosCargaIndex::class)
+        ->middleware('permiso:2')
+        ->name('horarios.carga');
+    Route::get('/horarios/impresion', HorariosImpresionIndex::class)
+        ->middleware('permiso:2')
+        ->name('horarios.impresion');
+    Route::get('/horarios/pdf/curso', HorarioCursoPdfController::class)
+        ->middleware('permiso:2')
+        ->name('horarios.pdf.curso');
+    Route::get('/horarios/pdf/profesor', HorarioProfesorPdfController::class)
+        ->middleware('permiso:2')
+        ->name('horarios.pdf.profesor');
 
     // Calificaciones (nivel secundario): sincro GE/CIDI, carga y consulta institucional
     Route::get('/calificaciones-secundario/sincro-ge', SincroGe::class)

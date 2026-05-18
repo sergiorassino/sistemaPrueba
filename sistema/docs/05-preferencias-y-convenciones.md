@@ -224,3 +224,27 @@ Antes de cerrar un PDF con columnas variables: comparar con `planilla-calificaci
 - Cuando aparezcan nuevas preferencias/restricciones, agregarlas en este archivo.
 - Los archivos de documentación se numeran secuencialmente para facilitar la lectura.
 - Personalización multi-colegio: [07-versionado-de-modulos-por-tenant.md](07-versionado-de-modulos-por-tenant.md).
+
+---
+
+## 10. Depuración SQL en pantalla (uso puntual)
+
+Algunos módulos muestran en Blade el texto SQL o las consultas “equivalentes” que usa el servidor para ayudar a diagnosticar problemas.
+
+### Costo real del servidor
+
+Ese texto suele obtenerse llamando a helpers PHP que **no son gratis**: además del armado del string pueden ejecutarse **consultas reales** o helpers que recorren listas para armar `IN (...)`, filtros legados, etc.
+
+Por eso la forma correcta de “apagar” la depuración no es ocultar el panel en la vista con `@if(false)` ni un flag que oculte el `<pre>` mientras **`render()` o las acciones Livewire siguen llamando al helper**. Eso sigue cargando PHP y la base cada request **en silencio**.
+
+### Patrón recomendado
+
+1. **Desactivado (normal):** comentar con `//` en PHP las llamadas a helpers de texto SQL (`textoDepuracionSql*`, `textoConsultasEjecutadas*`, etc.) y comentar con `{{-- ... --}}` el bloque Blade del panel / botón “Mostrar depuración”. Las propiedades Livewire solo usadas por ese panel pueden dejarse comentadas en el mismo bloque de nota.
+2. **Activado (minutos / horas, para investigar):** descomentar en orden: propiedades del componente → asignaciones en `updated*` / acciones → bloque en `render()` → Blade.
+3. **Cierre:** volver a comentarlo todo antes de dejar código en uso continuo.
+
+### Referencia en código
+
+Ejemplo aplicado en **Horarios**: `HorariosCargaIndex`, `HorariosImpresionIndex` + vistas `horarios-*-index.blade.php`, y métodos `HorariosProfesores::textoDepuracionSql*` (conservados; no se ejecutan si no hay llamada desde el componente).
+
+**ABM asignación docente (ppc):** `ProfesoresPorMateriaIndex` + `profesores-por-materia/index.blade.php`; método privado `textoConsultasEjecutadasAlElegirMateria` conservado (no se ejecuta sin la asignación en `selectMateria`).

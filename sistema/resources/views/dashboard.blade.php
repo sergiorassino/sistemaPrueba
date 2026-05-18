@@ -55,6 +55,18 @@
             'href' => route('abm.materias-anio'),
             'icon' => 'rows',
         ];
+        $dashboardLinks[] = [
+            'title' => 'Docentes por materia',
+            'hint' => 'Asignación docente por curso (ppc)',
+            'href' => route('abm.profesores-por-materia'),
+            'icon' => 'users',
+        ];
+        $dashboardLinks[] = [
+            'title' => 'Configuración de horarios',
+            'hint' => 'Turnos, días y reloj',
+            'href' => route('horarios.config'),
+            'icon' => 'calendar',
+        ];
     }
 
     if (tienePermiso(0)) {
@@ -148,6 +160,18 @@
             'hint'  => 'Registro por alumno',
             'href'  => route('seguimiento.inasistencias'),
             'icon'  => 'clipboard',
+        ];
+        $dashboardLinks[] = [
+            'title' => 'Carga de horarios',
+            'hint' => 'Horas cátedra por docente',
+            'href' => route('horarios.carga'),
+            'icon' => 'calendar',
+        ];
+        $dashboardLinks[] = [
+            'title' => 'Impresión de horarios',
+            'hint' => 'PDF por curso o docente',
+            'href' => route('horarios.impresion'),
+            'icon' => 'doc',
         ];
     }
 

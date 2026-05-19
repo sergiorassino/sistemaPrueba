@@ -30,8 +30,19 @@ class Terlec extends Model
         return $this->hasMany(Curso::class, 'idTerlec');
     }
 
+    /** Listados y selects: año más reciente primero (arriba en el desplegable). */
     public function scopeOrdenado($query)
     {
-        return $query->orderBy('orden', 'asc');
+        return $query->orderByDesc('ano')->orderByDesc('orden')->orderByDesc('id');
+    }
+
+    /**
+     * Opciones para desplegables de año lectivo (mismo criterio en todo el sistema).
+     *
+     * @return \Illuminate\Support\Collection<int, self>
+     */
+    public static function paraSelector()
+    {
+        return static::ordenado()->get(['id', 'ano']);
     }
 }

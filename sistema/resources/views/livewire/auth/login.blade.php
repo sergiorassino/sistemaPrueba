@@ -70,17 +70,18 @@
                 @enderror
             </div>
 
-            {{-- Año lectivo --}}
+            {{-- Año lectivo (componente aislado: evita que Livewire desordene las opciones al actualizar el DNI) --}}
             <div>
                 <label class="se-auth-label" for="idTerlec">Año lectivo</label>
-                <select wire:model="idTerlec"
-                        id="idTerlec"
-                        class="se-auth-select py-2.5 px-3 @error('idTerlec') !border-red-400 ring-2 ring-red-200/80 @enderror">
-                    <option value="">— Seleccione año —</option>
-                    @foreach ($terlecs as $t)
-                        <option value="{{ $t->id }}">{{ $t->ano }}</option>
-                    @endforeach
-                </select>
+                @php
+                    $terlecSelectClass = 'se-auth-select py-2.5 px-3'
+                        .($errors->has('idTerlec') ? ' !border-red-400 ring-2 ring-red-200/80' : '');
+                @endphp
+                <livewire:components.terlec-selector
+                    wire:model="idTerlec"
+                    input-id="idTerlec"
+                    :select-class="$terlecSelectClass"
+                    :key="'login-terlec-selector'" />
                 @error('idTerlec')
                     <p class="form-error">{{ $message }}</p>
                 @enderror

@@ -1140,4 +1140,106 @@ class ComunicacionesRepository
 
         return static::profesoresPorRol($idNivel, 'preceptor');
     }
+
+    /**
+     * Contadores para el panel de inicio: mensajes no leídos (recibidos) y destinatarios
+     * que aún no abrieron mensajes enviados por el profesor en el ciclo activo.
+     *
+     * @return array{
+     *   mensajes_no_leidos:int,
+     *   hilos_con_no_leidos:int,
+     *   destinatarios_sin_leer:int,
+     *   hilos_enviados_pendientes_lectura:int,
+     *   hilos_total:int
+     * }
+     */
+    public static function resumenBandejaProfesor(int $idProfesor, int $idNivel, int $idTerlec): array
+    {
+        $mensajesNoLeidos = (int) DB::table('com_mensajes_destinatarios as d')
+            ->join('com_hilos as h', 'h.id', '=', 'd.id_hilo')
+            ->where('h.id_nivel', $idNivel)
+            ->where('h.id_terlec', $idTerlec)
+            ->where('d.tipo_destinatario', 'profesor')
+            ->where('d.id_profesor', $idProfesor)
+            ->whereNull('d.leido_at')
+            ->count();
+
+        $hilosConNoLeidos = (int) DB::table('com_hilos as h')
+            ->where('h.id_nivel', $idNivel)
+            ->where('h.id_terlec', $idTerlec)
+            ->where(function ($q) use ($idProfesor) {
+                $q->where('h.creado_por_tipo', '!=', 'profesor')
+                    ->orWhere('h.creado_por_id', '!=', $idProfesor);
+            })
+            ->whereExists(function ($sub) use ($idProfesor) {
+                $sub->select(DB::raw(1))
+                    ->from('com_mensajes_destinatarios as d')
+                    ->whereColumn('d.id_hilo', 'h.id')
+                    ->where('d.tipo_destinatario', 'profesor')
+                    ->where('d.id_profesor', $idProfesor)
+                    ->whereNull('d.leido_at');
+            })
+            ->count();
+
+        $destSinLeer = (int) DB::table('com_mensajes_destinatarios as d')
+            ->join('com_mensajes as m', 'm.id', '=', 'd.id_mensaje')
+            ->join('com_hilos as h', 'h.id', '=', 'm.id_hilo')
+            ->where('h.id_nivel', $idNivel)
+            ->where('h.id_terlec', $idTerlec)
+            ->where('m.tipo_remitente', 'profesor')
+            ->where('m.id_profesor', $idProfesor)
+            ->whereNull('d.leido_at')
+            ->where(function ($q) use ($idProfesor) {
+                $q->where('d.tipo_destinatario', '!=', 'profesor')
+                    ->orWhere('d.id_profesor', '!=', $idProfesor)
+                    ->orWhereNull('d.id_profesor');
+            })
+            ->count();
+
+        $hilosEnviadosPendientes = (int) DB::table('com_hilos as h')
+            ->where('h.id_nivel', $idNivel)
+            ->where('h.id_terlec', $idTerlec)
+            ->where('h.creado_por_tipo', 'profesor')
+            ->where('h.creado_por_id', $idProfesor)
+            ->whereExists(function ($sub) use ($idProfesor) {
+                $sub->select(DB::raw(1))
+                    ->from('com_mensajes as m')
+                    ->join('com_mensajes_destinatarios as d', 'd.id_mensaje', '=', 'm.id')
+                    ->whereColumn('m.id_hilo', 'h.id')
+                    ->where('m.tipo_remitente', 'profesor')
+                    ->where('m.id_profesor', $idProfesor)
+                    ->whereNull('d.leido_at')
+                    ->where(function ($q) use ($idProfesor) {
+                        $q->where('d.tipo_destinatario', '!=', 'profesor')
+                            ->orWhere('d.id_profesor', '!=', $idProfesor)
+                            ->orWhereNull('d.id_profesor');
+                    });
+            })
+            ->count();
+
+        $hilosTotal = (int) DB::table('com_hilos as h')
+            ->where('h.id_nivel', $idNivel)
+            ->where('h.id_terlec', $idTerlec)
+            ->where(function ($q) use ($idProfesor) {
+                $q->where(function ($q2) use ($idProfesor) {
+                    $q2->where('h.creado_por_tipo', 'profesor')
+                        ->where('h.creado_por_id', $idProfesor);
+                })->orWhereExists(function ($sub) use ($idProfesor) {
+                    $sub->select(DB::raw(1))
+                        ->from('com_mensajes_destinatarios as d2')
+                        ->whereColumn('d2.id_hilo', 'h.id')
+                        ->where('d2.tipo_destinatario', 'profesor')
+                        ->where('d2.id_profesor', $idProfesor);
+                });
+            })
+            ->count();
+
+        return [
+            'mensajes_no_leidos'                  => $mensajesNoLeidos,
+            'hilos_con_no_leidos'                 => $hilosConNoLeidos,
+            'destinatarios_sin_leer'              => $destSinLeer,
+            'hilos_enviados_pendientes_lectura'   => $hilosEnviadosPendientes,
+            'hilos_total'                         => $hilosTotal,
+        ];
+    }
 }

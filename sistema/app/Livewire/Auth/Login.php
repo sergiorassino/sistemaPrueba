@@ -169,9 +169,8 @@ class Login extends Component
     public function render()
     {
         $niveles = Nivel::orderBy('id')->get(['id', 'nivel']);
-        $terlecs = Terlec::ordenado()->get(['id', 'ano']);
 
-        return view('livewire.auth.login', compact('niveles', 'terlecs'))
+        return view('livewire.auth.login', compact('niveles'))
             ->layout('layouts.guest');
     }
 }

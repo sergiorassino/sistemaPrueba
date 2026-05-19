@@ -49,6 +49,7 @@ a todos los módulos. Ver [06-reglas-de-seguridad.md](06-reglas-de-seguridad.md)
 - Componentes Livewire organizados por dominio: `Livewire/Auth/`, `Livewire/Abm/`.
 - Vistas Blade en mirror: `livewire/auth/`, `livewire/abm/`.
 - Helper global `schoolCtx()` para acceder al contexto de sesión.
+- **Selects de año lectivo (`terlec`):** orden **decreciente** (año más reciente primero en el `<select>`). Usar `Terlec::paraSelector()` o `Terlec::ordenado()`; en formularios Livewire con muchos re-renders, el componente `livewire:components.terlec-selector` (ver `app/Models/Terlec.php`).
 - Mensajes de validación en español.
 - Comentarios en español cuando aclaren lógica de negocio.
 
@@ -248,3 +249,33 @@ Por eso la forma correcta de “apagar” la depuración no es ocultar el panel 
 Ejemplo aplicado en **Horarios**: `HorariosCargaIndex`, `HorariosImpresionIndex` + vistas `horarios-*-index.blade.php`, y métodos `HorariosProfesores::textoDepuracionSql*` (conservados; no se ejecutan si no hay llamada desde el componente).
 
 **ABM asignación docente (ppc):** `ProfesoresPorMateriaIndex` + `profesores-por-materia/index.blade.php`; método privado `textoConsultasEjecutadasAlElegirMateria` conservado (no se ejecuta sin la asignación en `selectMateria`).
+
+---
+
+## 11. Modales Livewire (centrado en viewport)
+
+Los modales de confirmación, edición o selección múltiple (destinatarios, listas largas, etc.) deben **verse centrados en el monitor** y **no moverse** cuando el usuario hace scroll en el formulario o listado de la página de fondo.
+
+### Patrón obligatorio
+
+1. **Un único elemento HTML raíz** en la vista Livewire; dentro de él, `@teleport('body')` … `@endteleport` junto al `se-page` (no dos raíces hermanas).
+2. Contenedor **`fixed inset-0 z-[90]`** con `flex items-center justify-center` y, si el contenido puede crecer, `overflow-y-auto` en ese contenedor.
+3. Overlay **`absolute inset-0`** con fondo semitransparente (`bg-neutral-900/55 backdrop-blur-sm`).
+4. Panel del modal con **`relative z-10 my-auto`**, `max-h-[calc(100dvh-1.75rem)]`, `flex flex-col overflow-hidden`, `rounded-2xl`, `ring-1 ring-black/5`.
+5. **Scroll solo dentro del panel** (`min-h-0 flex-1 overflow-y-auto` en listas o cuerpo de formulario); header y footer con `shrink-0`.
+
+### Referencia en el repo
+
+- **Comunicaciones — elegir destinatarios:** `resources/views/comunicaciones/livewire/comunicaciones/nuevo-comunicado.blade.php` (modales alumnos, cursos, docentes).
+- **Historial de exámenes:** `resources/views/livewire/examenes/historial-examenes.blade.php` (bloque `@teleport` al final del archivo).
+
+### Regla Cursor
+
+Detalle para el agente: `.cursor/rules/modales-livewire.mdc`.
+
+### Antipatrones
+
+- Modal al final del Blade de una página larga, sin teleport.
+- Panel sin `my-auto` (queda anclado al scroll del documento).
+- Hacer scroll de toda la página para alcanzar el modal en lugar de centrarlo en el viewport.
+- Poner `@teleport` dentro de un `@include` anidado en el root (Livewire no refresca el modal; los botones parecen no responder).

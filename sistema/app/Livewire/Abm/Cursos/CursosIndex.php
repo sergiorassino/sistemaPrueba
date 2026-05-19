@@ -387,10 +387,7 @@ class CursosIndex extends Component
             ->orderBy('curPlanCurso')
             ->get();
 
-        $terlecs = Terlec::query()
-            ->orderBy('orden')
-            ->orderBy('ano')
-            ->get(['id', 'ano']);
+        $terlecs = Terlec::paraSelector();
 
         $niveles = Nivel::query()
             ->orderBy('id')

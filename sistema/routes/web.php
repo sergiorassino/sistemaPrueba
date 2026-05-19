@@ -19,6 +19,15 @@ use App\Http\Controllers\ListadoCursoPdfController;
 use App\Http\Controllers\Push\SuscribirController;
 use App\Http\Controllers\Horarios\HorarioCursoPdfController;
 use App\Http\Controllers\Horarios\HorarioProfesorPdfController;
+use App\Http\Controllers\Examenes\MateriasAdeudadasEntradaController;
+use App\Http\Controllers\Examenes\MateriasAdeudadasPdfController;
+use App\Livewire\Examenes\BorrarInscripcionesExamenIndex;
+use App\Livewire\Examenes\MateriasAdeudadasCargaManualIndex;
+use App\Livewire\Examenes\MateriasAdeudadasInscripcionIndex;
+use App\Livewire\Examenes\MateriasAdeudadasNotasIndex;
+use App\Livewire\Examenes\HistorialExamenesIndex;
+use App\Livewire\Examenes\MateriasAdeudadasGestionIndex;
+use App\Livewire\Examenes\MateriasAdeudadasListadoIndex;
 use App\Http\Controllers\SancionComunicadoPdfController;
 use App\Livewire\Abm\Curplan\CurplanForm;
 use App\Livewire\Abm\Curplan\CurplanIndex;
@@ -70,6 +79,7 @@ use App\Livewire\Horarios\HorariosConfigIndex;
 use App\Livewire\Horarios\HorariosImpresionIndex;
 use App\Livewire\Seguimiento\Inasistencias\InasistenciasIndex;
 use App\Livewire\Seguimiento\Inasistencias\PartesDiariosIndex;
+use App\Http\Controllers\DashboardController;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
 use Illuminate\Support\Facades\Auth;
@@ -136,9 +146,7 @@ Route::middleware(['auth', 'school.context'])->group(function () {
         return redirect()->route('dashboard');
     });
 
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('/notificaciones/push', SuscribirController::class)->name('push.suscribir');
 
@@ -206,6 +214,41 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/listados/libro-matricula/pdf', LibroMatriculaPdfController::class)
         ->middleware('permiso:2')
         ->name('listados.libro-matricula.pdf');
+
+    Route::get('/examenes/materias-adeudadas/entrar', [MateriasAdeudadasEntradaController::class, 'listado'])
+        ->middleware('permiso:2')
+        ->name('examenes.materias-adeudadas.entrar');
+    Route::get('/examenes/materias-adeudadas', MateriasAdeudadasListadoIndex::class)
+        ->middleware('permiso:2')
+        ->name('examenes.materias-adeudadas');
+    Route::get('/examenes/materias-adeudadas/pdf', MateriasAdeudadasPdfController::class)
+        ->middleware('permiso:2')
+        ->name('examenes.materias-adeudadas.pdf');
+    Route::get('/examenes/materias-adeudadas/gestion/entrar', [MateriasAdeudadasEntradaController::class, 'gestion'])
+        ->middleware('permiso:2')
+        ->name('examenes.materias-adeudadas.gestion.entrar');
+    Route::get('/examenes/materias-adeudadas/gestion', MateriasAdeudadasGestionIndex::class)
+        ->middleware('permiso:2')
+        ->name('examenes.materias-adeudadas.gestion');
+    Route::get('/examenes/materias-adeudadas/gestion/carga/{idLegajos}', MateriasAdeudadasCargaManualIndex::class)
+        ->middleware('permiso:2')
+        ->whereNumber('idLegajos')
+        ->name('examenes.materias-adeudadas.gestion.carga');
+    Route::get('/examenes/materias-adeudadas/gestion/inscribir/{idLegajos}', MateriasAdeudadasInscripcionIndex::class)
+        ->middleware('permiso:2')
+        ->whereNumber('idLegajos')
+        ->name('examenes.materias-adeudadas.gestion.inscribir');
+    Route::get('/examenes/materias-adeudadas/gestion/notas/{idLegajos}', MateriasAdeudadasNotasIndex::class)
+        ->middleware('permiso:2')
+        ->whereNumber('idLegajos')
+        ->name('examenes.materias-adeudadas.gestion.notas');
+    Route::get('/examenes/materias-adeudadas/gestion/historial/{idLegajos}', HistorialExamenesIndex::class)
+        ->middleware('permiso:2')
+        ->whereNumber('idLegajos')
+        ->name('examenes.materias-adeudadas.gestion.historial');
+    Route::get('/examenes/borrar-inscripciones', BorrarInscripcionesExamenIndex::class)
+        ->middleware('permiso:2')
+        ->name('examenes.borrar-inscripciones');
 
     Route::get('/horarios/carga', HorariosCargaIndex::class)
         ->middleware('permiso:2')

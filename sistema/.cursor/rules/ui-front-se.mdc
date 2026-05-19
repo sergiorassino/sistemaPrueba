@@ -139,6 +139,7 @@ Reglas:
 - Modal blanco, `rounded-2xl`, sombra suave y max-width acorde al contenido.
 - Header con borde `accent-200`; acciones en footer claro `accent-50`.
 - Confirmaciones destructivas usan rojo solo en icono/boton, no en toda la pantalla.
+- **Posicionamiento (obligatorio en Livewire):** `@teleport('body')`, panel con `my-auto` y `max-h` en `dvh`; scroll interno al contenido. Ver `.cursor/rules/modales-livewire.mdc` y `docs/05-preferencias-y-convenciones.md` §11. Referencia: Comunicaciones → elegir destinatarios.
 
 ## Botones e iconos
 

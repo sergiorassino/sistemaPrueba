@@ -74,7 +74,7 @@ class ContextSwitcher extends Component
 
     public function render()
     {
-        $terlecs = Terlec::ordenado()->get(['id', 'ano']);
+        $terlecs = Terlec::paraSelector();
 
         return view('livewire.school.context-switcher', compact('terlecs'));
     }

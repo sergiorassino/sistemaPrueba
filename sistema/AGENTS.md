@@ -29,6 +29,10 @@ No calcular promedios salvo en **carga manual** (`CargaCalificacionesSecundario`
 
 Tablas con columnas de distinto ancho: **porcentaje inline en cada `th` y `td`** (`min-width:0; overflow:hidden`), tabla al **100%**, `table-layout: fixed`. No confiar solo en `colgroup`. Referencias y antipatrones: `docs/05-preferencias-y-convenciones.md` §8.
 
+## Selects de año lectivo (`terlec`)
+
+Todo desplegable de ciclo lectivo: **orden decreciente** (año más reciente primero). Usar `Terlec::paraSelector()` o `Terlec::ordenado()`; en Livewire con re-render frecuente, `livewire:components.terlec-selector`. Regla Cursor: `.cursor/rules/terlec-selector-orden.mdc`.
+
 ## Resto del baseline
 
 Seguridad, permisos, `schoolCtx`, Blade, etc.: `docs/06-reglas-de-seguridad.md` y las reglas en `.cursor/rules/` (por ejemplo `seguridad-php-mysql-laravel.mdc`, `preferencias-del-proyecto.mdc`).

@@ -54,6 +54,12 @@ class SchoolContext
         return $this->_profesor;
     }
 
+    public function refreshProfesor(): void
+    {
+        $this->_profesor = null;
+        $this->profesor();
+    }
+
     public function nivel(): ?Nivel
     {
         if ($this->_nivel === null && $this->idNivel) {

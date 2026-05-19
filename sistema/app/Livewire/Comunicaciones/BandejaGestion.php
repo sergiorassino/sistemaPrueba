@@ -12,7 +12,7 @@ class BandejaGestion extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(51), 403, 'Sin permiso para ver comunicaciones.');
+        abort_unless(tienePermiso(3), 403, 'Sin permiso para ver comunicaciones.');
 
         $filtroQuery = request()->query('filtro', '');
         if (in_array($filtroQuery, ['no_leidos'], true)) {

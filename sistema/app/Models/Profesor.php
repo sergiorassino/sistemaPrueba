@@ -14,7 +14,7 @@ class Profesor extends Authenticatable
      * Permite columnas extra por colegio (p. ej. famiCargo) sin listarlas todas en fillable.
      * Mass assignment solo bloquea identificador y campos de sistema.
      */
-    protected $guarded = ['id', 'pwrd', 'permisos', 'ult_idNivel', 'ult_idTerlec', 'nivel'];
+    protected $guarded = ['id', 'pwrd', 'permisos', 'permisos_ia', 'ult_idNivel', 'ult_idTerlec', 'nivel'];
     protected $hidden = ['pwrd'];
 
     protected $casts = [

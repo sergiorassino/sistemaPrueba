@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use App\Http\Controllers\Alumnos\CalificacionesController;
 use App\Http\Controllers\Alumnos\InformeInasistenciasController;
@@ -80,6 +80,7 @@ use App\Livewire\Horarios\HorariosImpresionIndex;
 use App\Livewire\Seguimiento\Inasistencias\InasistenciasIndex;
 use App\Livewire\Seguimiento\Inasistencias\PartesDiariosIndex;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ManualSistemaPdfController;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
 use Illuminate\Support\Facades\Auth;
@@ -148,16 +149,18 @@ Route::middleware(['auth', 'school.context'])->group(function () {
 
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
+    Route::get('/manual-sistema.pdf', ManualSistemaPdfController::class)->name('manual.sistema.pdf');
+
     Route::get('/notificaciones/push', SuscribirController::class)->name('push.suscribir');
 
-    Route::get('/comunicaciones', BandejaGestion::class)->middleware('permiso:51')->name('comunicaciones.index');
-    Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:51', 'permiso:56'])->name('comunicaciones.revision');
-    Route::get('/comunicaciones/nuevo', NuevoComunicado::class)->middleware('permiso:52')->name('comunicaciones.nuevo');
+    Route::get('/comunicaciones', BandejaGestion::class)->middleware('permiso:3')->name('comunicaciones.index');
+    Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:3', 'permiso:8'])->name('comunicaciones.revision');
+    Route::get('/comunicaciones/nuevo', NuevoComunicado::class)->middleware('permiso:4')->name('comunicaciones.nuevo');
     Route::get('/comunicaciones/informe-envio/{id}', InformeEnvioComunicado::class)
-        ->middleware(['permiso:51', 'permiso:52'])
+        ->middleware(['permiso:3', 'permiso:4'])
         ->whereNumber('id')
         ->name('comunicaciones.informe-envio');
-    Route::get('/comunicaciones/{id}', HiloShow::class)->middleware('permiso:51')->whereNumber('id')->name('comunicaciones.hilo');
+    Route::get('/comunicaciones/{id}', HiloShow::class)->middleware('permiso:3')->whereNumber('id')->name('comunicaciones.hilo');
 
     // Administración: permisos de usuarios (orden 0)
     Route::get('/administracion/permisos', PermisosUsuariosIndex::class)
@@ -195,7 +198,7 @@ Route::middleware(['auth', 'school.context'])->group(function () {
         ->middleware('permiso:1')
         ->name('param.solapas-legajo-profesor');
     Route::get('/parametrizacion/com-canales', ComCanalesIndex::class)
-        ->middleware('permiso:53')
+        ->middleware('permiso:5')
         ->name('param.com-canales');
     Route::get('/abm/legajos', LegajosIndex::class)->middleware('permiso:2')->name('abm.legajos');
     Route::get('/abm/legajos/nuevo', LegajoForm::class)->middleware('permiso:2')->name('abm.legajos.create');

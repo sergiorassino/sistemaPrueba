@@ -9,9 +9,9 @@ class ProfesorAdministradorSeeder extends Seeder
 {
     public function run(): void
     {
-        $maxOrden = (int) DB::table('permisosusuarios')->max('orden');
-        $permisosLength = max(1, min(100, $maxOrden + 1));
-        $fullPermisos = str_repeat('1', $permisosLength);
+        $maxOrden = (int) DB::table('permisos_ia')->max('orden');
+        $permisosLength = max(1, min(50, $maxOrden + 1));
+        $fullPermisosIa = str_repeat('1', $permisosLength);
 
         DB::table('profesores')->updateOrInsert(
             ['id' => 1],
@@ -24,7 +24,7 @@ class ProfesorAdministradorSeeder extends Seeder
                 'sexo' => 0,
                 'nivel' => 2,
                 'pwrd' => 'pasepase',
-                'permisos' => $fullPermisos,
+                'permisos_ia' => $fullPermisosIa,
             ]
         );
     }

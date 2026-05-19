@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es" class="h-full bg-[#F4F8F9]">
 <head>
     <meta charset="UTF-8">
@@ -128,15 +128,15 @@
         config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'param.') || ($route ?? '') === 'push.suscribir') ? 'true' : 'false' }},
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
-        students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.') || (str_starts_with($route ?? '', 'comunicaciones.') && tienePermiso(51) && tienePermiso(2))) ? 'true' : 'false' }},
-        cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales') && tienePermiso(51) && tienePermiso(2)) ? 'true' : 'false' }},
+        students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.') || (str_starts_with($route ?? '', 'comunicaciones.') && tienePermiso(3) && tienePermiso(2))) ? 'true' : 'false' }},
+        cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales') && tienePermiso(3) && tienePermiso(2)) ? 'true' : 'false' }},
         calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.') || str_starts_with($route ?? '', 'boletinesSecundario.')) ? 'true' : 'false' }},
         disciplinario: {{ str_starts_with($route ?? '', 'seguimiento.disciplinario') ? 'true' : 'false' }},
         inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') || str_starts_with($route ?? '', 'seguimiento.partes-diarios') ? 'true' : 'false' }},
         docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.legajos-profesor')) ? 'true' : 'false' }},
         examenes: {{ str_starts_with($route ?? '', 'examenes.') ? 'true' : 'false' }},
         horarios: {{ str_starts_with($route ?? '', 'horarios.') ? 'true' : 'false' }},
-        comunicaciones: {{ (tienePermiso(51) && !tienePermiso(2) && (str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales')) ? 'true' : 'false' }},
+        comunicaciones: {{ (tienePermiso(3) && !tienePermiso(2) && (str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales')) ? 'true' : 'false' }},
     },
     isDesktopPeekLayout() {
         return window.matchMedia && window.matchMedia('(min-width: 768px)').matches;
@@ -340,19 +340,19 @@
             </div>
         @endif
 
-        {{-- Cuaderno de Comunicados (para usuarios con Estudiantes + Comunicaciones) --}}
-        @if(tienePermiso(51) && tienePermiso(2))
+        {{-- Comunicación institucional (para usuarios con Estudiantes + Comunicaciones) --}}
+        @if(tienePermiso(3) && tienePermiso(2))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
                     :class="(groups.cuadernoComunicados && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('cuadernoComunicados')"
-                    title="Cuaderno de Comunicados v1.0">
+                    title="Comunicación institucional v1.0">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">CUADERNO DE COMUNICADOS</span>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">COMUNICACIÓN INSTITUCIONAL</span>
                 <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                      :class="groups.cuadernoComunicados ? 'rotate-180' : ''"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -377,7 +377,7 @@
                     <span class="truncate">Bandeja de comunicados</span>
                 </a>
 
-                @if(tienePermiso(52))
+                @if(tienePermiso(4))
                 <a href="{{ route('comunicaciones.nuevo') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -391,7 +391,7 @@
                 </a>
                 @endif
 
-                @if(tienePermiso(56))
+                @if(tienePermiso(8))
                 <a href="{{ route('comunicaciones.revision') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -406,7 +406,7 @@
                 </a>
                 @endif
 
-                @if(tienePermiso(53))
+                @if(tienePermiso(5))
                 <a href="{{ route('param.com-canales') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -552,7 +552,7 @@
         @endif
 
         {{-- Comunicaciones (solo si no está ya en el menú Estudiantes) --}}
-        @if(tienePermiso(51) && !tienePermiso(2))
+        @if(tienePermiso(3) && !tienePermiso(2))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
@@ -587,7 +587,7 @@
                     </svg>
                     <span class="truncate">Bandeja</span>
                 </a>
-                @if(tienePermiso(52))
+                @if(tienePermiso(4))
                 <a href="{{ route('comunicaciones.nuevo') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -600,7 +600,7 @@
                     <span class="truncate">Nuevo comunicado</span>
                 </a>
                 @endif
-                @if(tienePermiso(56))
+                @if(tienePermiso(8))
                 <a href="{{ route('comunicaciones.revision') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -614,7 +614,7 @@
                     <span class="truncate">Control Cuaderno de Comunicados</span>
                 </a>
                 @endif
-                @if(tienePermiso(53))
+                @if(tienePermiso(5))
                 <a href="{{ route('param.com-canales') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -1057,7 +1057,7 @@
                 </a>
                 @endif
 
-                @if(tienePermiso(53))
+                @if(tienePermiso(5))
                 <a href="{{ route('param.com-canales') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -1173,6 +1173,21 @@
             </div>
 
         @endif
+
+        {{-- Manual del sistema (todos los usuarios de gestión) --}}
+        <div class="mt-4 pt-3 border-t se-sidebar-sep">
+            <a href="{{ route('manual.sistema.pdf') }}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors"
+               title="Descargar manual del sistema (PDF)">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+                <span class="truncate" x-show="!sidebarCollapsed" x-cloak>Manual del sistema</span>
+            </a>
+        </div>
 
     </nav>
 

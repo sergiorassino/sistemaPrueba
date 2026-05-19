@@ -28,7 +28,7 @@ class HiloShow extends Component
 
     public function mount(int $id): void
     {
-        abort_unless(tienePermiso(51), 403, 'Sin permiso para ver comunicaciones.');
+        abort_unless(tienePermiso(3), 403, 'Sin permiso para ver comunicaciones.');
 
         $ctx = schoolCtx();
 
@@ -39,7 +39,7 @@ class HiloShow extends Component
 
         abort_if($hilo === null, 404);
 
-        if (! tienePermiso(56)) {
+        if (! tienePermiso(8)) {
             $puede = ComunicacionesRepository::profesorPuedeVerHilo(
                 (int) $hilo->id,
                 (int) $ctx->idProfesor,
@@ -60,7 +60,7 @@ class HiloShow extends Component
 
     public function marcarMensajeNoLeido(int $idMensaje): void
     {
-        abort_unless(tienePermiso(51), 403, 'Sin permiso para ver comunicaciones.');
+        abort_unless(tienePermiso(3), 403, 'Sin permiso para ver comunicaciones.');
 
         $key = 'com:unread:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 40)) {
@@ -125,13 +125,13 @@ class HiloShow extends Component
 
         $esPropio = $msg->tipo_remitente === 'profesor' && (int) $msg->id_profesor === $idProf;
         if ($esPropio) {
-            if (! tienePermiso(54)) {
+            if (! tienePermiso(6)) {
                 return ['puede' => false, 'motivo' => 'Sin permiso para borrar mensajes propios.'];
             }
             return ['puede' => true, 'motivo' => ''];
         }
 
-        if (! tienePermiso(55)) {
+        if (! tienePermiso(7)) {
             return ['puede' => false, 'motivo' => 'Sin permiso para borrar mensajes ajenos.'];
         }
 
@@ -145,7 +145,7 @@ class HiloShow extends Component
 
     public function abrirModalBorrar(int $idMensaje): void
     {
-        abort_unless(tienePermiso(51), 403);
+        abort_unless(tienePermiso(3), 403);
 
         $ctx = schoolCtx();
 
@@ -204,7 +204,7 @@ class HiloShow extends Component
 
     public function borrarMensaje(int $idMensaje): void
     {
-        abort_unless(tienePermiso(51), 403);
+        abort_unless(tienePermiso(3), 403);
 
         $key = 'com:del:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 10)) {
@@ -245,9 +245,9 @@ class HiloShow extends Component
 
         $esPropio = $msg->tipo_remitente === 'profesor' && (int) $msg->id_profesor === $idProf;
         if ($esPropio) {
-            abort_unless(tienePermiso(54), 403, 'Sin permiso para borrar mensajes propios.');
+            abort_unless(tienePermiso(6), 403, 'Sin permiso para borrar mensajes propios.');
         } else {
-            abort_unless(tienePermiso(55), 403, 'Sin permiso para borrar mensajes ajenos.');
+            abort_unless(tienePermiso(7), 403, 'Sin permiso para borrar mensajes ajenos.');
         }
 
         DB::transaction(function () use ($msg, $hilo, $borrarHilo) {
@@ -298,7 +298,7 @@ class HiloShow extends Component
 
     public function responder(): void
     {
-        abort_unless(tienePermiso(51), 403);
+        abort_unless(tienePermiso(3), 403);
 
         $key = 'com:resp:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, config('comunicaciones.rate_limit_max', 20))) {

@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Administracion\Permisos;
 
-use App\Models\PermisoUsuario;
+use App\Models\PermisoIa;
 use App\Models\Profesor;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
@@ -45,12 +45,12 @@ class PermisosUsuariosIndex extends Component
         $profesor = Profesor::query()
             ->where('nivel', (int) (schoolCtx()->idNivel ?? 0))
             ->whereKey($id)
-            ->firstOrFail(['id', 'dni', 'nombre', 'apellido', 'permisos', 'nivel']);
+            ->firstOrFail(['id', 'dni', 'nombre', 'apellido', 'permisos_ia', 'nivel']);
 
         $this->profesorId = (int) $profesor->id;
 
-        $maxOrden = (int) (PermisoUsuario::query()->max('orden') ?? 0);
-        $cadena = (string) ($profesor->permisos ?? '');
+        $maxOrden = (int) (PermisoIa::query()->max('orden') ?? 0);
+        $cadena = (string) ($profesor->permisos_ia ?? '');
         if ($cadena === '') {
             $cadena = str_repeat('0', $maxOrden + 1);
         } elseif (strlen($cadena) <= $maxOrden) {
@@ -88,23 +88,26 @@ class PermisosUsuariosIndex extends Component
         $profesor = Profesor::query()
             ->where('nivel', (int) (schoolCtx()->idNivel ?? 0))
             ->whereKey($this->profesorId)
-            ->firstOrFail(['id', 'permisos']);
+            ->firstOrFail(['id', 'permisos_ia']);
 
-        $maxOrden = (int) (PermisoUsuario::query()->max('orden') ?? 0);
+        $maxOrden = (int) (PermisoIa::query()->max('orden') ?? 0);
         $chars = [];
         foreach (range(0, $maxOrden) as $orden) {
             $chars[] = ($this->permisos[$orden] ?? false) ? '1' : '0';
         }
 
-        $profesor->update([
-            'permisos' => implode('', $chars),
-        ]);
+        $cadena = implode('', $chars);
+        $profesor->forceFill(['permisos_ia' => $cadena])->save();
+
+        if ((int) $profesor->id === (int) (schoolCtx()->idProfesor ?? 0)) {
+            schoolCtx()->refreshProfesor();
+        }
 
         session()->flash('success', 'Permisos actualizados correctamente.');
     }
 
     /**
-     * @return array{0:Collection<int,Profesor>,1:?Profesor,2:Collection<int,PermisoUsuario>,3:array<string,Collection<int,PermisoUsuario>>}
+     * @return array{0:Collection<int,Profesor>,1:?Profesor,2:Collection<int,PermisoIa>,3:array<string,Collection<int,PermisoIa>>}
      */
     private function data(): array
     {
@@ -133,11 +136,11 @@ class PermisosUsuariosIndex extends Component
                 ->first(['id', 'dni', 'nombre', 'apellido']);
         }
 
-        $catalogo = PermisoUsuario::query()
+        $catalogo = PermisoIa::query()
             ->orderBy('orden')
             ->get(['id', 'orden', 'tema', 'descripcion']);
 
-        $porTema = $catalogo->groupBy(function (PermisoUsuario $p) {
+        $porTema = $catalogo->groupBy(function (PermisoIa $p) {
             $tema = trim((string) ($p->tema ?? ''));
             return $tema !== '' ? $tema : 'OTROS';
         });

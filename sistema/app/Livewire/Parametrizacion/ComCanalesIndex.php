@@ -32,7 +32,7 @@ class ComCanalesIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(53), 403, 'Sin permiso para administrar canales de comunicación.');
+        abort_unless(tienePermiso(5), 403, 'Sin permiso para administrar canales de comunicación.');
     }
 
     public function abrirFormNuevo(): void
@@ -54,7 +54,7 @@ class ComCanalesIndex extends Component
 
     public function guardarNuevo(): void
     {
-        abort_unless(tienePermiso(53), 403);
+        abort_unless(tienePermiso(5), 403);
 
         $roles = ComCanal::rolesClave();
 
@@ -131,7 +131,7 @@ class ComCanalesIndex extends Component
 
     public function guardar(): void
     {
-        abort_unless(tienePermiso(53), 403);
+        abort_unless(tienePermiso(5), 403);
 
         $this->validate([
             'editPuedeIniciar'   => 'boolean',
@@ -167,7 +167,7 @@ class ComCanalesIndex extends Component
 
     public function confirmarEliminar(int $id): void
     {
-        abort_unless(tienePermiso(53), 403);
+        abort_unless(tienePermiso(5), 403);
 
         $canal = ComCanal::findOrFail($id);
         $etiquetas = ComCanal::etiquetasRoles();
@@ -193,7 +193,7 @@ class ComCanalesIndex extends Component
 
     public function eliminarCanal(): void
     {
-        abort_unless(tienePermiso(53), 403);
+        abort_unless(tienePermiso(5), 403);
 
         if ($this->eliminarId === null) {
             $this->cerrarConfirmEliminar();

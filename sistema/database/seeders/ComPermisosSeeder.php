@@ -8,36 +8,53 @@ use Illuminate\Support\Facades\DB;
 class ComPermisosSeeder extends Seeder
 {
     /**
-     * Inserta los permisos del módulo de comunicaciones en permisosusuarios.
+     * Catálogo de permisos del módulo de comunicaciones en permisos_ia (órdenes 3–8).
      *
-     * Ordenes 51, 52, 53 (el máximo existente es 50 según el dump legacy).
-     * El middleware `permiso:N` verifica posición N en profesores.permisos.
+     * El middleware `permiso:N` y tienePermiso(N) usan profesores.permisos_ia.
      */
     public function run(): void
     {
         $permisos = [
             [
-                'id'          => 52,
-                'orden'       => 51,
+                'id'          => 4,
+                'orden'       => 3,
                 'tema'        => 'COMUNICACIONES',
-                'descripcion' => 'COMUNICACIONES: Permite ver la bandeja de comunicados y los hilos de conversación.',
+                'descripcion' => 'Ver la bandeja de comunicados y los hilos de conversación.',
             ],
             [
-                'id'          => 53,
-                'orden'       => 52,
+                'id'          => 5,
+                'orden'       => 4,
                 'tema'        => 'COMUNICACIONES',
-                'descripcion' => 'COMUNICACIONES: Permite iniciar nuevos comunicados hacia familias.',
+                'descripcion' => 'Iniciar nuevos comunicados hacia familias.',
             ],
             [
-                'id'          => 54,
-                'orden'       => 53,
+                'id'          => 6,
+                'orden'       => 5,
                 'tema'        => 'COMUNICACIONES - CONFIG',
-                'descripcion' => 'COMUNICACIONES: Permite administrar la configuración de canales (quién puede comunicarse con quién y por qué medios).',
+                'descripcion' => 'Administrar la configuración de canales (quién puede comunicarse con quién y por qué medios).',
+            ],
+            [
+                'id'          => 7,
+                'orden'       => 6,
+                'tema'        => 'COMUNICACIONES',
+                'descripcion' => 'Borrar mensajes propios en un hilo.',
+            ],
+            [
+                'id'          => 8,
+                'orden'       => 7,
+                'tema'        => 'COMUNICACIONES',
+                'descripcion' => 'Borrar mensajes de otros participantes en un hilo.',
+            ],
+            [
+                'id'          => 9,
+                'orden'       => 8,
+                'tema'        => 'COMUNICACIONES',
+                'descripcion' => 'Acceder a la bandeja de revisión de comunicados.',
             ],
         ];
 
         foreach ($permisos as $permiso) {
-            DB::table('permisosusuarios')->updateOrInsert(
+            DB::table('permisos_ia')->updateOrInsert(
                 ['id' => $permiso['id']],
                 $permiso
             );

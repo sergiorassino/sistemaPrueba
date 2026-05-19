@@ -69,7 +69,7 @@ class NuevoComunicado extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(51) && tienePermiso(52), 403, 'Sin permiso para iniciar comunicados.');
+        abort_unless(tienePermiso(3) && tienePermiso(4), 403, 'Sin permiso para iniciar comunicados.');
     }
 
     public function updatedModalAlumnosFiltro(): void
@@ -309,7 +309,7 @@ class NuevoComunicado extends Component
 
     public function enviar(): void
     {
-        abort_unless(tienePermiso(51) && tienePermiso(52), 403);
+        abort_unless(tienePermiso(3) && tienePermiso(4), 403);
 
         $key = 'com:nuevo:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, config('comunicaciones.rate_limit_max', 20))) {

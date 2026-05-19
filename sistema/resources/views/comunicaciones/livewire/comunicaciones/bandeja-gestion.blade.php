@@ -1,4 +1,4 @@
-<div class="se-page">
+﻿<div class="se-page">
     <section class="se-hero">
         <div class="se-hero-inner">
             <div class="min-w-0 space-y-3">
@@ -16,7 +16,7 @@
                     <span class="block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50">En esta vista</span>
                     <span class="text-xl font-bold tabular-nums">{{ $hilos->count() }}</span>
                 </span>
-                @if (tienePermiso(52))
+                @if (tienePermiso(4))
                     <a href="{{ route('comunicaciones.nuevo') }}"
                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 focus:outline-none focus:ring-2 focus:ring-white/60">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

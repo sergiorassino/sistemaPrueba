@@ -23,7 +23,15 @@ if (! function_exists('studentCtx')) {
 if (! function_exists('tienePermiso')) {
     function tienePermiso(int $orden): bool
     {
-        $permisos = schoolCtx()->profesor()?->permisos ?? '';
+        $profesor = schoolCtx()->profesor();
+        if (! $profesor) {
+            return false;
+        }
+
+        $permisos = (string) ($profesor->permisos_ia ?? '');
+        if ($permisos === '') {
+            $permisos = (string) ($profesor->permisos ?? '');
+        }
 
         return isset($permisos[$orden]) && $permisos[$orden] === '1';
     }

@@ -14,7 +14,7 @@ class DashboardController extends Controller
         $nombre = trim((Auth::user()->nombre ?? '').' '.(Auth::user()->apellido ?? ''));
 
         $bandeja = null;
-        if (tienePermiso(51)) {
+        if (tienePermiso(3)) {
             $bandeja = ComunicacionesRepository::resumenBandejaProfesor(
                 (int) $ctx->idProfesor,
                 (int) $ctx->idNivel,

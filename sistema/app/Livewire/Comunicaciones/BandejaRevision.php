@@ -19,7 +19,7 @@ class BandejaRevision extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(51) && tienePermiso(56), 403, 'Sin permiso para revisar comunicaciones.');
+        abort_unless(tienePermiso(3) && tienePermiso(8), 403, 'Sin permiso para revisar comunicaciones.');
 
         $ctx = schoolCtx();
         $this->idProfesorObjetivo = (int) $ctx->idProfesor;

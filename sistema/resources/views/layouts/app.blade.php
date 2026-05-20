@@ -123,23 +123,64 @@
     sidebarOpen: false,
     peekMenuMode: @json($isSidebarPeekMode),
     sidebarCollapsed: false,
+    _sidebarNavScrollTop: 0,
     _sidebarPeekTimer: null,
     groups: {
         config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'param.') || ($route ?? '') === 'push.suscribir') ? 'true' : 'false' }},
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
-        students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.') || (str_starts_with($route ?? '', 'comunicaciones.') && tienePermiso(3) && tienePermiso(2))) ? 'true' : 'false' }},
-        cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales') && tienePermiso(3) && tienePermiso(2)) ? 'true' : 'false' }},
+        students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.')) ? 'true' : 'false' }},
+        cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales') && tienePermiso(3)) ? 'true' : 'false' }},
         calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.') || str_starts_with($route ?? '', 'boletinesSecundario.')) ? 'true' : 'false' }},
         disciplinario: {{ str_starts_with($route ?? '', 'seguimiento.disciplinario') ? 'true' : 'false' }},
         inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') || str_starts_with($route ?? '', 'seguimiento.partes-diarios') ? 'true' : 'false' }},
         docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.legajos-profesor')) ? 'true' : 'false' }},
         examenes: {{ str_starts_with($route ?? '', 'examenes.') ? 'true' : 'false' }},
         horarios: {{ str_starts_with($route ?? '', 'horarios.') ? 'true' : 'false' }},
-        comunicaciones: {{ (tienePermiso(3) && !tienePermiso(2) && (str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales')) ? 'true' : 'false' }},
+        comunicaciones: false,
     },
     isDesktopPeekLayout() {
         return window.matchMedia && window.matchMedia('(min-width: 768px)').matches;
+    },
+    saveSidebarNavScroll() {
+        const nav = this.$refs.seSidebarNav;
+        if (!nav) return;
+        this._sidebarNavScrollTop = nav.scrollTop;
+        try {
+            sessionStorage.setItem('seSidebarNavScrollTop', String(this._sidebarNavScrollTop));
+        } catch (e) {}
+    },
+    loadSidebarNavScroll() {
+        try {
+            const raw = sessionStorage.getItem('seSidebarNavScrollTop');
+            if (raw === null || raw === '') return;
+            const n = parseInt(raw, 10);
+            if (!Number.isNaN(n) && n >= 0) this._sidebarNavScrollTop = n;
+        } catch (e) {}
+    },
+    restoreSidebarNavScroll() {
+        const nav = this.$refs.seSidebarNav;
+        if (!nav) return;
+        const top = this._sidebarNavScrollTop;
+        let tries = 0;
+        const apply = () => {
+            nav.scrollTop = top;
+            if (Math.abs(nav.scrollTop - top) > 2 && tries++ < 20) {
+                requestAnimationFrame(apply);
+            }
+        };
+        this.$nextTick(() => requestAnimationFrame(apply));
+    },
+    onSidebarNavScroll() {
+        if (!this.sidebarCollapsed) this.saveSidebarNavScroll();
+    },
+    onSidebarNavLinkActivate(ev) {
+        const link = ev.target.closest('a[href]');
+        if (!link) return;
+        const href = (link.getAttribute('href') || '').trim();
+        if (!href || href === '#') return;
+        this.saveSidebarNavScroll();
+        if (ev.type === 'click') this.sidebarOpen = false;
     },
     peekSidebarExpandNow() {
         if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
@@ -154,6 +195,7 @@
             if (!el) return;
             if (el.matches(':hover')) return;
             if (el.contains(document.activeElement)) return;
+            this.saveSidebarNavScroll();
             this.sidebarCollapsed = true;
         }, 200);
     },
@@ -183,8 +225,14 @@
                 if (parsed && typeof parsed === 'object') this.groups = { ...this.groups, ...parsed };
             } catch (e) {}
         }
+        this.loadSidebarNavScroll();
         // Desktop dashboard: sidebar ancho siempre; resto de rutas: rail hasta hover/focus.
         this.applyPeekSidebarBootState(false);
+        this.$watch('sidebarCollapsed', (collapsed) => {
+            if (!collapsed && this.peekMenuMode && this.isDesktopPeekLayout()) {
+                this.restoreSidebarNavScroll();
+            }
+        });
         if (!this._sePeekResizeBound) {
             this._sePeekResizeBound = true;
             window.addEventListener('resize', () => this.applyPeekSidebarBootState(true));
@@ -211,10 +259,10 @@
 {{-- Sidebar --}}
 <aside x-ref="seSidebar"
        @mouseenter="peekSidebarExpandNow()"
-       @mouseleave="peekSidebarMaybeCollapseLater()"
+       @mouseleave="saveSidebarNavScroll(); peekSidebarMaybeCollapseLater()"
        @focusin="peekSidebarExpandNow()"
        @focusout="peekSidebarFocusOut($event)"
-       class="se-sidebar fixed inset-y-0 left-0 z-[1000] flex flex-col transform transition-transform duration-200 ease-in-out
+       class="se-sidebar fixed inset-y-0 left-0 z-[1000] flex flex-col overflow-hidden transform transition-transform duration-200 ease-in-out
               md:translate-x-0 md:transition-[width] md:duration-200 md:ease-in-out md:shadow-lg"
        :class="[
            sidebarOpen ? 'translate-x-0' : '-translate-x-full',
@@ -261,12 +309,14 @@
     </div>
 
     {{-- Navigation --}}
-    <nav class="flex-1 relative z-[1] px-2.5 py-3 overflow-y-auto space-y-0.5"
+    <nav x-ref="seSidebarNav"
+         class="flex-1 min-h-0 relative z-[1] px-2.5 py-3 overflow-y-auto space-y-0.5"
          :class="sidebarCollapsed ? '!px-1 !py-2' : ''"
-         @click.capture="$event.target.closest('a[href]') && (sidebarOpen = false)">
+         @scroll.passive="onSidebarNavScroll()"
+         @mousedown.capture="onSidebarNavLinkActivate($event)"
+         @click.capture="onSidebarNavLinkActivate($event)">
 
         {{-- Estudiantes --}}
-        @if(tienePermiso(2))
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
                     :class="(groups.students && !sidebarCollapsed) ? 'is-open' : ''"
@@ -338,10 +388,9 @@
                 </a>
 
             </div>
-        @endif
 
-        {{-- Comunicación institucional (para usuarios con Estudiantes + Comunicaciones) --}}
-        @if(tienePermiso(3) && tienePermiso(2))
+        {{-- Comunicación institucional --}}
+        @if(tienePermiso(3))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
@@ -425,7 +474,6 @@
         @endif
 
         {{-- Calificaciones Secundario --}}
-        @if(tienePermiso(2))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
@@ -448,6 +496,7 @@
                  x-show="groups.calificacionesSec && !sidebarCollapsed"
                  x-collapse
                  x-cloak>
+                @if (tienePermiso(9))
                 <a href="{{ route('calificacionesSecundario.sincroGe') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -472,6 +521,7 @@
                     </svg>
                     <span class="truncate">Carga de calificaciones</span>
                 </a>
+                @endif
                 <a href="{{ route('calificacionesSecundario.consulta') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -523,6 +573,7 @@
                     </svg>
                     <span class="truncate">Planilla resumen</span>
                 </a>
+                @if (tienePermiso(10))
                 <a href="{{ route('calificacionesSecundario.coloquios') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -535,6 +586,7 @@
                     </svg>
                     <span class="truncate">Carga de coloquios</span>
                 </a>
+                @endif
                 <a href="{{ route('calificacionesSecundario.actaVolanteColoquios') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -549,91 +601,8 @@
                     <span class="truncate">Actas volantes coloquio</span>
                 </a>
             </div>
-        @endif
-
-        {{-- Comunicaciones (solo si no está ya en el menú Estudiantes) --}}
-        @if(tienePermiso(3) && !tienePermiso(2))
-            <div class="mt-4"></div>
-            <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
-                    :class="(groups.comunicaciones && !sidebarCollapsed) ? 'is-open' : ''"
-                    @click="toggleGroup('comunicaciones')"
-                    title="Comunicaciones v1.0">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3-3-3z"/>
-                </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">COMUNICACIONES</span>
-                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
-                     :class="groups.comunicaciones ? 'rotate-180' : ''"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-
-            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
-                 x-show="groups.comunicaciones && !sidebarCollapsed"
-                 x-collapse
-                 x-cloak>
-                <a href="{{ route('comunicaciones.index') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'comunicaciones.') && ! in_array(($route ?? ''), ['comunicaciones.nuevo', 'comunicaciones.revision'], true),
-                   ])
-                   title="Bandeja de comunicados v1.0">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                    </svg>
-                    <span class="truncate">Bandeja</span>
-                </a>
-                @if(tienePermiso(4))
-                <a href="{{ route('comunicaciones.nuevo') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.nuevo',
-                   ])
-                   title="Nuevo comunicado">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    <span class="truncate">Nuevo comunicado</span>
-                </a>
-                @endif
-                @if(tienePermiso(8))
-                <a href="{{ route('comunicaciones.revision') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.revision',
-                   ])
-                   title="Control Cuaderno de Comunicados v1.0">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                    <span class="truncate">Control Cuaderno de Comunicados</span>
-                </a>
-                @endif
-                @if(tienePermiso(5))
-                <a href="{{ route('param.com-canales') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'param.com-canales',
-                   ])
-                   title="Configuración de canales v1.0">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <span class="truncate">Configuración de Canales</span>
-                </a>
-                @endif
-            </div>
-        @endif
 
         {{-- Seguimiento disciplinario --}}
-        @if(tienePermiso(2))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
@@ -669,10 +638,8 @@
                         <span class="truncate">Seguimiento Disciplinario</span>
                     </a>
             </div>
-        @endif
 
         {{-- Asistencia estudiantes --}}
-        @if(tienePermiso(2))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
@@ -720,7 +687,6 @@
                     <span class="truncate">Parte diario del preceptor</span>
                 </a>
             </div>
-        @endif
 
         {{-- Docentes --}}
         @if(tienePermiso(1))
@@ -778,8 +744,8 @@
             </div>
         @endif
 
+        @if (tienePermiso(12))
         {{-- Exámenes --}}
-        @if(tienePermiso(2))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
@@ -842,7 +808,6 @@
         @endif
 
         {{-- Horarios --}}
-        @if(tienePermiso(2) || tienePermiso(1))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
@@ -865,7 +830,7 @@
                  x-show="groups.horarios && !sidebarCollapsed"
                  x-collapse
                  x-cloak>
-                @if(tienePermiso(1))
+                @if (tienePermiso(13))
                     <a href="{{ route('horarios.config') }}"
                        @class([
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -881,7 +846,7 @@
                     </a>
                 @endif
 
-                @if(tienePermiso(2))
+                @if (tienePermiso(13))
                     <a href="{{ route('horarios.carga') }}"
                        @class([
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
@@ -894,6 +859,7 @@
                         </svg>
                         <span class="truncate">Carga de horarios</span>
                     </a>
+                @endif
 
                     <a href="{{ route('horarios.impresion') }}"
                        @class([
@@ -907,12 +873,10 @@
                         </svg>
                         <span class="truncate">Impresión de horarios</span>
                     </a>
-                @endif
             </div>
-        @endif
 
         {{-- Configuración --}}
-        @if(tienePermiso(1))
+        @if (tienePermiso(14))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
@@ -1180,7 +1144,7 @@
                target="_blank"
                rel="noopener noreferrer"
                class="se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors"
-               title="Descargar manual del sistema (PDF)">
+               title="Abrir manual del sistema (PDF) en una pestaña nueva">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>

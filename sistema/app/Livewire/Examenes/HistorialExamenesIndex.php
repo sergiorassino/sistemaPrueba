@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Examenes;
 
+use App\Livewire\Examenes\Concerns\RequiresPermisoExamenes;
 use App\Support\Examenes\HistorialExamenes;
 use App\Support\Examenes\MateriasAdeudadasAlumnosListado;
 use App\Support\Examenes\MateriasAdeudadasCargaManual;
@@ -12,6 +13,8 @@ use Livewire\Component;
 
 class HistorialExamenesIndex extends Component
 {
+    use RequiresPermisoExamenes;
+
     public int $idLegajos;
 
     public bool $modalEditarAbierto = false;
@@ -34,8 +37,6 @@ class HistorialExamenesIndex extends Component
 
     public function mount(int $idLegajos): void
     {
-        abort_unless(tienePermiso(2), 403, 'Sin permiso para consultar el historial de exámenes.');
-
         $ctx = schoolCtx();
         if (! $ctx->isValid() || ! MateriasAdeudadasAlumnosListado::esNivelSecundario($ctx)) {
             abort(403, 'Este módulo requiere contexto de Secundario.');
@@ -111,8 +112,6 @@ class HistorialExamenesIndex extends Component
 
     public function guardarEdicion(): void
     {
-        abort_unless(tienePermiso(2), 403);
-
         if ($this->idNotaSeleccionada === null) {
             return;
         }
@@ -149,8 +148,6 @@ class HistorialExamenesIndex extends Component
 
     public function confirmarBorrado(): void
     {
-        abort_unless(tienePermiso(2), 403);
-
         if ($this->idNotaSeleccionada === null) {
             return;
         }

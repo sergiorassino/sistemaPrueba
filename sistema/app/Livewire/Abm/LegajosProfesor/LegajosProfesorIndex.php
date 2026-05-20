@@ -46,6 +46,8 @@ class LegajosProfesorIndex extends Component
 
     public function confirmDelete(int $id): void
     {
+        abort_unless(tienePermiso(11), 403, 'Sin permiso para eliminar legajos de docentes.');
+
         $p = $this->scopedProfesorOrFail($id);
         $deps = $this->dependenciasParaBorrar($id);
 
@@ -67,6 +69,8 @@ class LegajosProfesorIndex extends Component
 
     public function delete(): void
     {
+        abort_unless(tienePermiso(11), 403, 'Sin permiso para eliminar legajos de docentes.');
+
         $key = 'legajos-profesor:delete:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 10)) {
             session()->flash('success', 'Demasiados intentos. Espere un momento e intente nuevamente.');

@@ -2,11 +2,14 @@
 
 namespace App\Livewire\Parametrizacion;
 
+use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use App\Models\SolapaLegajo;
 use Livewire\Component;
 
 class SolapaLegajoIndex extends Component
 {
+    use RequiresPermisoConfiguracion;
+
     // ── Modal crear/editar ────────────────────────────────────────────────────
     public bool   $showModal    = false;
     public ?int   $editId       = null;

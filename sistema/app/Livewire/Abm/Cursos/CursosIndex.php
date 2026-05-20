@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Abm\Cursos;
 
+use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use App\Models\Curso;
 use App\Models\Curplan;
 use App\Models\Matplan;
@@ -17,6 +18,8 @@ use Livewire\Component;
 
 class CursosIndex extends Component
 {
+    use RequiresPermisoConfiguracion;
+
     public bool $showConfirm = false;
 
     public ?int $deleteId = null;

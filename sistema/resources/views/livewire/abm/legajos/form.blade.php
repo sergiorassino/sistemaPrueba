@@ -26,7 +26,7 @@
         <div class="min-w-0 space-y-3">
             <p class="se-eyebrow">Legajos de estudiantes</p>
             <div>
-                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">{{ $id ? 'Editar legajo' : 'Nuevo legajo' }}</h2>
+                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">{{ $id ? ($puedeEditar ? 'Editar legajo' : 'Consultar legajo') : 'Nuevo legajo' }}</h2>
                 <p class="mt-2 text-sm text-white/80">
                     {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
                     @if ($id)
@@ -37,22 +37,25 @@
         </div>
 
         <div class="flex flex-wrap justify-start gap-2 sm:justify-end">
-            <a href="{{ route('abm.legajos', ['focus' => $id]) }}" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15">Cancelar</a>
+            <a href="{{ route('abm.legajos', ['focus' => $id]) }}" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15">{{ $puedeEditar ? 'Cancelar' : 'Volver al listado' }}</a>
 
-            <button wire:click="save" wire:loading.attr="disabled" class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 disabled:opacity-60">
-                <span wire:loading.remove wire:target="save">Guardar legajo</span>
-                <span wire:loading wire:target="save">Guardando...</span>
-            </button>
+            @if ($puedeEditar)
+                <button wire:click="save" wire:loading.attr="disabled" class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 disabled:opacity-60">
+                    <span wire:loading.remove wire:target="save">Guardar legajo</span>
+                    <span wire:loading wire:target="save">Guardando...</span>
+                </button>
+            @endif
         </div>
         </div>
     </section>
 
     <div class="se-card overflow-hidden" x-data>
-        {{-- Tabs --}}
+        {{-- Tabs (fuera del fieldset: en modo consulta deben poder cambiar de solapa) --}}
         <div class="border-b border-accent-200 bg-white">
             <nav class="se-form-tabs">
                 @foreach ($tabsVisibles as $tab => $label)
-                    <button wire:click="setTab('{{ $tab }}')"
+                    <button type="button"
+                            wire:click="setTab('{{ $tab }}')"
                             @class([
                                 'se-form-tab',
                                 'se-form-tab-active' => $activeTab === $tab,
@@ -64,6 +67,7 @@
             </nav>
         </div>
 
+        <fieldset @disabled(! $puedeEditar) class="min-w-0 border-0 p-0 m-0">
         {{-- Contenido de solapas: parametrizado = orden desde campos_legajo; sin param = plantillas legacy --}}
         @if($modoParametrizadoLegajo)
             <div class="space-y-5 px-5 py-5 sm:px-6" wire:key="legajo-tab-{{ $activeTab }}">
@@ -518,6 +522,7 @@
 
         </div>
         @endif
+        </fieldset>
 
         {{-- Footer --}}
         <div class="border-t border-accent-200 bg-accent-50/70 px-5 py-3 sm:px-6">
@@ -551,7 +556,9 @@
 
                 <div class="flex shrink-0 items-center justify-between gap-3 px-6 py-4">
                     <div class="se-pill">{{ $matriculasAlumno->count() }} registro(s)</div>
-                    <button wire:click="openNuevaMatricula" class="btn-primary btn-sm">Nueva matrícula</button>
+                    @if ($puedeEditar)
+                        <button wire:click="openNuevaMatricula" class="btn-primary btn-sm">Nueva matrícula</button>
+                    @endif
                 </div>
 
                 <div class="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
@@ -578,10 +585,12 @@
                                         <td class="table-cell font-mono">{{ $m->fechaMatricula?->format('d/m/Y') ?? '—' }}</td>
                                         <td class="table-cell font-mono">{{ $m->fechaBaja?->format('d/m/Y') ?? '—' }}</td>
                                         <td class="table-cell text-right whitespace-nowrap">
-                                            <div class="flex items-center justify-end gap-2">
-                                                <button wire:click="openEditMatricula({{ $m->id }})" class="btn-secondary btn-sm">Editar</button>
-                                                <button wire:click="confirmDeleteMatricula({{ $m->id }})" class="btn-danger btn-sm">Borrar</button>
-                                            </div>
+                                            @if ($puedeEditar)
+                                                <div class="flex items-center justify-end gap-2">
+                                                    <button wire:click="openEditMatricula({{ $m->id }})" class="btn-secondary btn-sm">Editar</button>
+                                                    <button wire:click="confirmDeleteMatricula({{ $m->id }})" class="btn-danger btn-sm">Borrar</button>
+                                                </div>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty

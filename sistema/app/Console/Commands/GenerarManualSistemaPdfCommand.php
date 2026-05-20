@@ -28,10 +28,11 @@ class GenerarManualSistemaPdfCommand extends Command
         }
 
         $pdf = Pdf::loadView('pdf.manual-sistema', [
-            'meta'      => ManualSistemaCatalog::meta(),
-            'intro'     => ManualSistemaCatalog::introduccion(),
-            'secciones' => ManualSistemaCatalog::secciones(),
-            'colegio'   => $colegio !== '' ? $colegio : null,
+            'meta'    => ManualSistemaCatalog::meta(),
+            'intro'   => ManualSistemaCatalog::introduccion(),
+            'indice'  => ManualSistemaCatalog::indice(),
+            'grupos'  => ManualSistemaCatalog::grupos(),
+            'colegio' => $colegio !== '' ? $colegio : null,
         ])->setPaper('a4', 'portrait');
 
         $dir = dirname($output);

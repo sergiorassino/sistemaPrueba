@@ -18,6 +18,7 @@ class PermisosUsuariosIndex extends Component
 
     public function mount(): void
     {
+        abort_unless(tienePermiso(14), 403, 'Sin permiso para el módulo de configuración.');
         abort_unless(tienePermiso(0), 403, 'Sin permiso para administrar permisos.');
     }
 
@@ -66,25 +67,28 @@ class PermisosUsuariosIndex extends Component
     {
         abort_unless(tienePermiso(0), 403);
 
-        $this->permisos[$orden] = ! ($this->permisos[$orden] ?? false);
-    }
+        if (! $this->profesorId) {
+            $this->addError('profesorId', 'Seleccione un usuario.');
 
-    public function guardar(): void
-    {
-        abort_unless(tienePermiso(0), 403);
+            return;
+        }
 
-        $key = 'permisos:save:' . (auth()->id() ?? 'guest');
-        if (RateLimiter::tooManyAttempts($key, 30)) {
-            session()->flash('success', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+        $key = 'permisos:toggle:' . (auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 60)) {
+            session()->flash('success', 'Demasiados cambios seguidos. Espere un momento e intente nuevamente.');
+
             return;
         }
         RateLimiter::hit($key, 60);
 
-        if (! $this->profesorId) {
-            $this->addError('profesorId', 'Seleccione un usuario.');
-            return;
-        }
+        $this->permisos[$orden] = ! ($this->permisos[$orden] ?? false);
+        $this->persistirPermisosCadena();
 
+        session()->flash('success', 'Permiso guardado.');
+    }
+
+    private function persistirPermisosCadena(): void
+    {
         $profesor = Profesor::query()
             ->where('nivel', (int) (schoolCtx()->idNivel ?? 0))
             ->whereKey($this->profesorId)
@@ -96,14 +100,11 @@ class PermisosUsuariosIndex extends Component
             $chars[] = ($this->permisos[$orden] ?? false) ? '1' : '0';
         }
 
-        $cadena = implode('', $chars);
-        $profesor->forceFill(['permisos_ia' => $cadena])->save();
+        $profesor->forceFill(['permisos_ia' => implode('', $chars)])->save();
 
         if ((int) $profesor->id === (int) (schoolCtx()->idProfesor ?? 0)) {
             schoolCtx()->refreshProfesor();
         }
-
-        session()->flash('success', 'Permisos actualizados correctamente.');
     }
 
     /**

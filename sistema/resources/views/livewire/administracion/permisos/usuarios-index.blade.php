@@ -75,37 +75,35 @@
                         Seleccione un usuario para editar sus permisos.
                     </div>
                 @else
-                    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Usuario seleccionado</p>
-                            <p class="mt-1 text-lg font-bold text-neutral-900">
-                                {{ trim($profesorSeleccionado->apellido . ', ' . $profesorSeleccionado->nombre) }}
-                            </p>
-                            <p class="text-xs text-neutral-600">DNI: {{ $profesorSeleccionado->dni }}</p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" wire:click="guardar" class="btn-primary btn-sm">
-                                Guardar cambios
-                            </button>
-                        </div>
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Usuario seleccionado</p>
+                        <p class="mt-1 text-lg font-bold text-neutral-900">
+                            {{ trim($profesorSeleccionado->apellido . ', ' . $profesorSeleccionado->nombre) }}
+                        </p>
+                        <p class="text-xs text-neutral-600">DNI: {{ $profesorSeleccionado->dni }}</p>
+                        <p class="mt-2 text-xs text-neutral-500">Los cambios se guardan al marcar o desmarcar cada permiso.</p>
                     </div>
 
                     <div class="mt-6 space-y-6">
                         @foreach ($porTema as $tema => $items)
                             <section class="rounded-2xl border border-accent-200 bg-white">
                                 <div class="flex items-center justify-between border-b border-accent-200 bg-accent-50 px-4 py-3">
-                                    <p class="text-xs font-semibold uppercase tracking-wider text-neutral-700">{{ $tema }}</p>
+                                    <p class="text-sm font-bold uppercase tracking-wider text-neutral-900">{{ $tema }}</p>
                                     <p class="text-xs text-neutral-500">{{ $items->count() }} permiso(s)</p>
                                 </div>
                                 <div class="divide-y divide-accent-200">
                                     @foreach ($items as $perm)
-                                        <div class="flex items-start gap-3 px-4 py-3 hover:bg-accent-50/40">
+                                        <div class="flex items-start gap-3 px-4 py-3 hover:bg-accent-50/40"
+                                             wire:loading.class="opacity-60"
+                                             wire:target="togglePermiso">
                                             <input type="checkbox"
                                                    class="mt-1 rounded border-accent-300 text-primary-600 focus:ring-primary-500"
                                                    wire:click="togglePermiso({{ (int) $perm->orden }})"
+                                                   wire:loading.attr="disabled"
+                                                   wire:target="togglePermiso"
                                                    @checked(($permisos[(int) $perm->orden] ?? false) === true)>
                                             <div class="min-w-0 flex-1">
-                                                <p class="text-sm font-semibold text-neutral-900">
+                                                <p class="text-sm font-normal text-neutral-700">
                                                     Orden {{ (int) $perm->orden }}
                                                 </p>
                                                 <p class="mt-0.5 text-xs text-neutral-600">

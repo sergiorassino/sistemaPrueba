@@ -51,6 +51,8 @@ class LegajosIndex extends Component
 
     public function confirmDelete(int $id): void
     {
+        abort_unless(tienePermiso(2), 403, 'Sin permiso para eliminar legajos de estudiantes.');
+
         $l = $this->scopedLegajoOrFail($id);
 
         $countMatricula      = DB::table('matricula')->where('idLegajos', $id)->count();
@@ -82,6 +84,8 @@ class LegajosIndex extends Component
 
     public function delete(): void
     {
+        abort_unless(tienePermiso(2), 403, 'Sin permiso para eliminar legajos de estudiantes.');
+
         $key = 'legajos:delete:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 10)) {
             session()->flash('success', 'Demasiados intentos. Espere un momento e intente nuevamente.');

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Examenes;
 
+use App\Livewire\Examenes\Concerns\RequiresPermisoExamenes;
 use App\Support\Examenes\MateriasAdeudadasExporter;
 use App\Support\Examenes\MateriasAdeudadasFiltros;
 use App\Support\Examenes\MateriasAdeudadasPreparacion;
@@ -10,6 +11,8 @@ use Livewire\Component;
 
 class MateriasAdeudadasListadoIndex extends Component
 {
+    use RequiresPermisoExamenes;
+
     public int $prepTick = 0;
 
     /** @see MateriasAdeudadasFiltros */

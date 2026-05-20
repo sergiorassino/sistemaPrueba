@@ -87,10 +87,19 @@ class LegajoProfesorForm extends Component
 
     public function mount(?int $id = null): void
     {
+        if (! $id && ! tienePermiso(11)) {
+            abort(403, 'Sin permiso para crear legajos de docentes.');
+        }
+
         $this->id = $id;
         if ($id) {
             $this->loadProfesor($id);
         }
+    }
+
+    private function requireModificarLegajoDocente(): void
+    {
+        abort_unless(tienePermiso(11), 403, 'Sin permiso para modificar legajos de docentes.');
     }
 
     protected function rules(): array
@@ -157,6 +166,7 @@ class LegajoProfesorForm extends Component
 
     public function save(): mixed
     {
+        $this->requireModificarLegajoDocente();
         $this->validate();
 
         $allData = $this->formData();
@@ -388,8 +398,13 @@ class LegajoProfesorForm extends Component
             $this->activeTab = array_key_first($tabsVisibles) ?? 'docente';
         }
 
+        $puedeEditar = tienePermiso(11);
+        $pageTitle = $this->id
+            ? ($puedeEditar ? 'Editar legajo docente' : 'Consultar legajo docente')
+            : 'Nuevo legajo docente';
+
         return view('livewire.abm.legajos-profesor.form', compact(
-            'roles', 'sexosOpciones', 'estadosCivilesOpciones', 'tabsVisibles', 'modoParametrizado', 'columnasPorSolapaSlug',
-        ))->layout('layouts.app', ['pageTitle' => $this->id ? 'Editar legajo docente' : 'Nuevo legajo docente']);
+            'roles', 'sexosOpciones', 'estadosCivilesOpciones', 'tabsVisibles', 'modoParametrizado', 'columnasPorSolapaSlug', 'puedeEditar',
+        ))->layout('layouts.app', ['pageTitle' => $pageTitle]);
     }
 }

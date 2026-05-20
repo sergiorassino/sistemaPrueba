@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Examenes;
 
+use App\Livewire\Examenes\Concerns\RequiresPermisoExamenes;
 use App\Support\Examenes\MateriasAdeudadasAlumnosListado;
 use App\Support\Examenes\MateriasAdeudadasPreparacion;
 use Livewire\Attributes\On;
@@ -9,6 +10,8 @@ use Livewire\Component;
 
 class MateriasAdeudadasGestionIndex extends Component
 {
+    use RequiresPermisoExamenes;
+
     public string $buscar = '';
 
     /** Incrementa al confirmar el panel hijo para refrescar el listado de alumnos. */

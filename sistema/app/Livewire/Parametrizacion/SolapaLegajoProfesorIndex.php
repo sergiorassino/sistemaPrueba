@@ -2,11 +2,14 @@
 
 namespace App\Livewire\Parametrizacion;
 
+use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use App\Models\SolapaLegajoProfesor;
 use Livewire\Component;
 
 class SolapaLegajoProfesorIndex extends Component
 {
+    use RequiresPermisoConfiguracion;
+
     public bool $showModal = false;
 
     public ?int $editId = null;

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Horarios;
 
+use App\Livewire\Horarios\Concerns\RequiresPermisoHorariosConfigCarga;
 use App\Support\HorariosProfesores;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -9,6 +10,8 @@ use Livewire\Component;
 
 class HorariosCargaIndex extends Component
 {
+    use RequiresPermisoHorariosConfigCarga;
+
     public ?int $profesorId = null;
 
     public ?int $materiaId = null;

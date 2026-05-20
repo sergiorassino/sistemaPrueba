@@ -3,6 +3,7 @@
 namespace App\Livewire\Examenes;
 
 use App\Livewire\Examenes\Concerns\PreparaMateriasAdeudadasExamenes;
+use App\Livewire\Examenes\Concerns\RequiresPermisoExamenes;
 use App\Support\Examenes\MateriasAdeudadasPreparacion;
 use Livewire\Component;
 
@@ -13,6 +14,7 @@ use Livewire\Component;
 class MateriasAdeudadasPreparacionPanel extends Component
 {
     use PreparaMateriasAdeudadasExamenes;
+    use RequiresPermisoExamenes;
 
     /** @var self::MODULO_* */
     public string $modulo = MateriasAdeudadasPreparacion::MODULO_LISTADO;

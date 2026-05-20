@@ -28,9 +28,9 @@ if (! function_exists('tienePermiso')) {
             return false;
         }
 
-        $permisos = (string) ($profesor->permisos_ia ?? '');
+        $permisos = trim((string) ($profesor->permisos_ia ?? ''));
         if ($permisos === '') {
-            $permisos = (string) ($profesor->permisos ?? '');
+            return false;
         }
 
         return isset($permisos[$orden]) && $permisos[$orden] === '1';

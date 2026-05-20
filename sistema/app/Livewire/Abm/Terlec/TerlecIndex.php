@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Abm\Terlec;
 
+use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use App\Models\Terlec;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -9,6 +10,8 @@ use Livewire\Component;
 
 class TerlecIndex extends Component
 {
+    use RequiresPermisoConfiguracion;
+
     public bool $showModal    = false;
     public bool $showConfirm  = false;
     public ?int $editId       = null;

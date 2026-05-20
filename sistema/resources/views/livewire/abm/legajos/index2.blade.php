@@ -26,13 +26,15 @@
                     <span class="block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50">Registros</span>
                     <span class="text-xl font-bold tabular-nums">{{ $legajos->total() }}</span>
                 </span>
-                <a href="{{ route('abm.legajos.create') }}"
-                   class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 focus:outline-none focus:ring-2 focus:ring-white/60">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Nuevo legajo
-                </a>
+                @if (tienePermiso(2))
+                    <a href="{{ route('abm.legajos.create') }}"
+                       class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 focus:outline-none focus:ring-2 focus:ring-white/60">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Nuevo legajo
+                    </a>
+                @endif
             </div>
         </div>
     </section>
@@ -143,17 +145,24 @@
                                 @endif
                             </td>
                             <td class="table-cell align-top">
-                                <a href="{{ route('abm.legajos.edit', ['id' => $l->id, 'matriculas' => 1]) }}"
-                                   class="btn-primary btn-sm whitespace-nowrap">
-                                    Gestionar matrículas
-                                </a>
+                                @if (tienePermiso(2))
+                                    <a href="{{ route('abm.legajos.edit', ['id' => $l->id, 'matriculas' => 1]) }}"
+                                       class="btn-primary btn-sm whitespace-nowrap">
+                                        Gestionar matrículas
+                                    </a>
+                                @endif
                             </td>
                             <td class="table-cell text-right">
                                 <div class="flex flex-col items-stretch justify-end gap-2 sm:flex-row sm:items-center">
-                                    <a data-focus-target href="{{ route('abm.legajos.edit', ['id' => $l->id]) }}"
-                                       class="btn-secondary btn-sm">Editar</a>
-                                    <button wire:click="confirmDelete({{ $l->id }})"
-                                            class="btn-danger btn-sm">Eliminar</button>
+                                    @if (tienePermiso(2))
+                                        <a data-focus-target href="{{ route('abm.legajos.edit', ['id' => $l->id]) }}"
+                                           class="btn-secondary btn-sm">Editar</a>
+                                        <button wire:click="confirmDelete({{ $l->id }})"
+                                                class="btn-danger btn-sm">Eliminar</button>
+                                    @else
+                                        <a data-focus-target href="{{ route('abm.legajos.edit', ['id' => $l->id]) }}"
+                                           class="btn-secondary btn-sm">Ver</a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

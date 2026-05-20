@@ -17,7 +17,7 @@
             <div class="min-w-0 space-y-3">
                 <p class="se-eyebrow">Legajos del docente</p>
                 <div>
-                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">{{ $id ? 'Editar legajo' : 'Nuevo legajo' }}</h2>
+                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">{{ $id ? ($puedeEditar ? 'Editar legajo' : 'Consultar legajo') : 'Nuevo legajo' }}</h2>
                     <p class="mt-2 text-sm text-white/80">
                         {{ schoolCtx()->nivelNombre() }} · Un registro por nivel
                         @if ($id)<span class="text-white/45"> · </span> ID {{ $id }}@endif
@@ -26,12 +26,14 @@
             </div>
             <div class="flex flex-wrap justify-start gap-2 sm:justify-end">
                 <a href="{{ route('abm.legajos-profesor', ['focus' => $id]) }}"
-                   class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15">Cancelar</a>
-                <button wire:click="save" wire:loading.attr="disabled"
-                        class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 disabled:opacity-60">
-                    <span wire:loading.remove wire:target="save">Guardar legajo</span>
-                    <span wire:loading wire:target="save">Guardando…</span>
-                </button>
+                   class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15">{{ $puedeEditar ? 'Cancelar' : 'Volver al listado' }}</a>
+                @if ($puedeEditar)
+                    <button type="button" wire:click="save" wire:loading.attr="disabled"
+                            class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="save">Guardar legajo</span>
+                        <span wire:loading wire:target="save">Guardando…</span>
+                    </button>
+                @endif
             </div>
         </div>
     </section>
@@ -40,7 +42,8 @@
         <div class="border-b border-accent-200 bg-white">
             <nav class="se-form-tabs">
                 @foreach ($tabsVisibles as $tab => $label)
-                    <button wire:click="setTab('{{ $tab }}')"
+                    <button type="button"
+                            wire:click="setTab('{{ $tab }}')"
                             @class(['se-form-tab', 'se-form-tab-active' => $activeTab === $tab, 'se-form-tab-idle' => $activeTab !== $tab])>
                         {{ $label }}
                     </button>
@@ -48,6 +51,7 @@
             </nav>
         </div>
 
+        <fieldset @disabled(! $puedeEditar) class="min-w-0 border-0 p-0 m-0">
         <div class="space-y-5 px-5 py-5 sm:px-6" wire:key="prof-tab-{{ $activeTab }}">
             @if($activeTab === 'docente')
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -101,5 +105,6 @@
                 <p class="text-sm text-neutral-500">Configure campos activos para mostrar contenido en esta solapa.</p>
             @endif
         </div>
+        </fieldset>
     </div>
 </div>

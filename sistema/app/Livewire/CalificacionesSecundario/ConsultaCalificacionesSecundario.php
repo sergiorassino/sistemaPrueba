@@ -8,8 +8,8 @@ use Illuminate\Support\Collection;
 use Livewire\Component;
 
 /**
- * Consulta de calificaciones (nivel secundario) para personal con permiso de estudiantes:
- * elige curso y abre el mismo PDF que ve el alumno en autogestión.
+ * Consulta de calificaciones (nivel secundario): elige curso y abre el PDF de boletín.
+ * Acceso libre para usuarios autenticados del portal.
  */
 class ConsultaCalificacionesSecundario extends Component
 {

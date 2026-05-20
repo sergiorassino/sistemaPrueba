@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Parametrizacion;
 
+use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use App\Listados\CamposProfesorSync;
 use App\Models\CampoProfesor;
 use App\Models\SolapaLegajoProfesor;
@@ -9,6 +10,8 @@ use Livewire\Component;
 
 class CamposProfesorIndex extends Component
 {
+    use RequiresPermisoConfiguracion;
+
     public string $filtroSolapa = '';
 
     public function sincronizarDesdeProfesores(CamposProfesorSync $sync): void

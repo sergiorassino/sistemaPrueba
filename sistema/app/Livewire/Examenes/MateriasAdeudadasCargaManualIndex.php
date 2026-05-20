@@ -6,6 +6,7 @@ namespace App\Livewire\Examenes;
 
 
 
+use App\Livewire\Examenes\Concerns\RequiresPermisoExamenes;
 use App\Support\Examenes\MateriasAdeudadasAlumnosListado;
 
 use App\Support\Examenes\MateriasAdeudadasCargaManual;
@@ -21,6 +22,7 @@ use Livewire\Component;
 class MateriasAdeudadasCargaManualIndex extends Component
 
 {
+    use RequiresPermisoExamenes;
 
     public int $idLegajos;
 
@@ -32,8 +34,6 @@ class MateriasAdeudadasCargaManualIndex extends Component
 
     public function mount(int $idLegajos): void
     {
-        abort_unless(tienePermiso(2), 403, 'Sin permiso para gestionar materias adeudadas.');
-
         $ctx = schoolCtx();
         if (! $ctx->isValid() || ! MateriasAdeudadasAlumnosListado::esNivelSecundario($ctx)) {
             abort(403, 'Este módulo requiere contexto de Secundario.');
@@ -105,10 +105,6 @@ class MateriasAdeudadasCargaManualIndex extends Component
     private function ejecutarCambioAdeudo(int $idCalificacion, bool $registrar): void
 
     {
-
-        abort_unless(tienePermiso(2), 403);
-
-
 
         $key = 'examenes:ma-carga-manual:'.(auth()->id() ?? 'guest');
 

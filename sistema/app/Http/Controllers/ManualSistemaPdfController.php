@@ -14,14 +14,15 @@ class ManualSistemaPdfController extends Controller
         $colegio = schoolNombre();
 
         $pdf = Pdf::loadView('pdf.manual-sistema', [
-            'meta'      => ManualSistemaCatalog::meta(),
-            'intro'     => ManualSistemaCatalog::introduccion(),
-            'secciones' => ManualSistemaCatalog::secciones(),
-            'colegio'   => $colegio !== '' ? $colegio : null,
+            'meta'    => ManualSistemaCatalog::meta(),
+            'intro'   => ManualSistemaCatalog::introduccion(),
+            'indice'  => ManualSistemaCatalog::indice(),
+            'grupos'  => ManualSistemaCatalog::grupos(),
+            'colegio' => $colegio !== '' ? $colegio : null,
         ])->setPaper('a4', 'portrait');
 
         $filename = 'manual-sistema-'.now()->format('Y-m-d').'.pdf';
 
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
 }

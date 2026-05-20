@@ -2,12 +2,15 @@
 
 namespace App\Livewire\Examenes;
 
+use App\Livewire\Examenes\Concerns\RequiresPermisoExamenes;
 use App\Support\Examenes\BorrarInscripcionesExamen;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class BorrarInscripcionesExamenIndex extends Component
 {
+    use RequiresPermisoExamenes;
+
     public bool $showConfirm = false;
 
     public int $pendientes = 0;
@@ -16,7 +19,6 @@ class BorrarInscripcionesExamenIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(2), 403, 'Sin permiso para gestionar inscripciones a examen.');
         $this->refrescarConteo();
     }
 
@@ -39,8 +41,6 @@ class BorrarInscripcionesExamenIndex extends Component
 
     public function ejecutarBorrado(): void
     {
-        abort_unless(tienePermiso(2), 403);
-
         $key = 'examenes:borrar-inscripciones:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $this->addError('borrado', 'Demasiados intentos. Espere un minuto e intente de nuevo.');

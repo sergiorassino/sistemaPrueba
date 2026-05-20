@@ -58,6 +58,8 @@ class CargaCalificacionesSecundario extends Component
 
     public function mount(): void
     {
+        abort_unless(tienePermiso(9), 403, 'Sin permiso para cargar calificaciones.');
+
         // Entrada al módulo: forzar selección explícita de curso/materia.
         $this->cursoId = null;
         $this->materiaId = null;
@@ -365,6 +367,8 @@ class CargaCalificacionesSecundario extends Component
      */
     public function saveCell(int $id, string $field, mixed $value): void
     {
+        abort_unless(tienePermiso(9), 403);
+
         // Rate limit suave: evita bursts si el usuario navega rápido con teclado.
         $key = 'calificacionesSecundario:carga:cell:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 240)) {

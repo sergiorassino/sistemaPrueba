@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Abm\Curplan;
 
+use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use App\Models\Curplan;
 use App\Models\Plan;
 use Illuminate\Support\Facades\DB;
@@ -10,6 +11,8 @@ use Livewire\Component;
 
 class CurplanIndex extends Component
 {
+    use RequiresPermisoConfiguracion;
+
     public bool $showConfirm = false;
 
     public ?int $deleteId = null;

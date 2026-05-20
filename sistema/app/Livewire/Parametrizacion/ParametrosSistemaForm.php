@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Parametrizacion;
 
+use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use App\Models\Ento;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +12,7 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ParametrosSistemaForm extends Component
 {
+    use RequiresPermisoConfiguracion;
     use WithFileUploads;
 
     public string $insti = '';

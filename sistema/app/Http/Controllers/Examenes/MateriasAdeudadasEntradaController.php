@@ -13,6 +13,8 @@ class MateriasAdeudadasEntradaController extends Controller
 {
     public function listado(): RedirectResponse
     {
+        abort_unless(tienePermiso(12), 403, 'Sin permiso para el módulo de exámenes.');
+
         MateriasAdeudadasPreparacion::solicitarFormularioPreparacion(
             MateriasAdeudadasPreparacion::MODULO_LISTADO,
         );
@@ -22,6 +24,8 @@ class MateriasAdeudadasEntradaController extends Controller
 
     public function gestion(): RedirectResponse
     {
+        abort_unless(tienePermiso(12), 403, 'Sin permiso para el módulo de exámenes.');
+
         MateriasAdeudadasPreparacion::solicitarFormularioPreparacion(
             MateriasAdeudadasPreparacion::MODULO_GESTION,
         );

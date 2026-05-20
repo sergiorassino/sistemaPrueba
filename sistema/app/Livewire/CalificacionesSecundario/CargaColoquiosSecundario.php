@@ -36,6 +36,8 @@ class CargaColoquiosSecundario extends Component
 
     public function mount(): void
     {
+        abort_unless(tienePermiso(10), 403, 'Sin permiso para cargar coloquios.');
+
         $this->periodo = CalificacionesColoquioSecundario::PERIODO_DICIEMBRE;
         $this->cursoId = null;
         $this->materiaId = null;
@@ -352,6 +354,8 @@ class CargaColoquiosSecundario extends Component
 
     public function saveCell(int $id, string $field, mixed $value): void
     {
+        abort_unless(tienePermiso(10), 403);
+
         $key = 'calificacionesSecundario:coloquios:cell:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 240)) {
             return;

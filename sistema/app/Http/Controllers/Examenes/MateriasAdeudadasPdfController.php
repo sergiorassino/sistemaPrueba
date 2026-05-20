@@ -16,6 +16,8 @@ class MateriasAdeudadasPdfController extends Controller
 {
     public function __invoke(Request $request)
     {
+        abort_unless(tienePermiso(12), 403, 'Sin permiso para el módulo de exámenes.');
+
         @ini_set('memory_limit', '512M');
         set_time_limit(180);
 

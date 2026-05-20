@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Examenes;
 
+use App\Livewire\Examenes\Concerns\RequiresPermisoExamenes;
 use App\Support\Examenes\MateriasAdeudadasAlumnosListado;
 use App\Support\Examenes\MateriasAdeudadasCargaManual;
 use App\Support\Examenes\MateriasAdeudadasFiltros;
@@ -13,6 +14,8 @@ use Livewire\Component;
 
 class MateriasAdeudadasNotasIndex extends Component
 {
+    use RequiresPermisoExamenes;
+
     public int $idLegajos;
 
     public ?int $idCalificacionSeleccionada = null;
@@ -31,8 +34,6 @@ class MateriasAdeudadasNotasIndex extends Component
 
     public function mount(int $idLegajos): void
     {
-        abort_unless(tienePermiso(2), 403, 'Sin permiso para cargar notas de examen.');
-
         $ctx = schoolCtx();
         if (! $ctx->isValid() || ! MateriasAdeudadasAlumnosListado::esNivelSecundario($ctx)) {
             abort(403, 'Este módulo requiere contexto de Secundario.');
@@ -96,8 +97,6 @@ class MateriasAdeudadasNotasIndex extends Component
 
     public function guardarNuevaNota(): void
     {
-        abort_unless(tienePermiso(2), 403);
-
         if ($this->idCalificacionSeleccionada === null) {
             $this->addError('notas', 'Seleccione una materia adeudada.');
 

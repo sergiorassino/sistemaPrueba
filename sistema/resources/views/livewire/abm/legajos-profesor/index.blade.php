@@ -22,13 +22,15 @@
                     <span class="block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50">Registros</span>
                     <span class="text-xl font-bold tabular-nums">{{ $profesores->total() }}</span>
                 </span>
-                <a href="{{ route('abm.legajos-profesor.create') }}"
-                   class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Nuevo legajo
-                </a>
+                @if (tienePermiso(11))
+                    <a href="{{ route('abm.legajos-profesor.create') }}"
+                       class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Nuevo legajo
+                    </a>
+                @endif
             </div>
         </div>
     </section>
@@ -66,8 +68,12 @@
                             <td class="table-cell text-neutral-700">{{ $p->tipo?->tipo ?? '—' }}</td>
                             <td class="table-cell text-right">
                                 <div class="flex justify-end gap-2">
-                                    <a href="{{ route('abm.legajos-profesor.edit', $p->id) }}" class="btn-secondary btn-sm">Editar</a>
-                                    <button type="button" wire:click="confirmDelete({{ $p->id }})" class="btn-danger btn-sm">Eliminar</button>
+                                    @if (tienePermiso(11))
+                                        <a href="{{ route('abm.legajos-profesor.edit', $p->id) }}" class="btn-secondary btn-sm">Editar</a>
+                                        <button type="button" wire:click="confirmDelete({{ $p->id }})" class="btn-danger btn-sm">Eliminar</button>
+                                    @else
+                                        <a href="{{ route('abm.legajos-profesor.edit', $p->id) }}" class="btn-secondary btn-sm">Ver</a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

@@ -146,7 +146,9 @@
     @endif
 
     <div class="flex flex-wrap gap-3">
-        <a href="{{ route('horarios.config') }}" class="text-sm font-semibold text-primary-700 hover:underline">Configuración</a>
+        @if (tienePermiso(13))
+            <a href="{{ route('horarios.config') }}" class="text-sm font-semibold text-primary-700 hover:underline">Configuración</a>
+        @endif
         <a href="{{ route('horarios.impresion') }}" class="text-sm font-semibold text-primary-700 hover:underline">Impresión →</a>
     </div>
 </div>

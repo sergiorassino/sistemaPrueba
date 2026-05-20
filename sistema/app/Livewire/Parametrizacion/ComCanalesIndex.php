@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Parametrizacion;
 
+use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -9,6 +10,8 @@ use App\Models\ComCanal;
 
 class ComCanalesIndex extends Component
 {
+    use RequiresPermisoConfiguracion;
+
     // Edición inline de un canal
     public ?int $editandoId = null;
     public bool $editPuedeIniciar   = false;

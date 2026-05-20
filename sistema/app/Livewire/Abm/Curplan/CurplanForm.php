@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Abm\Curplan;
 
+use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use App\Models\Curplan;
 use App\Models\Matplan;
 use App\Models\Plan;
@@ -12,6 +13,8 @@ use Livewire\Component;
 
 class CurplanForm extends Component
 {
+    use RequiresPermisoConfiguracion;
+
     public ?int $id = null;
 
     public int|string $idPlan = '';

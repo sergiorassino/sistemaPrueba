@@ -142,34 +142,36 @@
                 @if (! $selectedMateriaId || ! $selectedMateria)
                     <p class="px-4 py-8 text-center text-sm text-neutral-500">Seleccione una materia a la izquierda.</p>
                 @else
-                    <div class="border-b border-accent-100 bg-white px-4 py-4">
-                        <label for="se-ppc-nuevo-prof" class="form-label">Agregar docente</label>
-                        <div class="mt-1.5 flex flex-col gap-3 sm:flex-row sm:items-end">
-                            <div class="min-w-0 flex-1">
-                                <select id="se-ppc-nuevo-prof" wire:model="nuevoProfesorId" class="form-select w-full @error('nuevoProfesorId') ring-2 ring-red-400 @enderror">
-                                    <option value="">— Elegir docente —</option>
-                                    @foreach ($elegiblesParaSelect as $prof)
-                                        <option value="{{ (int) $prof->id }}">
-                                            {{ trim(((string) $prof->apellido).', '.((string) $prof->nombre)) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('nuevoProfesorId')
-                                    <div class="mt-1 text-[11px] text-red-700">{{ $message }}</div>
-                                @enderror
-                                @error('selectedMateriaId')
-                                    <div class="mt-1 text-[11px] text-red-700">{{ $message }}</div>
-                                @enderror
+                    @if (tienePermiso(11))
+                        <div class="border-b border-accent-100 bg-white px-4 py-4">
+                            <label for="se-ppc-nuevo-prof" class="form-label">Agregar docente</label>
+                            <div class="mt-1.5 flex flex-col gap-3 sm:flex-row sm:items-end">
+                                <div class="min-w-0 flex-1">
+                                    <select id="se-ppc-nuevo-prof" wire:model="nuevoProfesorId" class="form-select w-full @error('nuevoProfesorId') ring-2 ring-red-400 @enderror">
+                                        <option value="">— Elegir docente —</option>
+                                        @foreach ($elegiblesParaSelect as $prof)
+                                            <option value="{{ (int) $prof->id }}">
+                                                {{ trim(((string) $prof->apellido).', '.((string) $prof->nombre)) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('nuevoProfesorId')
+                                        <div class="mt-1 text-[11px] text-red-700">{{ $message }}</div>
+                                    @enderror
+                                    @error('selectedMateriaId')
+                                        <div class="mt-1 text-[11px] text-red-700">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <button type="button" wire:click="agregarProfesor"
+                                        class="inline-flex shrink-0 items-center justify-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700">
+                                    Asignar
+                                </button>
                             </div>
-                            <button type="button" wire:click="agregarProfesor"
-                                    class="inline-flex shrink-0 items-center justify-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700">
-                                Asignar
-                            </button>
+                            @if ($elegiblesParaSelect->isEmpty())
+                                <p class="mt-2 text-xs text-neutral-500">No hay docentes disponibles (todos están asignados o no cumplen el criterio de tipo).</p>
+                            @endif
                         </div>
-                        @if ($elegiblesParaSelect->isEmpty())
-                            <p class="mt-2 text-xs text-neutral-500">No hay docentes disponibles (todos están asignados o no cumplen el criterio de tipo).</p>
-                        @endif
-                    </div>
+                    @endif
 
                     @if ($asignados->isEmpty())
                         <p class="px-4 py-8 text-center text-sm text-neutral-500">Sin docentes en esta materia.</p>
@@ -179,7 +181,9 @@
                                 <thead>
                                 <tr class="border-b border-accent-100 bg-white text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
                                     <th class="px-4 py-2.5">Apellido y nombre</th>
-                                    <th class="px-4 py-2.5 w-36 text-right">Acción</th>
+                                    @if (tienePermiso(11))
+                                        <th class="px-4 py-2.5 w-36 text-right">Acción</th>
+                                    @endif
                                 </tr>
                                 </thead>
                                 <tbody class="divide-y divide-accent-100 bg-white">
@@ -189,13 +193,15 @@
                                             {{ trim(((string) $row->apellido).', '.((string) $row->nombre)) }}
                                             <span class="ml-2 font-mono text-xs text-neutral-400">#{{ (int) $row->idProfesor }}</span>
                                         </td>
-                                        <td class="px-4 py-2.5 text-right">
-                                            <button type="button" wire:click="quitarProfesor({{ (int) $row->ppcId }})"
-                                                    wire:confirm="¿Quitar esta asignación del docente a la materia?"
-                                                    class="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50">
-                                                Quitar
-                                            </button>
-                                        </td>
+                                        @if (tienePermiso(11))
+                                            <td class="px-4 py-2.5 text-right">
+                                                <button type="button" wire:click="quitarProfesor({{ (int) $row->ppcId }})"
+                                                        wire:confirm="¿Quitar esta asignación del docente a la materia?"
+                                                        class="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50">
+                                                    Quitar
+                                                </button>
+                                            </td>
+                                        @endif
                                     </tr>
                                 @endforeach
                                 </tbody>

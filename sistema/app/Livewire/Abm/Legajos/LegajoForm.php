@@ -243,15 +243,25 @@ class LegajoForm extends Component
 
     public function mount(?int $id = null): void
     {
+        if (! $id && ! tienePermiso(2)) {
+            abort(403, 'Sin permiso para crear legajos de estudiantes.');
+        }
+
         $this->id = $id;
         if ($id) {
             $this->loadLegajo($id);
 
             if (request()->boolean('matriculas')) {
+                abort_unless(tienePermiso(2), 403, 'Sin permiso para gestionar matrículas.');
                 $this->matriculasDesdeListado = true;
                 $this->openMatriculas();
             }
         }
+    }
+
+    private function requireModificarLegajo(): void
+    {
+        abort_unless(tienePermiso(2), 403, 'Sin permiso para modificar legajos de estudiantes.');
     }
 
     protected function rules(): array
@@ -316,6 +326,7 @@ class LegajoForm extends Component
 
     public function save(): mixed
     {
+        $this->requireModificarLegajo();
         $this->validate();
 
         $allData = $this->formData();
@@ -356,6 +367,8 @@ class LegajoForm extends Component
     // ─── Matrículas ───────────────────────────────────────────────────────────
     public function openMatriculas(): void
     {
+        $this->requireModificarLegajo();
+
         if (! $this->id) {
             return;
         }
@@ -386,6 +399,8 @@ class LegajoForm extends Component
 
     public function openNuevaMatricula(): void
     {
+        $this->requireModificarLegajo();
+
         $this->matriculaEditId = null;
         $this->resetMatriculaForm();
 
@@ -400,6 +415,8 @@ class LegajoForm extends Component
 
     public function openEditMatricula(int $id): void
     {
+        $this->requireModificarLegajo();
+
         $m = Matricula::where('idLegajos', $this->id)->findOrFail($id);
         $this->matriculaEditId = $id;
 
@@ -464,6 +481,8 @@ class LegajoForm extends Component
 
     public function confirmMatriculaPlanChange(): void
     {
+        $this->requireModificarLegajo();
+
         $destino = (int) ($this->m_idCursosPendiente ?: $this->m_idCursos);
         if ($destino < 1) {
             $this->showMatriculaPlanConfirm = false;
@@ -487,6 +506,8 @@ class LegajoForm extends Component
 
     public function saveMatricula(): void
     {
+        $this->requireModificarLegajo();
+
         $this->validate([
             'm_idCursos' => ['required', 'integer', 'min:1'],
             'm_idCondiciones' => ['required', 'integer', 'min:1'],
@@ -597,6 +618,8 @@ class LegajoForm extends Component
 
     public function confirmDeleteMatricula(int $id): void
     {
+        $this->requireModificarLegajo();
+
         $m = Matricula::where('idLegajos', $this->id)->with(['terlec', 'curso'])->findOrFail($id);
 
         $this->matriculaDeleteId = $id;
@@ -621,6 +644,8 @@ class LegajoForm extends Component
 
     public function deleteMatricula(): void
     {
+        $this->requireModificarLegajo();
+
         if ($this->matriculaDeleteId && $this->id && $this->matriculaPuedeEliminar) {
             $dependencias = $this->dependenciasMatriculaParaBorrar($this->matriculaDeleteId);
             if ($dependencias !== []) {
@@ -1273,10 +1298,15 @@ class LegajoForm extends Component
             $this->activeTab = array_key_first($tabsVisibles) ?? 'alumno';
         }
 
+        $puedeEditar = tienePermiso(2);
+        $pageTitle = $this->id
+            ? ($puedeEditar ? 'Editar legajo' : 'Consultar legajo')
+            : 'Nuevo legajo';
+
         return view('livewire.abm.legajos.form', compact(
             'familias', 'cursos', 'condiciones', 'sexosOpciones', 'matriculasAlumno',
             'camposActivos', 'showField', 'showFieldEnTab', 'tabsVisibles', 'tabSlugToPanel',
-            'modoParametrizadoLegajo', 'columnasPorSolapaSlug',
-        ))->layout('layouts.app', ['pageTitle' => $this->id ? 'Editar legajo' : 'Nuevo legajo']);
+            'modoParametrizadoLegajo', 'columnasPorSolapaSlug', 'puedeEditar',
+        ))->layout('layouts.app', ['pageTitle' => $pageTitle]);
     }
 }

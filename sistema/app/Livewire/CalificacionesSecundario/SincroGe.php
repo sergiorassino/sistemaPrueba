@@ -38,7 +38,7 @@ class SincroGe extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(2), 403, 'Sin permiso para importar calificaciones.');
+        abort_unless(tienePermiso(9), 403, 'Sin permiso para importar calificaciones desde CIDI/GE.');
     }
 
     protected function rules(): array
@@ -118,7 +118,7 @@ class SincroGe extends Component
 
     public function importar(GeCsvImporter $importer): void
     {
-        abort_unless(tienePermiso(2), 403);
+        abort_unless(tienePermiso(9), 403);
 
         if (! $this->archivoCsv instanceof TemporaryUploadedFile) {
             $this->addError('archivoCsv', 'Seleccione un archivo CSV antes de importar.');

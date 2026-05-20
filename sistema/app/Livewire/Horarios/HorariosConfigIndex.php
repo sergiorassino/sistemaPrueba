@@ -2,12 +2,15 @@
 
 namespace App\Livewire\Horarios;
 
+use App\Livewire\Horarios\Concerns\RequiresPermisoHorariosConfigCarga;
 use App\Support\HorariosProfesores;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class HorariosConfigIndex extends Component
 {
+    use RequiresPermisoHorariosConfigCarga;
+
     /** @var array<int, bool> */
     public array $turnosMarcados = [];
 

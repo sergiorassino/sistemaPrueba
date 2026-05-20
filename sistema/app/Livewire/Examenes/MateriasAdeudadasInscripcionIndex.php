@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Examenes;
 
+use App\Livewire\Examenes\Concerns\RequiresPermisoExamenes;
 use App\Support\Examenes\MateriasAdeudadasAlumnosListado;
 use App\Support\Examenes\MateriasAdeudadasCargaManual;
 use App\Support\Examenes\MateriasAdeudadasInscripcion;
@@ -12,12 +13,12 @@ use Livewire\Component;
 
 class MateriasAdeudadasInscripcionIndex extends Component
 {
+    use RequiresPermisoExamenes;
+
     public int $idLegajos;
 
     public function mount(int $idLegajos): void
     {
-        abort_unless(tienePermiso(2), 403, 'Sin permiso para gestionar inscripciones a examen.');
-
         $ctx = schoolCtx();
         if (! $ctx->isValid() || ! MateriasAdeudadasAlumnosListado::esNivelSecundario($ctx)) {
             abort(403, 'Este módulo requiere contexto de Secundario.');
@@ -44,8 +45,6 @@ class MateriasAdeudadasInscripcionIndex extends Component
 
     public function cambiarCondicion(int $idCalificacion, string $condicion): void
     {
-        abort_unless(tienePermiso(2), 403);
-
         if (! $this->ejecutarConLimite()) {
             return;
         }
@@ -67,8 +66,6 @@ class MateriasAdeudadasInscripcionIndex extends Component
 
     public function cambiarInscripcion(int $idCalificacion, bool $inscripto): void
     {
-        abort_unless(tienePermiso(2), 403);
-
         if (! $this->ejecutarConLimite()) {
             return;
         }

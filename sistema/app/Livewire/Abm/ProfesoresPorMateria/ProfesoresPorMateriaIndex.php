@@ -231,6 +231,8 @@ TXT;
 
     public function agregarProfesor(): void
     {
+        abort_unless(tienePermiso(11), 403, 'Sin permiso para asignar docentes a la materia.');
+
         $key = 'ppc-assign:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 40)) {
             session()->flash('error', 'Demasiados intentos. Espere un momento.');
@@ -288,6 +290,8 @@ TXT;
 
     public function quitarProfesor(int $ppcId): void
     {
+        abort_unless(tienePermiso(11), 403, 'Sin permiso para quitar asignaciones de docentes.');
+
         $key = 'ppc-unassign:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 40)) {
             session()->flash('error', 'Demasiados intentos. Espere un momento.');

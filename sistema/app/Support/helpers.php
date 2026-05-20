@@ -66,6 +66,11 @@ if (! function_exists('schoolLogoUrl')) {
             return null;
         }
 
+        $path = trim($path);
+        if (! Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
         $memo = Storage::disk('public')->url($path);
 
         return $memo;
@@ -93,6 +98,11 @@ if (! function_exists('studentLogoUrl')) {
             ->value('logo_path');
 
         if (! is_string($path) || trim($path) === '') {
+            return null;
+        }
+
+        $path = trim($path);
+        if (! Storage::disk('public')->exists($path)) {
             return null;
         }
 
@@ -130,7 +140,14 @@ if (! function_exists('entoInstitutionalLogoUrlFallback')) {
             return null;
         }
 
-        $memo = Storage::disk('public')->url(trim($path));
+        $path = trim($path);
+        if (! Storage::disk('public')->exists($path)) {
+            $memo = null;
+
+            return null;
+        }
+
+        $memo = Storage::disk('public')->url($path);
 
         return $memo;
     }

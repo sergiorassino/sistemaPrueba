@@ -17,21 +17,41 @@ final class MateriasAdeudadasPreparacion
 
     public const MODULO_GESTION = 'gestion';
 
+    public const MODULO_ACTA_VOLANTE = 'acta_volante';
+
+    public const MODULO_PERMISO_EXAMEN = 'permiso_examen';
+
     private const SESSION_LISTADO = 'materias_adeudadas_prep_listado';
 
     private const SESSION_GESTION = 'materias_adeudadas_prep_gestion';
+
+    private const SESSION_ACTA_VOLANTE = 'materias_adeudadas_prep_acta_volante';
+
+    private const SESSION_PERMISO_EXAMEN = 'materias_adeudadas_prep_permiso_examen';
 
     private const SESSION_VISIT_OK_LISTADO = 'materias_adeudadas_visit_ok_listado';
 
     private const SESSION_VISIT_OK_GESTION = 'materias_adeudadas_visit_ok_gestion';
 
+    private const SESSION_VISIT_OK_ACTA_VOLANTE = 'materias_adeudadas_visit_ok_acta_volante';
+
+    private const SESSION_VISIT_OK_PERMISO_EXAMEN = 'materias_adeudadas_visit_ok_permiso_examen';
+
     private const SESSION_SOLICITAR_PREP_LISTADO = 'materias_adeudadas_solicitar_prep_listado';
 
     private const SESSION_SOLICITAR_PREP_GESTION = 'materias_adeudadas_solicitar_prep_gestion';
 
+    private const SESSION_SOLICITAR_PREP_ACTA_VOLANTE = 'materias_adeudadas_solicitar_prep_acta_volante';
+
+    private const SESSION_SOLICITAR_PREP_PERMISO_EXAMEN = 'materias_adeudadas_solicitar_prep_permiso_examen';
+
     private const SESSION_RECALCULO_OK_LISTADO = 'materias_adeudadas_recalculo_ok_listado';
 
     private const SESSION_RECALCULO_OK_GESTION = 'materias_adeudadas_recalculo_ok_gestion';
+
+    private const SESSION_RECALCULO_OK_ACTA_VOLANTE = 'materias_adeudadas_recalculo_ok_acta_volante';
+
+    private const SESSION_RECALCULO_OK_PERMISO_EXAMEN = 'materias_adeudadas_recalculo_ok_permiso_examen';
 
     /**
      * Clic en el menú: en la próxima carga del módulo se muestra el formulario de preparación.
@@ -95,12 +115,20 @@ final class MateriasAdeudadasPreparacion
         session()->forget([
             self::SESSION_LISTADO,
             self::SESSION_GESTION,
+            self::SESSION_ACTA_VOLANTE,
+            self::SESSION_PERMISO_EXAMEN,
             self::SESSION_VISIT_OK_LISTADO,
             self::SESSION_VISIT_OK_GESTION,
+            self::SESSION_VISIT_OK_ACTA_VOLANTE,
+            self::SESSION_VISIT_OK_PERMISO_EXAMEN,
             self::SESSION_SOLICITAR_PREP_LISTADO,
             self::SESSION_SOLICITAR_PREP_GESTION,
+            self::SESSION_SOLICITAR_PREP_ACTA_VOLANTE,
+            self::SESSION_SOLICITAR_PREP_PERMISO_EXAMEN,
             self::SESSION_RECALCULO_OK_LISTADO,
             self::SESSION_RECALCULO_OK_GESTION,
+            self::SESSION_RECALCULO_OK_ACTA_VOLANTE,
+            self::SESSION_RECALCULO_OK_PERMISO_EXAMEN,
             'examenes.materias_adeudadas_preparacion',
         ]);
     }
@@ -136,9 +164,13 @@ final class MateriasAdeudadasPreparacion
 
         $data = self::datosGuardados($modulo);
         if ($data === null || (int) ($data['idNivel'] ?? 0) !== (int) $ctx->idNivel) {
-            $data = self::datosGuardados(
-                $modulo === self::MODULO_GESTION ? self::MODULO_LISTADO : self::MODULO_GESTION,
-            );
+            foreach (self::modulosFallbackPrecarga($modulo) as $otro) {
+                $data = self::datosGuardados($otro);
+                if ($data !== null && (int) ($data['idNivel'] ?? 0) === (int) $ctx->idNivel) {
+                    break;
+                }
+                $data = null;
+            }
         }
 
         if ($data === null || (int) ($data['idNivel'] ?? 0) !== (int) $ctx->idNivel) {
@@ -195,32 +227,57 @@ final class MateriasAdeudadasPreparacion
         return $ano !== null ? (int) $ano : null;
     }
 
+    /**
+     * @return list<string>
+     */
+    private static function modulosFallbackPrecarga(string $modulo): array
+    {
+        return match ($modulo) {
+            self::MODULO_GESTION => [self::MODULO_LISTADO],
+            self::MODULO_ACTA_VOLANTE => [self::MODULO_LISTADO, self::MODULO_GESTION],
+            self::MODULO_PERMISO_EXAMEN => [self::MODULO_LISTADO, self::MODULO_GESTION, self::MODULO_ACTA_VOLANTE],
+            default => [self::MODULO_GESTION],
+        };
+    }
+
     private static function datosKey(string $modulo): string
     {
-        return $modulo === self::MODULO_GESTION
-            ? self::SESSION_GESTION
-            : self::SESSION_LISTADO;
+        return match ($modulo) {
+            self::MODULO_GESTION => self::SESSION_GESTION,
+            self::MODULO_ACTA_VOLANTE => self::SESSION_ACTA_VOLANTE,
+            self::MODULO_PERMISO_EXAMEN => self::SESSION_PERMISO_EXAMEN,
+            default => self::SESSION_LISTADO,
+        };
     }
 
     private static function visitOkKey(string $modulo): string
     {
-        return $modulo === self::MODULO_GESTION
-            ? self::SESSION_VISIT_OK_GESTION
-            : self::SESSION_VISIT_OK_LISTADO;
+        return match ($modulo) {
+            self::MODULO_GESTION => self::SESSION_VISIT_OK_GESTION,
+            self::MODULO_ACTA_VOLANTE => self::SESSION_VISIT_OK_ACTA_VOLANTE,
+            self::MODULO_PERMISO_EXAMEN => self::SESSION_VISIT_OK_PERMISO_EXAMEN,
+            default => self::SESSION_VISIT_OK_LISTADO,
+        };
     }
 
     private static function solicitarPrepKey(string $modulo): string
     {
-        return $modulo === self::MODULO_GESTION
-            ? self::SESSION_SOLICITAR_PREP_GESTION
-            : self::SESSION_SOLICITAR_PREP_LISTADO;
+        return match ($modulo) {
+            self::MODULO_GESTION => self::SESSION_SOLICITAR_PREP_GESTION,
+            self::MODULO_ACTA_VOLANTE => self::SESSION_SOLICITAR_PREP_ACTA_VOLANTE,
+            self::MODULO_PERMISO_EXAMEN => self::SESSION_SOLICITAR_PREP_PERMISO_EXAMEN,
+            default => self::SESSION_SOLICITAR_PREP_LISTADO,
+        };
     }
 
     private static function recalculoOkKey(string $modulo): string
     {
-        return $modulo === self::MODULO_GESTION
-            ? self::SESSION_RECALCULO_OK_GESTION
-            : self::SESSION_RECALCULO_OK_LISTADO;
+        return match ($modulo) {
+            self::MODULO_GESTION => self::SESSION_RECALCULO_OK_GESTION,
+            self::MODULO_ACTA_VOLANTE => self::SESSION_RECALCULO_OK_ACTA_VOLANTE,
+            self::MODULO_PERMISO_EXAMEN => self::SESSION_RECALCULO_OK_PERMISO_EXAMEN,
+            default => self::SESSION_RECALCULO_OK_LISTADO,
+        };
     }
 
     /**

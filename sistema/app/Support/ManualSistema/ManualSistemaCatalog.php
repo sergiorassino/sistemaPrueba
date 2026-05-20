@@ -528,7 +528,7 @@ final class ManualSistemaCatalog
                 'modulos'     => [
                     self::mod(
                         'Gestión de materias adeudadas',
-                        'Menú Exámenes → Materias adeudadas',
+                        'Menú Exámenes → Gestión de Materias Adeudadas',
                         'Operación completa por alumno: adeudos, inscripción a mesa, notas e historial.',
                         [
                             'Busque al alumno por nombre o DNI.',
@@ -543,18 +543,6 @@ final class ManualSistemaCatalog
                         'Permiso de estudiantes (2)',
                     ),
                     self::mod(
-                        'Listado de materias adeudadas',
-                        'Menú Exámenes → Listado de materias adeudadas',
-                        'Consulta quién adeuda materias e imprime listados PDF.',
-                        [
-                            'Aplique filtros de curso, materia o estado si la pantalla los ofrece.',
-                            'Revise el listado en pantalla.',
-                            'Genere el PDF para archivo o convocatoria.',
-                        ],
-                        [],
-                        'Permiso de estudiantes (2)',
-                    ),
-                    self::mod(
                         'Borrar inscripciones a examen',
                         'Menú Exámenes → Borrar TODAS las Inscripciones a Examen',
                         'Anula inscripciones cargadas por error (uso restringido).',
@@ -566,6 +554,47 @@ final class ManualSistemaCatalog
                             'Documente internamente por qué se eliminó una inscripción.',
                         ],
                         'Permiso de estudiantes (2)',
+                    ),
+                    self::mod(
+                        'Listado de materias adeudadas',
+                        'Menú Exámenes → Listado de Materias Adeudadas',
+                        'Consulta quién adeuda materias e imprime listados PDF.',
+                        [
+                            'Aplique filtros de curso, materia o estado si la pantalla los ofrece.',
+                            'Revise el listado en pantalla.',
+                            'Genere el PDF para archivo o convocatoria.',
+                        ],
+                        [],
+                        'Permiso de estudiantes (2)',
+                    ),
+                    self::mod(
+                        'Actas volantes de examen',
+                        'Menú Exámenes → Actas Volante',
+                        'Imprime acta PDF por materia del plan y condición de adeudo (previas inscriptas).',
+                        [
+                            'Al ingresar desde el menú, elija turno de examen y año lectivo y confirme el recálculo de condiciones.',
+                            'Revise el listado de actas con alumnos inscriptos (inscri = 1).',
+                            'Marque una, varias o todas las actas.',
+                            'Genere el PDF: una hoja por acta seleccionada.',
+                        ],
+                        [],
+                        'Permiso de exámenes (12)',
+                    ),
+                    self::mod(
+                        'Permiso de examen',
+                        'Menú Exámenes → Permisos de Examen',
+                        'Imprime un permiso PDF por alumno con todas sus materias adeudadas del turno.',
+                        [
+                            'Al ingresar desde el menú, elija turno de examen y año lectivo y confirme el recálculo de condiciones.',
+                            'Indique el número de permiso inicial (por defecto 1) y la fecha que figurará en el documento.',
+                            'Seleccione los alumnos a imprimir.',
+                            'Genere el PDF: una hoja por alumno; el pie muestra la localidad del colegio.',
+                        ],
+                        [
+                            'La fecha del permiso no se guarda en la base de datos; solo se usa en la impresión.',
+                            'Puede seleccionar muchos alumnos: el sistema arma un solo PDF (una hoja por alumno), como en el módulo anterior.',
+                        ],
+                        'Permiso de exámenes (12)',
                     ),
                 ],
             ],

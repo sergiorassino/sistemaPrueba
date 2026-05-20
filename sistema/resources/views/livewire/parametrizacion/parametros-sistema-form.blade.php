@@ -111,19 +111,32 @@
         <div class="mt-8 border-t border-accent-200 pt-6">
             <p class="se-section-title mb-4">Logo (JPG/JPEG/PNG por nivel)</p>
 
-            <div class="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
+            <div class="grid grid-cols-1 items-start gap-6 md:grid-cols-2"
+                 wire:key="logo-preview-{{ md5((string) ($currentLogoUrl ?? '')) }}"
+                 x-data="{ previewUrl: @js($currentLogoUrl) }">
                 <div class="space-y-3">
                     <div>
                         <label class="form-label">Subir logo</label>
                         <input wire:model="logo" type="file" accept="image/jpeg,image/png"
-                               class="form-input mt-1.5 @error('logo') border-red-400 @enderror">
+                               class="form-input mt-1.5 @error('logo') border-red-400 @enderror"
+                               x-on:change="
+                                   const file = $event.target.files?.[0];
+                                   if (! file || ! file.type.startsWith('image/')) return;
+                                   const reader = new FileReader();
+                                   reader.onload = (e) => { previewUrl = e.target?.result ?? null };
+                                   reader.readAsDataURL(file);
+                               ">
+                        <p wire:loading wire:target="logo" class="mt-1 text-xs font-medium text-primary-700">
+                            Subiendo archivo… espere a que termine antes de pulsar Guardar.
+                        </p>
                         @error('logo') <p class="form-error">{{ $message }}</p> @enderror
-                        <p class="mt-1 text-xs text-neutral-500">JPG/JPEG/PNG · máx. 2&nbsp;MB.</p>
+                        <p class="mt-1 text-xs text-neutral-500">JPG/JPEG/PNG · máx. 2&nbsp;MB · se guarda para el nivel activo ({{ $nivelNombre !== '' ? $nivelNombre : '—' }}).</p>
                     </div>
 
                     <label class="inline-flex cursor-pointer items-center gap-2">
-                        <input type="checkbox" wire:model="removeLogo"
-                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                        <input type="checkbox" wire:model.live="removeLogo"
+                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
+                               x-on:change="previewUrl = $event.target.checked ? null : @js($currentLogoUrl)">
                         <span class="text-xs text-neutral-600">Quitar logo actual</span>
                     </label>
                 </div>
@@ -131,13 +144,8 @@
                 <div class="space-y-2">
                     <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Vista previa</p>
                     <div class="flex min-h-[120px] items-center justify-center rounded-2xl border border-accent-200 bg-white p-4">
-                        @if ($logo)
-                            <img src="{{ $logo->temporaryUrl() }}" alt="Logo (preview)" class="max-h-28 object-contain">
-                        @elseif ($currentLogoUrl)
-                            <img src="{{ $currentLogoUrl }}" alt="Logo (actual)" class="max-h-28 object-contain">
-                        @else
-                            <span class="text-xs text-neutral-400">Sin logo</span>
-                        @endif
+                        <img x-show="previewUrl" x-bind:src="previewUrl" alt="Logo" class="max-h-28 object-contain">
+                        <span x-show="! previewUrl" class="text-xs text-neutral-400">Sin logo</span>
                     </div>
                 </div>
             </div>

@@ -58,4 +58,17 @@ final class MateriasAdeudadasFiltros
             default => '—',
         };
     }
+
+    /** Texto del encabezado «Alumnos condición» en actas volantes de examen (previas). */
+    public static function tituloCondicionActa(?string $condicion): string
+    {
+        $cond = strtoupper(trim((string) $condicion));
+
+        return match ($cond) {
+            'PR' => 'Previa',
+            'EQ' => 'Equivalencias',
+            'TM' => 'Regular (Tercer Materia)',
+            default => $cond !== '' ? $cond : 'Examen',
+        };
+    }
 }

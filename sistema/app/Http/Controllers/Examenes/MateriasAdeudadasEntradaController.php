@@ -32,4 +32,26 @@ class MateriasAdeudadasEntradaController extends Controller
 
         return redirect()->route('examenes.materias-adeudadas.gestion');
     }
+
+    public function actaVolante(): RedirectResponse
+    {
+        abort_unless(tienePermiso(12), 403, 'Sin permiso para el módulo de exámenes.');
+
+        MateriasAdeudadasPreparacion::solicitarFormularioPreparacion(
+            MateriasAdeudadasPreparacion::MODULO_ACTA_VOLANTE,
+        );
+
+        return redirect()->route('examenes.acta-volante-previos');
+    }
+
+    public function permisoExamen(): RedirectResponse
+    {
+        abort_unless(tienePermiso(12), 403, 'Sin permiso para el módulo de exámenes.');
+
+        MateriasAdeudadasPreparacion::solicitarFormularioPreparacion(
+            MateriasAdeudadasPreparacion::MODULO_PERMISO_EXAMEN,
+        );
+
+        return redirect()->route('examenes.permiso-examen');
+    }
 }

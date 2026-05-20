@@ -133,13 +133,13 @@
         <table class="bloque-meta" cellspacing="0" cellpadding="0">
             <tr>
                 <td class="meta-izq">
-                    <div><span class="lbl">Alumnos condición:</span> {{ $condicionLabel ?? '' }}</div>
+                    <div><span class="lbl">Alumnos condición:</span> {{ $acta['condicionLabel'] ?? $condicionLabel ?? '' }}</div>
                     <div><span class="lbl">Materia:</span> <span class="val">{{ $acta['materiaLabel'] ?? '' }}</span></div>
                     <div><span class="lbl">Curso:</span> <span class="val">{{ $acta['cursoLabel'] ?? '' }}</span></div>
                 </td>
                 <td class="meta-der">
                     <div class="caja-acta-wrap">
-                        <div class="caja-acta">Acta Volante de Coloquios</div>
+                        <div class="caja-acta">{{ $tituloCajaActa ?? 'Acta Volante de Coloquios' }}</div>
                     </div>
                     <div class="meta-fecha">Fecha: ........../.........../..........</div>
                     <div class="meta-fecha">Tomo: ...........&nbsp;&nbsp;Folio: ...........</div>

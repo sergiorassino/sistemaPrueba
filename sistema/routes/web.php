@@ -19,8 +19,12 @@ use App\Http\Controllers\ListadoCursoPdfController;
 use App\Http\Controllers\Push\SuscribirController;
 use App\Http\Controllers\Horarios\HorarioCursoPdfController;
 use App\Http\Controllers\Horarios\HorarioProfesorPdfController;
+use App\Http\Controllers\Examenes\ActaVolantePreviosPdfController;
 use App\Http\Controllers\Examenes\MateriasAdeudadasEntradaController;
 use App\Http\Controllers\Examenes\MateriasAdeudadasPdfController;
+use App\Http\Controllers\Examenes\PermisoExamenPdfController;
+use App\Livewire\Examenes\ActaVolantePreviosIndex;
+use App\Livewire\Examenes\PermisoExamenIndex;
 use App\Livewire\Examenes\BorrarInscripcionesExamenIndex;
 use App\Livewire\Examenes\MateriasAdeudadasCargaManualIndex;
 use App\Livewire\Examenes\MateriasAdeudadasInscripcionIndex;
@@ -237,6 +241,20 @@ Route::middleware(['auth', 'school.context'])->group(function () {
             ->name('examenes.materias-adeudadas.gestion.historial');
         Route::get('/examenes/borrar-inscripciones', BorrarInscripcionesExamenIndex::class)
             ->name('examenes.borrar-inscripciones');
+        Route::get('/examenes/actas-volantes-previos/entrar', [MateriasAdeudadasEntradaController::class, 'actaVolante'])
+            ->name('examenes.acta-volante-previos.entrar');
+        Route::get('/examenes/actas-volantes-previos', ActaVolantePreviosIndex::class)
+            ->name('examenes.acta-volante-previos');
+        Route::get('/examenes/actas-volantes-previos/pdf', ActaVolantePreviosPdfController::class)
+            ->name('examenes.acta-volante-previos.pdf');
+        Route::get('/examenes/permiso-examen/entrar', [MateriasAdeudadasEntradaController::class, 'permisoExamen'])
+            ->name('examenes.permiso-examen.entrar');
+        Route::get('/examenes/permiso-examen', PermisoExamenIndex::class)
+            ->name('examenes.permiso-examen');
+        Route::post('/examenes/permiso-examen/pdf', [PermisoExamenPdfController::class, 'preparar'])
+            ->name('examenes.permiso-examen.pdf.preparar');
+        Route::get('/examenes/permiso-examen/pdf', PermisoExamenPdfController::class)
+            ->name('examenes.permiso-examen.pdf');
     });
 
     Route::get('/horarios/carga', HorariosCargaIndex::class)

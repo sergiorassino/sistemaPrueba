@@ -113,6 +113,7 @@ class ParametrosSistemaForm extends Component
 
         /** @var Ento $ento */
         $ento = Ento::query()->firstOrNew(['idNivel' => $idNivel]);
+        $ento->idNivel = $idNivel;
 
         $payload = [
             'insti' => ($v = trim($this->insti)) !== '' ? $v : null,
@@ -150,6 +151,12 @@ class ParametrosSistemaForm extends Component
             }
             $filename = 'logo.' . $ext;
             $newPath = $this->logo->storeAs($dir, $filename, 'public');
+
+            if (! is_string($newPath) || $newPath === '' || ! Storage::disk('public')->exists($newPath)) {
+                $this->addError('logo', 'No se pudo guardar el archivo del logo. Verifique permisos en storage/app/public o ejecute php artisan storage:link.');
+
+                return;
+            }
 
             if ($old !== '' && $old !== $newPath) {
                 Storage::disk('public')->delete($old);

@@ -322,6 +322,17 @@ function bindCalifCargaTablas() {
 }
 
 /**
+ * Alinea cabecera y cuerpo cuando el tbody tiene barra vertical (scrollbar-gutter / overflow).
+ */
+function syncCierreHeadScrollbarGutter(head, body) {
+    const gutter =
+        body.scrollHeight > body.clientHeight
+            ? Math.max(0, body.offsetWidth - body.clientWidth)
+            : 0;
+    head.style.paddingRight = `${gutter}px`;
+}
+
+/**
  * Cierre anual: cabecera de columnas fija; scroll vertical/horizontal en el cuerpo de la grilla.
  */
 function bindCierreAnualGrillas() {
@@ -340,9 +351,16 @@ function bindCierreAnualGrillas() {
         if (head) {
             const syncFromBody = () => {
                 head.scrollLeft = body.scrollLeft;
+                syncCierreHeadScrollbarGutter(head, body);
             };
             body.addEventListener('scroll', syncFromBody, { passive: true });
             syncFromBody();
+            if (typeof ResizeObserver !== 'undefined') {
+                const ro = new ResizeObserver(syncFromBody);
+                ro.observe(body);
+                ro.observe(head);
+            }
+            window.addEventListener('resize', syncFromBody, { passive: true });
         }
 
         grilla.addEventListener(

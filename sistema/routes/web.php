@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use App\Http\Controllers\Alumnos\CalificacionesController;
 use App\Http\Controllers\Alumnos\InformeInasistenciasController;
@@ -61,6 +61,11 @@ use App\Livewire\CalificacionesSecundario\PlanillaResumenCalificacionesSecundari
 use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\CierreAnualIndex;
 use App\Livewire\CalificacionesSecundario\CierreAnualHistorial;
+use App\Http\Controllers\MatrizAnaliticos\AnaliticoFrentePdfController;
+use App\Http\Controllers\MatrizAnaliticos\AnaliticoReversoPdfController;
+use App\Livewire\MatrizAnaliticos\LibroMatrizDatosAdicionales;
+use App\Livewire\MatrizAnaliticos\LibroMatrizEditar;
+use App\Livewire\MatrizAnaliticos\LibroMatrizIndex;
 use App\Livewire\BoletinesSecundario\BoletinesSecundarioIndex;
 use App\Livewire\CalificacionesSecundario\SincroGe;
 use App\Livewire\Comunicaciones\BandejaGestion;
@@ -302,6 +307,27 @@ Route::middleware(['auth', 'school.context'])->group(function () {
         ->middleware('permiso:15')
         ->whereNumber('idLegajos')
         ->name('calificacionesSecundario.cierreAnual.historial');
+
+    // Libro matriz / pase / analítico
+    Route::get('/matriz-analiticos/libro-matriz', LibroMatrizIndex::class)
+        ->middleware('permiso:16')
+        ->name('matrizAnaliticos.libroMatriz');
+    Route::get('/matriz-analiticos/libro-matriz/{idLegajos}/editar', LibroMatrizEditar::class)
+        ->middleware('permiso:16')
+        ->whereNumber('idLegajos')
+        ->name('matrizAnaliticos.libroMatriz.editar');
+    Route::get('/matriz-analiticos/libro-matriz/{idLegajos}/datos-adicionales', LibroMatrizDatosAdicionales::class)
+        ->middleware('permiso:16')
+        ->whereNumber('idLegajos')
+        ->name('matrizAnaliticos.libroMatriz.datosAdicionales');
+    Route::get('/matriz-analiticos/libro-matriz/{idLegajos}/pdf-frente', AnaliticoFrentePdfController::class)
+        ->middleware('permiso:16')
+        ->whereNumber('idLegajos')
+        ->name('matrizAnaliticos.libroMatriz.pdfFrente');
+    Route::get('/matriz-analiticos/libro-matriz/{idLegajos}/pdf-reverso', AnaliticoReversoPdfController::class)
+        ->middleware('permiso:16')
+        ->whereNumber('idLegajos')
+        ->name('matrizAnaliticos.libroMatriz.pdfReverso');
 
     // Boletines / informe de progreso escolar (nivel secundario)
     Route::get('/boletines-secundario', BoletinesSecundarioIndex::class)

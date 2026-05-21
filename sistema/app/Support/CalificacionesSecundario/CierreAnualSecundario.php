@@ -320,6 +320,12 @@ final class CierreAnualSecundario
                     $feb = trim((string) ($fila->feb ?? ''));
 
                     if (self::estaAprobadaEnFebrero($calif, $dic, $feb)) {
+                        if (! self::necesitaPaseAMatriz($fila)) {
+                            $omitidos++;
+
+                            continue;
+                        }
+
                         $notaFinal = self::notaFinalCierre($calif, $dic, $feb, self::MES_FEBRERO);
                         $cond = self::condMatriculaParaFila($fila);
 
@@ -346,7 +352,7 @@ final class CierreAnualSecundario
                         continue;
                     }
 
-                    if ((int) ($fila->apro ?? 0) === 2) {
+                    if (self::yaMarcadaComoPrevia($fila)) {
                         $omitidos++;
 
                         continue;
@@ -439,8 +445,31 @@ final class CierreAnualSecundario
                 'c.dic',
                 'c.feb',
                 'c.apro',
+                'c.condAdeuda',
                 'co.condicion as condicion_matricula',
             ]);
+    }
+
+    /** Fila adeudada como previa (cierre febrero ya ejecutado). */
+    private static function yaMarcadaComoPrevia(object $fila): bool
+    {
+        if ((int) ($fila->apro ?? 0) !== 1) {
+            return false;
+        }
+
+        return strtoupper(trim((string) ($fila->condAdeuda ?? ''))) === 'PR';
+    }
+
+    /**
+     * Aún no está cerrada al matriz como aprobada (incluye previa PR que debe promoverse).
+     */
+    private static function necesitaPaseAMatriz(object $fila): bool
+    {
+        if ((int) ($fila->apro ?? 0) !== 2) {
+            return true;
+        }
+
+        return trim((string) ($fila->condAdeuda ?? '')) !== '';
     }
 
     private static function condMatriculaParaFila(object $fila): string

@@ -23,6 +23,35 @@ alwaysApply: true
 
 - **Intención**: el listado arranca a la izquierda y, si no entra, aparece scroll horizontal; nunca debe quedar oculto por el sidebar.
 
+## Grillas angostas (pocas columnas o ancho acotado)
+
+Cuando la grilla **no** ocupa todo el ancho del contenedor (tabla con `width: max-content`, `w-max`, columnas en `rem` fijas, `.gf` con `min-width` menor que el card, etc.), debe quedar **centrada** horizontalmente.
+
+- Envolver el scroll + grilla en un contenedor con clase **`se-grid-angosta-wrap`** (definida en `resources/css/app.css`).
+- Ese contenedor combina scroll vertical/horizontal del listado (`overflow-auto`, p. ej. `se-matriz-list-scroll` o `w-full overflow-x-auto`) con `display: flex; justify-content: center`.
+- El hijo directo (tabla, `.gf`, etc.) lleva `flex-shrink: 0` vía la regla CSS; no usar `justify-start` en grillas angostas.
+- La **barra de búsqueda/filtros** asociada a esa grilla angosta también va centrada: `se-matriz-list-toolbar--angosta` (o `justify-center` equivalente en el toolbar del módulo).
+
+```blade
+<div class="se-cierre-anual-body-wrap se-matriz-list-scroll se-grid-angosta-wrap" tabindex="0">
+    <table class="se-matriz-list-tabla se-matriz-list-tabla--cert-alu-reg table-fixed">
+        ...
+    </table>
+</div>
+```
+
+Variante planilla `.gf-*`:
+
+```blade
+<div class="w-full overflow-x-auto se-grid-angosta-wrap">
+    <div class="gf min-w-[32rem]">
+        <!-- gf-head / gf-row -->
+    </div>
+</div>
+```
+
+- **Grillas anchas** (muchas columnas, `min-w` grande, riesgo de quedar bajo el sidebar): seguir con `justify-start` y el patrón de la sección anterior; **no** centrar.
+
 ## Sidebar
 
 - Al cambiar el ancho del sidebar, asegurar que el contenido principal se desplace (o ajuste su ancho) de forma consistente.

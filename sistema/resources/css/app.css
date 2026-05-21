@@ -406,6 +406,9 @@
         @apply flex shrink-0 flex-wrap items-center gap-2 rounded-xl border bg-white px-2 py-1.5 shadow-sm;
         border-color: var(--color-accent-200);
     }
+    .se-matriz-list-toolbar--angosta {
+        @apply justify-center;
+    }
     .se-matriz-list-toolbar .form-label {
         @apply mb-0 text-[10px];
     }
@@ -425,6 +428,23 @@
     }
     .se-matriz-list-tabla {
         @apply w-full min-w-full border-collapse border-spacing-0 text-[11px] leading-tight text-gray-900;
+    }
+    /* Certificado alumno regular: tabla compacta, sin estirar al 100% del card */
+    .se-matriz-list-tabla--cert-alu-reg,
+    .se-matriz-list-tabla--cert-asist-prof {
+        width: max-content;
+        max-width: 100%;
+        min-width: 0;
+    }
+    /* Grilla angosta (ancho al contenido o min-width acotado): centrada en el contenedor */
+    .se-grid-angosta-wrap {
+        @apply flex justify-center;
+    }
+    .se-grid-angosta-wrap > .gf,
+    .se-grid-angosta-wrap > table,
+    .se-grid-angosta-wrap > .se-matriz-list-tabla--cert-alu-reg,
+    .se-grid-angosta-wrap > .se-matriz-list-tabla--cert-asist-prof {
+        flex-shrink: 0;
     }
     .se-matriz-list-tabla thead th {
         position: sticky;

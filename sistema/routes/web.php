@@ -61,8 +61,20 @@ use App\Livewire\CalificacionesSecundario\PlanillaResumenCalificacionesSecundari
 use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\CierreAnualIndex;
 use App\Livewire\CalificacionesSecundario\CierreAnualHistorial;
+use App\Http\Controllers\Certificados\CertificadoAlumnoRegularPdfController;
+use App\Http\Controllers\Certificados\CertificadoEstudiosTramitePdfController;
+use App\Http\Controllers\Certificados\CertificadoAsistenciaProfesorPdfController;
+use App\Http\Controllers\Certificados\ConstanciaDocumentosPdfController;
+use App\Http\Controllers\Certificados\PaseParcialPdfController;
+use App\Http\Controllers\Certificados\SolicitudDePasePdfController;
 use App\Http\Controllers\MatrizAnaliticos\AnaliticoFrentePdfController;
 use App\Http\Controllers\MatrizAnaliticos\AnaliticoReversoPdfController;
+use App\Livewire\Certificados\CertificadoAlumnoRegularIndex;
+use App\Livewire\Certificados\CertificadoEstudiosTramiteIndex;
+use App\Livewire\Certificados\CertificadoAsistenciaProfesorIndex;
+use App\Livewire\Certificados\ConstanciaDocumentosIndex;
+use App\Livewire\Certificados\PaseParcialIndex;
+use App\Livewire\Certificados\SolicitudDePaseIndex;
 use App\Livewire\MatrizAnaliticos\LibroMatrizDatosAdicionales;
 use App\Livewire\MatrizAnaliticos\LibroMatrizEditar;
 use App\Livewire\MatrizAnaliticos\LibroMatrizIndex;
@@ -328,6 +340,60 @@ Route::middleware(['auth', 'school.context'])->group(function () {
         ->middleware('permiso:16')
         ->whereNumber('idLegajos')
         ->name('matrizAnaliticos.libroMatriz.pdfReverso');
+
+    // Certificados — alumno regular
+    Route::get('/certificados/alumno-regular', CertificadoAlumnoRegularIndex::class)
+        ->middleware('permiso:17')
+        ->name('certificados.alumnoRegular');
+    Route::get('/certificados/alumno-regular/{idLegajos}/pdf', CertificadoAlumnoRegularPdfController::class)
+        ->middleware('permiso:17')
+        ->whereNumber('idLegajos')
+        ->name('certificados.alumnoRegular.pdf');
+
+    // Certificados — estudios en trámite
+    Route::get('/certificados/estudios-tramite', CertificadoEstudiosTramiteIndex::class)
+        ->middleware('permiso:18')
+        ->name('certificados.estudiosTramite');
+    Route::get('/certificados/estudios-tramite/{idLegajos}/pdf', CertificadoEstudiosTramitePdfController::class)
+        ->middleware('permiso:18')
+        ->whereNumber('idLegajos')
+        ->name('certificados.estudiosTramite.pdf');
+
+    // Certificados — constancia de documentos
+    Route::get('/certificados/constancia-documentos', ConstanciaDocumentosIndex::class)
+        ->middleware('permiso:19')
+        ->name('certificados.constanciaDocumentos');
+    Route::get('/certificados/constancia-documentos/{idLegajos}/pdf', ConstanciaDocumentosPdfController::class)
+        ->middleware('permiso:19')
+        ->whereNumber('idLegajos')
+        ->name('certificados.constanciaDocumentos.pdf');
+
+    // Certificados — asistencia del profesor
+    Route::get('/certificados/asistencia-profesor', CertificadoAsistenciaProfesorIndex::class)
+        ->middleware('permiso:20')
+        ->name('certificados.asistenciaProfesor');
+    Route::get('/certificados/asistencia-profesor/{idProfesores}/pdf', CertificadoAsistenciaProfesorPdfController::class)
+        ->middleware('permiso:20')
+        ->whereNumber('idProfesores')
+        ->name('certificados.asistenciaProfesor.pdf');
+
+    // Certificados — pase parcial
+    Route::get('/certificados/pase-parcial', PaseParcialIndex::class)
+        ->middleware('permiso:21')
+        ->name('certificados.paseParcial');
+    Route::get('/certificados/pase-parcial/{idLegajos}/pdf', PaseParcialPdfController::class)
+        ->middleware('permiso:21')
+        ->whereNumber('idLegajos')
+        ->name('certificados.paseParcial.pdf');
+
+    // Certificados — solicitud de pase
+    Route::get('/certificados/solicitud-de-pase', SolicitudDePaseIndex::class)
+        ->middleware('permiso:22')
+        ->name('certificados.solicitudDePase');
+    Route::get('/certificados/solicitud-de-pase/{idLegajos}/pdf', SolicitudDePasePdfController::class)
+        ->middleware('permiso:22')
+        ->whereNumber('idLegajos')
+        ->name('certificados.solicitudDePase.pdf');
 
     // Boletines / informe de progreso escolar (nivel secundario)
     Route::get('/boletines-secundario', BoletinesSecundarioIndex::class)

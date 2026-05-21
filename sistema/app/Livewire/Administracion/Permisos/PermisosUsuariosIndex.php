@@ -36,7 +36,7 @@ class PermisosUsuariosIndex extends Component
     private function cargarProfesor(?int $id): void
     {
         $this->resetValidation();
-        $this->permisos = [];
+        $this->reset('permisos');
         $this->profesorId = null;
 
         if (! $id) {
@@ -51,7 +51,7 @@ class PermisosUsuariosIndex extends Component
         $this->profesorId = (int) $profesor->id;
 
         $maxOrden = (int) (PermisoIa::query()->max('orden') ?? 0);
-        $cadena = (string) ($profesor->permisos_ia ?? '');
+        $cadena = trim((string) ($profesor->permisos_ia ?? ''));
         if ($cadena === '') {
             $cadena = str_repeat('0', $maxOrden + 1);
         } elseif (strlen($cadena) <= $maxOrden) {

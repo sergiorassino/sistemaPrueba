@@ -84,7 +84,7 @@
                         <p class="mt-2 text-xs text-neutral-500">Los cambios se guardan al marcar o desmarcar cada permiso.</p>
                     </div>
 
-                    <div class="mt-6 space-y-6">
+                    <div class="mt-6 space-y-6" wire:key="permisos-panel-{{ $profesorId }}">
                         @foreach ($porTema as $tema => $items)
                             <section class="rounded-2xl border border-accent-200 bg-white">
                                 <div class="flex items-center justify-between border-b border-accent-200 bg-accent-50 px-4 py-3">
@@ -97,6 +97,7 @@
                                              wire:loading.class="opacity-60"
                                              wire:target="togglePermiso">
                                             <input type="checkbox"
+                                                   wire:key="perm-{{ $profesorId }}-{{ (int) $perm->orden }}"
                                                    class="mt-1 rounded border-accent-300 text-primary-600 focus:ring-primary-500"
                                                    wire:click="togglePermiso({{ (int) $perm->orden }})"
                                                    wire:loading.attr="disabled"

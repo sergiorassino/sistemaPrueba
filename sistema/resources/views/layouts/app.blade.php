@@ -137,6 +137,7 @@
         docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.legajos-profesor')) ? 'true' : 'false' }},
         examenes: {{ str_starts_with($route ?? '', 'examenes.') ? 'true' : 'false' }},
         matrizAnaliticos: {{ str_starts_with($route ?? '', 'matrizAnaliticos.') ? 'true' : 'false' }},
+        certificados: {{ str_starts_with($route ?? '', 'certificados.') ? 'true' : 'false' }},
         horarios: {{ str_starts_with($route ?? '', 'horarios.') ? 'true' : 'false' }},
         comunicaciones: false,
     },
@@ -882,6 +883,116 @@
                     </svg>
                     <span class="truncate">Libro Matriz / Pase / Analítico</span>
                 </a>
+            </div>
+        @endif
+
+        @if (tienePermiso(17) || tienePermiso(18) || tienePermiso(19) || tienePermiso(20) || tienePermiso(21))
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    :class="(groups.certificados && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('certificados')"
+                    title="Certificados">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">CERTIFICADOS</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.certificados ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.certificados && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                @if (tienePermiso(17))
+                    <a href="{{ route('certificados.alumnoRegular') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => ($route ?? '') === 'certificados.alumnoRegular',
+                       ])
+                       title="Constancia de Alumno Regular">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Constancia de Alumno Regular</span>
+                    </a>
+                @endif
+                @if (tienePermiso(18))
+                    <a href="{{ route('certificados.estudiosTramite') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => ($route ?? '') === 'certificados.estudiosTramite',
+                       ])
+                       title="Constancia de Certificado en Trámite">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Constancia de Certificado en Trámite</span>
+                    </a>
+                @endif
+                @if (tienePermiso(19))
+                    <a href="{{ route('certificados.constanciaDocumentos') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => ($route ?? '') === 'certificados.constanciaDocumentos',
+                       ])
+                       title="Constancia de Documentos">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Constancia de Documentos</span>
+                    </a>
+                @endif
+                @if (tienePermiso(20))
+                    <a href="{{ route('certificados.asistenciaProfesor') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => ($route ?? '') === 'certificados.asistenciaProfesor',
+                       ])
+                       title="Certificado de Asistencia del Profesor">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Asistencia del Profesor</span>
+                    </a>
+                @endif
+                @if (tienePermiso(21))
+                    <a href="{{ route('certificados.paseParcial') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => ($route ?? '') === 'certificados.paseParcial',
+                       ])
+                       title="Pase Parcial">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Pase Parcial</span>
+                    </a>
+                @endif
+                @if (tienePermiso(22))
+                    <a href="{{ route('certificados.solicitudDePase') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => ($route ?? '') === 'certificados.solicitudDePase',
+                       ])
+                       title="Solicitud de Pase">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Solicitud de Pase</span>
+                    </a>
+                @endif
             </div>
         @endif
 

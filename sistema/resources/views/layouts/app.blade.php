@@ -600,6 +600,21 @@
                     </svg>
                     <span class="truncate">Actas volantes coloquio</span>
                 </a>
+                @if (tienePermiso(15))
+                <a href="{{ route('calificacionesSecundario.cierreAnual') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.cierreAnual'
+                           || ($route ?? '') === 'calificacionesSecundario.cierreAnual.historial',
+                   ])
+                   title="Cierre anual (secundario)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12l2 2 4-4m5-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="truncate">Cierre anual</span>
+                </a>
+                @endif
             </div>
 
         {{-- Seguimiento disciplinario --}}

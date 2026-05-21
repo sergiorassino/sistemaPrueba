@@ -1,4 +1,4 @@
-﻿<div class="se-page">
+<div class="se-page">
     <section class="se-hero">
         <div class="se-hero-inner">
             <div class="min-w-0 space-y-3">

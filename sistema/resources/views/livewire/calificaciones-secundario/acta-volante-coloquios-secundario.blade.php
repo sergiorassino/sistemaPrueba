@@ -1,4 +1,4 @@
-﻿{{-- Actas volantes de coloquio: una hoja PDF por materia con alumnos elegibles. --}}
+{{-- Actas volantes de coloquio: una hoja PDF por materia con alumnos elegibles. --}}
 <div class="mx-auto w-full max-w-4xl space-y-6">
     <section class="se-hero">
         <div class="se-hero-inner">

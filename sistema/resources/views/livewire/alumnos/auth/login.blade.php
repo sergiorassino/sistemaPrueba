@@ -8,12 +8,20 @@
             </div>
         @endif
 
-        <form wire:submit="login" class="space-y-3" autocomplete="on">
+        <noscript>
+            <p class="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+                Se requiere JavaScript activo para iniciar sesión de forma segura.
+            </p>
+        </noscript>
+
+        <form wire:submit.prevent="login"
+              class="space-y-3"
+              autocomplete="on"
+              x-on:submit.prevent>
             <div>
                 <label class="form-label text-xs" for="dni">DNI (usuario)</label>
                 <input wire:model.live="dni"
                        id="dni"
-                       name="username"
                        type="text"
                        inputmode="numeric"
                        autocomplete="username"
@@ -29,7 +37,6 @@
                 <div class="relative">
                     <input wire:model.live="pwrd"
                            id="pwrd"
-                           name="password"
                            x-bind:type="showPassword ? 'text' : 'password'"
                            autocomplete="current-password"
                            class="form-input text-sm py-2 pl-2 pr-10 @error('pwrd') border-red-400 @enderror">

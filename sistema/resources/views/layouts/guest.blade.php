@@ -87,5 +87,12 @@
 </div>
 
 @livewireScripts
+<script>
+    if (window.seSidebarPurgeLegacyGroupsStorage) {
+        window.seSidebarPurgeLegacyGroupsStorage();
+    } else {
+        try { localStorage.removeItem('sidebarGroups'); } catch (e) {}
+    }
+</script>
 </body>
 </html>

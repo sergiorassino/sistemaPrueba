@@ -1,4 +1,4 @@
-﻿<style>
+<style>
         /* A4 apaisado: margen superior amplio para que el header no quede en zona no imprimible */
         @page { margin: 15mm 7mm 6mm 7mm; }
         body {

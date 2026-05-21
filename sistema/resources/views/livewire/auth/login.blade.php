@@ -9,13 +9,21 @@
             </div>
         @endif
 
-        <form wire:submit="login" class="mt-6 space-y-4" autocomplete="on">
-            {{-- DNI --}}
+        <noscript>
+            <p class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+                Se requiere JavaScript activo para iniciar sesión de forma segura.
+            </p>
+        </noscript>
+
+        <form wire:submit.prevent="login"
+              class="mt-6 space-y-4"
+              autocomplete="on"
+              x-on:submit.prevent>
+            {{-- DNI: sin name= para que un envío HTML accidental no lleve datos en la URL --}}
             <div>
                 <label class="se-auth-label" for="dni">DNI (usuario)</label>
                 <input wire:model.live="dni"
                        id="dni"
-                       name="username"
                        type="text"
                        inputmode="numeric"
                        autocomplete="username"
@@ -32,7 +40,6 @@
                 <div class="relative">
                     <input wire:model.live="pwrd"
                            id="pwrd"
-                           name="password"
                            x-bind:type="showPassword ? 'text' : 'password'"
                            autocomplete="current-password"
                            class="se-auth-input py-2.5 pl-3 pr-11 @error('pwrd') !border-red-400 ring-2 ring-red-200/80 @enderror">

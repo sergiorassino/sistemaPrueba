@@ -1,4 +1,4 @@
-﻿@php
+@php
     $tituloDocumento = $tituloDocumento ?? 'Consulta de Calificaciones';
     $mostrarMarcaAgua = $mostrarMarcaAgua ?? true;
     $mostrarFirmas = $mostrarFirmas ?? false;

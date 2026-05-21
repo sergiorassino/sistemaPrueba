@@ -321,7 +321,56 @@ function bindCalifCargaTablas() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => queueMicrotask(bindCalifCargaTablas));
+/**
+ * Cierre anual: cabecera de columnas fija; scroll vertical/horizontal en el cuerpo de la grilla.
+ */
+function bindCierreAnualGrillas() {
+    document.querySelectorAll('.se-cierre-anual-grilla').forEach((grilla) => {
+        if (grilla._seCierreBound) {
+            return;
+        }
+        grilla._seCierreBound = true;
+
+        const head = grilla.querySelector('[data-se-cierre-head]');
+        const body = grilla.querySelector('[data-se-cierre-body]');
+        if (!body) {
+            return;
+        }
+
+        if (head) {
+            const syncFromBody = () => {
+                head.scrollLeft = body.scrollLeft;
+            };
+            body.addEventListener('scroll', syncFromBody, { passive: true });
+            syncFromBody();
+        }
+
+        grilla.addEventListener(
+            'wheel',
+            (e) => {
+                if (body.scrollHeight <= body.clientHeight) {
+                    return;
+                }
+                if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) {
+                    return;
+                }
+                const maxTop = body.scrollHeight - body.clientHeight;
+                const next = Math.min(maxTop, Math.max(0, body.scrollTop + e.deltaY));
+                if (next === body.scrollTop) {
+                    return;
+                }
+                e.preventDefault();
+                body.scrollTop = next;
+            },
+            { passive: false },
+        );
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    queueMicrotask(bindCalifCargaTablas);
+    queueMicrotask(bindCierreAnualGrillas);
+});
 
 document.addEventListener('alpine:initialized', () => {
     scheduleSeShellPeekBootAfterAlpine();
@@ -393,6 +442,7 @@ function triggerSeSidebarOverflowSync() {
 
 document.addEventListener('livewire:navigated', () => {
     queueMicrotask(bindCalifCargaTablas);
+    queueMicrotask(bindCierreAnualGrillas);
     queueMicrotask(triggerSeSidebarOverflowSync);
     window.setTimeout(triggerSeSidebarOverflowSync, 200);
 });
@@ -405,6 +455,7 @@ document.addEventListener('livewire:init', () => {
     if (L && typeof L.hook === 'function') {
         L.hook('morph.updated', () => {
             queueMicrotask(bindCalifCargaTablas);
+            queueMicrotask(bindCierreAnualGrillas);
             queueMicrotask(triggerSeSidebarOverflowSync);
         });
     }

@@ -18,6 +18,29 @@ class Login extends Component
 
     public string $pwrd = '';
 
+    public function mount(): void
+    {
+        $request = request();
+
+        if ($request->hasAny(['password', 'pwrd'])) {
+            session()->flash(
+                'error',
+                'Por seguridad no se puede iniciar sesión con contraseña en la dirección web. Ingrese sus datos nuevamente.',
+            );
+
+            $this->redirectRoute('alumnos.login', navigate: false);
+
+            return;
+        }
+
+        if ($this->dni === '' && $request->filled('username')) {
+            $dni = preg_replace('/\D+/', '', (string) $request->query('username'));
+            if ($dni !== '') {
+                $this->dni = $dni;
+            }
+        }
+    }
+
     public function updatedDni(): void
     {
         $this->resetErrorBag('dni');

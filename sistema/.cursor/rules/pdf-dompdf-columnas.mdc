@@ -1,12 +1,14 @@
 ---
-description: PDFs con DomPDF — anchos de columna en tablas Blade
+description: PDFs legacy con DomPDF — anchos de columna en tablas Blade
 globs:
   - resources/views/pdf/**
   - resources/views/listados/pdf/**
 alwaysApply: false
 ---
 
-# PDFs DomPDF — columnas con distinto ancho
+# PDFs legacy DomPDF — columnas con distinto ancho
+
+Solo aplica a PDFs **ya existentes** en DomPDF. Los **PDFs nuevos** usan TCPDF: ver `.cursor/rules/pdf-tcpdf-nuevos.mdc`.
 
 Leer **`docs/05-preferencias-y-convenciones.md` §8** antes de crear o modificar tablas en PDF.
 

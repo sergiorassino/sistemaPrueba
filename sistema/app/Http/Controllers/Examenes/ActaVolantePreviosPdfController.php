@@ -4,20 +4,24 @@ namespace App\Http\Controllers\Examenes;
 
 use App\Http\Controllers\Controller;
 use App\Support\Examenes\ActaVolantePrevios;
+use App\Support\Examenes\ActaVolantePreviosTcpdf;
 use App\Support\Examenes\MateriasAdeudadasPreparacion;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class ActaVolantePreviosPdfController extends Controller
 {
-    public function __invoke(Request $request)
+    public function __invoke(Request $request): Response|RedirectResponse
     {
         abort_unless(tienePermiso(12), 403, 'Sin permiso para el módulo de exámenes.');
 
-        @ini_set('memory_limit', '512M');
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(300);
+        }
 
         $key = 'acta-volante-previos-pdf:'.(auth()->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 30)) {
@@ -77,17 +81,35 @@ class ActaVolantePreviosPdfController extends Controller
             $instiNombre = 'Institución educativa';
         }
 
-        $pdf = Pdf::loadView('pdf.acta-volante-coloquios', [
-            'instiNombre' => mb_strtoupper($instiNombre, 'UTF-8'),
-            'tituloCajaActa' => 'Acta Volante de Exámenes',
-            'actas' => $payload['actas'],
-            'filasPorActa' => ActaVolantePrevios::FILAS_POR_ACTA,
-        ])->setPaper('a4', 'portrait');
+        $pdf = ActaVolantePreviosTcpdf::generar(
+            $payload['actas'],
+            [
+                'instiNombre' => mb_strtoupper($instiNombre, 'UTF-8'),
+                'tituloCajaActa' => 'Acta Volante de Exámenes',
+            ],
+            ActaVolantePrevios::FILAS_POR_ACTA,
+        );
 
-        $response = $pdf->stream($slug.'.pdf');
-        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        $response->headers->set('Pragma', 'no-cache');
+        if ($pdf->paginasGeneradas() < 1) {
+            abort(404);
+        }
 
-        return $response;
+        $this->limpiarBuffersSalida();
+
+        $binario = $pdf->Output($slug.'.pdf', 'S');
+
+        return response($binario, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$slug.'.pdf"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+        ]);
+    }
+
+    private function limpiarBuffersSalida(): void
+    {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
     }
 }

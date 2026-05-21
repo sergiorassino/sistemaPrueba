@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Http\Controllers\Alumnos\CalificacionesController;
 use App\Http\Controllers\Alumnos\InformeInasistenciasController;
@@ -59,6 +59,8 @@ use App\Livewire\CalificacionesSecundario\PlanillaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\ActaVolanteColoquiosSecundario;
 use App\Livewire\CalificacionesSecundario\PlanillaResumenCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
+use App\Livewire\CalificacionesSecundario\CierreAnualIndex;
+use App\Livewire\CalificacionesSecundario\CierreAnualHistorial;
 use App\Livewire\BoletinesSecundario\BoletinesSecundarioIndex;
 use App\Livewire\CalificacionesSecundario\SincroGe;
 use App\Livewire\Comunicaciones\BandejaGestion;
@@ -293,6 +295,13 @@ Route::middleware(['auth', 'school.context'])->group(function () {
         ->name('calificacionesSecundario.consulta');
     Route::get('/calificaciones-secundario/consulta/pdf', ConsultaCalificacionesSecundarioPdfController::class)
         ->name('calificacionesSecundario.consulta.pdf');
+    Route::get('/calificaciones-secundario/cierre-anual', CierreAnualIndex::class)
+        ->middleware('permiso:15')
+        ->name('calificacionesSecundario.cierreAnual');
+    Route::get('/calificaciones-secundario/cierre-anual/{idLegajos}/historial', CierreAnualHistorial::class)
+        ->middleware('permiso:15')
+        ->whereNumber('idLegajos')
+        ->name('calificacionesSecundario.cierreAnual.historial');
 
     // Boletines / informe de progreso escolar (nivel secundario)
     Route::get('/boletines-secundario', BoletinesSecundarioIndex::class)

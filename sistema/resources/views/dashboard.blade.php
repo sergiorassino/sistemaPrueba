@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('pageTitle', schoolNombre())
 
@@ -18,7 +18,7 @@
         <div class="relative flex flex-col gap-6 p-6 sm:p-8 md:flex-row md:items-center md:justify-between md:gap-8">
             <div class="min-w-0 flex-1 space-y-3">
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Panel de inicio</p>
-                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight leading-tight truncate" title="{{ $nombreUsuario }}">
                     Hola, {{ $nombreUsuario }}
                 </h1>
                 <p class="text-sm sm:text-base text-white/80 max-w-xl">
@@ -38,7 +38,7 @@
         <h2 id="dash-session-heading" class="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">
             Datos de la sesión
         </h2>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.72fr)]">
             <div class="se-dash-session-card">
                 <div class="se-dash-session-icon">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -46,9 +46,9 @@
                               d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
                 </div>
-                <div class="min-w-0">
+                <div class="se-dash-session-body">
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Usuario</p>
-                    <p class="mt-1 text-lg font-bold text-neutral-900 truncate">{{ $nombreUsuario }}</p>
+                    <p class="se-dash-session-value text-neutral-900" title="{{ $nombreUsuario }}">{{ $nombreUsuario }}</p>
                 </div>
             </div>
             <div class="se-dash-session-card">
@@ -57,9 +57,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/>
                     </svg>
                 </div>
-                <div class="min-w-0">
+                <div class="se-dash-session-body">
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Nivel</p>
-                    <p class="mt-1 text-lg font-bold text-neutral-900 truncate">{{ $ctx->nivelNombre() }}</p>
+                    <p class="se-dash-session-value text-neutral-900" title="{{ $ctx->nivelNombre() }}">{{ $ctx->nivelNombre() }}</p>
                 </div>
             </div>
             <div class="se-dash-session-card">
@@ -69,9 +69,9 @@
                               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
                 </div>
-                <div class="min-w-0">
+                <div class="se-dash-session-body">
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Año lectivo</p>
-                    <p class="mt-1 text-lg font-bold tabular-nums text-[#40848D]">{{ $ctx->terlecAno() }}</p>
+                    <p class="se-dash-session-value tabular-nums text-[#40848D]" title="{{ $ctx->terlecAno() }}">{{ $ctx->terlecAno() }}</p>
                 </div>
             </div>
         </div>

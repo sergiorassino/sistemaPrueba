@@ -272,8 +272,14 @@
     }
 
     .se-dash-session-card {
-        @apply flex items-center gap-4 rounded-2xl border bg-white p-5 shadow-sm transition-shadow duration-200;
+        @apply flex min-w-0 items-center gap-3 overflow-hidden rounded-2xl border bg-white p-4 shadow-sm transition-shadow duration-200 sm:gap-4 sm:p-5;
         border-color: var(--color-accent-200);
+    }
+    .se-dash-session-body {
+        @apply min-w-0 flex-1 overflow-hidden;
+    }
+    .se-dash-session-value {
+        @apply mt-1 truncate text-base font-bold leading-snug sm:text-lg;
     }
     .se-dash-session-card:hover {
         @apply shadow-md;
@@ -318,6 +324,47 @@
     /* Pantallas operativas SE: ABM, formularios y listados */
     .se-page {
         @apply mx-auto max-w-7xl space-y-6;
+    }
+
+    /* Cierre anual: ocupar viewport y scroll solo en el cuerpo de la grilla (cabecera fija). */
+    .se-main:has(.se-cierre-anual-fill) {
+        @apply h-full min-h-0 overflow-hidden;
+    }
+    main:has(.se-cierre-anual-fill) {
+        @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+    }
+    .se-cierre-anual-fill {
+        @apply -mx-4 -mb-4 flex min-h-0 flex-1 flex-col md:-mx-8 md:-mb-8;
+    }
+    .se-cierre-anual-grid {
+        @apply grid min-h-0 flex-1 gap-3;
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+    .se-cierre-anual-grid--listado {
+        grid-template-rows: auto auto auto minmax(0, 1fr);
+    }
+    /* Grilla: cabecera fuera del scroll vertical (no depende de position:sticky ni del transform del layout). */
+    .se-cierre-anual-grilla {
+        @apply flex h-full min-h-0 flex-1 flex-col;
+    }
+    .se-cierre-anual-head-wrap {
+        @apply shrink-0 overflow-x-hidden border-b border-accent-200 bg-white shadow-sm shadow-neutral-900/5;
+    }
+    .se-cierre-anual-body-wrap {
+        @apply min-h-0 flex-1 overflow-x-auto overflow-y-auto overscroll-y-contain;
+    }
+    .se-cierre-anual-tabla-wide {
+        @apply w-full;
+        min-width: 66rem;
+    }
+    .se-cierre-anual-tabla {
+        @apply w-full min-w-full border-separate border-spacing-0 text-sm;
+    }
+    .se-cierre-anual-tabla thead th {
+        @apply bg-white px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-500;
+    }
+    .se-cierre-anual-tabla tbody td {
+        @apply px-3 py-2;
     }
     .se-hero {
         @apply relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-neutral-800 text-white shadow-lg shadow-neutral-900/10;

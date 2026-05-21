@@ -25,9 +25,10 @@ Detalle y matices: `docs/06-reglas-de-seguridad.md` sección **9**.
 
 No calcular promedios salvo en **carga manual** (`CargaCalificacionesSecundario`, al guardar `ic01..ic28` → `calif`). El resto del sistema solo **lee** `calificaciones.calif`. Detalle: `docs/05-preferencias-y-convenciones.md` §7.
 
-## PDFs (DomPDF — anchos de columna)
+## PDFs
 
-Tablas con columnas de distinto ancho: **porcentaje inline en cada `th` y `td`** (`min-width:0; overflow:hidden`), tabla al **100%**, `table-layout: fixed`. No confiar solo en `colgroup`. Referencias y antipatrones: `docs/05-preferencias-y-convenciones.md` §8.
+- **Nuevos:** **TCPDF** (`tecnickcom/tcpdf`), clase en `app/Support/`, controlador `*PdfController`. No usar DomPDF ni vistas Blade de layout. Regla: `.cursor/rules/pdf-tcpdf-nuevos.mdc`. Referencia: `ActaVolantePreviosTcpdf`.
+- **Legacy (DomPDF):** tablas con columnas de distinto ancho: **porcentaje inline en cada `th` y `td`** (`min-width:0; overflow:hidden`), tabla al **100%**, `table-layout: fixed`. No confiar solo en `colgroup`. Regla: `.cursor/rules/pdf-dompdf-columnas.mdc`; detalle en `docs/05-preferencias-y-convenciones.md` §8.
 
 ## Selects de año lectivo (`terlec`)
 

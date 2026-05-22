@@ -87,9 +87,11 @@ a todos los módulos. Ver [06-reglas-de-seguridad.md](06-reglas-de-seguridad.md)
 
 ## 6. Menú lateral, dashboard y módulos por nivel educativo
 
+**Nombres oficiales de los tres sidebars:** [08-menus-de-navegacion.md](08-menus-de-navegacion.md) — *Menú de Secretaría*, *Menú de Alumnos*, *Menú de Docentes*.
+
 Cuando un módulo aplica solo a **secundario**, **primario** o **inicial** (o existirán variantes por nivel, como boletines o calificaciones), debe quedar explícito en código, menú y documentación. No usar nombres genéricos ambiguos (`Boletines` a secas) si el alcance es de un solo nivel.
 
-### Sidebar (`resources/views/layouts/app.blade.php`)
+### Sidebar del Menú de Secretaría (`resources/views/layouts/app.blade.php`)
 
 - Cada enlace del menú lleva atributo **`title`** (tooltip al pasar el mouse), con el mismo criterio que el resto del sistema:
   - Nombre del módulo con **nivel entre paréntesis** cuando corresponda: `(secundario)`, `(primario)`, `(inicial)`.

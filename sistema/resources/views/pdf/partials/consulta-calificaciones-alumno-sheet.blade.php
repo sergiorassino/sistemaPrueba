@@ -155,14 +155,23 @@
 
     @php
         $adeudadas = $consulta['materias_adeudadas'] ?? [];
+        $tercerMateria = $consulta['tercer_materia'] ?? [];
         $itemsBoletin = $consulta['items_boletin'] ?? [];
-        $hayPieTexto = count($adeudadas) > 0 || count($itemsBoletin) > 0;
+        $hayPieTexto = count($adeudadas) > 0 || count($tercerMateria) > 0 || count($itemsBoletin) > 0;
     @endphp
     @if (! $mostrarFirmas && count($adeudadas) > 0)
         <div class="adeu">
             <p class="adeu-title">MATERIAS PREVIAS:</p>
             <p class="adeu-body">@foreach ($adeudadas as $a){{ $a->linea }}@if (! $loop->last) - @endif@endforeach</p>
         </div>
+    @endif
+
+    @if (! $mostrarFirmas && count($tercerMateria) > 0)
+        @include('pdf.partials.consulta-calificaciones-tercer-materia-pie', [
+            'tercerMateria' => $tercerMateria,
+            'conFirmas' => false,
+            'blank' => $blank,
+        ])
     @endif
 
     @if (! $mostrarFirmas && count($itemsBoletin) > 0)
@@ -195,6 +204,13 @@
                                 <p class="adeu-body">@foreach ($adeudadas as $a){{ $a->linea }}@if (! $loop->last) - @endif@endforeach</p>
                             </div>
                         @endif
+                        @if (count($tercerMateria) > 0)
+                            @include('pdf.partials.consulta-calificaciones-tercer-materia-pie', [
+                                'tercerMateria' => $tercerMateria,
+                                'conFirmas' => true,
+                                'blank' => $blank,
+                            ])
+                        @endif
                         @if (count($itemsBoletin) > 0)
                             <div class="disc disc--con-firmas">
                                 @foreach ($itemsBoletin as $it)
@@ -218,11 +234,11 @@
                         <div class="firma-bloque">
                             <table class="firma-tabla" cellspacing="0" cellpadding="0">
                                 <tr>
-                                    <td class="firma-cel">
+                                    <td class="firma-cel firma-cel-padre" style="padding-left:20mm;">
                                         <div class="firma-linea"></div>
                                         <p class="firma-label">Firma Padre / Madre / Tutor</p>
                                     </td>
-                                    <td class="firma-sep">&nbsp;</td>
+                                    <td class="firma-sep" style="width:20mm;min-width:20mm;max-width:20mm;">&nbsp;</td>
                                     <td class="firma-cel">
                                         <div class="firma-linea"></div>
                                         <p class="firma-label">Firma Directivo</p>

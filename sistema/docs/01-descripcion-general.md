@@ -32,12 +32,15 @@ desarrollada. Se continúa desde ahí.
 
 ## 3. Interfaz de usuario
 
-| Contexto                                 | Orientación        |
-|------------------------------------------|--------------------|
-| Autogestión docentes/alumnos             | 90% mobile         |
-| Gestión pedagógica y cuotas (secretaría) | 80% desktop        |
+Tres **menús de navegación** (sidebar). Nomenclatura oficial: [08-menus-de-navegacion.md](08-menus-de-navegacion.md).
 
-- Layout: **Sidebar menu**, 100% responsivo.
+| Menú | Layout | Orientación típica |
+|------|--------|-------------------|
+| **Secretaría** (gestión completa) | `layouts/app.blade.php` | 80% desktop |
+| **Alumnos** (familia / estudiante) | `layouts/alumno.blade.php` | 90% mobile |
+| **Docentes** (portal reducido) | `layouts/docente.blade.php` | 90% mobile |
+
+- Sidebar responsivo en los tres portales.
 - Design system basado en la paleta de colores de `/SE/`.
 
 ---
@@ -70,7 +73,7 @@ sistemaPrueba/
     │   └── Support/             # SchoolContext, helpers
     ├── docs/                    # ← Documentación del proyecto
     ├── resources/views/
-    │   ├── layouts/             # app.blade.php, guest.blade.php
+    │   ├── layouts/             # app (Secretaría), alumno, docente, guest
     │   └── livewire/            # Vistas Livewire
     └── routes/web.php           # Rutas (guest + auth + school.context)
 ```
@@ -89,17 +92,17 @@ Módulos de parametrización y gestión básica de alumnos.
 Ver [02-modelo-de-datos.md](02-modelo-de-datos.md) para detalle de tablas.
 
 **Ya implementado:**
-- Login de gestión (tabla `profesores`, auth custom con soporte bcrypt híbrido)
+- Login de Secretaría (tabla `profesores`, auth custom con soporte bcrypt híbrido)
 - SchoolContext (nivel + ciclo lectivo en sesión)
 - Middleware `EnsureSchoolContext`
 - ABM Ciclos Lectivos (`terlec`)
 - ABM Niveles (`niveles`)
 - ABM Legajos (`legajos`) con formulario de alta/edición
-- Layout con sidebar responsivo
+- Menú de Secretaría con sidebar responsivo; Menú de Alumnos; scaffold Menú de Docentes
 - Modelos Eloquent: Calificacion, Condicion, Curso, Familia, Legajo, Matricula, Nivel, Profesor, ProfesorTipo, Terlec
 
 **Pendiente en Etapa 1:**
-- Login de autogestión de alumnos (portal separado)
+- Menú de Docentes: ítems y redirección post-login por rol (en curso)
 - ABM Planes, Cursos modelo, Materias modelo
 - Gestión de matrícula y calificaciones
 - Sistema de permisos completo

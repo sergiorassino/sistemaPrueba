@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureMenuPortal;
 use App\Http\Middleware\EnsureSchoolContext;
 use App\Http\Middleware\EnsureStudentContext;
 use App\Http\Middleware\NoStoreResponse;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'student.context' => EnsureStudentContext::class,
             'no-store'       => NoStoreResponse::class,
             'permiso'        => \App\Http\Middleware\CheckPermiso::class,
+            'menu.portal'    => EnsureMenuPortal::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

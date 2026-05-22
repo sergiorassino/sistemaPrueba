@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿{{-- Menú de Secretaría — sistema de gestión completo (secretaría, preceptores, admin). Ver docs/08-menus-de-navegacion.md --}}
+<!DOCTYPE html>
 <html lang="es" class="h-full bg-[#F4F8F9]">
 <head>
     <meta charset="UTF-8">
@@ -705,7 +706,7 @@
                 </a>
             </div>
 
-        {{-- Docentes --}}
+        {{-- Menú de Secretaría: grupo DOCENTES (ABM desde secretaría; no es el Menú de Docentes) --}}
         @if(tienePermiso(1))
             <div class="mt-4"></div>
             <button type="button"
@@ -860,6 +861,20 @@
                     </svg>
                     <span class="truncate">Permisos de Examen</span>
                 </a>
+                @if (tenantBoletinMuestraTercerMateria())
+                <a href="{{ route('examenes.tercer-materia') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'is-active shadow-sm' => request()->routeIs('examenes.tercer-materia', 'examenes.tercer-materia.pdf', 'examenes.tercer-materia.acta-compromiso.pdf'),
+                   ])
+                   title="Gestión de tercer materia (condición TM)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                    <span class="truncate">Gestión de Tercer Materia</span>
+                </a>
+                @endif
             </div>
         @endif
 

@@ -5,6 +5,7 @@ namespace App\Livewire\Auth;
 use App\Models\Nivel;
 use App\Models\Profesor;
 use App\Models\Terlec;
+use App\Support\ProfesorMenuPortal;
 use App\Support\SchoolContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -182,7 +183,7 @@ class Login extends Component
 
             // Redirección completa (no SPA wire:navigate) para garantizar
             // que las cookies de sesión se propaguen correctamente
-            return redirect()->route('dashboard');
+            return $this->redirectRoute(ProfesorMenuPortal::rutaInicio($profesor), navigate: false);
         }
 
         RateLimiter::hit($throttleKey, 60);

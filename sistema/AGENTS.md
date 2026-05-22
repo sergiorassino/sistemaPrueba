@@ -34,6 +34,10 @@ No calcular promedios salvo en **carga manual** (`CargaCalificacionesSecundario`
 
 Todo desplegable de ciclo lectivo: **orden decreciente** (año más reciente primero). Usar `Terlec::paraSelector()` o `Terlec::ordenado()`; en Livewire con re-render frecuente, `livewire:components.terlec-selector`. Regla Cursor: `.cursor/rules/terlec-selector-orden.mdc`.
 
+## Menús de navegación (terminología)
+
+Usar siempre: **Menú de Secretaría** (`layouts/app`), **Menú de Alumnos** (`layouts/alumno`), **Menú de Docentes** (`layouts/docente`). No llamar “staff” ni mezclar con el grupo sidebar “DOCENTES” de secretaría. Detalle: `docs/08-menus-de-navegacion.md`.
+
 ## Resto del baseline
 
 Seguridad, permisos, `schoolCtx`, Blade, etc.: `docs/06-reglas-de-seguridad.md` y las reglas en `.cursor/rules/` (por ejemplo `seguridad-php-mysql-laravel.mdc`, `preferencias-del-proyecto.mdc`).

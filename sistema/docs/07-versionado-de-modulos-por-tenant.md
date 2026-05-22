@@ -52,6 +52,19 @@ return [
 
 Usos típicos: URLs de terceros, flags de comportamiento, textos o límites que no convenga guardar en BD.
 
+Ejemplo (tercer materia en boletín / consulta de calificaciones — solo colegios que lo usan):
+
+```php
+// config/tenants/{slug}.php
+return [
+    'boletin' => [
+        'mostrar_tercer_materia' => true,
+    ],
+];
+```
+
+Default en `config/tenant.php`: `false`. Consumir con `tenantBoletinMuestraTercerMateria()` o `config('tenant.boletin.mostrar_tercer_materia')`.
+
 El `slug` también se usa en rutas de almacenamiento (ej. logos en `ento/logos/{slug}/…`).
 
 ### 3.2 Parametrización en base de datos (principal)
@@ -115,7 +128,7 @@ Antes de agregar comportamiento solo para un colegio en código compartido, conf
 **Montecristo necesita enlace a aranceles en autogestión:**
 
 1. Agregar clave en `config/tenants/montecristo.php`.
-2. Consumir con `config('tenant.autogestion.aranceles_aulica_url')` en la vista (ej. `layouts/alumno.blade.php`).
+2. Consumir con `config('tenant.autogestion.aranceles_aulica_url')` en el **Menú de Alumnos** (`layouts/alumno.blade.php`).
 3. En el servidor de Montecristo: `TENANT_SLUG=montecristo` y BD correspondiente.
 
 **Colegio nuevo con legajo distinto:**

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\BoletinesSecundario;
 
 use App\Http\Controllers\Controller;
+use App\Support\BoletinesSecundario\BoletinConsultaCalificacionesTcpdf;
 use App\Support\ConsultaCalificacionesAlumno;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -36,18 +36,14 @@ class BoletinSecundarioPdfController extends Controller
             $slug = 'informe_progreso_escolar';
         }
 
-        $pdf = Pdf::loadView('pdf.consulta-calificaciones-alumno', [
-            'consulta' => $data,
-            'pdfHeader' => schoolPdfHeaderData(),
-            'tituloDocumento' => 'Informe de Progreso Escolar',
-            'mostrarMarcaAgua' => false,
-            'mostrarFirmas' => true,
-        ])->setPaper('a4', 'landscape');
+        $pdf = BoletinConsultaCalificacionesTcpdf::generarHoja(
+            $data,
+            schoolPdfHeaderData(),
+            'Informe de Progreso Escolar',
+            false,
+            true,
+        );
 
-        $response = $pdf->stream($slug.'.pdf');
-        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        $response->headers->set('Pragma', 'no-cache');
-
-        return $response;
+        return BoletinConsultaCalificacionesTcpdf::respuestaHttp($pdf, $slug.'.pdf');
     }
 }

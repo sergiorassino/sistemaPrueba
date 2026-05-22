@@ -1,4 +1,4 @@
-{{-- Boletín de calificaciones (secundario): misma plantilla para autogestión del estudiante y para docentes/secretaría. --}}
+{{-- Legacy DomPDF: la salida activa usa BoletinConsultaCalificacionesTcpdf. Mantener parcial por referencia. --}}
 <!DOCTYPE html>
 <html lang="es">
 <head>

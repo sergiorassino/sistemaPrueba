@@ -3,15 +3,16 @@
 namespace App\Http\Controllers\CalificacionesSecundario;
 
 use App\Http\Controllers\Controller;
+use App\Support\BoletinesSecundario\BoletinConsultaCalificacionesTcpdf;
 use App\Support\ConsultaCalificacionesAlumno;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 /**
- * Boletín de consulta de calificaciones (secundario) para docentes/secretaría.
- * Comparte la vista PDF con la autogestión del estudiante.
+ * Consulta de calificaciones (secundario) para docentes/secretaría — PDF TCPDF.
+ * Misma plantilla y datos que el informe de progreso escolar ({@see ConsultaCalificacionesAlumno}),
+ * con marca «SIN VALOR LEGAL» y sin firmas.
  */
 class ConsultaCalificacionesSecundarioPdfController extends Controller
 {
@@ -36,15 +37,14 @@ class ConsultaCalificacionesSecundarioPdfController extends Controller
             $slug = 'consulta_calificaciones_secundario';
         }
 
-        $pdf = Pdf::loadView('pdf.consulta-calificaciones-alumno', [
-            'consulta' => $data,
-            'pdfHeader' => schoolPdfHeaderData(),
-        ])->setPaper('a4', 'landscape');
+        $pdf = BoletinConsultaCalificacionesTcpdf::generarHoja(
+            $data,
+            schoolPdfHeaderData(),
+            'Consulta de Calificaciones',
+            true,
+            false,
+        );
 
-        $response = $pdf->stream($slug.'.pdf');
-        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        $response->headers->set('Pragma', 'no-cache');
-
-        return $response;
+        return BoletinConsultaCalificacionesTcpdf::respuestaHttp($pdf, $slug.'.pdf');
     }
 }

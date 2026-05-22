@@ -4,6 +4,7 @@ namespace App\Livewire\School;
 
 use App\Models\Profesor;
 use App\Models\Terlec;
+use App\Support\ProfesorMenuPortal;
 use App\Support\SchoolContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -69,7 +70,7 @@ class ContextSwitcher extends Component
             ->update(['ult_idTerlec' => $newIdTerlec]);
 
         // Redirección completa: reinicia el estado de todos los módulos Livewire.
-        return redirect()->route('dashboard');
+        return $this->redirectRoute(ProfesorMenuPortal::rutaInicio($profesor), navigate: false);
     }
 
     public function render()

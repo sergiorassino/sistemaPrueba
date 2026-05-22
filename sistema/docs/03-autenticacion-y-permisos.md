@@ -2,15 +2,22 @@
 
 ---
 
-## 1. Dos Logins Separados
+## 1. Portales y logins
 
-El sistema tiene **dos portales de login completamente independientes**.
+Hay **tres menús de navegación** (ver [08-menus-de-navegacion.md](08-menus-de-navegacion.md)) y **dos logins** independientes hoy:
+
+| Menú | Login |
+|------|--------|
+| **Menú de Secretaría** | `/loginUsuario` → `profesores` |
+| **Menú de Docentes** | Mismo login que Secretaría (redirección por rol: pendiente) |
+| **Menú de Alumnos** | `/loginEstudiante` → `legajos` |
 
 ---
 
-### 1.1 Login de Gestión (tabla `profesores`)
+### 1.1 Login de Secretaría (tabla `profesores`)
 
-Aplica a: profesores, secretarios, administradores.
+Aplica a: secretarios, administración, preceptores y también profesores que entren por este login.
+Alcance habitual: **Menú de Secretaría** (`layouts/app.blade.php`). Los profesores con rol acotado irán al **Menú de Docentes** cuando esté definida la redirección.
 
 | Campo          | Origen                           |
 |----------------|----------------------------------|
@@ -25,15 +32,22 @@ Aplica a: profesores, secretarios, administradores.
 - Al hacer login, se establece el `SchoolContext` (idProfesor, idNivel, idTerlec) en sesión.
 - Middleware `EnsureSchoolContext` protege todas las rutas autenticadas.
 
-**Menú según rol:**
-- Rol "Profesor/a" → menú limitado (autogestión docente)
-- Resto de roles → acceso completo según modelo de permisos
+**Menú según rol (`IdTipoProf` en `profesortipo`):**
+
+| Rol en legajo (ejemplos) | `IdTipoProf` típico | Menú tras login |
+|--------------------------|---------------------|-----------------|
+| Profesor/a | **6** | **Menú de Docentes** (`/portal-docente`, `portalDocente.*`) |
+| Directivo, Secretario, Preceptor, Administrador, Gabinete de orientación | distinto de 6 | **Menú de Secretaría** (`/dashboard`, rutas con `menu.portal:secretaria`) |
+
+Lógica centralizada en `App\Support\ProfesorMenuPortal::ID_TIPO_PROFESOR_AULA` (valor **6**).
+Middleware `menu.portal` impide cruzar portales (un profesor no navega ABM de secretaría por URL directa).
+Permisos `profesores.permisos` siguen aplicando **dentro** del menú de Secretaría.
 
 ---
 
-### 1.2 Login de Autogestión de Alumnos (tabla `legajos`)
+### 1.2 Login del Menú de Alumnos (tabla `legajos`)
 
-Portal completamente separado del login de gestión.
+Portal completamente separado del login de Secretaría.
 
 | Campo          | Origen                           |
 |----------------|----------------------------------|
@@ -42,9 +56,9 @@ Portal completamente separado del login de gestión.
 | Nivel          | No se selecciona                 |
 | Ciclo lectivo  | Se toma de `ento.idTerlecVerNotas` |
 
-**Estado:** Pendiente de implementación.
+**Estado:** Implementado (guard `alumno`, layout `alumno.blade.php`).
 
-**Diferencias clave con el login de gestión:**
+**Diferencias clave con el login de Secretaría:**
 - Sin selección de nivel ni ciclo lectivo en el formulario.
 - El ciclo lectivo se determina automáticamente desde `ento.idTerlecVerNotas`.
 - Requiere su propio auth provider, guard y rutas separadas.

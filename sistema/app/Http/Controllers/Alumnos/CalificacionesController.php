@@ -3,14 +3,15 @@
 namespace App\Http\Controllers\Alumnos;
 
 use App\Http\Controllers\Controller;
+use App\Support\BoletinesSecundario\BoletinConsultaCalificacionesTcpdf;
 use App\Support\ConsultaCalificacionesAlumno;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 /**
- * Única salida del módulo: boletín en PDF (A4 apaisado), sin pantalla duplicada.
+ * Consulta de calificaciones del portal alumno — PDF TCPDF (A4 apaisado).
+ * Misma plantilla que el informe institucional; marca «SIN VALOR LEGAL» y sin firmas.
  */
 class CalificacionesController extends Controller
 {
@@ -33,15 +34,14 @@ class CalificacionesController extends Controller
             $slug = 'consulta_calificaciones';
         }
 
-        $pdf = Pdf::loadView('pdf.consulta-calificaciones-alumno', [
-            'consulta' => $data,
-            'pdfHeader' => studentPdfHeaderData(),
-        ])->setPaper('a4', 'landscape');
+        $pdf = BoletinConsultaCalificacionesTcpdf::generarHoja(
+            $data,
+            studentPdfHeaderData(),
+            'Consulta de Calificaciones',
+            true,
+            false,
+        );
 
-        $response = $pdf->stream($slug.'.pdf');
-        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        $response->headers->set('Pragma', 'no-cache');
-
-        return $response;
+        return BoletinConsultaCalificacionesTcpdf::respuestaHttp($pdf, $slug.'.pdf');
     }
 }

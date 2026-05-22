@@ -22,4 +22,12 @@ return [
         'aranceles_aulica_url' => null,
     ],
 
+    /**
+     * Boletín / consulta de calificaciones (secundario).
+     * Activar solo en `config/tenants/{slug}.php` para colegios que usan régimen TM.
+     */
+    'boletin' => [
+        'mostrar_tercer_materia' => false,
+    ],
+
 ];

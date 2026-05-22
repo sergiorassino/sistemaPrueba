@@ -22,7 +22,9 @@ use App\Http\Controllers\Horarios\HorarioProfesorPdfController;
 use App\Http\Controllers\Examenes\ActaVolantePreviosPdfController;
 use App\Http\Controllers\Examenes\MateriasAdeudadasEntradaController;
 use App\Http\Controllers\Examenes\MateriasAdeudadasPdfController;
+use App\Http\Controllers\Examenes\ActaCompromisoTercerMateriaPdfController;
 use App\Http\Controllers\Examenes\PermisoExamenPdfController;
+use App\Http\Controllers\Examenes\TercerMateriaPdfController;
 use App\Livewire\Examenes\ActaVolantePreviosIndex;
 use App\Livewire\Examenes\PermisoExamenIndex;
 use App\Livewire\Examenes\BorrarInscripcionesExamenIndex;
@@ -32,6 +34,7 @@ use App\Livewire\Examenes\MateriasAdeudadasNotasIndex;
 use App\Livewire\Examenes\HistorialExamenesIndex;
 use App\Livewire\Examenes\MateriasAdeudadasGestionIndex;
 use App\Livewire\Examenes\MateriasAdeudadasListadoIndex;
+use App\Livewire\Examenes\TercerMateriaIndex;
 use App\Http\Controllers\SancionComunicadoPdfController;
 use App\Livewire\Abm\Curplan\CurplanForm;
 use App\Livewire\Abm\Curplan\CurplanIndex;
@@ -173,11 +176,18 @@ Route::middleware(['auth:web,alumno'])->prefix('notificaciones-push/api')->group
     Route::post('/send', [PushApiController::class, 'send'])->name('push.api.send');
 });
 
-// Authenticated + school context routes
-Route::middleware(['auth', 'school.context'])->group(function () {
+// Menú de Docentes — IdTipoProf = 6 (profesortipo «Profesor/a»)
+Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('portal-docente')->group(function () {
+    Route::get('/', function () {
+        return view('portal-docente.home');
+    })->name('portalDocente.home');
+});
+
+// Menú de Secretaría — directivos, secretarios, preceptores, administración, gabinete, etc.
+Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(function () {
 
     Route::get('/', function () {
-        return redirect()->route('dashboard');
+        return redirect()->route(\App\Support\ProfesorMenuPortal::rutaInicio());
     });
 
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
@@ -299,6 +309,13 @@ Route::middleware(['auth', 'school.context'])->group(function () {
             ->name('examenes.permiso-examen.pdf.preparar');
         Route::get('/examenes/permiso-examen/pdf', PermisoExamenPdfController::class)
             ->name('examenes.permiso-examen.pdf');
+        Route::get('/examenes/tercer-materia', TercerMateriaIndex::class)
+            ->name('examenes.tercer-materia');
+        Route::get('/examenes/tercer-materia/pdf', TercerMateriaPdfController::class)
+            ->name('examenes.tercer-materia.pdf');
+        Route::get('/examenes/tercer-materia/acta-compromiso/{idCalificacion}', ActaCompromisoTercerMateriaPdfController::class)
+            ->whereNumber('idCalificacion')
+            ->name('examenes.tercer-materia.acta-compromiso.pdf');
     });
 
     Route::get('/horarios/carga', HorariosCargaIndex::class)

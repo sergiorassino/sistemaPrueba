@@ -8,6 +8,7 @@ Leer en este orden:
 
 1. **`sistema/AGENTS.md`** — resumen operativo para IAs
 2. **`sistema/docs/06-reglas-de-seguridad.md`** — sección 9 (BD y ejecución)
-3. **`sistema/.cursor/rules/`** — reglas del proyecto (`alwaysApply` donde corresponda)
+3. **`sistema/docs/08-menus-de-navegacion.md`** — Menú de Secretaría / Alumnos / Docentes (nombres oficiales)
+4. **`sistema/.cursor/rules/`** — reglas del proyecto (`alwaysApply` donde corresponda)
 
 Así la restricción **viaja con el clone del repo** y no depende de que cada colaborador configure reglas globales en Cursor.

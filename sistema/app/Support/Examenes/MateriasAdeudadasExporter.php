@@ -290,7 +290,7 @@ final class MateriasAdeudadasExporter
         return 0;
     }
 
-    private static function cursoLabelDesdeFila(object $r): string
+    public static function cursoLabelDesdeFila(object $r): string
     {
         $sec = trim((string) ($r->cursec ?? ''));
         if ($sec !== '') {

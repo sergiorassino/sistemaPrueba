@@ -282,6 +282,23 @@ CREATE TABLE IF NOT EXISTS `itemsboletin` (
   KEY `itemsboletin_idterlec_activo_index` (`idTerlec`, `activo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+INSERT INTO `itemsboletin` (`id`, `orden`, `etiqueta`, `fuente`, `condicion_where`, `idTerlec`, `activo`) VALUES
+(1, 1, 'Inasistencias Justificadas', 'inasistencias', 'tipo <> 5 and just = ''J''', NULL, 1),
+(2, 2, 'Inasistencias Injustificadas', 'inasistencias', 'tipo <> 5 and just = ''I''', NULL, 1),
+(3, 3, 'Total de Inasistencias', 'inasistencias', 'tipo <> 5 and (just = ''J'' or just = ''I'')', NULL, 1),
+(4, 4, 'Inasistencias a Educación Física', 'inasistencias', 'tipo = 5', NULL, 1),
+(5, 5, 'Apercibimientos Orales', 'sanciones', 'idTipoSancion = 2', NULL, 1),
+(6, 6, 'Apercibimientos Escritos', 'sanciones', 'idTipoSancion = 3', NULL, 1),
+(7, 7, 'Amonestaciones', 'sanciones', 'idTipoSancion = 1 and publicada = 1', NULL, 1),
+(8, 8, 'Suspensiones', 'sanciones', 'idTipoSancion = 6', NULL, 1)
+ON DUPLICATE KEY UPDATE
+  `orden` = VALUES(`orden`),
+  `etiqueta` = VALUES(`etiqueta`),
+  `fuente` = VALUES(`fuente`),
+  `condicion_where` = VALUES(`condicion_where`),
+  `idTerlec` = VALUES(`idTerlec`),
+  `activo` = VALUES(`activo`);
+
 -- Solo si existe la columna dnitut (tabla legajos legacy)
 SET @has_dnitut := (
   SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS

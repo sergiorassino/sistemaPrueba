@@ -4,12 +4,12 @@ namespace App\Http\Controllers\BoletinesSecundario;
 
 use App\Http\Controllers\Controller;
 use App\Support\BoletinSecundarioLoteParams;
+use App\Support\BoletinesSecundario\BoletinConsultaCalificacionesTcpdf;
 use App\Support\ConsultaCalificacionesAlumno;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * Informes de progreso escolar en un solo PDF (varias matrículas del mismo curso).
@@ -66,16 +66,12 @@ class BoletinSecundarioLotePdfController extends Controller
             $slug = 'informes_progreso_escolar';
         }
 
-        $pdf = Pdf::loadView('pdf.boletines-secundario-lote', [
-            'consultas' => $consultas,
-            'pdfHeader' => schoolPdfHeaderData(),
-            'tituloDocumento' => 'Informe de Progreso Escolar',
-        ])->setPaper('a4', 'landscape');
+        $pdf = BoletinConsultaCalificacionesTcpdf::generarLote(
+            $consultas,
+            schoolPdfHeaderData(),
+            'Informe de Progreso Escolar',
+        );
 
-        $response = $pdf->stream($slug.'.pdf');
-        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        $response->headers->set('Pragma', 'no-cache');
-
-        return $response;
+        return BoletinConsultaCalificacionesTcpdf::respuestaHttp($pdf, $slug.'.pdf');
     }
 }

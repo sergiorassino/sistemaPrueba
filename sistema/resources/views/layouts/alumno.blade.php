@@ -1,3 +1,4 @@
+{{-- Menú de Alumnos — autogestión familia/estudiante. Ver docs/08-menus-de-navegacion.md --}}
 <!DOCTYPE html>
 <html lang="es" class="h-full bg-[#F4F8F9]">
 <head>

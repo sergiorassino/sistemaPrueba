@@ -35,7 +35,10 @@
         <div class="se-card overflow-hidden p-0">
             <div class="border-b border-accent-200 bg-accent-50 px-5 py-3">
                 <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Estudiantes del curso</p>
-                <p class="text-sm text-neutral-600">Abre el boletín en PDF (mismo formato que en autogestión del estudiante).</p>
+                <p class="text-sm text-neutral-600">
+                    Abre la consulta en PDF (grilla de calificaciones, materias previas, tercer materia si corresponde,
+                    inasistencias y sanciones). Mismo contenido que en autogestión del estudiante, con marca «SIN VALOR LEGAL».
+                </p>
             </div>
             <div class="flex w-full justify-center overflow-x-auto px-4 pb-4 pt-1">
                 <table class="w-max max-w-full table-auto divide-y divide-accent-200 text-sm">

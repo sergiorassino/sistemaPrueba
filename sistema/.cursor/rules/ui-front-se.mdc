@@ -16,8 +16,10 @@ Esta regla define la identidad visual aprobada para todo el sistema: login, dash
 - Archivos de referencia:
   - `resources/css/app.css`
   - `resources/views/layouts/guest.blade.php`
-  - `resources/views/layouts/app.blade.php`
-  - `resources/views/layouts/alumno.blade.php`
+  - `resources/views/layouts/app.blade.php` (Menú de Secretaría)
+  - `resources/views/layouts/alumno.blade.php` (Menú de Alumnos)
+  - `resources/views/layouts/docente.blade.php` (Menú de Docentes)
+  - `docs/08-menus-de-navegacion.md`
   - `resources/views/livewire/auth/login.blade.php`
   - `resources/views/dashboard.blade.php`
   - `resources/views/livewire/abm/legajos/index2.blade.php`
@@ -67,6 +69,8 @@ Reglas:
 
 ## Sidebar y navegacion interna
 
+Tres portales con sidebar (nombres oficiales en `docs/08-menus-de-navegacion.md`): **Secretaría** (`app`), **Alumnos** (`alumno`), **Docentes** (`docente`).
+
 - El menu interno debe ser sidebar en desktop.
 - En estado colapsado debe quedar una barra compacta con iconos, no desaparecer.
 - Fondo del sidebar: Jet `#333333` con radial suave dark cyan arriba a la izquierda.
@@ -76,8 +80,8 @@ Reglas:
   - Hover: `#C1D7DA` en baja opacidad.
   - Activo: fondo `#40848D` y acento lateral `#C1D7DA`.
 - Header:
-  - Docentes: logo en contenedor blanco, contexto activo y selector si corresponde.
-  - Alumnos: version compacta segun `layouts/alumno.blade.php`.
+  - Menú de Secretaría: logo en contenedor blanco, contexto activo y selector (`context-switcher`).
+  - Menú de Alumnos / Docentes: version compacta segun su layout.
 - Footer: avatar simple con inicial, nombre de usuario y logout con icono.
 
 ## Login

@@ -9,8 +9,7 @@
             padding: 0;
             position: relative;
         }
-        /* Marca de agua: debe ir DESPUÃ‰S de la tabla en el HTML y en posiciÃ³n absoluta
-           sobre el bloque (Dompdf trata mal z-index/fixed respecto al contenido). */
+        /* Marca de agua: overlay sobre la grilla (centro ~54% del alto del bloque). */
         .sheet-wrap {
             position: relative;
             width: 100%;
@@ -25,14 +24,14 @@
             bottom: 0;
             width: 100%;
             height: 100%;
-            z-index: 10;
+            z-index: 0;
             pointer-events: none;
             overflow: visible;
         }
-        /*
-         * Centro X/Y respecto solo a la grilla (overlay = alto/ancho de la tabla).
-         * top ~54% baja un poco el centro respecto al 50% geomÃ©trico para acercarlo al bloque de materias (tbody).
-         */
+        .outer {
+            position: relative;
+            z-index: 1;
+        }
         .wm {
             position: absolute;
             left: 50%;
@@ -43,8 +42,8 @@
             text-align: center;
             font-size: 22pt;
             font-weight: 700;
-            color: #c0c0c0;
-            opacity: 0.4;
+            color: #a8a8a8;
+            opacity: 0.52;
             letter-spacing: 0.5px;
             transform: translate(-50%, -50%) rotate(-29deg);
             transform-origin: center center;
@@ -182,6 +181,19 @@
             letter-spacing: 0.02em;
         }
         .adeu-body { margin: 0; font-weight: 400; line-height: 1.02; text-align: left; }
+        .tm-boletin-wrap { margin-top: 2mm; width: 100%; }
+        .tm-boletin-wrap--firmas { margin-top: 1mm; }
+        .tm-boletin-wrap + .tm-boletin-wrap { margin-top: 1.5mm; }
+        .tm-boletin-inner { width: auto; }
+        .tm-boletin-texto { white-space: nowrap; }
+        .tm-boletin-lbl { font-weight: 700; }
+        .tm-boletin-materia {
+            font-weight: 400;
+            text-transform: uppercase;
+        }
+        .tm-boletin-grid { width: auto; table-layout: fixed; }
+        .tm-boletin-celdas { padding-left: 3mm; }
+        .tm-boletin-celda { overflow: hidden; height: 10pt; }
         /* Pie: texto (previas / Ã­tems) a la izquierda; firmas a la derecha en la misma franja vertical */
         .pie-footer { width: 100%; margin-top: 1.5mm; }
         .pie-footer-tabla {
@@ -195,7 +207,7 @@
         .pie-footer--solo-firmas .pie-firmas-cel { width: 100%; }
         .disc--con-firmas { margin-top: 1.5mm; }
         .adeu--con-firmas { margin-top: 1mm; }
-        .firma-bloque { margin: 0; padding: 0; }
+        .firma-bloque { margin: 0; padding: 10mm 0 0 0; }
         .pie-firmas-cel .firma-bloque { width: 100%; }
         .pie-footer--solo-firmas .firma-bloque {
             padding-left: 50mm;
@@ -207,8 +219,6 @@
             table-layout: auto;
         }
         .firma-sep {
-            width: 40mm;
-            min-width: 40mm;
             padding: 0;
             border: 0;
             font-size: 1pt;
@@ -228,6 +238,15 @@
             vertical-align: top;
             padding: 0;
             border: 0;
+        }
+        /* Padre/tutor +20 mm; separador -20 mm → el directivo no se corre */
+        .firma-tabla td.firma-cel-padre {
+            padding: 0 0 0 20mm !important;
+        }
+        .firma-tabla td.firma-sep {
+            width: 20mm !important;
+            min-width: 20mm !important;
+            max-width: 20mm;
         }
         .firma-linea {
             border-bottom: 0.55pt dotted #333;

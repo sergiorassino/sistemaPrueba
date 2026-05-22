@@ -23,6 +23,7 @@ Antes de trabajar en cualquier módulo, leer:
 5. `docs/05-preferencias-y-convenciones.md` — Convenciones de código y preferencias
 6. `docs/06-reglas-de-seguridad.md` — Baseline de seguridad obligatorio
 7. `docs/07-versionado-de-modulos-por-tenant.md` — Personalización por colegio (config, BD, permisos; sin paquetes Composer)
+8. `docs/08-menus-de-navegacion.md` — Menú de Secretaría / Alumnos / Docentes (nombres oficiales)
 
 ## Reglas críticas (siempre)
 

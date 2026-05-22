@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Matricula;
+use App\Support\Examenes\TercerMateriaGestor;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -26,6 +27,7 @@ final class ConsultaCalificacionesAlumno
      *     cursoLabel: string,
      *     rows: list<object>,
      *     materias_adeudadas: list<object{materia: string, curso: string, linea: string}>,
+     *     tercer_materia: list<array{materia: string, curso: string, ano_lectivo: int|string, nombre_boletin: string, linea: string, tm1: string, tm2: string, tm3: string, tm4: string, tm5: string, tm6: string, tmNota: string}>,
      *     items_boletin: list<object{etiqueta: string, fuente: string, total: float}>
      * }
      */
@@ -33,7 +35,7 @@ final class ConsultaCalificacionesAlumno
     {
         $ctx = studentCtx();
         if (! $ctx->isValid()) {
-            return ['ok' => false, 'error' => 'Sesión inválida.', 'anoLectivo' => null, 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'materias_adeudadas' => [], 'items_boletin' => []];
+            return self::respuestaError('Sesión inválida.');
         }
 
         $idLegajo = (int) $ctx->idLegajo;
@@ -50,17 +52,10 @@ final class ConsultaCalificacionesAlumno
             ->first();
 
         if (! $matricula) {
-            return [
-                'ok' => false,
-                'error' => 'No hay matrícula registrada para este ciclo lectivo. Contacte a secretaría.',
-                'anoLectivo' => $ctx->terlecAno(),
-                'alumnoLinea' => '',
-                'dni' => '',
-                'cursoLabel' => '',
-                'rows' => [],
-                'materias_adeudadas' => [],
-                'items_boletin' => [],
-            ];
+            return self::respuestaError(
+                'No hay matrícula registrada para este ciclo lectivo. Contacte a secretaría.',
+                $ctx->terlecAno(),
+            );
         }
 
         return self::datasetDesdeMatricula($matricula);
@@ -73,11 +68,11 @@ final class ConsultaCalificacionesAlumno
     {
         $ctx = schoolCtx();
         if (! $ctx->isValid()) {
-            return ['ok' => false, 'error' => 'Sesión inválida.', 'anoLectivo' => null, 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'materias_adeudadas' => [], 'items_boletin' => []];
+            return self::respuestaError('Sesión inválida.');
         }
 
         if ($idMatricula <= 0) {
-            return ['ok' => false, 'error' => 'Solicitud inválida.', 'anoLectivo' => $ctx->terlecAno(), 'alumnoLinea' => '', 'dni' => '', 'cursoLabel' => '', 'rows' => [], 'materias_adeudadas' => [], 'items_boletin' => []];
+            return self::respuestaError('Solicitud inválida.', $ctx->terlecAno());
         }
 
         /** @var Matricula|null $matricula */
@@ -98,11 +93,42 @@ final class ConsultaCalificacionesAlumno
                 'cursoLabel' => '',
                 'rows' => [],
                 'materias_adeudadas' => [],
+                'tercer_materia' => [],
                 'items_boletin' => [],
             ];
         }
 
         return self::datasetDesdeMatricula($matricula);
+    }
+
+    /**
+     * @return array{
+     *     ok: false,
+     *     error: string,
+     *     anoLectivo: ?int,
+     *     alumnoLinea: string,
+     *     dni: string,
+     *     cursoLabel: string,
+     *     rows: list<object>,
+     *     materias_adeudadas: list<object>,
+     *     tercer_materia: list<array>,
+     *     items_boletin: list<object>
+     * }
+     */
+    private static function respuestaError(string $error, ?int $anoLectivo = null): array
+    {
+        return [
+            'ok' => false,
+            'error' => $error,
+            'anoLectivo' => $anoLectivo,
+            'alumnoLinea' => '',
+            'dni' => '',
+            'cursoLabel' => '',
+            'rows' => [],
+            'materias_adeudadas' => [],
+            'tercer_materia' => [],
+            'items_boletin' => [],
+        ];
     }
 
     /**
@@ -115,6 +141,7 @@ final class ConsultaCalificacionesAlumno
      *     cursoLabel: string,
      *     rows: list<object>,
      *     materias_adeudadas: list<object{materia: string, curso: string, linea: string}>,
+     *     tercer_materia: list<array{materia: string, curso: string, ano_lectivo: int|string, nombre_boletin: string, linea: string, tm1: string, tm2: string, tm3: string, tm4: string, tm5: string, tm6: string, tmNota: string}>,
      *     items_boletin: list<object{etiqueta: string, fuente: string, total: float}>
      * }
      */
@@ -158,6 +185,7 @@ final class ConsultaCalificacionesAlumno
 
         $idNivel = (int) $matricula->idNivel;
         $materiasAdeudadas = self::materiasAdeudadasCiclosAnteriores($idLegajo, $idTerlec, $idNivel);
+        $tercerMateria = self::tercerMateriaParaLegajo($idLegajo, $idNivel, $idTerlec);
 
         return [
             'ok' => true,
@@ -168,8 +196,21 @@ final class ConsultaCalificacionesAlumno
             'cursoLabel' => $cursoLabel,
             'rows' => $rows->all(),
             'materias_adeudadas' => $materiasAdeudadas,
+            'tercer_materia' => $tercerMateria,
             'items_boletin' => self::itemsBoletinParaMatricula($idMat, $idTerlec),
         ];
+    }
+
+    /**
+     * @return list<array{materia: string, curso: string, ano_lectivo: int|string, linea: string, tm1: string, tm2: string, tm3: string, tm4: string, tm5: string, tm6: string, tmNota: string}>
+     */
+    private static function tercerMateriaParaLegajo(int $idLegajo, int $idNivel, int $idTerlec): array
+    {
+        if (! tenantBoletinMuestraTercerMateria()) {
+            return [];
+        }
+
+        return TercerMateriaGestor::filasParaLegajo($idLegajo, $idNivel, $idTerlec);
     }
 
     /**
@@ -312,25 +353,73 @@ final class ConsultaCalificacionesAlumno
     private const ITEMS_BOLETIN_FUENTES = ['inasistencias', 'sanciones'];
 
     /**
+     * Ítems estándar del pie del boletín (referencia: configuración habitual en colegios del sistema).
+     * Se usan si {@see itemsboletin} no existe o no tiene filas activas.
+     *
+     * @return list<object{etiqueta: string, fuente: string, condicion_where: string}>
+     */
+    private static function definicionesItemsBoletinPorDefecto(): array
+    {
+        $filas = [
+            [1, 'Inasistencias Justificadas', 'inasistencias', "tipo <> 5 and just = 'J'"],
+            [2, 'Inasistencias Injustificadas', 'inasistencias', "tipo <> 5 and just = 'I'"],
+            [3, 'Total de Inasistencias', 'inasistencias', "tipo <> 5 and (just = 'J' or just = 'I')"],
+            [4, 'Inasistencias a Educación Física', 'inasistencias', 'tipo = 5'],
+            [5, 'Apercibimientos Orales', 'sanciones', 'idTipoSancion = 2'],
+            [6, 'Apercibimientos Escritos', 'sanciones', 'idTipoSancion = 3'],
+            [7, 'Amonestaciones', 'sanciones', 'idTipoSancion = 1 and publicada = 1'],
+            [8, 'Suspensiones', 'sanciones', 'idTipoSancion = 6'],
+        ];
+
+        $out = [];
+        foreach ($filas as [$orden, $etiqueta, $fuente, $cond]) {
+            $out[] = (object) [
+                'orden' => $orden,
+                'etiqueta' => $etiqueta,
+                'fuente' => $fuente,
+                'condicion_where' => $cond,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<object{etiqueta: string, fuente: string, condicion_where: string}>
+     */
+    private static function definicionesItemsBoletinActivas(int $idTerlec): array
+    {
+        if (Schema::hasTable('itemsboletin')) {
+            $definiciones = DB::table('itemsboletin')
+                ->where('activo', true)
+                ->where(function ($q) use ($idTerlec) {
+                    $q->whereNull('idTerlec')
+                        ->orWhere('idTerlec', $idTerlec);
+                })
+                ->orderBy('orden')
+                ->orderBy('id')
+                ->get(['etiqueta', 'fuente', 'condicion_where']);
+
+            if ($definiciones->isNotEmpty()) {
+                return $definiciones->all();
+            }
+        }
+
+        return self::definicionesItemsBoletinPorDefecto();
+    }
+
+    /**
      * Filas para el pie del PDF (inasistencias / sanciones) según {@see ItemBoletin}.
      *
      * @return list<object{etiqueta: string, fuente: string, total: float}>
      */
     private static function itemsBoletinParaMatricula(int $idMatricula, int $idTerlec): array
     {
-        if ($idMatricula <= 0 || ! Schema::hasTable('itemsboletin')) {
+        if ($idMatricula <= 0) {
             return [];
         }
 
-        $definiciones = DB::table('itemsboletin')
-            ->where('activo', true)
-            ->where(function ($q) use ($idTerlec) {
-                $q->whereNull('idTerlec')
-                    ->orWhere('idTerlec', $idTerlec);
-            })
-            ->orderBy('orden')
-            ->orderBy('id')
-            ->get(['etiqueta', 'fuente', 'condicion_where']);
+        $definiciones = self::definicionesItemsBoletinActivas($idTerlec);
 
         $out = [];
         foreach ($definiciones as $def) {

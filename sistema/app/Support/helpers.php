@@ -309,6 +309,17 @@ if (! function_exists('schoolNombre')) {
     }
 }
 
+if (! function_exists('tenantBoletinMuestraTercerMateria')) {
+    /**
+     * Si el colegio muestra el bloque de tercer materia en boletín y consulta de calificaciones.
+     * Default false; activar en `config/tenants/{slug}.php`.
+     */
+    function tenantBoletinMuestraTercerMateria(): bool
+    {
+        return (bool) config('tenant.boletin.mostrar_tercer_materia', false);
+    }
+}
+
 if (! function_exists('notificaciones_push_enviar')) {
     /**
      * Enviar notificación push a uno o más legajos (user_key).

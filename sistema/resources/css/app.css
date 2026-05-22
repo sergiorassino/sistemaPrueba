@@ -635,6 +635,24 @@
         @apply rounded-2xl border bg-white shadow-sm shadow-neutral-900/5;
         border-color: var(--color-accent-200);
     }
+
+    /* Listado inasistencias docentes: caber en ~17" sin scroll horizontal */
+    .se-inas-docentes-table {
+        @apply w-full table-fixed border-collapse text-[11px];
+    }
+    .se-inas-docentes-table .table-header {
+        @apply px-1 py-1.5 text-[10px] tracking-wide;
+    }
+    .se-inas-docentes-table .table-cell {
+        @apply px-1 py-1.5 text-[11px];
+    }
+    .se-inas-docentes-table .btn-sm,
+    .se-inas-docentes-table .se-inas-doc-btn {
+        @apply px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide;
+    }
+    .se-inas-docentes-table .se-inas-doc-btn {
+        @apply inline-block max-w-[3.75rem] text-center;
+    }
     .se-soft-card {
         @apply rounded-2xl border shadow-sm;
         background-color: rgba(255,255,255,.82);

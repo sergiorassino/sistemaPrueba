@@ -134,7 +134,7 @@
         calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.') || str_starts_with($route ?? '', 'boletinesSecundario.')) ? 'true' : 'false' }},
         disciplinario: {{ str_starts_with($route ?? '', 'seguimiento.disciplinario') ? 'true' : 'false' }},
         inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') || str_starts_with($route ?? '', 'seguimiento.partes-diarios') ? 'true' : 'false' }},
-        docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.legajos-profesor')) ? 'true' : 'false' }},
+        docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.legajos-profesor') || str_starts_with($route ?? '', 'docentes.inasistencias')) ? 'true' : 'false' }},
         examenes: {{ str_starts_with($route ?? '', 'examenes.') ? 'true' : 'false' }},
         matrizAnaliticos: {{ str_starts_with($route ?? '', 'matrizAnaliticos.') ? 'true' : 'false' }},
         certificados: {{ str_starts_with($route ?? '', 'certificados.') ? 'true' : 'false' }},
@@ -758,6 +758,21 @@
                     </svg>
                     <span class="truncate">Asignación de Profesores por Materia y Curso</span>
                 </a>
+
+                @if (tienePermiso(23))
+                    <a href="{{ route('docentes.inasistencias') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'is-active shadow-sm' => str_starts_with($route ?? '', 'docentes.inasistencias'),
+                       ])
+                       title="Inasistencias docentes">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="truncate">Inasistencias docentes</span>
+                    </a>
+                @endif
             </div>
         @endif
 

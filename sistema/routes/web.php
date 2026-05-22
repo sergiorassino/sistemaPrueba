@@ -40,6 +40,16 @@ use App\Livewire\Abm\Legajos\LegajoForm;
 use App\Livewire\Abm\Legajos\LegajosIndex;
 use App\Livewire\Abm\LegajosProfesor\LegajoProfesorForm;
 use App\Livewire\Abm\LegajosProfesor\LegajosProfesorIndex;
+use App\Http\Controllers\Docentes\InformeInasistenciasDocentePdfController;
+use App\Livewire\Docentes\Inasistencias\CargosDocenteIndex;
+use App\Livewire\Docentes\Inasistencias\InformeBimestreShow;
+use App\Livewire\Docentes\Inasistencias\InasistenciaDocenteForm;
+use App\Livewire\Docentes\Inasistencias\InasistenciasDocenteShow;
+use App\Livewire\Docentes\Inasistencias\EnvioMasivoInasistenciasDocentes;
+use App\Livewire\Docentes\Inasistencias\InasistenciasDocentesIndex;
+use App\Livewire\Docentes\Inasistencias\RankingInasistenciasMateriasCursos;
+use App\Http\Controllers\Docentes\RankingInasistenciasMateriasCursosCsvController;
+use App\Support\InasistenciasDocentes;
 use App\Livewire\Abm\MateriasAnio\MateriasAnioIndex;
 use App\Livewire\Abm\ProfesoresPorMateria\ProfesoresPorMateriaIndex;
 use App\Livewire\Abm\Niveles\NivelesIndex;
@@ -226,6 +236,21 @@ Route::middleware(['auth', 'school.context'])->group(function () {
     Route::get('/abm/legajos-profesor', LegajosProfesorIndex::class)->middleware('permiso:1')->name('abm.legajos-profesor');
     Route::get('/abm/legajos-profesor/nuevo', LegajoProfesorForm::class)->middleware('permiso:11')->name('abm.legajos-profesor.create');
     Route::get('/abm/legajos-profesor/{id}/editar', LegajoProfesorForm::class)->whereNumber('id')->name('abm.legajos-profesor.edit');
+
+    Route::middleware('permiso:'.InasistenciasDocentes::PERMISO_ORDEN)->prefix('docentes/inasistencias')->group(function () {
+        Route::get('/', InasistenciasDocentesIndex::class)->name('docentes.inasistencias');
+        Route::get('/envio-masivo', EnvioMasivoInasistenciasDocentes::class)->name('docentes.inasistencias.envio-masivo');
+        Route::get('/ranking', RankingInasistenciasMateriasCursos::class)->name('docentes.inasistencias.ranking');
+        Route::get('/ranking/exportar-csv', RankingInasistenciasMateriasCursosCsvController::class)->name('docentes.inasistencias.ranking.csv');
+        Route::get('/{idProfesor}', InasistenciasDocenteShow::class)->whereNumber('idProfesor')->name('docentes.inasistencias.show');
+        Route::get('/{idProfesor}/nuevo', InasistenciaDocenteForm::class)->whereNumber('idProfesor')->name('docentes.inasistencias.create');
+        Route::get('/{idProfesor}/{id}/editar', InasistenciaDocenteForm::class)->whereNumber(['idProfesor', 'id'])->name('docentes.inasistencias.edit');
+        Route::get('/{idProfesor}/cargos/{idCxp?}', CargosDocenteIndex::class)->whereNumber(['idProfesor', 'idCxp'])->name('docentes.inasistencias.cargos');
+        Route::get('/{idProfesor}/informe/{bimestre}', InformeBimestreShow::class)->whereNumber(['idProfesor', 'bimestre'])->name('docentes.inasistencias.informe');
+        Route::get('/{idProfesor}/informe/{bimestre}/pdf', InformeInasistenciasDocentePdfController::class)
+            ->whereNumber(['idProfesor', 'bimestre'])
+            ->name('docentes.inasistencias.informe.pdf');
+    });
 
     Route::get('/listados/por-curso', ListadoPorCurso::class)->name('listados.por-curso');
     Route::get('/listados/por-curso/listado', ListadoCursoPdfController::class)->name('listados.por-curso.pdf');

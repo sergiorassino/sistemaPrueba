@@ -20,8 +20,9 @@
     <div class="se-card mt-6 overflow-hidden">
         <div class="border-b border-accent-200 bg-white px-5 py-4">
             <p class="text-sm text-neutral-700">
-                Registros de calificaciones con <code class="text-xs">apro = 1</code> y condición
-                <code class="text-xs">TM</code> (tercer materia). Las notas TM se guardan al salir de cada campo. El curso actual y el docente corresponden al ciclo lectivo activo en sesión.
+                Alumnos regulares en el ciclo lectivo activo, con calificaciones
+                <code class="text-xs">apro = 1</code> y <code class="text-xs">condAdeuda = TM</code>.
+                Las notas TM se guardan al salir de cada campo. El curso actual y el docente corresponden al ciclo lectivo activo en sesión.
             </p>
         </div>
 

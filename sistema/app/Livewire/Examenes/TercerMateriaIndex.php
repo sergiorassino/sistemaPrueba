@@ -67,6 +67,7 @@ class TercerMateriaIndex extends Component
         $resultado = TercerMateriaGestor::actualizarCamposTm(
             $idCalificacion,
             (int) $ctx->idNivel,
+            (int) $ctx->idTerlec,
             [$campo => $valor],
         );
 

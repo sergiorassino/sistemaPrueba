@@ -2,10 +2,12 @@
 
 namespace App\Support\Examenes;
 
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Gestión de tercer materia: calificaciones adeudadas con condición TM.
+ * Gestión de tercer materia: calificaciones adeudadas (apro = 1, condAdeuda TM).
+ * El listado del módulo exige además matrícula regular en el ciclo lectivo activo.
  */
 final class TercerMateriaGestor
 {
@@ -62,16 +64,15 @@ final class TercerMateriaGestor
             })
             ->leftJoin('turnos_clase as tc', 'tc.id', '=', 'cu.idTurnoClase')
             ->join('terlec as t', 't.id', '=', 'c.idTerlec')
-            ->leftJoin('matricula as mat_act', function ($join) use ($idTerlecActual): void {
-                $join->on('mat_act.idLegajos', '=', 'c.idLegajos')
-                    ->where('mat_act.idTerlec', '=', $idTerlecActual);
-            })
-            ->leftJoin('cursos as cu_act', 'cu_act.Id', '=', 'mat_act.idCursos')
             ->where('c.apro', 1)
             ->where('c.condAdeuda', 'TM')
             ->where('cu.idNivel', $idNivel);
 
-        if ($idLegajo !== null && $idLegajo > 0) {
+        $soloListadoModulo = $idLegajo === null || $idLegajo < 1;
+        self::joinMatriculaCicloActual($query, $idNivel, $idTerlecActual, $soloListadoModulo);
+        $query->leftJoin('cursos as cu_act', 'cu_act.Id', '=', 'mat_act.idCursos');
+
+        if (! $soloListadoModulo) {
             $query->where('c.idLegajos', $idLegajo);
         }
 
@@ -106,7 +107,7 @@ final class TercerMateriaGestor
                 ),
             ]);
 
-        if ($idLegajo !== null && $idLegajo > 0) {
+        if (! $soloListadoModulo) {
             $raw = $query
                 ->orderByDesc('t.ano')
                 ->orderBy('m.materia')
@@ -294,9 +295,9 @@ final class TercerMateriaGestor
      *     error: string
      * }
      */
-    public static function actualizarCamposTm(int $idCalificacion, int $idNivel, array $campos): array
+    public static function actualizarCamposTm(int $idCalificacion, int $idNivel, int $idTerlecActual, array $campos): array
     {
-        $fila = self::calificacionTm($idCalificacion, $idNivel);
+        $fila = self::calificacionTm($idCalificacion, $idNivel, $idTerlecActual);
         if ($fila === null) {
             return ['ok' => false, 'error' => 'Registro no encontrado o sin condición TM.'];
         }
@@ -321,7 +322,7 @@ final class TercerMateriaGestor
             ->where('id', $idCalificacion)
             ->update($update);
 
-        $refrescada = self::calificacionTm($idCalificacion, $idNivel);
+        $refrescada = self::calificacionTm($idCalificacion, $idNivel, $idTerlecActual);
 
         return [
             'ok' => true,
@@ -332,15 +333,18 @@ final class TercerMateriaGestor
     /**
      * @return array<string, mixed>|null
      */
-    public static function calificacionTm(int $idCalificacion, int $idNivel): ?array
+    public static function calificacionTm(int $idCalificacion, int $idNivel, int $idTerlecActual): ?array
     {
-        $r = DB::table('calificaciones as c')
+        $query = DB::table('calificaciones as c')
             ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
             ->where('c.id', $idCalificacion)
             ->where('c.apro', 1)
             ->where('c.condAdeuda', 'TM')
-            ->where('cu.idNivel', $idNivel)
-            ->first([
+            ->where('cu.idNivel', $idNivel);
+
+        self::joinMatriculaCicloActual($query, $idNivel, $idTerlecActual, true);
+
+        $r = $query->first([
                 'c.id',
                 'c.idLegajos',
                 'c.idTerlec',
@@ -388,7 +392,7 @@ final class TercerMateriaGestor
      */
     public static function datosActaCompromiso(int $idCalificacion, int $idNivel, int $idTerlecActual): ?array
     {
-        $r = DB::table('calificaciones as c')
+        $query = DB::table('calificaciones as c')
             ->join('legajos as l', 'l.id', '=', 'c.idLegajos')
             ->join('materias as m', function ($join): void {
                 $join->on('m.id', '=', 'c.idMaterias')
@@ -398,25 +402,26 @@ final class TercerMateriaGestor
             ->where('c.id', $idCalificacion)
             ->where('c.apro', 1)
             ->where('c.condAdeuda', 'TM')
-            ->where('cu.idNivel', $idNivel)
-            ->first([
+            ->where('cu.idNivel', $idNivel);
+
+        self::joinMatriculaCicloActual($query, $idNivel, $idTerlecActual, true);
+        $query->leftJoin('cursos as cu_act', 'cu_act.Id', '=', 'mat_act.idCursos');
+
+        $r = $query->first([
                 'c.idLegajos',
                 'l.apellido',
                 'l.nombre',
                 'l.dni',
                 'm.materia',
                 'cu.cursec',
+                'cu_act.cursec as curso_actual_cursec',
             ]);
 
         if ($r === null) {
             return null;
         }
 
-        $cursoActual = DB::table('matricula as mat')
-            ->join('cursos as cu', 'cu.Id', '=', 'mat.idCursos')
-            ->where('mat.idLegajos', (int) $r->idLegajos)
-            ->where('mat.idTerlec', $idTerlecActual)
-            ->value('cu.cursec');
+        $cursoActual = trim((string) ($r->curso_actual_cursec ?? ''));
 
         $apellido = trim((string) ($r->apellido ?? ''));
         $nombre = trim((string) ($r->nombre ?? ''));
@@ -426,8 +431,50 @@ final class TercerMateriaGestor
             'dni' => trim((string) ($r->dni ?? '')),
             'nombreTercerMateria' => trim((string) ($r->materia ?? '')),
             'nombreCursoTercerMateria' => trim((string) ($r->cursec ?? '')),
-            'cursoActual' => trim((string) ($cursoActual ?? '')),
+            'cursoActual' => $cursoActual,
         ];
+    }
+
+    /**
+     * Matrícula del ciclo lectivo activo: inner join si debe ser regular (listado del módulo).
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     */
+    private static function joinMatriculaCicloActual(
+        $query,
+        int $idNivel,
+        int $idTerlecActual,
+        bool $soloRegularesActivos,
+    ): void {
+        if ($idTerlecActual < 1 || $idNivel < 1) {
+            if ($soloRegularesActivos) {
+                $query->whereRaw('0 = 1');
+            }
+
+            return;
+        }
+
+        $idsRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
+
+        if ($soloRegularesActivos) {
+            $query->join('matricula as mat_act', function ($join) use ($idTerlecActual, $idNivel, $idsRegulares): void {
+                $join->on('mat_act.idLegajos', '=', 'c.idLegajos')
+                    ->where('mat_act.idTerlec', '=', $idTerlecActual)
+                    ->where('mat_act.idNivel', '=', $idNivel)
+                    ->whereIn('mat_act.idCondiciones', $idsRegulares)
+                    ->whereNull('mat_act.fechaBaja');
+            });
+
+            return;
+        }
+
+        $query->leftJoin('matricula as mat_act', function ($join) use ($idTerlecActual, $idNivel): void {
+            $join->on('mat_act.idLegajos', '=', 'c.idLegajos')
+                ->where('mat_act.idTerlec', '=', $idTerlecActual)
+                ->where('mat_act.idNivel', '=', $idNivel);
+        });
     }
 
     /**

@@ -5,6 +5,8 @@ namespace App\Livewire\Auth;
 use App\Models\Nivel;
 use App\Models\Profesor;
 use App\Models\Terlec;
+use App\Support\DniInput;
+use App\Support\EntoTerlecVerNotas;
 use App\Support\ProfesorMenuPortal;
 use App\Support\SchoolContext;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +24,9 @@ class Login extends Component
 
     public int|string $idTerlec = '';
 
+    /** Mensaje a pantalla completa cuando un docente elige un año no autorizado. */
+    public ?string $mensajeBloqueoDocenteTerlec = null;
+
     public function mount(): void
     {
         $request = request();
@@ -38,7 +43,7 @@ class Login extends Component
         }
 
         if ($this->dni === '' && $request->filled('username')) {
-            $dni = preg_replace('/\D+/', '', (string) $request->query('username'));
+            $dni = DniInput::digitsOnly((string) $request->query('username'));
             if ($dni !== '') {
                 $this->dni = $dni;
                 $this->updatedDni($dni);
@@ -50,10 +55,13 @@ class Login extends Component
     {
         $this->resetErrorBag('dni');
 
-        $dni = trim($value);
+        $dni = DniInput::digitsOnly($value);
+        if ($dni !== $this->dni) {
+            $this->dni = $dni;
+        }
 
         // Evitar consultas si el DNI todavía no es válido
-        if ($dni === '' || ! ctype_digit($dni) || strlen($dni) < 7 || strlen($dni) > 11) {
+        if ($dni === '' || strlen($dni) < 7) {
             return;
         }
 
@@ -111,13 +119,13 @@ class Login extends Component
 
     public function login()
     {
+        $this->dni = DniInput::digitsOnly($this->dni);
+
         // Si el usuario no seleccionó nivel/año, intentar sugerirlos desde el último acceso guardado.
-        $dni = trim($this->dni);
+        $dni = $this->dni;
         if (
             $dni !== ''
-            && ctype_digit($dni)
             && strlen($dni) >= 7
-            && strlen($dni) <= 11
             && ($this->idNivel === '' || $this->idTerlec === '')
         ) {
             $profesor = Profesor::query()
@@ -162,6 +170,15 @@ class Login extends Component
             /** @var Profesor $profesor */
             $profesor = Auth::user();
 
+            if (ProfesorMenuPortal::usaMenuDocentes($profesor)
+                && ! EntoTerlecVerNotas::terlecPermitido((int) $this->idNivel, (int) $this->idTerlec)) {
+                Auth::logout();
+                RateLimiter::clear($throttleKey);
+                $this->mensajeBloqueoDocenteTerlec = EntoTerlecVerNotas::mensajeSoloAnoAutorizado((int) $this->idNivel);
+
+                return;
+            }
+
             // Regenerar sesión primero (seguridad anti-session-fixation)
             session()->regenerate();
 
@@ -189,6 +206,11 @@ class Login extends Component
         RateLimiter::hit($throttleKey, 60);
 
         $this->addError('dni', 'DNI o contraseña incorrectos. Verifique sus datos.');
+    }
+
+    public function cerrarMensajeBloqueoDocenteTerlec(): void
+    {
+        $this->mensajeBloqueoDocenteTerlec = null;
     }
 
     public function render()

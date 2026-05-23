@@ -264,6 +264,48 @@ final class PlanillaCalificacionesSecundario
      *     lineHeightFila: float
      * }
      */
+    /**
+     * Anchos de columna en % del ancho de tabla (misma fórmula que `planilla-calificaciones-hoja.blade.php`).
+     *
+     * @return array{
+     *     ord: float,
+     *     ec: float,
+     *     eval: list<float>,
+     *     jis: list<float>,
+     *     dic: float,
+     *     feb: float,
+     *     prom: float
+     * }
+     */
+    public static function anchosColumnasPorcentaje(): array
+    {
+        $factorAnchoNotas = 0.9;
+        $wEvPctNarrow = 7.05;
+        $wEvPctBase = 8.1 * 0.9;
+        $wEvPct = $wEvPctNarrow * $factorAnchoNotas;
+        $freedEval = 8 * 8.1 * 0.1;
+        $addColoq = $freedEval / 3;
+        $toPromOnly = 8 * ($wEvPctBase - $wEvPctNarrow);
+        $wJisPct = 5.8 * $factorAnchoNotas;
+        $wDicPct = (1.8 + $addColoq) * $factorAnchoNotas;
+        $wFebPct = $wDicPct;
+        $wPromPct = (1.26 + $addColoq + $toPromOnly) * $factorAnchoNotas;
+        $ahorroNotasPct = (8 * $wEvPctNarrow) + (2 * 5.8) + (1.8 + $addColoq) * 2 + (1.26 + $addColoq + $toPromOnly);
+        $ahorroNotasPct -= (8 * $wEvPct) + (2 * $wJisPct) + $wDicPct * 2 + $wPromPct;
+        $wOrdPct = 2.5;
+        $wEcPct = (19.54 - $wOrdPct) + $ahorroNotasPct;
+
+        return [
+            'ord' => $wOrdPct,
+            'ec' => $wEcPct,
+            'eval' => array_fill(0, 8, $wEvPct),
+            'jis' => [$wJisPct, $wJisPct],
+            'dic' => $wDicPct,
+            'feb' => $wFebPct,
+            'prom' => $wPromPct,
+        ];
+    }
+
     public static function metricasLayoutFilas(int $cantidadFilas): array
     {
         $n = max(1, $cantidadFilas);

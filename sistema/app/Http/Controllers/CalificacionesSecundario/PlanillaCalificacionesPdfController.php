@@ -3,16 +3,17 @@
 namespace App\Http\Controllers\CalificacionesSecundario;
 
 use App\Http\Controllers\Controller;
+use App\Support\CalificacionesSecundario\PlanillaCalificacionesTcpdf;
 use App\Support\PlanillaCalificacionesSecundario;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class PlanillaCalificacionesPdfController extends Controller
 {
-    public function __invoke(Request $request)
+    public function __invoke(Request $request): Response
     {
         @ini_set('memory_limit', '512M');
 
@@ -72,17 +73,20 @@ class PlanillaCalificacionesPdfController extends Controller
             $slug = 'planilla_calificaciones';
         }
 
-        $pdf = Pdf::loadView('pdf.planilla-calificaciones', [
+        $pdf = PlanillaCalificacionesTcpdf::generar([
             'pdfHeader' => schoolPdfHeaderData(),
             'ano' => $ano,
             'cursoLabel' => $cursoLabel,
             'secciones' => $secciones,
-        ])->setPaper('a4', 'portrait');
+        ]);
 
-        $response = $pdf->stream($slug.'.pdf');
-        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        $response->headers->set('Pragma', 'no-cache');
+        $binary = $pdf->Output($slug.'.pdf', 'S');
 
-        return $response;
+        return response($binary, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$slug.'.pdf"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+        ]);
     }
 }

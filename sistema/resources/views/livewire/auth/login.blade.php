@@ -26,8 +26,10 @@
                        id="dni"
                        type="text"
                        inputmode="numeric"
+                       maxlength="11"
                        autocomplete="username"
                        placeholder="Ej: 25038868"
+                       x-on:input="$event.target.value = $event.target.value.replace(/\D/g, '').slice(0, 11)"
                        class="se-auth-input py-2.5 px-3 @error('dni') !border-red-400 ring-2 ring-red-200/80 @enderror">
                 @error('dni')
                     <p class="form-error">{{ $message }}</p>
@@ -111,4 +113,23 @@
             </div>
         </form>
     </div>
+
+    @if ($mensajeBloqueoDocenteTerlec)
+        <div class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-neutral-900/50 backdrop-blur-sm"
+             role="alertdialog"
+             aria-modal="true"
+             aria-labelledby="login-bloqueo-docente-titulo">
+            <div class="w-full max-w-md rounded-2xl border border-accent-200 bg-white p-6 sm:p-8 shadow-xl text-center">
+                <p id="login-bloqueo-docente-titulo"
+                   class="text-base sm:text-lg font-semibold leading-relaxed text-neutral-800">
+                    {{ $mensajeBloqueoDocenteTerlec }}
+                </p>
+                <button type="button"
+                        wire:click="cerrarMensajeBloqueoDocenteTerlec"
+                        class="se-auth-btn mt-6 min-w-[8rem]">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    @endif
 </div>

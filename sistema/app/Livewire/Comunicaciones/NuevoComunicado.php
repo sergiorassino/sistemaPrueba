@@ -2,11 +2,12 @@
 
 namespace App\Livewire\Comunicaciones;
 
-use App\Push\DestinatariosRepository;
-use Illuminate\Support\Facades\RateLimiter;
-use Livewire\Component;
 use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComunicacionesRepository;
+use App\Push\DestinatariosRepository;
+use App\Support\ComunicacionesRutasGestion;
+use Illuminate\Support\Facades\RateLimiter;
+use Livewire\Component;
 
 class NuevoComunicado extends Component
 {
@@ -487,7 +488,7 @@ class NuevoComunicado extends Component
         }
 
         session()->flash('success', 'Comunicado registrado. A continuación el detalle de cada envío por medio.');
-        $this->redirectRoute('comunicaciones.informe-envio', ['id' => $hilo->id]);
+        $this->redirectRoute(ComunicacionesRutasGestion::nombreRuta('informe-envio'), ['id' => $hilo->id]);
     }
 
     private function recargarModalAlumnosLista(): void
@@ -582,6 +583,6 @@ class NuevoComunicado extends Component
             'cursos'       => $cursos,
             'maxContenido' => config('comunicaciones.max_contenido', 2000),
             'maxAsunto'    => config('comunicaciones.max_asunto', 200),
-        ])->layout('layouts.app', ['pageTitle' => 'Nuevo Comunicado']);
+        ])->layout(ComunicacionesRutasGestion::layout(), ['pageTitle' => 'Nuevo Comunicado']);
     }
 }

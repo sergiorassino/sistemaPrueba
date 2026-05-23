@@ -3,6 +3,8 @@
 namespace App\Livewire\CalificacionesSecundario;
 
 use App\Models\Curso;
+use App\Support\EntoCargaNotas;
+use App\Support\PortalDocente\CalificacionesDocenteSecundario;
 use App\Support\PromedioAnualCalificacionesSecundario;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -56,8 +58,26 @@ class CargaCalificacionesSecundario extends Component
      */
     public array $notasPermitidasLista = [];
 
-    public function mount(): void
+    /** Menú de Docentes: sin permiso 9; alcance por ppc y `ento.cargaNotasOff`. */
+    public bool $modoPortalDocente = false;
+
+    public bool $cargaNotasSoloLectura = false;
+
+    public bool $mostrarModalNotasOff = false;
+
+    public string $mensajeNotasOff = '';
+
+    /**
+     * Secretaría: sin parámetros. Menú de Docentes: `{curso}` y `{materia}` en la ruta.
+     */
+    public function mount(?int $curso = null, ?int $materia = null): void
     {
+        if ($curso !== null && $materia !== null) {
+            $this->inicializarModoPortalDocente($curso, $materia);
+
+            return;
+        }
+
         abort_unless(tienePermiso(9), 403, 'Sin permiso para cargar calificaciones.');
 
         // Entrada al módulo: forzar selección explícita de curso/materia.
@@ -65,6 +85,30 @@ class CargaCalificacionesSecundario extends Component
         $this->materiaId = null;
         $this->rows = [];
         $this->resetNotasPermitidas();
+    }
+
+    protected function inicializarModoPortalDocente(int $curso, int $materia): void
+    {
+        CalificacionesDocenteSecundario::abortSiNoEsSecundario();
+
+        $this->modoPortalDocente = true;
+        $this->cursoId = $curso > 0 ? $curso : null;
+        $this->materiaId = $materia > 0 ? $materia : null;
+        $this->rows = [];
+        $this->resetNotasPermitidas();
+
+        CalificacionesDocenteSecundario::abortSiProfesorSinMateria($materia, $curso);
+
+        $params = EntoCargaNotas::paraNivelActual();
+        if ($params['bloqueada']) {
+            $this->cargaNotasSoloLectura = true;
+            $this->mensajeNotasOff = $params['mensaje'];
+            $this->mostrarModalNotasOff = true;
+        }
+
+        if ($this->cursoId && $this->materiaId) {
+            $this->loadGrid();
+        }
     }
 
     public function updatedCursoId($value): void
@@ -124,6 +168,13 @@ class CargaCalificacionesSecundario extends Component
 
         if (! $materiaOk) {
             abort(404);
+        }
+
+        if ($this->modoPortalDocente) {
+            CalificacionesDocenteSecundario::abortSiProfesorSinMateria(
+                (int) $this->materiaId,
+                (int) $this->cursoId,
+            );
         }
     }
 
@@ -367,7 +418,13 @@ class CargaCalificacionesSecundario extends Component
      */
     public function saveCell(int $id, string $field, mixed $value): void
     {
-        abort_unless(tienePermiso(9), 403);
+        if ($this->modoPortalDocente) {
+            if ($this->cargaNotasSoloLectura) {
+                return;
+            }
+        } else {
+            abort_unless(tienePermiso(9), 403);
+        }
 
         // Rate limit suave: evita bursts si el usuario navega rápido con teclado.
         $key = 'calificacionesSecundario:carga:cell:'.(auth()->id() ?? 'guest');
@@ -562,17 +619,47 @@ class CargaCalificacionesSecundario extends Component
         $notasPermitidasLista = $this->notasPermitidasLista;
         $notasPermitidasActiva = $this->notasPermitidasActiva();
 
-        return view(
-            'livewire.calificaciones-secundario.carga-calificaciones-secundario',
-            compact(
-                'cursos',
-                'materias',
-                'cursoLabel',
-                'materiaLabel',
-                'notasPermitidasLista',
-                'notasPermitidasActiva',
-            ),
-        )
-            ->layout('layouts.app', ['pageTitle' => 'Carga de calificaciones (secundario)']);
+        $modoPortalDocente = $this->modoPortalDocente;
+        $soloLectura = $this->modoPortalDocente && $this->cargaNotasSoloLectura;
+        $mostrarModalNotasOff = $this->modoPortalDocente && $this->mostrarModalNotasOff;
+        $mensajeNotasOff = $this->mensajeNotasOff;
+        $pdfUrl = null;
+        $urlLista = null;
+
+        if ($this->modoPortalDocente && $this->cursoId && $this->materiaId) {
+            $pdfUrl = route('portalDocente.calificaciones.pdf', [
+                'curso' => $this->cursoId,
+                'materia' => $this->materiaId,
+            ]);
+            $urlLista = route('portalDocente.calificaciones');
+        }
+
+        $viewData = compact(
+            'cursos',
+            'materias',
+            'cursoLabel',
+            'materiaLabel',
+            'notasPermitidasLista',
+            'notasPermitidasActiva',
+            'modoPortalDocente',
+            'soloLectura',
+            'mostrarModalNotasOff',
+            'mensajeNotasOff',
+            'pdfUrl',
+            'urlLista',
+        );
+
+        $layout = $this->modoPortalDocente ? 'layouts.docente' : 'layouts.app';
+        $pageTitle = $this->modoPortalDocente
+            ? 'Calificaciones'
+            : 'Carga de calificaciones (secundario)';
+
+        return view('livewire.calificaciones-secundario.carga-calificaciones-secundario', $viewData)
+            ->layout($layout, ['pageTitle' => $pageTitle]);
+    }
+
+    public function aceptarAvisoCargaNotasOff(): void
+    {
+        $this->mostrarModalNotasOff = false;
     }
 }

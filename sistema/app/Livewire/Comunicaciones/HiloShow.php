@@ -2,11 +2,12 @@
 
 namespace App\Livewire\Comunicaciones;
 
+use App\Comunicaciones\CanalesPolicy;
+use App\Comunicaciones\ComunicacionesRepository;
+use App\Support\ComunicacionesRutasGestion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
-use App\Comunicaciones\CanalesPolicy;
-use App\Comunicaciones\ComunicacionesRepository;
 use App\Models\ComCanal;
 use App\Models\ComHilo;
 use App\Models\ComMensaje;
@@ -289,7 +290,7 @@ class HiloShow extends Component
 
         if ($borrarHilo) {
             session()->flash('success', 'Hilo eliminado.');
-            $this->redirectRoute('comunicaciones.index');
+            $this->redirectRoute(ComunicacionesRutasGestion::nombreRuta('index'));
             return;
         }
 
@@ -487,6 +488,6 @@ class HiloShow extends Component
             'paraCompleto'       => $paraCompleto,
             'idProfesorSesion'   => (int) $ctx->idProfesor,
             'whatsappWaBanner'   => $whatsappWaBanner,
-        ])->layout('layouts.app', ['pageTitle' => $hilo->asunto]);
+        ])->layout(ComunicacionesRutasGestion::layout(), ['pageTitle' => $hilo->asunto]);
     }
 }

@@ -1,4 +1,4 @@
-{{-- Planilla por curso: una o más materias (una hoja A4 por materia). --}}
+{{-- Legacy DomPDF (referencia). Generación activa: App\Support\CalificacionesSecundario\PlanillaCalificacionesTcpdf --}}
 <!DOCTYPE html>
 <html lang="es">
 <head>

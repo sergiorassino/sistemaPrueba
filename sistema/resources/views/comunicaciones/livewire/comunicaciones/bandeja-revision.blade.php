@@ -1,3 +1,4 @@
+@php use App\Support\ComunicacionesRutasGestion; @endphp
 <div class="se-page">
     <section class="se-hero">
         <div class="se-hero-inner">
@@ -11,7 +12,7 @@
                 </div>
             </div>
 
-            <a href="{{ route('comunicaciones.index') }}"
+            <a href="{{ ComunicacionesRutasGestion::route('index') }}"
                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -24,7 +25,10 @@
     <div class="se-card overflow-hidden">
         <div class="border-b border-accent-200 bg-white px-5 py-4">
             <p class="se-section-title">Usuario y filtros</p>
-            <p class="mt-1 text-sm text-neutral-600">Permite revisar hilos enviados y recibidos por otros usuarios.</p>
+            <p class="mt-1 text-sm text-neutral-600">
+                Por defecto se listan todos los comunicados del colegio en el ciclo elegido (envíos a familias, preceptores y demás).
+                Opcionalmente filtre por un usuario para ver solo su bandeja.
+            </p>
         </div>
 
         <div class="space-y-6 border-t border-accent-100 bg-accent-50/30 p-5 sm:p-6">
@@ -52,10 +56,23 @@
                             </div>
                         @endif
                     </div>
-                    <p class="mt-2 text-xs text-neutral-500">
-                        <span class="font-semibold text-neutral-700">Viendo:</span>
-                        {{ $profesorObjetivoLabel ?? ('ID ' . $idProfesorObjetivo) }}
-                    </p>
+                    <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+                        <span>
+                            <span class="font-semibold text-neutral-700">Viendo:</span>
+                            @if ($idProfesorObjetivo)
+                                {{ $profesorObjetivoLabel ?? ('ID ' . $idProfesorObjetivo) }}
+                            @else
+                                Todos los comunicados institucionales
+                            @endif
+                        </span>
+                        @if ($idProfesorObjetivo)
+                            <button type="button"
+                                    wire:click="limpiarFiltroProfesor"
+                                    class="font-semibold text-primary-700 underline-offset-2 hover:underline">
+                                Ver todos
+                            </button>
+                        @endif
+                    </div>
                 </div>
 
                 <div>
@@ -137,7 +154,12 @@
 
                 $deNombre = trim((string) ($hilo->cuerpo_inicial_nombre ?? ''));
                 $deVinculo = trim((string) ($hilo->cuerpo_inicial_vinculo ?? ''));
-                $deLabel = $deNombre !== '' ? $deNombre : ((string) ($hilo->cuerpo_inicial_tipo ?? '') === 'profesor' ? 'Personal escolar' : 'Familia');
+                $remitenteInst = trim((string) ($hilo->remitente_institucional ?? ''));
+                if ($esEnviados && $remitenteInst !== '') {
+                    $deLabel = $remitenteInst;
+                } else {
+                    $deLabel = $deNombre !== '' ? $deNombre : ((string) ($hilo->cuerpo_inicial_tipo ?? '') === 'profesor' ? 'Personal escolar' : 'Familia');
+                }
                 if ($deVinculo !== '' && $deNombre !== '') {
                     $deLabel .= ' ('.$deVinculo.')';
                 }
@@ -163,7 +185,7 @@
                 }
             @endphp
 
-            <a href="{{ route('comunicaciones.hilo', $hilo->id) }}"
+            <a href="{{ ComunicacionesRutasGestion::route('hilo', $hilo->id) }}"
                @class([
                    'se-card block p-4 transition hover:shadow-md sm:p-5',
                    'border-l-4 border-l-primary-600 bg-primary-50/20' => $esEnviados && ! $tieneNoLeidos,
@@ -216,6 +238,11 @@
                             'justify-end text-right' => ! $esEnviados,
                         ])>
                             @if ($esEnviados)
+                                @if (! $idProfesorObjetivo && $deLabel !== '')
+                                    <span class="shrink-0 text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">De:</span>
+                                    <span class="min-w-0 max-w-[9rem] truncate text-neutral-600 sm:max-w-[12rem]">{{ $deLabel }}</span>
+                                    <span class="shrink-0 text-neutral-400">·</span>
+                                @endif
                                 <span class="shrink-0 text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">Para:</span>
                                 <span class="min-w-0 truncate text-neutral-700">{{ $paraLabel }}</span>
                             @else

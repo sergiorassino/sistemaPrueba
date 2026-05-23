@@ -45,7 +45,7 @@ Orientación UI: **mobile-first** (ver [01-descripcion-general.md](01-descripcio
 ## 3. Menú de Docentes
 
 - **Audiencia:** profesores que solo necesitan **pocas acciones** (carga/consulta acotada, comunicados propios, etc.) sin el menú completo de secretaría.
-- **Estado:** layout y ruta placeholder creados; ítems del menú se irán agregando por tarea.
+- **Estado:** layout operativo; ítems según permisos (calificaciones/cuaderno en secundario, comunicación institucional, etc.).
 - **Layout:** `resources/views/layouts/docente.blade.php`.
 - **Rutas (convención):** prefijo URL `/portal-docente` · nombres de ruta `portalDocente.*`  
   (no usar solo `/docentes` porque ya existe el módulo de secretaría `docentes.inasistencias.*`).
@@ -100,3 +100,4 @@ En código y PRs, preferir comentarios del tipo:
 
 - **2026-05-22:** Definición de los tres nombres oficiales; scaffold del menú de Docentes (`layouts/docente.blade.php`, `portalDocente.home`).
 - **2026-05-22:** Redirección post-login y separación de rutas por `IdTipoProf` (6 → Docentes; demás → Secretaría).
+- **2026-05-23:** Menú de Docentes: sección Comunicación institucional (`portalDocente.comunicaciones.*`, mismos componentes que secretaría).

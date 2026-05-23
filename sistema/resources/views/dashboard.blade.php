@@ -1,4 +1,9 @@
-@extends('layouts.app')
+@extends($layout ?? 'layouts.app')
+
+@php
+    $modoPortalDocente = $modoPortalDocente ?? false;
+    $rutaComunicacionesIndex = $modoPortalDocente ? 'portalDocente.comunicaciones.index' : 'comunicaciones.index';
+@endphp
 
 @section('pageTitle', schoolNombre())
 
@@ -92,7 +97,7 @@
                         Ciclo {{ $ctx->terlecAno() }} · {{ (int) ($bandeja['hilos_total'] ?? 0) }} hilos en bandeja
                     </p>
                 </div>
-                <a href="{{ route('comunicaciones.index') }}"
+                <a href="{{ route($rutaComunicacionesIndex) }}"
                    class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#40848D] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -103,7 +108,7 @@
             </div>
 
             <div class="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-4">
-                <a href="{{ route('comunicaciones.index', ['filtro' => 'no_leidos']) }}"
+                <a href="{{ route($rutaComunicacionesIndex, ['filtro' => 'no_leidos']) }}"
                    @class([
                        'se-dash-mail-stat group',
                        'se-dash-mail-stat--urgent' => $urgenteRecibidos,
@@ -124,7 +129,7 @@
                     @endif
                 </a>
 
-                <a href="{{ route('comunicaciones.index') }}"
+                <a href="{{ route($rutaComunicacionesIndex) }}"
                    @class([
                        'se-dash-mail-stat group',
                        'se-dash-mail-stat--warn' => $urgenteEnviados,

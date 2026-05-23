@@ -4,6 +4,7 @@ namespace App\Livewire\Comunicaciones;
 
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Models\ComMensajeEnvio;
+use App\Support\ComunicacionesRutasGestion;
 use Livewire\Component;
 
 class InformeEnvioComunicado extends Component
@@ -71,6 +72,6 @@ class InformeEnvioComunicado extends Component
     {
         return view('comunicaciones::livewire.comunicaciones.informe-envio-comunicado', [
             'waLinks' => session('whatsapp_wa_links'),
-        ])->layout('layouts.app', ['pageTitle' => 'Informe de envío']);
+        ])->layout(ComunicacionesRutasGestion::layout(), ['pageTitle' => 'Informe de envío']);
     }
 }

@@ -24,8 +24,10 @@
                        id="dni"
                        type="text"
                        inputmode="numeric"
+                       maxlength="11"
                        autocomplete="username"
                        placeholder="Ej: 25038868"
+                       x-on:input="$event.target.value = $event.target.value.replace(/\D/g, '').slice(0, 11)"
                        class="form-input text-sm py-2 @error('dni') border-red-400 @enderror">
                 @error('dni')
                     <p class="form-error">{{ $message }}</p>

@@ -1,4 +1,13 @@
 {{-- Módulo calificacionesSecundario: carga de calificaciones (UI). Guardado vía `saveCell`: TEA con `wire:change`; el resto de inputs numéricos con delegación `focusout` en `tbody` (validación de notas permitidas en el navegador, ver `app.js`). --}}
+@php
+    $modoPortalDocente = $modoPortalDocente ?? false;
+    $soloLectura = $soloLectura ?? false;
+    $mostrarModalNotasOff = $mostrarModalNotasOff ?? false;
+    $mensajeNotasOff = $mensajeNotasOff ?? '';
+    $pdfUrl = $pdfUrl ?? null;
+    $urlLista = $urlLista ?? null;
+@endphp
+<div>
 <div class="mx-auto w-full max-w-[98rem] space-y-6">
     <style>
         /* Override inline para evitar “celdas enormes” por estilos globales/caché.
@@ -25,24 +34,52 @@
         table.se-calif-grid input[type="checkbox"]{ height: 14px !important; width: 14px !important; }
     </style>
     <section class="se-hero">
-        <div class="se-hero-inner">
+        <div class="se-hero-inner flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0 space-y-2">
-                <p class="se-eyebrow">Calificaciones · Secundario</p>
-                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Carga de calificaciones</h2>
+                <p class="se-eyebrow">{{ $modoPortalDocente ? 'Portal docente · Secundario' : 'Calificaciones · Secundario' }}</p>
+                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">
+                    {{ $modoPortalDocente ? 'Calificaciones' : 'Carga de calificaciones' }}
+                </h2>
                 <p class="max-w-2xl text-sm text-white/80">
                     {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
+                    @if ($modoPortalDocente && $cursoId && $materiaId)
+                        <span class="block sm:inline sm:before:content-['·'] sm:before:mx-2">
+                            <span class="font-semibold text-white">{{ $cursoLabel ?? '—' }}</span>
+                            · <span class="font-semibold text-white">{{ $materiaLabel ?? '—' }}</span>
+                        </span>
+                    @endif
                 </p>
+                @if ($soloLectura)
+                    <p class="text-xs font-semibold uppercase tracking-wide text-amber-200/95">
+                        Solo consulta — la carga está deshabilitada
+                    </p>
+                @endif
             </div>
-            <a href="{{ route('dashboard') }}"
-               class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-                Volver al panel
-            </a>
+            <div class="flex flex-wrap shrink-0 items-center gap-2">
+                @if ($modoPortalDocente && $pdfUrl && $cursoId && $materiaId)
+                    <a href="{{ $pdfUrl }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Exportar PDF
+                    </a>
+                @endif
+                <a href="{{ $modoPortalDocente ? ($urlLista ?? route('portalDocente.calificaciones')) : route('dashboard') }}"
+                   class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    {{ $modoPortalDocente ? 'Volver al listado' : 'Volver al panel' }}
+                </a>
+            </div>
         </div>
     </section>
 
+    @if (! $modoPortalDocente)
     {{-- Paso 1/2: selección de curso y materia. `wire:model.live` dispara los `updated*()` del componente. --}}
     <div class="se-toolbar flex-col !items-stretch gap-4 lg:flex-row lg:items-end">
         <div class="grid min-w-0 flex-1 grid-cols-1 gap-4 sm:grid-cols-2">
@@ -66,15 +103,23 @@
             </div>
         </div>
     </div>
+    @endif
 
     @if ($cursoId && $materiaId)
         <div class="se-card px-5 py-3">
             <p class="text-sm text-neutral-600">
-                <span class="font-semibold text-neutral-800">{{ $cursoLabel ?? '—' }}</span>
-                <span class="mx-1.5 text-neutral-400">·</span>
-                <span class="font-semibold text-neutral-800">{{ $materiaLabel ?? '—' }}</span>
-                <span class="mt-1 block text-xs text-neutral-500 sm:mt-0 sm:inline sm:before:mx-2 sm:before:content-['·']">
-                    Los datos se guardan al salir de cada celda.
+                @if (! $modoPortalDocente)
+                    <span class="font-semibold text-neutral-800">{{ $cursoLabel ?? '—' }}</span>
+                    <span class="mx-1.5 text-neutral-400">·</span>
+                    <span class="font-semibold text-neutral-800">{{ $materiaLabel ?? '—' }}</span>
+                    <span class="mx-1.5 text-neutral-400 hidden sm:inline">·</span>
+                @endif
+                <span class="mt-1 block text-xs text-neutral-500 sm:mt-0 sm:inline">
+                    @if ($soloLectura)
+                        Visualización de calificaciones (solo lectura).
+                    @else
+                        Los datos se guardan al salir de cada celda.
+                    @endif
                 </span>
             </p>
         </div>
@@ -158,6 +203,7 @@
                         class="bg-white"
                         data-se-calif-tbody
                         data-se-calif-activa="{{ $notasPermitidasActiva ? '1' : '0' }}"
+                        data-se-calif-solo-lectura="{{ $soloLectura ? '1' : '0' }}"
                         data-se-calif-allowed='@json($notasPermitidasLista ?? [])'
                     >
                         @forelse ($rows as $row)
@@ -200,7 +246,12 @@
                                     <td class="border border-accent-200 px-0.5 py-0.5">
                                         <input
                                             id="se-calif-{{ (int) $row['id'] }}-{{ $field }}"
-                                            class="w-full h-[18px] text-center text-[10px] leading-none border border-accent-200 rounded !px-0 !py-0 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                                            @readonly($soloLectura)
+                                            @class([
+                                                'w-full h-[18px] text-center text-[10px] leading-none border border-accent-200 rounded !px-0 !py-0',
+                                                'bg-accent-50/80 text-neutral-700 cursor-default' => $soloLectura,
+                                                'focus:border-primary-500 focus:ring-1 focus:ring-primary-500' => ! $soloLectura,
+                                            ])
                                             maxlength="2"
                                             value="{{ $row[$field] ?? '' }}"
                                             wire:key="cell-{{ (int) $materiaId }}-{{ (int) $row['id'] }}-{{ $field }}"
@@ -220,7 +271,12 @@
                                 <td class="border border-accent-200 px-0.5 py-0.5">
                                     <input
                                         id="se-calif-{{ (int) $row['id'] }}-dic"
-                                        class="w-full h-[18px] text-center text-[10px] leading-none border border-accent-200 rounded !px-0 !py-0 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                                        @readonly($soloLectura)
+                                        @class([
+                                            'w-full h-[18px] text-center text-[10px] leading-none border border-accent-200 rounded !px-0 !py-0',
+                                            'bg-accent-50/80 text-neutral-700 cursor-default' => $soloLectura,
+                                            'focus:border-primary-500 focus:ring-1 focus:ring-primary-500' => ! $soloLectura,
+                                        ])
                                         maxlength="2"
                                         value="{{ $row['dic'] ?? '' }}"
                                         wire:key="cell-{{ (int) $materiaId }}-{{ (int) $row['id'] }}-dic"
@@ -229,7 +285,12 @@
                                 <td class="border border-accent-200 px-0.5 py-0.5">
                                     <input
                                         id="se-calif-{{ (int) $row['id'] }}-feb"
-                                        class="w-full h-[18px] text-center text-[10px] leading-none border border-accent-200 rounded !px-0 !py-0 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                                        @readonly($soloLectura)
+                                        @class([
+                                            'w-full h-[18px] text-center text-[10px] leading-none border border-accent-200 rounded !px-0 !py-0',
+                                            'bg-accent-50/80 text-neutral-700 cursor-default' => $soloLectura,
+                                            'focus:border-primary-500 focus:ring-1 focus:ring-primary-500' => ! $soloLectura,
+                                        ])
                                         maxlength="2"
                                         value="{{ $row['feb'] ?? '' }}"
                                         wire:key="cell-{{ (int) $materiaId }}-{{ (int) $row['id'] }}-feb"
@@ -251,11 +312,13 @@
                                 <td class="border border-accent-200 px-0.5 py-0.5 text-center">
                                     <input
                                         type="checkbox"
-                                        class="h-3.5 w-3.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500"
+                                        class="h-3.5 w-3.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500 disabled:opacity-60"
                                         @checked((bool) ($row['tea'] ?? false))
+                                        @disabled($soloLectura)
                                         wire:key="cell-{{ (int) $materiaId }}-{{ (int) $row['id'] }}-tea"
-                                        {{-- Checkbox: guardado en `change` (no aplica blur). --}}
-                                        wire:change="saveCell({{ $row['id'] }}, 'tea', $event.target.checked)"
+                                        @if (! $soloLectura)
+                                            wire:change="saveCell({{ $row['id'] }}, 'tea', $event.target.checked)"
+                                        @endif
                                     />
                                 </td>
                             </tr>
@@ -273,11 +336,46 @@
                 </div>
             </div>
         </div>
-    @else
+    @elseif (! $modoPortalDocente)
         <div class="se-card px-5 py-8">
             <p class="text-center text-sm text-neutral-600 sm:text-left">
                 Seleccioná un curso y después una materia para cargar la planilla.
             </p>
         </div>
+    @endif
+</div>
+
+    @if ($mostrarModalNotasOff)
+        @teleport('body')
+        <div class="fixed inset-0 z-[1100] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="modal-notas-off-titulo"
+             wire:key="modal-notas-off-carga">
+            <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm"
+                 wire:click="aceptarAvisoCargaNotasOff"
+                 aria-hidden="true"></div>
+
+            <div class="relative z-10 my-auto flex w-full max-w-md max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl border border-accent-200 bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),40rem)]"
+                 @click.stop>
+                <div class="shrink-0 border-b border-accent-200 px-5 py-4">
+                    <h3 id="modal-notas-off-titulo" class="text-base font-bold text-neutral-900">Carga de calificaciones</h3>
+                </div>
+                <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+                    <p class="text-sm text-neutral-700 leading-relaxed whitespace-pre-line">{{ $mensajeNotasOff }}</p>
+                    <p class="mt-3 text-xs text-neutral-500">
+                        Podrá consultar las calificaciones en modo solo lectura.
+                    </p>
+                </div>
+                <div class="shrink-0 flex justify-end border-t border-accent-200 bg-accent-50 px-5 py-3">
+                    <button type="button"
+                            wire:click="aceptarAvisoCargaNotasOff"
+                            class="inline-flex items-center justify-center rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                        Aceptar
+                    </button>
+                </div>
+            </div>
+        </div>
+        @endteleport
     @endif
 </div>

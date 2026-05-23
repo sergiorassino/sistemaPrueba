@@ -6,6 +6,7 @@ use App\Models\Ento;
 use App\Models\Legajo;
 use App\Models\Matricula;
 use App\Models\Terlec;
+use App\Support\DniInput;
 use App\Support\StudentContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -34,16 +35,21 @@ class Login extends Component
         }
 
         if ($this->dni === '' && $request->filled('username')) {
-            $dni = preg_replace('/\D+/', '', (string) $request->query('username'));
+            $dni = DniInput::digitsOnly((string) $request->query('username'));
             if ($dni !== '') {
                 $this->dni = $dni;
             }
         }
     }
 
-    public function updatedDni(): void
+    public function updatedDni(?string $value = null): void
     {
         $this->resetErrorBag('dni');
+
+        $dni = DniInput::digitsOnly($value ?? $this->dni);
+        if ($dni !== $this->dni) {
+            $this->dni = $dni;
+        }
     }
 
     public function updatedPwrd(): void
@@ -70,6 +76,8 @@ class Login extends Component
 
     public function login()
     {
+        $this->dni = DniInput::digitsOnly($this->dni);
+
         $this->validate();
 
         $throttleKey = 'alumnos:login:'.request()->ip();

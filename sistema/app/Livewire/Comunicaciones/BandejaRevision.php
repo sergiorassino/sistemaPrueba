@@ -2,8 +2,9 @@
 
 namespace App\Livewire\Comunicaciones;
 
-use Livewire\Component;
 use App\Comunicaciones\ComunicacionesRepository;
+use App\Support\ComunicacionesRutasGestion;
+use Livewire\Component;
 
 class BandejaRevision extends Component
 {
@@ -11,7 +12,9 @@ class BandejaRevision extends Component
     public string $direccion = 'todos'; // todos|recibidos|enviados
     public string $periodo = 'actual'; // actual|historico
 
-    public int $idProfesorObjetivo;
+    /** null = todos los comunicados institucionales del nivel/ciclo */
+    public ?int $idProfesorObjetivo = null;
+
     public ?string $profesorObjetivoLabel = null;
 
     public string $profesorSearch = '';
@@ -20,11 +23,14 @@ class BandejaRevision extends Component
     public function mount(): void
     {
         abort_unless(tienePermiso(3) && tienePermiso(8), 403, 'Sin permiso para revisar comunicaciones.');
+    }
 
-        $ctx = schoolCtx();
-        $this->idProfesorObjetivo = (int) $ctx->idProfesor;
-        $prof = $ctx->profesor();
-        $this->profesorObjetivoLabel = $prof ? trim("{$prof->apellido}, {$prof->nombre}") : null;
+    public function limpiarFiltroProfesor(): void
+    {
+        $this->idProfesorObjetivo      = null;
+        $this->profesorObjetivoLabel   = null;
+        $this->profesorSearch          = '';
+        $this->profesorResults         = [];
     }
 
     public function hydrate(): void
@@ -60,17 +66,17 @@ class BandejaRevision extends Component
 
         $dir = in_array($this->direccion, ['todos', 'recibidos', 'enviados'], true) ? $this->direccion : 'todos';
 
-        $hilos = ComunicacionesRepository::bandejaProfesor(
-            (int) $this->idProfesorObjetivo,
+        $hilos = ComunicacionesRepository::bandejaRevisionControl(
             $idNivel,
             $idTerlec,
             $this->filtro,
             $dir === 'todos' ? 'todos' : $dir,
-            $this->periodo !== 'historico'
+            $this->periodo !== 'historico',
+            $this->idProfesorObjetivo
         );
 
         return view('comunicaciones::livewire.comunicaciones.bandeja-revision', [
             'hilos' => $hilos,
-        ])->layout('layouts.app', ['pageTitle' => 'Comunicaciones · Revisión']);
+        ])->layout(ComunicacionesRutasGestion::layout(), ['pageTitle' => 'Comunicaciones · Revisión']);
     }
 }

@@ -1,3 +1,4 @@
+@php use App\Support\ComunicacionesRutasGestion; @endphp
 <div class="se-page">
     <section class="se-hero">
         <div class="se-hero-inner">
@@ -17,7 +18,7 @@
                     <span class="text-xl font-bold tabular-nums">{{ $hilos->count() }}</span>
                 </span>
                 @if (tienePermiso(4))
-                    <a href="{{ route('comunicaciones.nuevo') }}"
+                    <a href="{{ ComunicacionesRutasGestion::route('nuevo') }}"
                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 focus:outline-none focus:ring-2 focus:ring-white/60">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -135,7 +136,7 @@
                     }
                 }
             @endphp
-            <a href="{{ route('comunicaciones.hilo', $hilo->id) }}"
+            <a href="{{ ComunicacionesRutasGestion::route('hilo', $hilo->id) }}"
                @class([
                    'se-card block p-4 transition hover:shadow-md sm:p-5',
                    'border-l-4 border-l-primary-600 bg-primary-50/20' => $esEnviados && ! $tieneNoLeidos,

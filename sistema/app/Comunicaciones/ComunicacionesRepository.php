@@ -540,6 +540,92 @@ class ComunicacionesRepository
     }
 
     /**
+     * Bandeja de control / revisión institucional: todos los hilos del nivel y ciclo,
+     * sin acotar a la participación de un solo profesor.
+     *
+     * Si $idProfesorFiltro es mayor que cero, delega en {@see bandejaProfesor}.
+     *
+     * @param  string  $direccion  todos|recibidos|enviados
+     * @return \Illuminate\Support\Collection
+     */
+    public static function bandejaRevisionControl(
+        int $idNivel,
+        int $idTerlec,
+        string $filtro = 'todos',
+        string $direccion = 'todos',
+        bool $soloTerlecActual = true,
+        ?int $idProfesorFiltro = null
+    ) {
+        if ($idProfesorFiltro !== null && $idProfesorFiltro > 0) {
+            return static::bandejaProfesor(
+                $idProfesorFiltro,
+                $idNivel,
+                $idTerlec,
+                $filtro,
+                $direccion,
+                $soloTerlecActual
+            );
+        }
+
+        $direccion = in_array($direccion, ['recibidos', 'enviados'], true) ? $direccion : 'todos';
+
+        $query = DB::table('com_hilos as h')
+            ->where('h.id_nivel', $idNivel)
+            ->when($soloTerlecActual, fn ($q) => $q->where('h.id_terlec', $idTerlec))
+            ->when($direccion === 'enviados', fn ($q) => $q->where('h.creado_por_tipo', 'profesor'))
+            ->when($direccion === 'recibidos', function ($q) {
+                $q->where(function ($w) {
+                    $w->where('h.creado_por_tipo', 'familia')
+                        ->orWhereExists(function ($sub) {
+                            $sub->select(DB::raw(1))
+                                ->from('com_mensajes_destinatarios as dx')
+                                ->whereColumn('dx.id_hilo', 'h.id')
+                                ->where('dx.tipo_destinatario', 'profesor');
+                        });
+                });
+            })
+            ->leftJoin('com_mensajes_destinatarios as d', 'd.id_hilo', '=', 'h.id');
+
+        $select = [
+            'h.id', 'h.asunto', 'h.scope', 'h.estado', 'h.cuerpo_inicial_id',
+            'h.creado_por_tipo', 'h.creado_por_id', 'h.creado_por_rol',
+            'h.familia_puede_responder', 'h.docentes_permite_respuestas',
+            'h.id_curso', 'h.cursos_envio',
+            'h.ultimo_mensaje_at', 'h.created_at',
+            DB::raw('SUM(CASE WHEN d.leido_at IS NULL AND d.id IS NOT NULL THEN 1 ELSE 0 END) as no_leidos'),
+            DB::raw('SUM(CASE WHEN d.respondido_at IS NOT NULL THEN 1 ELSE 0 END) as respondidos'),
+            DB::raw('COUNT(d.id) as total_dest'),
+            DB::raw("CASE WHEN h.creado_por_tipo = 'profesor' THEN 'enviado' ELSE 'recibido' END as direccion"),
+            DB::raw('(SELECT COUNT(*) FROM com_mensajes mx WHERE mx.id_hilo = h.id) as mensajes_count'),
+            DB::raw("(SELECT TRIM(CONCAT(COALESCE(p.apellido, ''), ', ', COALESCE(p.nombre, ''))) FROM profesores p WHERE p.id = h.creado_por_id AND h.creado_por_tipo = 'profesor' LIMIT 1) as remitente_institucional"),
+        ];
+
+        $select[] = DB::raw('(SELECT m.contenido FROM com_mensajes m WHERE m.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_contenido');
+        $select[] = DB::raw("(SELECT COUNT(DISTINCT d0.id_legajo) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia' AND d0.id_legajo IS NOT NULL) as destinatarios_familia_count");
+        $select[] = DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_legajo SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia') as destinatarios_nombres_concat");
+        $select[] = DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_profesor SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor') as destinatarios_doc_nombres_concat");
+        $select[] = DB::raw("(SELECT CASE WHEN TRIM(COALESCE(c.cursec, '')) <> '' THEN TRIM(c.cursec) ELSE TRIM(COALESCE(cp.curPlanCurso, 'Curso')) END FROM cursos c LEFT JOIN curplan cp ON cp.id = c.idCurPlan WHERE c.Id = h.id_curso LIMIT 1) as curso_envio_label");
+        $select[] = DB::raw('(SELECT m0.tipo_remitente FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_tipo');
+        $select[] = DB::raw('(SELECT m0.nombre_remitente_snapshot FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_nombre');
+        $select[] = DB::raw('(SELECT m0.vinculo_familiar FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_vinculo');
+
+        $query->select($select)
+            ->groupBy('h.id', 'h.asunto', 'h.scope', 'h.estado', 'h.creado_por_tipo',
+                'h.creado_por_id', 'h.creado_por_rol', 'h.familia_puede_responder',
+                'h.docentes_permite_respuestas',
+                'h.ultimo_mensaje_at', 'h.created_at', 'h.cuerpo_inicial_id', 'h.id_curso', 'h.cursos_envio')
+            ->orderByDesc('h.ultimo_mensaje_at');
+
+        if ($filtro === 'no_leidos') {
+            $query->havingRaw('SUM(CASE WHEN d.leido_at IS NULL AND d.id IS NOT NULL THEN 1 ELSE 0 END) > 0');
+        } elseif ($filtro === 'respondidos') {
+            $query->havingRaw('SUM(CASE WHEN d.respondido_at IS NOT NULL THEN 1 ELSE 0 END) > 0');
+        }
+
+        return $query->get();
+    }
+
+    /**
      * Bandeja de la familia: hilos donde el legajo es creador o destinatario.
      *
      * @param  string  $direccion  todos|recibidos|enviados — unificar bandeja o filtrar por origen

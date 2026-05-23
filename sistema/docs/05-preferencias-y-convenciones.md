@@ -155,7 +155,7 @@ Aplicar el mismo criterio que ya funciona en:
 
 | Referencia | Archivo |
 |------------|---------|
-| Planilla de calificaciones | `resources/views/pdf/partials/planilla-calificaciones-hoja.blade.php` |
+| Planilla de calificaciones | `App\Support\CalificacionesSecundario\PlanillaCalificacionesTcpdf` (vistas Blade en `pdf/partials/planilla-calificaciones-hoja.blade.php` solo referencia legacy) |
 | Libro de matrícula | `resources/views/listados/pdf/libro-matricula.blade.php` |
 | Informe de inasistencias | `resources/views/pdf/informe-inasistencias.blade.php` |
 | Acta volante de coloquio | `resources/views/pdf/acta-volante-coloquios.blade.php` |

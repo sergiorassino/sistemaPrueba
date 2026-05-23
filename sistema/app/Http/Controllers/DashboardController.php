@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Comunicaciones\ComunicacionesRepository;
+use App\Support\ProfesorMenuPortal;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -12,6 +13,7 @@ class DashboardController extends Controller
     {
         $ctx = schoolCtx();
         $nombre = trim((Auth::user()->nombre ?? '').' '.(Auth::user()->apellido ?? ''));
+        $modoPortalDocente = ProfesorMenuPortal::usaMenuDocentes(Auth::user());
 
         $bandeja = null;
         if (tienePermiso(3)) {
@@ -23,8 +25,10 @@ class DashboardController extends Controller
         }
 
         return view('dashboard', [
-            'nombreUsuario' => $nombre !== '' ? $nombre : 'Usuario',
-            'bandeja'       => $bandeja,
+            'layout'            => $modoPortalDocente ? 'layouts.docente' : 'layouts.app',
+            'modoPortalDocente' => $modoPortalDocente,
+            'nombreUsuario'     => $nombre !== '' ? $nombre : 'Usuario',
+            'bandeja'           => $bandeja,
         ]);
     }
 }

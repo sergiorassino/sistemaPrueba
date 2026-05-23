@@ -204,8 +204,14 @@ function bindCalifCargaTablas() {
         tbody.addEventListener(
             'focusout',
             (e) => {
+                if (tbody.getAttribute('data-se-calif-solo-lectura') === '1') {
+                    return;
+                }
                 const el = e.target;
                 if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
+                    return;
+                }
+                if (el.readOnly || el.disabled) {
                     return;
                 }
                 const m = el.id && String(el.id).match(/^se-calif-(\d+)-(.+)$/);

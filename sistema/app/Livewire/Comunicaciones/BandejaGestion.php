@@ -2,8 +2,9 @@
 
 namespace App\Livewire\Comunicaciones;
 
-use Livewire\Component;
 use App\Comunicaciones\ComunicacionesRepository;
+use App\Support\ComunicacionesRutasGestion;
+use Livewire\Component;
 
 class BandejaGestion extends Component
 {
@@ -50,6 +51,6 @@ class BandejaGestion extends Component
 
         return view('comunicaciones::livewire.comunicaciones.bandeja-gestion', [
             'hilos' => $hilos,
-        ])->layout('layouts.app', ['pageTitle' => 'Comunicaciones']);
+        ])->layout(ComunicacionesRutasGestion::layout(), ['pageTitle' => 'Comunicaciones']);
     }
 }

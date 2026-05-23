@@ -9,6 +9,7 @@ use App\Http\Controllers\BoletinesSecundario\BoletinSecundarioLotePdfController;
 use App\Http\Controllers\BoletinesSecundario\BoletinSecundarioPdfController;
 use App\Http\Controllers\CalificacionesSecundario\ConsultaCalificacionesSecundarioPdfController;
 use App\Http\Controllers\CalificacionesSecundario\PlanillaCalificacionesPdfController;
+use App\Http\Controllers\PortalDocente\PortalDocentePlanillaCalificacionesPdfController;
 use App\Http\Controllers\CalificacionesSecundario\ActaVolanteColoquiosPdfController;
 use App\Http\Controllers\CalificacionesSecundario\PlanillaResumenCalificacionesPdfController;
 use App\Http\Controllers\EstudiantesExcelController;
@@ -104,6 +105,10 @@ use App\Livewire\Parametrizacion\CamposLegajoIndex;
 use App\Livewire\Parametrizacion\CamposProfesorIndex;
 use App\Livewire\Parametrizacion\ComCanalesIndex;
 use App\Livewire\Parametrizacion\ParametrosSistemaForm;
+use App\Livewire\PortalDocente\CalificacionesIndex as PortalDocenteCalificacionesIndex;
+use App\Livewire\PortalDocente\CuadernoSeguimientoIndex as PortalDocenteCuadernoSeguimientoIndex;
+use App\Livewire\PortalDocente\RegistroSituacionAulicaIndex as PortalDocenteRegistroSituacionAulicaIndex;
+use App\Livewire\PortalDocente\SituacionAulicaAlumnoShow as PortalDocenteSituacionAulicaAlumnoShow;
 use App\Livewire\Parametrizacion\SolapaLegajoIndex;
 use App\Livewire\Parametrizacion\SolapaLegajoProfesorIndex;
 use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
@@ -178,9 +183,34 @@ Route::middleware(['auth:web,alumno'])->prefix('notificaciones-push/api')->group
 
 // Menú de Docentes — IdTipoProf = 6 (profesortipo «Profesor/a»)
 Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('portal-docente')->group(function () {
-    Route::get('/', function () {
-        return view('portal-docente.home');
-    })->name('portalDocente.home');
+    Route::get('/', DashboardController::class)->name('portalDocente.home');
+
+    Route::get('/calificaciones', PortalDocenteCalificacionesIndex::class)
+        ->name('portalDocente.calificaciones');
+    Route::get('/calificaciones/{curso}/{materia}', CargaCalificacionesSecundario::class)
+        ->whereNumber(['curso', 'materia'])
+        ->name('portalDocente.calificaciones.carga');
+    Route::get('/calificaciones/{curso}/{materia}/pdf', PortalDocentePlanillaCalificacionesPdfController::class)
+        ->whereNumber(['curso', 'materia'])
+        ->name('portalDocente.calificaciones.pdf');
+
+    Route::get('/cuaderno-seguimiento', PortalDocenteCuadernoSeguimientoIndex::class)
+        ->name('portalDocente.cuadernoSeguimiento');
+    Route::get('/cuaderno-seguimiento/{curso}/{materia}', PortalDocenteRegistroSituacionAulicaIndex::class)
+        ->whereNumber(['curso', 'materia'])
+        ->name('portalDocente.cuadernoSeguimiento.registro');
+    Route::get('/cuaderno-seguimiento/{curso}/{materia}/alumno/{matricula}', PortalDocenteSituacionAulicaAlumnoShow::class)
+        ->whereNumber(['curso', 'materia', 'matricula'])
+        ->name('portalDocente.cuadernoSeguimiento.alumno');
+
+    Route::get('/comunicaciones', BandejaGestion::class)->middleware('permiso:3')->name('portalDocente.comunicaciones.index');
+    Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:3', 'permiso:8'])->name('portalDocente.comunicaciones.revision');
+    Route::get('/comunicaciones/nuevo', NuevoComunicado::class)->middleware('permiso:4')->name('portalDocente.comunicaciones.nuevo');
+    Route::get('/comunicaciones/informe-envio/{id}', InformeEnvioComunicado::class)
+        ->middleware(['permiso:3', 'permiso:4'])
+        ->whereNumber('id')
+        ->name('portalDocente.comunicaciones.informe-envio');
+    Route::get('/comunicaciones/{id}', HiloShow::class)->middleware('permiso:3')->whereNumber('id')->name('portalDocente.comunicaciones.hilo');
 });
 
 // Menú de Secretaría — directivos, secretarios, preceptores, administración, gabinete, etc.

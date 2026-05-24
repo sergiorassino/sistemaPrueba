@@ -409,6 +409,28 @@
     .se-matriz-list-toolbar--angosta {
         @apply justify-center;
     }
+    /* Grillas con pocas columnas: ancho al contenido, centrada, 30 mm entre columnas */
+    .se-grid-pocos-campos {
+        width: max-content;
+        max-width: 100%;
+        border-collapse: collapse;
+    }
+    .se-grid-pocos-campos th:not(:last-child),
+    .se-grid-pocos-campos td:not(:last-child) {
+        padding-right: 30mm;
+    }
+    .se-grid-pocos-campos th,
+    .se-grid-pocos-campos td {
+        padding-left: 0;
+    }
+    /* Toolbar / búsqueda sobre grilla angosta: centrado + 30 mm entre controles */
+    .se-toolbar-pocos-campos {
+        @apply flex flex-wrap items-center justify-center;
+        gap: 30mm;
+    }
+    .se-grid-angosta-wrap > .se-grid-pocos-campos {
+        flex-shrink: 0;
+    }
     .se-matriz-list-toolbar .form-label {
         @apply mb-0 text-[10px];
     }

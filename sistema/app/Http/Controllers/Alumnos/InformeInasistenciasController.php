@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Alumnos;
 
 use App\Http\Controllers\Controller;
 use App\Support\InformeInasistencias;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\InformeInasistenciasTcpdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -35,15 +35,8 @@ class InformeInasistenciasController extends Controller
             $slug = 'informe_inasistencias';
         }
 
-        $pdf = Pdf::loadView('pdf.informe-inasistencias', [
-            ...$datos,
-            'pdfHeader' => studentPdfHeaderData(),
-        ])->setPaper('a4', 'portrait');
+        $pdf = InformeInasistenciasTcpdf::generar($datos, studentPdfHeaderData());
 
-        $response = $pdf->stream($slug.'.pdf');
-        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        $response->headers->set('Pragma', 'no-cache');
-
-        return $response;
+        return InformeInasistenciasTcpdf::respuestaHttp($pdf, $slug.'.pdf');
     }
 }

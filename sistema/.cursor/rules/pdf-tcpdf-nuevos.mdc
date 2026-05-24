@@ -15,11 +15,12 @@ Los PDFs **ya existentes** en DomPDF se mantienen hasta una migración explícit
 
 ## Patrón del repo
 
-1. **Clase de maquetación** en `app/Support/.../` que extiende `TCPDF` (coordenadas en mm, fuente `dejavusans` para UTF-8).
-2. **Controlador** `*PdfController` que arma datos, instancia la clase, llama a un método tipo `generar()` / `Output()` y devuelve `Response` con `Content-Type: application/pdf`.
-3. **Sin** `Barryvdh\DomPDF\Facade\Pdf` ni vistas Blade dedicadas al layout del PDF (salvo reutilizar datos ya calculados en PHP).
+1. **Clase de maquetación** en `app/Support/.../` que extiende `TCPDF` (coordenadas en mm).
+2. **Fuente Arial obligatoria:** usar `App\Support\Pdf\TcpdfFuenteArial::aplicar($pdf, $style, $size)` en lugar de `SetFont('dejavusans', …)`. Los TTF van en `storage/fonts/` (`arial.ttf`, `arialbd.ttf` opcional).
+3. **Controlador** `*PdfController` que arma datos, instancia la clase, llama a un método tipo `generar()` / `Output()` y devuelve `Response` con `Content-Type: application/pdf`.
+4. **Sin** `Barryvdh\DomPDF\Facade\Pdf` ni vistas Blade dedicadas al layout del PDF (salvo reutilizar datos ya calculados en PHP).
 
-Referencia: `App\Support\Examenes\ActaVolantePreviosTcpdf` + `ActaVolantePreviosPdfController`.
+Referencia: `App\Support\InformeInasistenciasTcpdf` + `InformeInasistenciasPdfController` (Arial + maquetación compacta).
 
 ## Convenciones
 
@@ -36,4 +37,4 @@ Referencia: `App\Support\Examenes\ActaVolantePreviosTcpdf` + `ActaVolantePrevios
 
 ## DomPDF (solo legacy)
 
-Si se toca un PDF **existente** en DomPDF, seguir `.cursor/rules/pdf-dompdf-columnas.mdc` y `docs/05-preferencias-y-convenciones.md` §8.
+Si se toca un PDF **existente** en DomPDF, seguir `.cursor/rules/pdf-dompdf-columnas.mdc` y `docs/05-preferencias-y-convenciones.md` §9.

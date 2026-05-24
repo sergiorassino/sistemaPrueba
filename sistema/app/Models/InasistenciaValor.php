@@ -16,6 +16,7 @@ class InasistenciaValor extends Model
 
     protected $fillable = [
         'concepto',
+        'texto_cidi',
         'cantidad',
     ];
 
@@ -37,6 +38,32 @@ class InasistenciaValor extends Model
                 ->map(fn (self $v) => (string) (int) $v->id)
                 ->values();
         });
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => Cache::forget('inasistencias_valores:ids_educacion_fisica'));
+        static::deleted(fn () => Cache::forget('inasistencias_valores:ids_educacion_fisica'));
+    }
+
+    /** Normaliza texto de concepto o de columna «Tipo» del CSV CIDI (comparación sin distinción de mayúsculas/acentos). */
+    public static function normalizarTexto(string $texto): string
+    {
+        return static::normalizarConcepto($texto);
+    }
+
+    public static function conceptoEsLlegadaTarde(string $concepto): bool
+    {
+        $n = static::normalizarConcepto($concepto);
+
+        return str_contains($n, 'llegada') || str_contains($n, 'tarde') || str_contains($n, 'tardanza');
+    }
+
+    public static function conceptoEsRetiro(string $concepto): bool
+    {
+        $n = static::normalizarConcepto($concepto);
+
+        return str_contains($n, 'retiro');
     }
 
     public static function conceptoEsEducacionFisica(string $concepto): bool

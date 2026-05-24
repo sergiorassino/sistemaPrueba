@@ -25,22 +25,8 @@
                 <p class="text-sm text-neutral-600">No hay alumnos matriculados en este curso para el año lectivo actual.</p>
             </div>
         @else
-            <style>
-                /* 30 mm entre columnas; tabla centrada en el área de contenido */
-                table.se-portal-sa-alumnos-grid th,
-                table.se-portal-sa-alumnos-grid td {
-                    padding-top: 0.5rem;
-                    padding-bottom: 0.5rem;
-                    padding-left: 0;
-                    padding-right: 30mm;
-                }
-                table.se-portal-sa-alumnos-grid th:last-child,
-                table.se-portal-sa-alumnos-grid td:last-child {
-                    padding-right: 0;
-                }
-            </style>
-            <div class="flex w-full justify-center overflow-x-auto px-3 py-4 sm:px-4">
-                <table class="se-portal-sa-alumnos-grid w-auto table-auto text-sm">
+            <div class="w-full overflow-x-auto px-3 py-4 sm:px-4 se-grid-angosta-wrap">
+                <table class="se-grid-pocos-campos w-auto table-auto text-sm">
                     <thead class="border-b border-accent-200 bg-accent-50">
                         <tr>
                             <th class="text-left text-[10px] font-semibold uppercase tracking-wider text-neutral-600">Alumno/a</th>

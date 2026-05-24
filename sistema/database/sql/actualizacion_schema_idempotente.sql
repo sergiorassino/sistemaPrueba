@@ -403,14 +403,20 @@ INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES
 (22, 20, 'CERTIFICADOS', 'Certificado de asistencia del profesor: listado de personal del legajo y emisión de PDF.'),
 (23, 21, 'CERTIFICADOS', 'Pase parcial: listado de legajos de nivel medio, solicitud y emisión de PDF.'),
 (24, 22, 'CERTIFICADOS', 'Solicitud de pase: listado de legajos de nivel medio, datos en paseprovisorio y emisión de PDF.'),
-(25, 23, 'INASISTENCIAS DOCENTES', 'Gestión de inasistencias docentes: cargos, registros, informes por bimestre y PDF.')
+(25, 23, 'INASISTENCIAS DOCENTES', 'Gestión de inasistencias docentes: cargos, registros, informes por bimestre y PDF.'),
+(26, 24, 'ASISTENCIA ESTUDIANTES', 'Importar inasistencias de estudiantes desde CSV CIDI/GE (InasistenciasDetalle).')
 ON DUPLICATE KEY UPDATE
   `orden` = VALUES(`orden`),
   `tema` = VALUES(`tema`),
   `descripcion` = VALUES(`descripcion`);
 
 -- =============================================================================
--- 8. Inasistencias docentes
+-- 8. Inasistencias estudiantes — texto CIDI en catálogo de tipos
+-- =============================================================================
+CALL sp_add_column_if_missing('inasistencias_valores', 'texto_cidi', 'varchar(120) NULL DEFAULT NULL AFTER `concepto`');
+
+-- =============================================================================
+-- 9. Inasistencias docentes
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS `cargos` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,

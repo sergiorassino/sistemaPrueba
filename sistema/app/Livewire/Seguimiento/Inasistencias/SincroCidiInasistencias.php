@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Livewire\CalificacionesSecundario;
+namespace App\Livewire\Seguimiento\Inasistencias;
 
-use App\Services\SincroGe\GeCsvImporter;
-use App\Services\SincroGe\GeCsvImportResult;
+use App\Models\InasistenciaValor;
+use App\Services\SincroCidiInasistencias\CidiInasistenciasCsvImporter;
+use App\Services\SincroCidiInasistencias\CidiInasistenciasCsvImportResult;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -13,9 +14,9 @@ use RuntimeException;
 use Throwable;
 
 /**
- * sincroGe — descarga de calificaciones desde exportación GE/CIDI (CSV).
+ * Importación de inasistencias desde CSV CIDI/GE (InasistenciasDetalle).
  */
-class SincroGe extends Component
+class SincroCidiInasistencias extends Component
 {
     use WithFileUploads;
 
@@ -31,12 +32,59 @@ class SincroGe extends Component
     /** @var array<string, mixed>|null */
     public ?array $ultimoResultado = null;
 
-    /** Ruta temporal en disco local si hubo que copiar el archivo desde Livewire. */
+    /** @var array<int, string> id inasistencias_valores => texto CIDI tal como viene en el CSV */
+    public array $textosCidi = [];
+
     private ?string $storedCsvRelativePath = null;
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(9), 403, 'Sin permiso para importar calificaciones desde CIDI/GE.');
+        abort_unless(tienePermiso(24), 403, 'Sin permiso para importar inasistencias desde CIDI/GE.');
+        $this->cargarTextosCidi();
+    }
+
+    public function guardarTextosCidi(): void
+    {
+        abort_unless(tienePermiso(24), 403);
+
+        $key = 'sincroCidiInasistencias:textos:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 20)) {
+            $this->addError('textosCidi', 'Demasiados guardados seguidos. Espere un momento.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $reglas = [];
+        foreach (array_keys($this->textosCidi) as $id) {
+            $reglas['textosCidi.'.$id] = ['nullable', 'string', 'max:120'];
+        }
+        $this->validate($reglas);
+
+        $idsPermitidos = InasistenciaValor::query()->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        foreach ($this->textosCidi as $id => $texto) {
+            $id = (int) $id;
+            if (! in_array($id, $idsPermitidos, true)) {
+                continue;
+            }
+
+            InasistenciaValor::query()->whereKey($id)->update([
+                'texto_cidi' => trim((string) $texto) !== '' ? trim((string) $texto) : null,
+            ]);
+        }
+
+        $this->cargarTextosCidi();
+        session()->flash('success', 'Textos CIDI del catálogo guardados.');
+    }
+
+    private function cargarTextosCidi(): void
+    {
+        $this->textosCidi = InasistenciaValor::query()
+            ->orderBy('concepto')
+            ->get(['id', 'texto_cidi'])
+            ->mapWithKeys(fn (InasistenciaValor $v) => [(int) $v->id => (string) ($v->texto_cidi ?? '')])
+            ->all();
     }
 
     public function updatedArchivoCsv(): void
@@ -67,10 +115,10 @@ class SincroGe extends Component
         $bytes = (int) ($this->archivoCsv->getSize() ?? 0);
         $this->archivoTamanioKb = $bytes > 0 ? (int) ceil($bytes / 1024) : null;
 
-        if (! $this->validarEncabezadoGe($this->archivoCsv)) {
+        if (! $this->validarEncabezadoCidi($this->archivoCsv)) {
             $this->addError(
                 'archivoCsv',
-                'El archivo no coincide con el formato GE/CIDI (separador «;» y columnas de calificaciones). Verifique que exportó el listado correcto.'
+                'El archivo no coincide con el formato CIDI de inasistencias (separador «;», columnas Grado/Año, Tipo, Fecha). Verifique que exportó InasistenciasDetalle.'
             );
             $this->archivoCsv = null;
             $this->archivoNombre = null;
@@ -91,9 +139,9 @@ class SincroGe extends Component
         $this->resetValidation('archivoCsv');
     }
 
-    public function importar(GeCsvImporter $importer): void
+    public function importar(CidiInasistenciasCsvImporter $importer): void
     {
-        abort_unless(tienePermiso(9), 403);
+        abort_unless(tienePermiso(24), 403);
 
         if (! $this->archivoCsv instanceof TemporaryUploadedFile) {
             $this->addError('archivoCsv', 'Seleccione un archivo CSV antes de importar.');
@@ -109,12 +157,12 @@ class SincroGe extends Component
         }
 
         if (! $this->encabezadoValido) {
-            $this->addError('archivoCsv', 'El archivo no tiene un encabezado GE/CIDI válido. Vuelva a seleccionarlo.');
+            $this->addError('archivoCsv', 'El archivo no tiene un encabezado CIDI válido. Vuelva a seleccionarlo.');
 
             return;
         }
 
-        $key = 'sincroGe:import:'.(auth()->id() ?? 'guest');
+        $key = 'sincroCidiInasistencias:import:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 6)) {
             $this->addError('archivoCsv', 'Demasiados intentos seguidos. Espere un minuto e intente de nuevo.');
 
@@ -134,15 +182,14 @@ class SincroGe extends Component
             return;
         }
 
-        $path = null;
         try {
             $path = $this->resolveCsvAbsolutePath($this->archivoCsv);
             $result = $importer->import($path, $idTerlec, $idNivel);
             $this->ultimoResultado = $this->serializeResult($result);
 
-            if ($result->committed && $result->updatedRows > 0) {
+            if ($result->committed && $result->filasModificadas() > 0) {
                 session()->flash('success', $result->successMessage());
-            } elseif ($result->hasIssues() || $result->updatedRows === 0) {
+            } elseif ($result->hasIssues() || $result->filasModificadas() === 0) {
                 session()->flash('warning', $result->successMessage());
             }
 
@@ -182,7 +229,7 @@ class SincroGe extends Component
         return null;
     }
 
-    private function validarEncabezadoGe(TemporaryUploadedFile $file): bool
+    private function validarEncabezadoCidi(TemporaryUploadedFile $file): bool
     {
         $path = $file->getRealPath();
         if (! is_string($path) || $path === '' || ! is_readable($path)) {
@@ -200,15 +247,17 @@ class SincroGe extends Component
         $header = fgetcsv($handle, 0, ';');
         fclose($handle);
 
-        if (! is_array($header) || count($header) < 60) {
+        if (! is_array($header) || count($header) < 7) {
             return false;
         }
 
         $joined = mb_strtoupper(implode(';', array_map('trim', $header)), 'UTF-8');
 
-        return str_contains($joined, 'NOTA FINAL')
-            && str_contains($joined, 'ESPACIO CURRICULAR')
-            && str_contains($joined, 'NOTA EVAL 1');
+        return str_contains($joined, 'GRADO')
+            && str_contains($joined, 'DIVIS')
+            && str_contains($joined, 'TIPO')
+            && str_contains($joined, 'FECHA')
+            && (str_contains($joined, 'DOCUMENTO') || str_contains($joined, 'DNI'));
     }
 
     private function resolveCsvAbsolutePath(TemporaryUploadedFile $file): string
@@ -229,8 +278,8 @@ class SincroGe extends Component
 
         $userId = (int) (auth()->id() ?? 0);
         $relative = $file->storeAs(
-            'imports/sincro-ge',
-            'ge_'.$userId.'_'.uniqid('', true).'.'.$ext,
+            'imports/sincro-cidi-inasistencias',
+            'cidi_inas_'.$userId.'_'.uniqid('', true).'.'.$ext,
             'local'
         );
 
@@ -261,12 +310,15 @@ class SincroGe extends Component
     /**
      * @return array<string, mixed>
      */
-    private function serializeResult(GeCsvImportResult $result): array
+    private function serializeResult(CidiInasistenciasCsvImportResult $result): array
     {
         return [
             'totalDataRows' => $result->totalDataRows,
+            'insertedRows' => $result->insertedRows,
             'updatedRows' => $result->updatedRows,
             'skippedRows' => $result->skippedRows,
+            'skippedPresenteRows' => $result->skippedPresenteRows,
+            'skippedSinCambioRows' => $result->skippedSinCambioRows,
             'committed' => $result->committed,
             'message' => $result->successMessage(),
             'issues' => $result->issues,
@@ -276,7 +328,17 @@ class SincroGe extends Component
 
     public function render()
     {
-        return view('livewire.calificaciones-secundario.sincro-ge')
-            ->layout('layouts.app', ['pageTitle' => 'Descargar calificaciones desde CIDI']);
+        $tiposInasistencia = InasistenciaValor::query()
+            ->orderBy('concepto')
+            ->get(['id', 'concepto', 'cantidad', 'texto_cidi']);
+
+        $textosCidiConfigurados = $tiposInasistencia->contains(
+            fn (InasistenciaValor $v) => trim((string) ($v->texto_cidi ?? '')) !== ''
+        );
+
+        return view('livewire.seguimiento.inasistencias.sincro-cidi', [
+            'tiposInasistencia' => $tiposInasistencia,
+            'textosCidiConfigurados' => $textosCidiConfigurados,
+        ])->layout('layouts.app', ['pageTitle' => 'Descargar inasistencias desde CIDI']);
     }
 }

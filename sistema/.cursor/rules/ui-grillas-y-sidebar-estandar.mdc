@@ -52,6 +52,16 @@ Variante planilla `.gf-*`:
 
 - **Grillas anchas** (muchas columnas, `min-w` grande, riesgo de quedar bajo el sidebar): seguir con `justify-start` y el patrón de la sección anterior; **no** centrar.
 
+## Grillas con pocos campos (separación 30 mm)
+
+Cuando la grilla tiene **pocas columnas** (p. ej. etiqueta + botón, checkbox + nombre + acción):
+
+- Tabla: clase **`se-grid-pocos-campos`** — ancho al contenido y **30 mm** entre columnas (`padding-right` en celdas, salvo la última).
+- Contenedor: **`se-grid-angosta-wrap`** + `overflow-x-auto` para centrar la grilla en el card.
+- Toolbar / búsqueda / botones **encima** de esa grilla: **`se-toolbar-pocos-campos`** — `justify-center` y **`gap: 30mm`** entre controles.
+
+Detalle y ejemplo Blade: `docs/05-preferencias-y-convenciones.md` (sección *Grillas con pocos campos*).
+
 ## Sidebar
 
 - Al cambiar el ancho del sidebar, asegurar que el contenido principal se desplace (o ajuste su ancho) de forma consistente.

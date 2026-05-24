@@ -486,6 +486,36 @@ final class ManualSistemaCatalog
                         [],
                         'Permiso de estudiantes (2)',
                     ),
+                    self::mod(
+                        'Informe de inasistencias',
+                        'Menú Asistencia estudiantes → Informe de Inasistencias',
+                        'Genera el informe PDF de inasistencias por curso (mismo formato que la autogestión del alumno).',
+                        [
+                            'Elija el curso en el listado.',
+                            'Marque uno, varios o todos los estudiantes del curso.',
+                            'Genere el PDF con los informes seleccionados (una hoja por alumno).',
+                        ],
+                        [
+                            'Las familias pueden descargar el mismo informe desde su portal.',
+                        ],
+                        'Permiso de estudiantes (2)',
+                    ),
+                    self::mod(
+                        'Sincronización CIDI inasistencias',
+                        'Menú Asistencia estudiantes → Descargar inasistencias desde CIDI',
+                        'Importa el CSV InasistenciasDetalle exportado desde GE/CIDI; omite presentes y registra ausencias, llegadas tarde y retiros.',
+                        [
+                            'Exporte desde CIDI el listado InasistenciasDetalle (CSV con punto y coma).',
+                            'En la pantalla de sincronización, cargue en cada tipo el «texto CIDI» (valor exacto de la columna Tipo del CSV) y guarde.',
+                            'Suba el archivo con el ciclo lectivo y nivel correctos en sesión.',
+                            'Revise el resumen: filas registradas, presentes omitidos y detalle de errores (alumno no matriculado, tipo no mapeado, etc.).',
+                            'Habilite el permiso IA orden 24 para el personal que deba importar.',
+                        ],
+                        [
+                            'Cada fila debe tener texto_cidi igual al Tipo del CSV. Llegada tarde/retiro anticipado: just J; AUSENTE JUSTIFICADO/INJUSTIFICADO: cantidad 1 y J/I (tipos separados).',
+                        ],
+                        'Permiso IA orden 24',
+                    ),
                 ],
             ],
             [

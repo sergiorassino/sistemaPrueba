@@ -14,6 +14,7 @@ use App\Http\Controllers\CalificacionesSecundario\ActaVolanteColoquiosPdfControl
 use App\Http\Controllers\CalificacionesSecundario\PlanillaResumenCalificacionesPdfController;
 use App\Http\Controllers\EstudiantesExcelController;
 use App\Http\Controllers\InformeInasistenciasPdfController;
+use App\Http\Controllers\InformeInasistenciasLotePdfController;
 use App\Http\Controllers\ParteDiarioPreceptorPdfController;
 use App\Http\Controllers\LibroMatriculaPdfController;
 use App\Http\Controllers\ListadoCursoPdfController;
@@ -119,7 +120,9 @@ use App\Livewire\Horarios\HorariosCargaIndex;
 use App\Livewire\Horarios\HorariosConfigIndex;
 use App\Livewire\Horarios\HorariosImpresionIndex;
 use App\Livewire\Seguimiento\Inasistencias\InasistenciasIndex;
+use App\Livewire\Seguimiento\Inasistencias\SincroCidiInasistencias;
 use App\Livewire\Seguimiento\Inasistencias\PartesDiariosIndex;
+use App\Livewire\Seguimiento\Inasistencias\InformeInasistenciasLoteIndex;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ManualSistemaPdfController;
 use App\Support\SchoolContext;
@@ -499,11 +502,17 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
     // Gestión de inasistencias
     Route::get('/seguimiento/inasistencias', InasistenciasIndex::class)
         ->name('seguimiento.inasistencias');
+    Route::get('/seguimiento/inasistencias/sincro-cidi', SincroCidiInasistencias::class)
+        ->name('seguimiento.inasistencias.sincroCidi');
     Route::get('/seguimiento/inasistencias/nuevo', InasistenciaForm::class)
         ->name('seguimiento.inasistencias.create');
     Route::get('/seguimiento/inasistencias/{id}/editar', InasistenciaForm::class)
         ->whereNumber('id')
         ->name('seguimiento.inasistencias.edit');
+    Route::get('/seguimiento/inasistencias/informe', InformeInasistenciasLoteIndex::class)
+        ->name('seguimiento.inasistencias.informe');
+    Route::get('/seguimiento/inasistencias/informe/lote/pdf', InformeInasistenciasLotePdfController::class)
+        ->name('seguimiento.inasistencias.informe.lote.pdf');
     Route::get('/seguimiento/inasistencias/{idMatricula}/informe/pdf', InformeInasistenciasPdfController::class)
         ->whereNumber('idMatricula')
         ->name('seguimiento.inasistencias.informe.pdf');

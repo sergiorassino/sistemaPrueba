@@ -75,6 +75,28 @@ a todos los módulos. Ver [06-reglas-de-seguridad.md](06-reglas-de-seguridad.md)
 </div>
 ```
 
+### Grillas con pocos campos (convención)
+
+Cuando la pantalla muestra una **tabla o grilla angosta** (pocas columnas: curso + acción, alumno + botón, búsqueda + listado corto, etc.):
+
+1. **Separación entre columnas:** **30 mm** (`padding-right: 30mm` en cada celda salvo la última). Clase de tabla: **`se-grid-pocos-campos`** (`resources/css/app.css`).
+2. **Centrado horizontal:** la grilla no debe ocupar todo el ancho del card; va **centrada** con `width: max-content` y contenedor **`se-grid-angosta-wrap`** (scroll horizontal si hace falta en mobile).
+3. **Barra superior** (botones de marcar/desmarcar, generar PDF, cuadro de búsqueda, filtros): también **centrada**, con **30 mm** entre controles. Clase: **`se-toolbar-pocos-campos`** (o `se-matriz-list-toolbar--angosta` si solo hace falta centrar sin el gap de 30 mm).
+
+```blade
+<div class="se-toolbar-pocos-campos border-b border-accent-100 px-5 py-3">
+    <!-- botones / búsqueda -->
+</div>
+<div class="w-full overflow-x-auto px-4 py-2 se-grid-angosta-wrap">
+    <table class="se-grid-pocos-campos w-auto text-sm">
+        ...
+    </table>
+</div>
+```
+
+- **Grillas anchas** (muchas columnas): no aplicar esta regla; seguir con alineación a la izquierda (sección anterior).
+- Referencia en UI: `livewire/seguimiento/inasistencias/informe-lote-index.blade.php`.
+
 ---
 
 ## 5. Varios colegios (tenants)
@@ -143,9 +165,22 @@ Si se agrega otro flujo que deba calcular (p. ej. batch nocturno o otro nivel), 
 
 ---
 
-## 8. PDFs con DomPDF (anchos de columna)
+## 8. PDFs nuevos con TCPDF (fuente Arial)
 
-Los PDFs del sistema usan **Barryvdh DomPDF** (`Pdf::loadView(...)`) y vistas Blade en `resources/views/pdf/` (y `resources/views/listados/pdf/`).
+Todo **PDF nuevo** y toda **migración explícita** desde DomPDF debe usar **TCPDF** (`tecnickcom/tcpdf`), clase en `app/Support/`, controlador `*PdfController`.
+
+- **Fuente:** **Arial** mediante `App\Support\Pdf\TcpdfFuenteArial::aplicar($pdf, $style, $pt)` (no `dejavusans` ni `SetFont` directo).
+- **Archivos TTF:** `storage/fonts/arial.ttf` y opcional `arialbd.ttf` (ver `storage/fonts/README.md`). En Windows también se detecta `C:\Windows\Fonts\`.
+- **Maquetación:** coordenadas en mm (`Cell`, `MultiCell`, `Rect`); fechas `d/m/Y`.
+- **Referencia:** `App\Support\InformeInasistenciasTcpdf` + `InformeInasistenciasPdfController`.
+
+Regla Cursor: `.cursor/rules/pdf-tcpdf-nuevos.mdc`.
+
+---
+
+## 9. PDFs con DomPDF (anchos de columna, legacy)
+
+Los PDFs **legacy** usan **Barryvdh DomPDF** (`Pdf::loadView(...)`) y vistas Blade en `resources/views/pdf/` (y `resources/views/listados/pdf/`).
 
 ### Regla de oro
 
@@ -157,7 +192,7 @@ Aplicar el mismo criterio que ya funciona en:
 |------------|---------|
 | Planilla de calificaciones | `App\Support\CalificacionesSecundario\PlanillaCalificacionesTcpdf` (vistas Blade en `pdf/partials/planilla-calificaciones-hoja.blade.php` solo referencia legacy) |
 | Libro de matrícula | `resources/views/listados/pdf/libro-matricula.blade.php` |
-| Informe de inasistencias | `resources/views/pdf/informe-inasistencias.blade.php` |
+| Informe de inasistencias | `App\Support\InformeInasistenciasTcpdf` (migrado a TCPDF + Arial) |
 | Acta volante de coloquio | `resources/views/pdf/acta-volante-coloquios.blade.php` |
 
 ### Patrón obligatorio para tablas con columnas de distinto ancho

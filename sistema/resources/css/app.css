@@ -885,9 +885,9 @@
 }
 
 /*
- * Menú de Secretaría — tema Bosque SE.
+ * Sidebar Bosque SE (Secretaría, Alumnos, Docentes).
  * Mismo degradé y brillo que .se-hero (headers de formularios / ABM).
- * Activar con clase .se-sidebar--bosque en layouts/app.blade.php.
+ * Activar con clase .se-sidebar--bosque en el <aside> del layout.
  */
 .se-sidebar--bosque {
     color: #fff;
@@ -961,6 +961,13 @@
         inset 3px 0 0 var(--color-accent-200),
         0 1px 0 rgba(0, 0, 0, 0.12);
 }
+.se-sidebar--bosque .se-sidebar-nav-label {
+    font-size: 0.6875rem; /* 11px */
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.5);
+}
 @media (min-width: 768px) {
     .se-sidebar--bosque.is-collapsed .se-sidebar-groupbtn {
         justify-content: center;
@@ -968,4 +975,38 @@
         padding-left: 0.35rem;
         padding-right: 0.35rem;
     }
+    .se-sidebar--bosque.is-collapsed .se-sidebar-link {
+        justify-content: center;
+        gap: 0;
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+    }
+}
+
+/*
+ * Logo del encabezado del sidebar: tamaño acotado por CSS (.is-collapsed / .is-narrowing),
+ * no solo por Alpine :class, para evitar el flash del logo a tamaño natural al animar el rail.
+ */
+.se-sidebar-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    max-width: 100%;
+}
+.se-sidebar-brand img {
+    display: block;
+    height: 2.25rem;
+    width: auto;
+    max-width: 9.5rem;
+    max-height: 2.25rem;
+    object-fit: contain;
+}
+.se-sidebar.is-collapsed .se-sidebar-brand img,
+.se-sidebar.is-narrowing .se-sidebar-brand img {
+    height: 2rem;
+    width: 2rem;
+    max-width: 2rem;
+    max-height: 2rem;
 }

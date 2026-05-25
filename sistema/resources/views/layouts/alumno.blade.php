@@ -7,105 +7,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $pageTitle ?? (isset($title) ? $title . ' — ' : '') }}{{ config('app.name') }}</title>
     @include('layouts.partials.favicon-alumno')
+    @include('layouts.partials.sidebar-bosque-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
-    <style>
-        :root {
-            --se-jet: #333333;
-            --se-primary: #40848D;
-            --se-light-blue: #C1D7DA;
-            --se-hover-bg: rgba(193, 215, 218, 0.18);
-            --se-sep: rgba(193, 215, 218, 0.22);
-            --se-white-85: rgba(255, 255, 255, 0.85);
-            --se-white-05: rgba(255, 255, 255, 0.05);
-            --se-white-10: rgba(255, 255, 255, 0.10);
-            --se-sidebar-w: 23.04rem;
-            --se-sidebar-w-collapsed: 5rem;
-        }
-        /* Sin position:relative aquí: pisaría Tailwind `fixed` y el sidebar pasaría al flujo (contenido debajo). */
-        .se-sidebar {
-            background-color: var(--se-jet);
-            color: #fff;
-            font-family: "Roboto Condensed", "Arial Narrow", "Helvetica Neue", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-            font-stretch: condensed;
-            width: var(--se-sidebar-w);
-            overflow-x: hidden;
-        }
-        .se-sidebar::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            background:
-                radial-gradient(ellipse 142% 86% at 0% 0%, rgba(64, 132, 141, 0.60), transparent 65%),
-                radial-gradient(ellipse 78% 52% at 100% 6%, rgba(64, 132, 141, 0.14), transparent 58%);
-        }
-        @media (min-width: 768px) {
-            .se-sidebar.is-collapsed { width: var(--se-sidebar-w-collapsed); }
-        }
-        .se-sidebar-sep { border-color: var(--se-sep); }
-        .se-sidebar-iconbtn { color: var(--se-white-85); }
-        .se-sidebar-iconbtn:hover { background: var(--se-hover-bg); color: #fff; }
-        .se-sidebar-groupbtn { color: var(--se-white-85); background: var(--se-white-05); border: 1px solid var(--se-sep); }
-        .se-sidebar-groupbtn:hover { background: var(--se-hover-bg); }
-        .se-sidebar-groupbtn.is-open { background: var(--se-white-10); }
-        /* Enlaces a módulos: un poco más anchos; grupos heredan Condensed del sidebar. */
-        .se-sidebar-link {
-            font-family: "Roboto", "Helvetica Neue", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-            font-stretch: normal;
-            min-width: 0;
-        }
-        .se-sidebar-link span.truncate {
-            min-width: 0;
-            flex: 1 1 0%;
-        }
-        .se-sidebar-link { color: var(--se-white-85); }
-        .se-sidebar-link:hover { background: var(--se-hover-bg); color: #fff; }
-        .se-sidebar-link.is-active {
-            background: var(--se-primary);
-            color: #fff;
-            box-shadow: inset 3px 0 0 var(--se-light-blue);
-        }
-        .se-main {
-            width: 100%;
-            min-width: 0;
-            transition: transform 200ms ease-in-out, width 200ms ease-in-out;
-            transform: translateX(0);
-        }
-        @media (min-width: 768px) {
-            .se-main {
-                transform: translateX(var(--se-sidebar-w));
-                width: calc(100% - var(--se-sidebar-w));
-            }
-            .se-main.is-collapsed {
-                transform: translateX(var(--se-sidebar-w-collapsed));
-                width: calc(100% - var(--se-sidebar-w-collapsed));
-            }
-            .se-sidebar.is-collapsed .se-sidebar-groupbtn {
-                justify-content: center;
-                gap: 0;
-                padding-left: 0.35rem;
-                padding-right: 0.35rem;
-            }
-            .se-sidebar.is-collapsed .se-sidebar-link {
-                justify-content: center;
-                gap: 0;
-                padding-left: 0.35rem;
-                padding-right: 0.35rem;
-            }
-        }
-        @media (max-width: 767px) {
-            .se-main.is-mobile-open {
-                transform: translateX(var(--se-sidebar-w));
-                width: calc(100% - var(--se-sidebar-w));
-            }
-        }
-    </style>
 </head>
 @php
     $route = request()->route()?->getName();
-    /** En desktop: rail colapsado salvo la bandeja principal; hover/focus expanden (mismo patrón que `layouts/app`). */
-    $isSidebarPeekMode = (($route ?? '') !== 'alumnos.comunicaciones.index');
+    /** En desktop: rail colapsado en todas las pantallas; hover/focus expanden (mismo patrón que Secretaría salvo dashboard). */
+    $isSidebarPeekMode = true;
 @endphp
 <body class="h-full">
 
@@ -122,16 +31,22 @@
         peekSidebarExpandNow() {
             if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
             clearTimeout(this._sidebarPeekTimer);
+            const el = this.$refs.seSidebar;
+            if (el) el.classList.remove('is-narrowing');
             this.sidebarCollapsed = false;
         },
         peekSidebarMaybeCollapseLater() {
             if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
             clearTimeout(this._sidebarPeekTimer);
+            const el = this.$refs.seSidebar;
+            if (el) el.classList.add('is-narrowing');
             this._sidebarPeekTimer = window.setTimeout(() => {
-                const el = this.$refs.seSidebar;
                 if (!el) return;
-                if (el.matches(':hover')) return;
-                if (el.contains(document.activeElement)) return;
+                if (el.matches(':hover') || el.contains(document.activeElement)) {
+                    el.classList.remove('is-narrowing');
+                    return;
+                }
+                el.classList.remove('is-narrowing');
                 this.sidebarCollapsed = true;
             }, 200);
         },
@@ -178,7 +93,7 @@
        @mouseleave="peekSidebarMaybeCollapseLater()"
        @focusin="peekSidebarExpandNow()"
        @focusout="peekSidebarFocusOut($event)"
-       class="se-sidebar fixed inset-y-0 left-0 z-[1000] flex flex-col transform transition-transform duration-200 ease-in-out
+       class="se-sidebar se-sidebar--bosque fixed inset-y-0 left-0 z-[1000] flex flex-col overflow-hidden transform transition-transform duration-200 ease-in-out
               md:translate-x-0 md:transition-[width] md:duration-200 md:ease-in-out md:shadow-lg"
        :class="[
            sidebarOpen ? 'translate-x-0' : '-translate-x-full',
@@ -194,24 +109,24 @@
             . ' · ' . trim((string) ($alumno?->apellido ?? '') . ', ' . (string) ($alumno?->nombre ?? ''));
     @endphp
 
-    <div class="border-b se-sidebar-sep relative z-[1] flex-shrink-0"
+    <div class="border-b se-sidebar-sep relative z-[1] overflow-hidden flex-shrink-0"
          :class="sidebarCollapsed ? 'flex flex-col items-center gap-2 py-3 px-1' : 'min-h-12 px-2.5 py-2 flex flex-row items-center gap-2'">
 
         <div class="flex min-w-0 items-center gap-2"
              :class="sidebarCollapsed ? 'flex-col justify-center' : 'flex-1'">
-            <span class="rounded-2xl bg-white px-2 py-1.5 shadow-sm flex-shrink-0 overflow-hidden">
+            <span class="se-sidebar-brand rounded-2xl bg-white px-2 py-1.5 shadow-sm">
                 <img src="{{ $logoUrl }}" alt=""
-                     class="object-contain flex-shrink-0 block"
-                     :class="sidebarCollapsed ? 'h-8 w-8' : 'h-9 w-auto max-w-[9.5rem]'">
+                     width="152" height="36"
+                     class="object-contain block">
             </span>
 
-            <p class="text-white text-[11px] font-semibold truncate min-w-0 leading-snug"
+            <p class="text-white/90 text-[12px] font-semibold truncate min-w-0 leading-snug"
                x-show="!sidebarCollapsed" x-cloak
                title="{{ $sidebarSessionLine }}">
                 <span class="text-white/90">{{ studentCtx()->nivelNombre() }}</span>
-                <span class="text-white/50"> · </span>
+                <span class="text-white/45"> · </span>
                 <span class="text-white/90">{{ studentCtx()->terlecAno() }}</span>
-                <span class="block text-[10px] font-medium text-white/70 truncate mt-0.5">
+                <span class="block text-[11px] font-medium text-white/65 truncate mt-0.5">
                     {{ $alumno?->apellido ?? '' }}{{ ($alumno?->apellido && $alumno?->nombre) ? ', ' : '' }}{{ $alumno?->nombre ?? '' }}
                 </span>
             </p>
@@ -230,7 +145,7 @@
         <a href="{{ route('alumnos.calificaciones') }}"
            target="_blank"
            rel="noopener noreferrer"
-           class="se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors"
+           class="se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors"
            title="Consulta de Calificaciones (se abre en una nueva pestaña)">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -242,7 +157,7 @@
         <a href="{{ route('alumnos.inasistencias.informe') }}"
            target="_blank"
            rel="noopener noreferrer"
-           class="se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors"
+           class="se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors"
            title="Informe de inasistencias (se abre en una nueva pestaña)">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -255,7 +170,7 @@
             <a href="{{ config('tenant.autogestion.aranceles_aulica_url') }}"
                target="_blank"
                rel="noopener noreferrer"
-               class="se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors"
+               class="se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors"
                title="Gestión de Aranceles Escolares (se abre en una nueva pestaña)">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -265,13 +180,13 @@
             </a>
         @endif
 
-        <p x-show="!sidebarCollapsed" x-cloak class="mt-3 mb-0.5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-white/50">
+        <p x-show="!sidebarCollapsed" x-cloak class="se-sidebar-nav-label mt-3 mb-0.5 px-2.5">
             Cuaderno de comunicados
         </p>
 
         <a href="{{ route('alumnos.comunicaciones.index') }}"
            @class([
-               'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                'is-active shadow-sm' => $alumnoComCuadernoActivo,
            ])
            title="Bandeja de comunicados con la escuela">
@@ -284,7 +199,7 @@
 
         <a href="{{ route('alumnos.comunicaciones.nuevo') }}"
            @class([
-               'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                'is-active shadow-sm' => $alumnoRuta === 'alumnos.comunicaciones.nuevo',
            ])
            title="Escribir un nuevo comunicado a la escuela">
@@ -294,13 +209,13 @@
             <span x-show="!sidebarCollapsed" x-cloak class="truncate">Nuevo comunicado</span>
         </a>
 
-        <p x-show="!sidebarCollapsed" x-cloak class="mt-3 mb-0.5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-white/50">
+        <p x-show="!sidebarCollapsed" x-cloak class="se-sidebar-nav-label mt-3 mb-0.5 px-2.5">
             Ajustes
         </p>
 
         <a href="{{ route('alumnos.push.index') }}"
            @class([
-               'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                'is-active shadow-sm' => str_starts_with($route ?? '', 'alumnos.push'),
            ])
            title="Notificaciones Push">
@@ -313,7 +228,7 @@
 
         <a href="{{ route('alumnos.comunicaciones.preferencias') }}"
            @class([
-               'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                'is-active shadow-sm' => $alumnoRuta === 'alumnos.comunicaciones.preferencias',
            ])
            title="Medios de contacto (push, email, WhatsApp)">
@@ -332,12 +247,12 @@
              :class="sidebarCollapsed ? 'flex-col gap-2' : ''">
             <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                  style="background: var(--se-primary);">
-                <span class="text-white text-xs font-bold">
+                <span class="text-white text-[13px] font-bold">
                     {{ strtoupper(substr((string) (auth('alumno')->user()?->apellido ?? 'U'), 0, 1)) }}
                 </span>
             </div>
             <div class="flex-1 min-w-0" x-show="!sidebarCollapsed" x-cloak>
-                <p class="text-white text-xs font-medium truncate">
+                <p class="text-white/90 text-[13px] font-medium truncate">
                     {{ auth('alumno')->user()?->apellido ?? '' }}, {{ auth('alumno')->user()?->nombre ?? '' }}
                 </p>
             </div>

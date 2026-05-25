@@ -11,92 +11,15 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $pageTitle ?? (isset($title) ? $title . ' — ' : '') }}{{ config('app.name') }}</title>
     @include('layouts.partials.favicon')
+    @include('layouts.partials.sidebar-bosque-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
-    <style>
-        :root {
-            --se-jet: #333333;
-            --se-primary: #40848D;
-            --se-light-blue: #C1D7DA;
-            --se-hover-bg: rgba(193, 215, 218, 0.18);
-            --se-sep: rgba(193, 215, 218, 0.22);
-            --se-white-85: rgba(255, 255, 255, 0.85);
-            --se-sidebar-w: 23.04rem;
-            --se-sidebar-w-collapsed: 5rem;
-        }
-        /* Sin position:relative aquí: pisaría Tailwind `fixed` y el sidebar pasaría al flujo (contenido debajo). */
-        .se-sidebar {
-            background-color: var(--se-jet);
-            color: #fff;
-            font-family: "Roboto Condensed", "Arial Narrow", "Helvetica Neue", "Noto Sans", system-ui, sans-serif;
-            font-stretch: condensed;
-            width: var(--se-sidebar-w);
-            overflow-x: hidden;
-        }
-        .se-sidebar::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            background:
-                radial-gradient(ellipse 142% 86% at 0% 0%, rgba(64, 132, 141, 0.60), transparent 65%),
-                radial-gradient(ellipse 78% 52% at 100% 6%, rgba(64, 132, 141, 0.14), transparent 58%);
-        }
-        @media (min-width: 768px) {
-            .se-sidebar.is-collapsed { width: var(--se-sidebar-w-collapsed); }
-        }
-        .se-sidebar-sep { border-color: var(--se-sep); }
-        .se-sidebar-link {
-            font-family: "Roboto", system-ui, sans-serif;
-            font-stretch: normal;
-            min-width: 0;
-        }
-        .se-sidebar-link span.truncate {
-            min-width: 0;
-            flex: 1 1 0%;
-        }
-        .se-sidebar-link { color: var(--se-white-85); }
-        .se-sidebar-link:hover { background: var(--se-hover-bg); color: #fff; }
-        .se-sidebar-link.is-active {
-            background: var(--se-primary);
-            color: #fff;
-            box-shadow: inset 3px 0 0 var(--se-light-blue);
-        }
-        .se-main {
-            width: 100%;
-            min-width: 0;
-            transition: transform 200ms ease-in-out, width 200ms ease-in-out;
-            transform: translateX(0);
-        }
-        @media (min-width: 768px) {
-            .se-main {
-                transform: translateX(var(--se-sidebar-w));
-                width: calc(100% - var(--se-sidebar-w));
-            }
-            .se-main.is-collapsed {
-                transform: translateX(var(--se-sidebar-w-collapsed));
-                width: calc(100% - var(--se-sidebar-w-collapsed));
-            }
-            .se-sidebar.is-collapsed .se-sidebar-link {
-                justify-content: center;
-                gap: 0;
-                padding-left: 0.35rem;
-                padding-right: 0.35rem;
-            }
-        }
-        @media (max-width: 767px) {
-            .se-main.is-mobile-open {
-                transform: translateX(var(--se-sidebar-w));
-                width: calc(100% - var(--se-sidebar-w));
-            }
-        }
-    </style>
 </head>
 @php
     $route = request()->route()?->getName();
     $portalEsSecundario = str_contains(mb_strtolower((string) schoolCtx()->nivelNombre()), 'secundari');
-    /** En desktop: rail colapsado salvo inicio y bandeja de comunicados; hover/focus expanden. */
-    $isSidebarPeekMode = ! in_array($route ?? '', ['portalDocente.home', 'portalDocente.comunicaciones.index'], true);
+    /** En desktop: rail colapsado salvo inicio; hover/focus expanden (mismo patrón que Secretaría salvo dashboard). */
+    $isSidebarPeekMode = (($route ?? '') !== 'portalDocente.home');
     $docenteComBandejaActiva = str_starts_with($route ?? '', 'portalDocente.comunicaciones')
         && ! in_array($route ?? '', ['portalDocente.comunicaciones.nuevo', 'portalDocente.comunicaciones.revision'], true);
 @endphp
@@ -115,16 +38,22 @@
         peekSidebarExpandNow() {
             if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
             clearTimeout(this._sidebarPeekTimer);
+            const el = this.$refs.seSidebar;
+            if (el) el.classList.remove('is-narrowing');
             this.sidebarCollapsed = false;
         },
         peekSidebarMaybeCollapseLater() {
             if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
             clearTimeout(this._sidebarPeekTimer);
+            const el = this.$refs.seSidebar;
+            if (el) el.classList.add('is-narrowing');
             this._sidebarPeekTimer = window.setTimeout(() => {
-                const el = this.$refs.seSidebar;
                 if (!el) return;
-                if (el.matches(':hover')) return;
-                if (el.contains(document.activeElement)) return;
+                if (el.matches(':hover') || el.contains(document.activeElement)) {
+                    el.classList.remove('is-narrowing');
+                    return;
+                }
+                el.classList.remove('is-narrowing');
                 this.sidebarCollapsed = true;
             }, 200);
         },
@@ -171,7 +100,7 @@
        @mouseleave="peekSidebarMaybeCollapseLater()"
        @focusin="peekSidebarExpandNow()"
        @focusout="peekSidebarFocusOut($event)"
-       class="se-sidebar fixed inset-y-0 left-0 z-[1000] flex flex-col overflow-hidden transform transition-transform duration-200 ease-in-out
+       class="se-sidebar se-sidebar--bosque fixed inset-y-0 left-0 z-[1000] flex flex-col overflow-hidden transform transition-transform duration-200 ease-in-out
               md:translate-x-0 md:transition-[width] md:duration-200 md:ease-in-out md:shadow-lg"
        :class="[
            sidebarOpen ? 'translate-x-0' : '-translate-x-full',
@@ -187,7 +116,7 @@
             . ' · ' . trim((string) ($usuario?->apellido ?? '') . ' ' . (string) ($usuario?->nombre ?? ''));
     @endphp
 
-    <div class="border-b se-sidebar-sep relative z-[1] flex-shrink-0"
+    <div class="border-b se-sidebar-sep relative z-[1] overflow-hidden flex-shrink-0"
          :class="sidebarCollapsed ? 'flex flex-col items-center gap-2 py-3 px-1' : 'min-h-12 px-2.5 py-2 flex flex-col gap-1'">
 
         <a href="{{ route('portalDocente.home') }}"
@@ -195,25 +124,24 @@
            class="flex min-w-0 items-center gap-2 rounded-lg text-left no-underline text-inherit transition-colors hover:bg-[var(--se-hover-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--se-light-blue)]"
            :class="sidebarCollapsed ? 'flex-col justify-center' : 'flex-row flex-1'"
            title="Inicio del portal docente">
-            <span class="rounded-lg bg-white px-2 py-1.5 shadow-sm flex-shrink-0">
+            <span class="se-sidebar-brand rounded-lg bg-white px-2 py-1.5 shadow-sm">
                 <img src="{{ $logoUrl }}" alt=""
-                     class="object-contain flex-shrink-0 block"
-                     :class="sidebarCollapsed ? 'h-8 w-8' : 'h-9 w-auto max-w-[9.5rem]'">
+                     width="152" height="36"
+                     class="object-contain block">
             </span>
-            <p class="text-white text-[11px] font-semibold truncate min-w-0 leading-snug"
+            <p class="text-white/90 text-[12px] font-semibold truncate min-w-0 leading-snug"
                x-show="!sidebarCollapsed" x-cloak
                title="{{ $sidebarSessionLine }}">
                 <span class="text-white/90">{{ schoolCtx()->nivelNombre() }}</span>
-                <span class="text-white/50"> · </span>
+                <span class="text-white/45"> · </span>
                 <span class="text-white/90">{{ schoolCtx()->terlecAno() }}</span>
-                <span class="block text-[10px] font-medium text-white/70 truncate mt-0.5">
+                <span class="block text-[11px] font-medium text-white/65 truncate mt-0.5">
                     {{ $usuario?->nombre ?? '' }} {{ $usuario?->apellido ?? '' }}
                 </span>
             </p>
         </a>
 
-        <p x-show="!sidebarCollapsed" x-cloak
-           class="text-[10px] font-bold uppercase tracking-wider text-white/60 px-0.5">
+        <p x-show="!sidebarCollapsed" x-cloak class="se-sidebar-nav-label px-0.5">
             Menú de Docentes
         </p>
     </div>
@@ -225,7 +153,7 @@
         @if ($portalEsSecundario)
             <a href="{{ route('portalDocente.calificaciones') }}"
                @class([
-                   'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                   'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                    'is-active shadow-sm' => str_starts_with($route ?? '', 'portalDocente.calificaciones'),
                ])
                title="Carga y consulta de calificaciones">
@@ -237,7 +165,7 @@
             </a>
             <a href="{{ route('portalDocente.cuadernoSeguimiento') }}"
                @class([
-                   'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                   'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                    'is-active shadow-sm' => str_starts_with($route ?? '', 'portalDocente.cuadernoSeguimiento'),
                ])
                title="Cuaderno de seguimiento áulico y situación disciplinaria">
@@ -250,14 +178,13 @@
         @endif
 
         @if (tienePermiso(3))
-            <p x-show="!sidebarCollapsed" x-cloak
-               class="mt-3 mb-0.5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-white/50">
+            <p x-show="!sidebarCollapsed" x-cloak class="se-sidebar-nav-label mt-3 mb-0.5 px-2.5">
                 Comunicación institucional
             </p>
 
             <a href="{{ route('portalDocente.comunicaciones.index') }}"
                @class([
-                   'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                   'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                    'is-active shadow-sm' => $docenteComBandejaActiva,
                ])
                title="Bandeja de comunicados con familias y personal">
@@ -271,7 +198,7 @@
             @if (tienePermiso(4))
                 <a href="{{ route('portalDocente.comunicaciones.nuevo') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'portalDocente.comunicaciones.nuevo',
                    ])
                    title="Nuevo comunicado a familias o personal">
@@ -285,7 +212,7 @@
             @if (tienePermiso(8))
                 <a href="{{ route('portalDocente.comunicaciones.revision') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'portalDocente.comunicaciones.revision',
                    ])
                    title="Control Cuaderno de Comunicados">
@@ -305,12 +232,12 @@
         <div class="flex items-center gap-3"
              :class="sidebarCollapsed ? 'flex-col gap-2' : ''">
             <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--se-primary);">
-                <span class="text-white text-xs font-bold">
+                <span class="text-white text-[13px] font-bold">
                     {{ strtoupper(substr((string) ($usuario?->apellido ?? 'U'), 0, 1)) }}
                 </span>
             </div>
             <div class="flex-1 min-w-0" x-show="!sidebarCollapsed" x-cloak>
-                <p class="text-white text-xs font-medium truncate">
+                <p class="text-white/90 text-[13px] font-medium truncate">
                     {{ $usuario?->nombre ?? '' }} {{ $usuario?->apellido ?? '' }}
                 </p>
             </div>

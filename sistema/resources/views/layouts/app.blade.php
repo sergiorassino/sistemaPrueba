@@ -7,42 +7,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $pageTitle ?? (isset($title) ? $title . ' — ' : '') }}{{ config('app.name') }}</title>
     @include('layouts.partials.favicon')
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+    @include('layouts.partials.sidebar-bosque-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
-    <style>
-        /* Bosque SE — variables del sidebar (alineadas a .se-hero). */
-        :root {
-            --se-primary: #40848d;
-            --se-light-blue: #c1d7da;
-            --se-hover-bg: rgba(255, 255, 255, 0.12);
-            --se-sep: rgba(255, 255, 255, 0.14);
-            --se-sidebar-text: rgba(255, 255, 255, 0.9);
-            --se-group-text: rgba(255, 255, 255, 0.82);
-            --se-group-bg: rgba(255, 255, 255, 0.07);
-            --se-group-open-bg: rgba(255, 255, 255, 0.12);
-            --se-sidebar-w: 24rem;
-            --se-sidebar-w-collapsed: 5rem;
-        }
-        .se-main {
-            width: 100%;
-            min-width: 0;
-            transition: transform 200ms ease-in-out, width 200ms ease-in-out;
-            transform: translateX(0);
-        }
-        @media (min-width: 768px) {
-            .se-main {
-                transform: translateX(var(--se-sidebar-w));
-                width: calc(100% - var(--se-sidebar-w));
-            }
-            .se-main.is-collapsed {
-                transform: translateX(var(--se-sidebar-w-collapsed));
-                width: calc(100% - var(--se-sidebar-w-collapsed));
-            }
-        }
-    </style>
 </head>
 @php
     $route = request()->route()?->getName();
@@ -122,16 +89,22 @@
     peekSidebarExpandNow() {
         if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
         clearTimeout(this._sidebarPeekTimer);
+        const el = this.$refs.seSidebar;
+        if (el) el.classList.remove('is-narrowing');
         this.sidebarCollapsed = false;
     },
     peekSidebarMaybeCollapseLater() {
         if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
         clearTimeout(this._sidebarPeekTimer);
+        const el = this.$refs.seSidebar;
+        if (el) el.classList.add('is-narrowing');
         this._sidebarPeekTimer = window.setTimeout(() => {
-            const el = this.$refs.seSidebar;
             if (!el) return;
-            if (el.matches(':hover')) return;
-            if (el.contains(document.activeElement)) return;
+            if (el.matches(':hover') || el.contains(document.activeElement)) {
+                el.classList.remove('is-narrowing');
+                return;
+            }
+            el.classList.remove('is-narrowing');
             this.saveSidebarNavScroll();
             this.sidebarCollapsed = true;
         }, 200);
@@ -214,7 +187,7 @@
             . ' · ' . schoolCtx()->terlecAno()
             . ' · ' . trim((Auth::user()->nombre ?? '') . ' ' . (Auth::user()->apellido ?? ''));
     @endphp
-    <div class="border-b se-sidebar-sep relative z-10 overflow-visible flex-shrink-0"
+    <div class="border-b se-sidebar-sep relative z-10 overflow-hidden flex-shrink-0"
          :class="sidebarCollapsed ? 'flex flex-col items-center gap-2 py-3 px-1' : 'min-h-12 px-2.5 py-2 flex flex-row items-center gap-2'">
 
         <a href="{{ route('dashboard') }}"
@@ -222,10 +195,10 @@
            class="flex min-w-0 items-center gap-2 rounded-lg text-left no-underline text-inherit transition-colors hover:bg-[var(--se-hover-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--se-light-blue)]"
            :class="sidebarCollapsed ? 'flex-col justify-center' : 'flex-1'"
            title="Ir al panel principal v1.0">
-            <span class="rounded-lg bg-white px-2 py-1.5 shadow-sm flex-shrink-0">
+            <span class="se-sidebar-brand rounded-lg bg-white px-2 py-1.5 shadow-sm">
                 <img src="{{ $sidebarLogoUrl }}" alt=""
-                     class="object-contain flex-shrink-0 block"
-                     :class="sidebarCollapsed ? 'h-8 w-8' : 'h-9 w-auto max-w-[9.5rem]'">
+                     width="152" height="36"
+                     class="object-contain block">
             </span>
 
             <p class="text-white/90 text-[12px] font-semibold truncate min-w-0 leading-snug"

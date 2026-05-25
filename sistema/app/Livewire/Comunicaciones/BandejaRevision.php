@@ -15,6 +15,8 @@ class BandejaRevision extends Component
     /** null = todos los comunicados institucionales del nivel/ciclo */
     public ?int $idProfesorObjetivo = null;
 
+    public ?int $idLegajoObjetivo = null;
+
     public ?string $profesorObjetivoLabel = null;
 
     public string $profesorSearch = '';
@@ -28,6 +30,7 @@ class BandejaRevision extends Component
     public function limpiarFiltroProfesor(): void
     {
         $this->idProfesorObjetivo      = null;
+        $this->idLegajoObjetivo        = null;
         $this->profesorObjetivoLabel   = null;
         $this->profesorSearch          = '';
         $this->profesorResults         = [];
@@ -43,8 +46,9 @@ class BandejaRevision extends Component
     public function updatedProfesorSearch(): void
     {
         $ctx = schoolCtx();
-        $this->profesorResults = ComunicacionesRepository::buscarProfesores(
+        $this->profesorResults = ComunicacionesRepository::buscarUsuariosRevision(
             (int) $ctx->idNivel,
+            (int) $ctx->idTerlec,
             $this->profesorSearch,
             15
         );
@@ -52,7 +56,20 @@ class BandejaRevision extends Component
 
     public function selectProfesor(int $id, string $label): void
     {
-        $this->idProfesorObjetivo = (int) $id;
+        $this->selectUsuario('profesor', $id, $label);
+    }
+
+    public function selectUsuario(string $tipo, int $id, string $label): void
+    {
+        $this->idProfesorObjetivo = null;
+        $this->idLegajoObjetivo = null;
+
+        if ($tipo === 'estudiante') {
+            $this->idLegajoObjetivo = (int) $id;
+        } else {
+            $this->idProfesorObjetivo = (int) $id;
+        }
+
         $this->profesorObjetivoLabel = trim($label);
         $this->profesorSearch = '';
         $this->profesorResults = [];
@@ -72,7 +89,8 @@ class BandejaRevision extends Component
             $this->filtro,
             $dir === 'todos' ? 'todos' : $dir,
             $this->periodo !== 'historico',
-            $this->idProfesorObjetivo
+            $this->idProfesorObjetivo,
+            $this->idLegajoObjetivo
         );
 
         return view('comunicaciones::livewire.comunicaciones.bandeja-revision', [

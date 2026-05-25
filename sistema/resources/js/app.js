@@ -464,7 +464,53 @@ function triggerSeSidebarOverflowSync() {
     shell.dispatchEvent(new CustomEvent('se-sidebar-sync-overflow', { bubbles: false }));
 }
 
+function seIsLegacySchoolFavicon(href) {
+    if (!href || /favicon-se/i.test(href)) return false;
+    return /\/storage\//.test(href)
+        || /\/ento\/logos\//i.test(href)
+        || /img\/[1-5]\.png/i.test(href)
+        || /icono-escuela/i.test(href)
+        || /favicon\.ico/i.test(href);
+}
+
+function seApplyMonogramFaviconFromMeta() {
+    document.querySelector('meta[name="se-favicon"]')?.remove();
+
+    const light = document.querySelector('meta[name="se-favicon-light"]')?.getAttribute('content');
+    const dark = document.querySelector('meta[name="se-favicon-dark"]')?.getAttribute('content');
+    if (!light || !dark) return;
+
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const href = prefersDark ? dark : light;
+
+    document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach((link) => {
+        const media = link.getAttribute('media') || '';
+        if (media.includes('prefers-color-scheme')) return;
+        if (seIsLegacySchoolFavicon(link.href)) {
+            link.remove();
+            return;
+        }
+        link.type = 'image/png';
+        link.href = href;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    queueMicrotask(seApplyMonogramFaviconFromMeta);
+});
+
+window.addEventListener('pageshow', () => {
+    queueMicrotask(seApplyMonogramFaviconFromMeta);
+});
+
+if (typeof window.matchMedia === 'function') {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        queueMicrotask(seApplyMonogramFaviconFromMeta);
+    });
+}
+
 document.addEventListener('livewire:navigated', () => {
+    queueMicrotask(seApplyMonogramFaviconFromMeta);
     queueMicrotask(bindCalifCargaTablas);
     queueMicrotask(bindCierreAnualGrillas);
     queueMicrotask(triggerSeSidebarOverflowSync);

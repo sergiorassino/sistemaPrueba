@@ -2,7 +2,7 @@
  * Service Worker - Notificaciones Push (autogestión)
  */
 const CACHE_NAME = 'autogestion-push-v1';
-const NOTIFICATION_ICON_PATH = '/favicon.ico';
+const NOTIFICATION_ICON_PATH = '/img/favicon-se-light.svg';
 
 self.addEventListener('install', function (event) {
     self.skipWaiting();

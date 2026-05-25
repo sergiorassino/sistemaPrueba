@@ -37,8 +37,8 @@ if (! function_exists('tienePermiso')) {
     }
 }
 
-if (! function_exists('schoolLogoUrl')) {
-    function schoolLogoUrl(bool $refresh = false): ?string
+if (! function_exists('schoolLogoStoragePath')) {
+    function schoolLogoStoragePath(bool $refresh = false): ?string
     {
         static $memo = null;
         static $done = false;
@@ -51,12 +51,13 @@ if (! function_exists('schoolLogoUrl')) {
         if ($done) {
             return $memo;
         }
-        $done = true;
 
         $idNivel = (int) (schoolCtx()->idNivel ?? 0);
         if ($idNivel <= 0) {
             return null;
         }
+
+        $done = true;
 
         $path = Ento::query()
             ->where('idNivel', $idNivel)
@@ -71,7 +72,52 @@ if (! function_exists('schoolLogoUrl')) {
             return null;
         }
 
-        $memo = Storage::disk('public')->url($path);
+        $memo = $path;
+
+        return $memo;
+    }
+}
+
+if (! function_exists('schoolLogoUrl')) {
+    function schoolLogoUrl(bool $refresh = false): ?string
+    {
+        $path = schoolLogoStoragePath($refresh);
+
+        return $path !== null ? Storage::disk('public')->url($path) : null;
+    }
+}
+
+if (! function_exists('studentLogoStoragePath')) {
+    function studentLogoStoragePath(): ?string
+    {
+        static $memo = null;
+        static $done = false;
+
+        if ($done) {
+            return $memo;
+        }
+
+        $idNivel = (int) (studentCtx()->idNivel ?? 0);
+        if ($idNivel <= 0) {
+            return null;
+        }
+
+        $done = true;
+
+        $path = Ento::query()
+            ->where('idNivel', $idNivel)
+            ->value('logo_path');
+
+        if (! is_string($path) || trim($path) === '') {
+            return null;
+        }
+
+        $path = trim($path);
+        if (! Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        $memo = $path;
 
         return $memo;
     }
@@ -80,45 +126,17 @@ if (! function_exists('schoolLogoUrl')) {
 if (! function_exists('studentLogoUrl')) {
     function studentLogoUrl(): ?string
     {
-        static $memo = null;
-        static $done = false;
+        $path = studentLogoStoragePath();
 
-        if ($done) {
-            return $memo;
-        }
-        $done = true;
-
-        $idNivel = (int) (studentCtx()->idNivel ?? 0);
-        if ($idNivel <= 0) {
-            return null;
-        }
-
-        $path = Ento::query()
-            ->where('idNivel', $idNivel)
-            ->value('logo_path');
-
-        if (! is_string($path) || trim($path) === '') {
-            return null;
-        }
-
-        $path = trim($path);
-        if (! Storage::disk('public')->exists($path)) {
-            return null;
-        }
-
-        $memo = Storage::disk('public')->url($path);
-
-        return $memo;
+        return $path !== null ? Storage::disk('public')->url($path) : null;
     }
 }
 
-if (! function_exists('entoInstitutionalLogoUrlFallback')) {
+if (! function_exists('entoInstitutionalLogoStoragePath')) {
     /**
-     * Primer logo institucional definido en `ento` (cualquier nivel).
-     * Misma fuente que `schoolLogoUrl()` / `studentLogoUrl()` para pantallas sin
-     * contexto de nivel (login de estudiantes) o si el nivel activo no tiene `logo_path`.
+     * Primer `logo_path` definido en `ento` (cualquier nivel).
      */
-    function entoInstitutionalLogoUrlFallback(): ?string
+    function entoInstitutionalLogoStoragePath(): ?string
     {
         static $memo = null;
         static $done = false;
@@ -147,9 +165,52 @@ if (! function_exists('entoInstitutionalLogoUrlFallback')) {
             return null;
         }
 
-        $memo = Storage::disk('public')->url($path);
+        $memo = $path;
 
         return $memo;
+    }
+}
+
+if (! function_exists('entoInstitutionalLogoUrlFallback')) {
+    /**
+     * Primer logo institucional definido en `ento` (cualquier nivel).
+     * Misma fuente que `schoolLogoUrl()` / `studentLogoUrl()` para pantallas sin
+     * contexto de nivel (login de estudiantes) o si el nivel activo no tiene `logo_path`.
+     */
+    function entoInstitutionalLogoUrlFallback(): ?string
+    {
+        $path = entoInstitutionalLogoStoragePath();
+
+        return $path !== null ? Storage::disk('public')->url($path) : null;
+    }
+}
+
+if (! function_exists('seMonogramFaviconUrls')) {
+    /**
+     * Favicon monograma SE (PNG para la pestaña; SVG opcional en /favicon.ico vía controlador).
+     *
+     * @return array{light: string, dark: string}
+     */
+    function seMonogramFaviconUrls(): array
+    {
+        $version = '5';
+
+        return [
+            'light' => asset('img/favicon-se-32-light.png').'?v='.$version,
+            'dark' => asset('img/favicon-se-32-dark.png').'?v='.$version,
+        ];
+    }
+}
+
+if (! function_exists('institutionalFaviconUrl')) {
+    /**
+     * URL del favicon institucional (monograma SE, variante para tema claro del navegador).
+     *
+     * @deprecated Preferir seMonogramFaviconUrls() en vistas; se mantiene por compatibilidad.
+     */
+    function institutionalFaviconUrl(?callable $contextLogo = null): string
+    {
+        return seMonogramFaviconUrls()['light'];
     }
 }
 

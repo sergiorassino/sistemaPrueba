@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config('app.name') }} — {{ ($guestPortal ?? 'staff') === 'alumno' ? 'Estudiantes' : 'Acceso' }}</title>
+    @include('layouts.partials.favicon-guest')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>

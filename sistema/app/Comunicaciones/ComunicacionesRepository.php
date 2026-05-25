@@ -91,6 +91,85 @@ class ComunicacionesRepository
     }
 
     /**
+     * Estudiantes matriculados en el nivel y ciclo lectivo (revisión de comunicados).
+     *
+     * @return list<array{id:int,label:string,dni:?string}>
+     */
+    public static function buscarEstudiantes(int $idNivel, int $idTerlec, string $q, int $limit = 15): array
+    {
+        $q = trim($q);
+        if ($q === '') {
+            return [];
+        }
+
+        $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $q) . '%';
+
+        $rows = DB::table('legajos as l')
+            ->join('matricula as m', 'm.idLegajos', '=', 'l.id')
+            ->where('m.idNivel', $idNivel)
+            ->where('m.idTerlec', $idTerlec)
+            ->whereNotNull('m.idLegajos')
+            ->where(function ($w) use ($like) {
+                $w->where('l.apellido', 'like', $like)
+                    ->orWhere('l.nombre', 'like', $like)
+                    ->orWhere('l.dni', 'like', $like);
+            })
+            ->select(['l.id', 'l.apellido', 'l.nombre', 'l.dni'])
+            ->distinct()
+            ->orderBy('l.apellido')
+            ->orderBy('l.nombre')
+            ->limit(max(1, min(50, $limit)))
+            ->get();
+
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'id' => (int) $r->id,
+                'label' => trim((string) $r->apellido . ', ' . (string) $r->nombre),
+                'dni' => $r->dni !== null ? (string) $r->dni : null,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Búsqueda unificada para Control Cuaderno de Comunicados (profesor/a, personal o estudiante).
+     *
+     * @return list<array{tipo:string,id:int,label:string,dni:?string}>
+     */
+    public static function buscarUsuariosRevision(int $idNivel, int $idTerlec, string $q, int $limit = 15): array
+    {
+        $limit = max(1, min(30, $limit));
+        $mitad = (int) ceil($limit / 2);
+
+        $out = [];
+        foreach (static::buscarProfesores($idNivel, $q, $mitad) as $p) {
+            $out[] = [
+                'tipo' => 'profesor',
+                'id' => $p['id'],
+                'label' => $p['label'],
+                'dni' => $p['dni'],
+            ];
+        }
+        $restante = $limit - count($out);
+        if ($restante > 0) {
+            foreach (static::buscarEstudiantes($idNivel, $idTerlec, $q, $restante) as $e) {
+                $out[] = [
+                    'tipo' => 'estudiante',
+                    'id' => $e['id'],
+                    'label' => $e['label'],
+                    'dni' => $e['dni'],
+                ];
+            }
+        }
+
+        usort($out, fn (array $a, array $b): int => strcasecmp($a['label'], $b['label']));
+
+        return array_slice($out, 0, $limit);
+    }
+
+    /**
      * Profesores o preceptores del nivel (para selector con checkboxes), ordenados.
      * Opcionalmente filtra por texto en apellido, nombre o DNI.
      *
@@ -543,7 +622,7 @@ class ComunicacionesRepository
      * Bandeja de control / revisión institucional: todos los hilos del nivel y ciclo,
      * sin acotar a la participación de un solo profesor.
      *
-     * Si $idProfesorFiltro es mayor que cero, delega en {@see bandejaProfesor}.
+     * Si $idProfesorFiltro o $idLegajoFiltro es mayor que cero, delega en la bandeja de ese usuario.
      *
      * @param  string  $direccion  todos|recibidos|enviados
      * @return \Illuminate\Support\Collection
@@ -554,8 +633,22 @@ class ComunicacionesRepository
         string $filtro = 'todos',
         string $direccion = 'todos',
         bool $soloTerlecActual = true,
-        ?int $idProfesorFiltro = null
+        ?int $idProfesorFiltro = null,
+        ?int $idLegajoFiltro = null
     ) {
+        if ($idLegajoFiltro !== null && $idLegajoFiltro > 0) {
+            $dir = in_array($direccion, ['todos', 'recibidos', 'enviados'], true) ? $direccion : 'todos';
+
+            return static::bandejaFamilia(
+                $idLegajoFiltro,
+                $idNivel,
+                $idTerlec,
+                $filtro,
+                $dir,
+                $soloTerlecActual
+            );
+        }
+
         if ($idProfesorFiltro !== null && $idProfesorFiltro > 0) {
             return static::bandejaProfesor(
                 $idProfesorFiltro,
@@ -674,24 +767,30 @@ class ComunicacionesRepository
                   ->where('d.id_legajo', $idLegajo);
             })
             ->select([
-                'h.id', 'h.asunto', 'h.scope', 'h.estado',
+                'h.id', 'h.asunto', 'h.scope', 'h.estado', 'h.cuerpo_inicial_id',
                 'h.creado_por_tipo', 'h.creado_por_id', 'h.creado_por_rol',
-                'h.familia_puede_responder',
+                'h.familia_puede_responder', 'h.docentes_permite_respuestas',
+                'h.id_curso', 'h.cursos_envio',
                 'h.ultimo_mensaje_at', 'h.created_at',
                 DB::raw('SUM(CASE WHEN d.leido_at IS NULL AND d.id IS NOT NULL THEN 1 ELSE 0 END) as no_leidos'),
                 DB::raw('SUM(CASE WHEN d.respondido_at IS NOT NULL THEN 1 ELSE 0 END) as respondidos'),
                 DB::raw("CASE WHEN h.creado_por_tipo = 'familia' AND h.creado_por_id = {$idLegajo} THEN 'enviado' ELSE 'recibido' END as direccion"),
                 DB::raw('(SELECT COUNT(*) FROM com_mensajes mx WHERE mx.id_hilo = h.id) as mensajes_count'),
                 DB::raw('(SELECT m.contenido FROM com_mensajes m WHERE m.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_contenido'),
+                DB::raw("(SELECT COUNT(DISTINCT d0.id_legajo) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia' AND d0.id_legajo IS NOT NULL) as destinatarios_familia_count"),
+                DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_legajo SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia') as destinatarios_nombres_concat"),
                 DB::raw("(SELECT COUNT(DISTINCT d0.id_profesor) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor' AND d0.id_profesor IS NOT NULL) as destinatarios_prof_count"),
+                DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_profesor SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor') as destinatarios_doc_nombres_concat"),
                 DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_profesor SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor') as destinatarios_prof_nombres_concat"),
+                DB::raw("(SELECT CASE WHEN TRIM(COALESCE(c.cursec, '')) <> '' THEN TRIM(c.cursec) ELSE TRIM(COALESCE(cp.curPlanCurso, 'Curso')) END FROM cursos c LEFT JOIN curplan cp ON cp.id = c.idCurPlan WHERE c.Id = h.id_curso LIMIT 1) as curso_envio_label"),
                 DB::raw('(SELECT m0.tipo_remitente FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_tipo'),
                 DB::raw('(SELECT m0.nombre_remitente_snapshot FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_nombre'),
                 DB::raw('(SELECT m0.vinculo_familiar FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_vinculo'),
             ])
             ->groupBy('h.id', 'h.asunto', 'h.scope', 'h.estado', 'h.creado_por_tipo',
                       'h.creado_por_id', 'h.creado_por_rol', 'h.familia_puede_responder',
-                      'h.ultimo_mensaje_at', 'h.created_at', 'h.cuerpo_inicial_id')
+                      'h.docentes_permite_respuestas',
+                      'h.ultimo_mensaje_at', 'h.created_at', 'h.cuerpo_inicial_id', 'h.id_curso', 'h.cursos_envio')
             ->orderByDesc('h.ultimo_mensaje_at');
 
         if ($filtro === 'no_leidos') {

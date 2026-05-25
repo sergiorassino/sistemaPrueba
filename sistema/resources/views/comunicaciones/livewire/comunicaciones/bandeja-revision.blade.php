@@ -34,7 +34,7 @@
         <div class="space-y-6 border-t border-accent-100 bg-accent-50/30 p-5 sm:p-6">
             <div class="grid gap-4 lg:grid-cols-3">
                 <div class="lg:col-span-2">
-                    <label for="prof-search" class="form-label">Buscar usuario (profesor/a o personal)</label>
+                    <label for="prof-search" class="form-label">Buscar usuario (profesor/a, personal o estudiante)</label>
                     <div class="relative mt-1.5">
                         <input id="prof-search"
                                type="text"
@@ -45,9 +45,12 @@
                             <div class="absolute z-20 mt-2 max-h-48 w-full overflow-y-auto rounded-2xl border border-accent-200 bg-white shadow-lg">
                                 @foreach ($profesorResults as $p)
                                     <button type="button"
-                                            wire:click="selectProfesor({{ (int) $p['id'] }}, @js($p['label']))"
+                                            wire:click="selectUsuario(@js($p['tipo']), {{ (int) $p['id'] }}, @js($p['label']))"
                                             class="block w-full border-b border-accent-100 px-3 py-2.5 text-left text-sm transition last:border-b-0 hover:bg-accent-50">
                                         <span class="font-semibold text-neutral-900">{{ $p['label'] }}</span>
+                                        <span class="ml-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+                                            {{ ($p['tipo'] ?? '') === 'estudiante' ? 'Estudiante' : 'Personal' }}
+                                        </span>
                                         @if (! empty($p['dni']))
                                             <span class="ml-1 text-xs text-neutral-400">DNI {{ $p['dni'] }}</span>
                                         @endif
@@ -59,13 +62,16 @@
                     <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
                         <span>
                             <span class="font-semibold text-neutral-700">Viendo:</span>
-                            @if ($idProfesorObjetivo)
-                                {{ $profesorObjetivoLabel ?? ('ID ' . $idProfesorObjetivo) }}
+                            @if ($idProfesorObjetivo || $idLegajoObjetivo)
+                                {{ $profesorObjetivoLabel ?? ('ID ' . ($idProfesorObjetivo ?: $idLegajoObjetivo)) }}
+                                @if ($idLegajoObjetivo)
+                                    <span class="text-neutral-400">(estudiante)</span>
+                                @endif
                             @else
                                 Todos los comunicados institucionales
                             @endif
                         </span>
-                        @if ($idProfesorObjetivo)
+                        @if ($idProfesorObjetivo || $idLegajoObjetivo)
                             <button type="button"
                                     wire:click="limpiarFiltroProfesor"
                                     class="font-semibold text-primary-700 underline-offset-2 hover:underline">
@@ -238,7 +244,7 @@
                             'justify-end text-right' => ! $esEnviados,
                         ])>
                             @if ($esEnviados)
-                                @if (! $idProfesorObjetivo && $deLabel !== '')
+                                @if (! $idProfesorObjetivo && ! $idLegajoObjetivo && $deLabel !== '')
                                     <span class="shrink-0 text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">De:</span>
                                     <span class="min-w-0 max-w-[9rem] truncate text-neutral-600 sm:max-w-[12rem]">{{ $deLabel }}</span>
                                     <span class="shrink-0 text-neutral-400">·</span>

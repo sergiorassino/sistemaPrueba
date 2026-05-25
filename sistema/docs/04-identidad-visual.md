@@ -35,8 +35,10 @@ Ubicacion actual: `public/img/`.
 
 | Archivo | Uso recomendado |
 | --- | --- |
-| `1.png` | Icono compacto, favicon, sidebar colapsado |
+| `1.png` | Icono compacto, sidebar colapsado |
 | `2.png` | Variante clara del icono |
+| `favicon-se-light.svg` | Favicon monograma **SE** (tema claro del navegador) |
+| `favicon-se-dark.svg` | Favicon monograma **SE** (tema oscuro del navegador) |
 | `3.png` | Logo principal/prominente para login, dashboard y fallback general |
 | `4.png` | Variante horizontal para headers amplios |
 | `5.png` | Variante compacta horizontal |
@@ -46,6 +48,7 @@ Regla de uso:
 - Preferir `schoolLogoUrl()` cuando exista logo institucional dinamico.
 - Usar `asset('img/3.png')` como fallback principal.
 - El logo debe tener presencia real en login, dashboard y pantallas institucionales.
+- **Favicon de pestaña:** monograma `SE` via `seMonogramFaviconUrls()` (`favicon-se-light.svg` / `favicon-se-dark.svg`), no el logo completo con fondo oscuro.
 
 ---
 

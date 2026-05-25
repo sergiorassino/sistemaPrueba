@@ -124,11 +124,15 @@ use App\Livewire\Seguimiento\Inasistencias\SincroCidiInasistencias;
 use App\Livewire\Seguimiento\Inasistencias\PartesDiariosIndex;
 use App\Livewire\Seguimiento\Inasistencias\InformeInasistenciasLoteIndex;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InstitutionalIconController;
 use App\Http\Controllers\ManualSistemaPdfController;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/icono-escuela.png', InstitutionalIconController::class)->name('institutional.icon');
+Route::get('/favicon.ico', InstitutionalIconController::class);
 
 // Guest routes
 Route::middleware('guest')->group(function () {

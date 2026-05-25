@@ -193,7 +193,7 @@ if (! function_exists('seMonogramFaviconUrls')) {
      */
     function seMonogramFaviconUrls(): array
     {
-        $version = '5';
+        $version = '11';
 
         return [
             'light' => asset('img/favicon-se-32-light.png').'?v='.$version,

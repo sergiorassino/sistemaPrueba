@@ -3,8 +3,8 @@
 @endphp
 <meta name="se-favicon-light" content="{{ $seFavicon['light'] }}">
 <meta name="se-favicon-dark" content="{{ $seFavicon['dark'] }}">
-<link rel="icon" type="image/png" sizes="32x32" href="{{ $seFavicon['light'] }}">
-<link rel="icon" type="image/png" sizes="32x32" href="{{ $seFavicon['dark'] }}" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/png" sizes="64x64" href="{{ $seFavicon['light'] }}">
+<link rel="icon" type="image/png" sizes="64x64" href="{{ $seFavicon['dark'] }}" media="(prefers-color-scheme: dark)">
 <link rel="shortcut icon" type="image/png" href="{{ $seFavicon['light'] }}">
 <script>
     (function () {

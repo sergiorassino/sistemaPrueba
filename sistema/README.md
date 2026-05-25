@@ -37,9 +37,37 @@ Toda la documentación del proyecto está en `sistema/docs/`:
 | 05 | `05-preferencias-y-convenciones.md`  | Convenciones de código, preferencias       |
 | 06 | `06-reglas-de-seguridad.md`          | Baseline de seguridad obligatorio          |
 
+## Flujo de ramas Git
+
+| Rama | Uso |
+|------|-----|
+| **`sergio`** | Desarrollo diario (rama activa por defecto) |
+| **`main`** | Resguardo en GitHub; refleja lo estable de `sergio` |
+
+Ramas retiradas: `desarrolloSergioConTenant`, `ramaMain`.
+
+**Trabajo habitual** (siempre en `sergio`):
+
+```bash
+git checkout sergio
+git pull
+# ... commits ...
+git push
+```
+
+**Resguardo en `main`** (cuando querés dejar copia estable en GitHub):
+
+```bash
+git checkout main
+git pull
+git merge sergio
+git push origin main
+git checkout sergio
+```
+
 ## Asistentes de código (Cursor, Copilot, etc.)
 
-Políticas **versionadas** en el repo (incluye no ejecutar escrituras en la BD desde el agente): ver **`AGENTS.md`** en esta carpeta y en la raíz del repositorio padre.
+Políticas **versionadas** en el repo (incluye no ejecutar escrituras en la BD desde el agente): ver **`AGENTS.md`** en esta carpeta.
 
 ## Setup local
 

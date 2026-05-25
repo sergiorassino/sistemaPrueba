@@ -187,24 +187,24 @@ if (! function_exists('entoInstitutionalLogoUrlFallback')) {
 
 if (! function_exists('seMonogramFaviconUrls')) {
     /**
-     * Favicon monograma SE (PNG para la pestaña; SVG opcional en /favicon.ico vía controlador).
+     * Favicon de pestaña: `1.png` (tema claro del navegador), `2.png` (tema oscuro).
      *
      * @return array{light: string, dark: string}
      */
     function seMonogramFaviconUrls(): array
     {
-        $version = '11';
+        $version = '14';
 
         return [
-            'light' => asset('img/favicon-se-32-light.png').'?v='.$version,
-            'dark' => asset('img/favicon-se-32-dark.png').'?v='.$version,
+            'light' => asset('img/1.png').'?v='.$version,
+            'dark' => asset('img/2.png').'?v='.$version,
         ];
     }
 }
 
 if (! function_exists('institutionalFaviconUrl')) {
     /**
-     * URL del favicon institucional (monograma SE, variante para tema claro del navegador).
+     * URL del favicon institucional (variante para tema claro del navegador).
      *
      * @deprecated Preferir seMonogramFaviconUrls() en vistas; se mantiene por compatibilidad.
      */

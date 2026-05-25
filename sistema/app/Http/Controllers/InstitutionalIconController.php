@@ -7,7 +7,7 @@ use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
- * Monograma SE para /favicon.ico (PNG; la pestaña no usa bien solo SVG en Windows).
+ * Favicon para /favicon.ico: `1.png` (tema claro), `2.png` (tema oscuro).
  */
 class InstitutionalIconController extends Controller
 {
@@ -16,7 +16,7 @@ class InstitutionalIconController extends Controller
         $preferDark = $request->header('Sec-CH-Prefers-Color-Scheme') === 'dark'
             || (is_string($request->query('theme')) && $request->query('theme') === 'dark');
 
-        $filename = $preferDark ? 'favicon-se-32-dark.png' : 'favicon-se-32-light.png';
+        $filename = $preferDark ? '2.png' : '1.png';
 
         return response()->file(public_path('img/'.$filename), [
             'Content-Type' => 'image/png',

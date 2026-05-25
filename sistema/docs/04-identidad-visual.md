@@ -48,7 +48,7 @@ Regla de uso:
 - Preferir `schoolLogoUrl()` cuando exista logo institucional dinamico.
 - Usar `asset('img/3.png')` como fallback principal.
 - El logo debe tener presencia real en login, dashboard y pantallas institucionales.
-- **Favicon de pestaña:** monograma `SE` via `seMonogramFaviconUrls()` (`favicon-se-light.svg` / `favicon-se-dark.svg`), no el logo completo con fondo oscuro.
+- **Pestañas del navegador:** favicon `1.png` (tema claro del navegador) y `2.png` (tema oscuro), vía `layouts/partials/favicon.blade.php` y `/favicon.ico`. Los SVG `favicon-se-*` quedan para notificaciones push u otros usos.
 
 ---
 

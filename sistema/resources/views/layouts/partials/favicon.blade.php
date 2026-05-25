@@ -3,8 +3,8 @@
 @endphp
 <meta name="se-favicon-light" content="{{ $seFavicon['light'] }}">
 <meta name="se-favicon-dark" content="{{ $seFavicon['dark'] }}">
-<link rel="icon" type="image/png" sizes="64x64" href="{{ $seFavicon['light'] }}">
-<link rel="icon" type="image/png" sizes="64x64" href="{{ $seFavicon['dark'] }}" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ $seFavicon['light'] }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ $seFavicon['dark'] }}" media="(prefers-color-scheme: dark)">
 <link rel="shortcut icon" type="image/png" href="{{ $seFavicon['light'] }}">
 <script>
     (function () {
@@ -12,12 +12,16 @@
         var dark = @json($seFavicon['dark']);
 
         function isLegacyFavicon(href) {
-            if (!href || /favicon-se/i.test(href)) {
+            if (!href) {
+                return false;
+            }
+            if (/img\/1\.png/i.test(href) || /img\/2\.png/i.test(href)) {
                 return false;
             }
             return /\/storage\//.test(href)
                 || /\/ento\/logos\//i.test(href)
-                || /img\/[1-5]\.png/i.test(href)
+                || /img\/[345]\.png/i.test(href)
+                || /favicon-se/i.test(href)
                 || /icono-escuela/i.test(href)
                 || /favicon\.ico/i.test(href);
         }

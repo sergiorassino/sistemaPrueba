@@ -1,2 +1,11 @@
+# Repositorio Git: solo la aplicación en sistema/
+# El resto del directorio (SQL, .env producción, SE/, etc.) queda local.
+
+*
+!.gitignore
+!/sistema/
+!/sistema/**
+
+# Legacy (por si algún archivo suelto en raíz escapa al patrón anterior)
 /_miPhp
 /_miPhp/

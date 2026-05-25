@@ -7,83 +7,24 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $pageTitle ?? (isset($title) ? $title . ' — ' : '') }}{{ config('app.name') }}</title>
     @include('layouts.partials.favicon')
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     <style>
+        /* Bosque SE — variables del sidebar (alineadas a .se-hero). */
         :root {
-            --se-jet: #333333;
-            --se-primary: #40848D;
-            --se-light-blue: #C1D7DA;
-            --se-hover-bg: rgba(193, 215, 218, 0.18);
-            --se-sep: rgba(193, 215, 218, 0.22);
-            --se-white-85: rgba(255, 255, 255, 0.85);
-            --se-white-05: rgba(255, 255, 255, 0.05);
-            --se-white-10: rgba(255, 255, 255, 0.10);
-            --se-sidebar-w: 23.04rem;
+            --se-primary: #40848d;
+            --se-light-blue: #c1d7da;
+            --se-hover-bg: rgba(255, 255, 255, 0.12);
+            --se-sep: rgba(255, 255, 255, 0.14);
+            --se-sidebar-text: rgba(255, 255, 255, 0.9);
+            --se-group-text: rgba(255, 255, 255, 0.82);
+            --se-group-bg: rgba(255, 255, 255, 0.07);
+            --se-group-open-bg: rgba(255, 255, 255, 0.12);
+            --se-sidebar-w: 24rem;
             --se-sidebar-w-collapsed: 5rem;
-        }
-        /* Sin position:relative aquí: pisaría Tailwind `fixed` y el sidebar pasaría al flujo (contenido debajo). */
-        .se-sidebar {
-            background-color: var(--se-jet);
-            color: #fff;
-            font-family: "Roboto Condensed", "Arial Narrow", "Helvetica Neue", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-            font-stretch: condensed;
-            width: var(--se-sidebar-w);
-            overflow-x: hidden;
-        }
-        .se-sidebar::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            background:
-                radial-gradient(ellipse 142% 86% at 0% 0%, rgba(64, 132, 141, 0.60), transparent 65%),
-                radial-gradient(ellipse 78% 52% at 100% 6%, rgba(64, 132, 141, 0.14), transparent 58%);
-        }
-        @media (min-width: 768px) {
-            .se-sidebar.is-collapsed { width: var(--se-sidebar-w-collapsed); }
-        }
-        .se-sidebar-sep { border-color: var(--se-sep); }
-        .se-sidebar-iconbtn { color: var(--se-white-85); }
-        .se-sidebar-iconbtn:hover { background: var(--se-hover-bg); color: #fff; }
-        .se-sidebar-groupbtn {
-            color: rgba(255, 255, 255, 0.95);
-            background: var(--se-white-05);
-            border: 1px solid var(--se-sep);
-            text-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);
-        }
-        .se-sidebar-groupbtn:hover { background: var(--se-hover-bg); }
-        .se-sidebar-groupbtn.is-open { background: var(--se-white-10); }
-        /* Sidebar expandido: títulos de grupo a la izquierda (no centrados en el hueco flex). */
-        .se-sidebar:not(.is-collapsed) .se-sidebar-groupbtn {
-            justify-content: flex-start;
-        }
-        .se-sidebar:not(.is-collapsed) .se-sidebar-groupbtn .se-sidebar-group-label {
-            flex: 1 1 0%;
-            min-width: 0;
-            text-align: left;
-        }
-        /* Opciones hijas: icono y texto desde 5 mm del borde interior del nav. */
-        .se-sidebar-group-items > .se-sidebar-link {
-            padding-left: 5mm;
-            padding-right: 0.625rem;
-        }
-        /* Enlaces a módulos: un poco más anchos; grupos heredan Condensed del sidebar. */
-        .se-sidebar-link {
-            font-family: "Roboto", "Helvetica Neue", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-            font-stretch: normal;
-            min-width: 0;
-        }
-        .se-sidebar-link span.truncate {
-            min-width: 0;
-            flex: 1 1 0%;
-        }
-        .se-sidebar-link { color: var(--se-white-85); }
-        .se-sidebar-link:hover { background: var(--se-hover-bg); color: #fff; }
-        .se-sidebar-link.is-active {
-            background: var(--se-primary);
-            color: #fff;
-            box-shadow: inset 3px 0 0 var(--se-light-blue);
         }
         .se-main {
             width: 100%;
@@ -99,14 +40,6 @@
             .se-main.is-collapsed {
                 transform: translateX(var(--se-sidebar-w-collapsed));
                 width: calc(100% - var(--se-sidebar-w-collapsed));
-            }
-        }
-        @media (min-width: 768px) {
-            .se-sidebar.is-collapsed .se-sidebar-groupbtn {
-                justify-content: center;
-                gap: 0;
-                padding-left: 0.35rem;
-                padding-right: 0.35rem;
             }
         }
     </style>
@@ -266,7 +199,7 @@
        @mouseleave="saveSidebarNavScroll(); peekSidebarMaybeCollapseLater()"
        @focusin="peekSidebarExpandNow()"
        @focusout="peekSidebarFocusOut($event)"
-       class="se-sidebar fixed inset-y-0 left-0 z-[1000] flex flex-col overflow-hidden transform transition-transform duration-200 ease-in-out
+       class="se-sidebar se-sidebar--bosque fixed inset-y-0 left-0 z-[1000] flex flex-col overflow-hidden transform transition-transform duration-200 ease-in-out
               md:translate-x-0 md:transition-[width] md:duration-200 md:ease-in-out md:shadow-lg"
        :class="[
            sidebarOpen ? 'translate-x-0' : '-translate-x-full',
@@ -295,13 +228,13 @@
                      :class="sidebarCollapsed ? 'h-8 w-8' : 'h-9 w-auto max-w-[9.5rem]'">
             </span>
 
-            <p class="text-white text-[11px] font-semibold truncate min-w-0 leading-snug"
+            <p class="text-white/90 text-[12px] font-semibold truncate min-w-0 leading-snug"
                x-show="!sidebarCollapsed" x-cloak
                title="{{ $sidebarSessionLine }}">
                 <span class="text-white/90">{{ schoolCtx()->nivelNombre() }}</span>
-                <span class="text-white/50"> · </span>
+                <span class="text-white/45"> · </span>
                 <span class="text-white/90">{{ schoolCtx()->terlecAno() }}</span>
-                <span class="block text-[10px] font-medium text-white/70 truncate mt-0.5">
+                <span class="block text-[11px] font-medium text-white/65 truncate mt-0.5">
                     {{ Auth::user()->nombre ?? '' }} {{ Auth::user()->apellido ?? '' }}
                 </span>
             </p>
@@ -322,7 +255,7 @@
 
         {{-- Estudiantes --}}
             <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.students && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('students')"
                     title="Estudiantes v1.0">
@@ -344,7 +277,7 @@
                  x-cloak>
                 <a href="{{ route('abm.legajos') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.legajos'),
                    ])
                    title="Legajos de Estudiantes v1.0">
@@ -362,7 +295,7 @@
                 @endphp
                 <a href="{{ route('listados.por-curso') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('listados.por-curso', 'listados.por-curso.pdf', 'listados.exportar-excel'),
                    ])
                    title="Listados de Estudiantes por Curso v1.0">
@@ -380,7 +313,7 @@
                 @endphp
                 <a href="{{ route('listados.libro-matricula') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('listados.libro-matricula', 'listados.libro-matricula.pdf'),
                    ])
                    title="Libro de Matrícula v1.0">
@@ -397,7 +330,7 @@
         @if(tienePermiso(3))
             <div class="mt-4"></div>
             <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.cuadernoComunicados && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('cuadernoComunicados')"
                     title="Comunicación institucional v1.0">
@@ -419,7 +352,7 @@
                  x-cloak>
                 <a href="{{ route('comunicaciones.index') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'comunicaciones.') && ! in_array(($route ?? ''), ['comunicaciones.nuevo', 'comunicaciones.revision'], true),
                    ])
                    title="Bandeja de comunicados v1.0">
@@ -433,7 +366,7 @@
                 @if(tienePermiso(4))
                 <a href="{{ route('comunicaciones.nuevo') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.nuevo',
                    ])
                    title="Nuevo comunicado a familias v1.0">
@@ -447,7 +380,7 @@
                 @if(tienePermiso(8))
                 <a href="{{ route('comunicaciones.revision') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.revision',
                    ])
                    title="Control Cuaderno de Comunicados v1.0">
@@ -462,7 +395,7 @@
                 @if(tienePermiso(5))
                 <a href="{{ route('param.com-canales') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'param.com-canales',
                    ])
                    title="Configuración de canales v1.0">
@@ -480,7 +413,7 @@
         {{-- Calificaciones Secundario --}}
             <div class="mt-4"></div>
             <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.calificacionesSec && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('calificacionesSec')"
                     title="Calificaciones (secundario) v1.0">
@@ -503,7 +436,7 @@
                 @if (tienePermiso(9))
                 <a href="{{ route('calificacionesSecundario.sincroGe') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.sincroGe',
                    ])
                    title="Descargar calificaciones desde CIDI (GE) v1.0">
@@ -515,7 +448,7 @@
                 </a>
                 <a href="{{ route('calificacionesSecundario.carga') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.carga',
                    ])
                    title="Carga de calificaciones (secundario) v1.0">
@@ -528,7 +461,7 @@
                 @endif
                 <a href="{{ route('calificacionesSecundario.consulta') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.consulta'
                            || ($route ?? '') === 'calificacionesSecundario.consulta.pdf',
                    ])
@@ -541,7 +474,7 @@
                 </a>
                 <a href="{{ route('boletinesSecundario.index') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'boletinesSecundario.'),
                    ])
                    title="Boletines (secundario) · Informe de progreso escolar v1.0">
@@ -553,7 +486,7 @@
                 </a>
                 <a href="{{ route('calificacionesSecundario.planilla') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.planilla'
                            || ($route ?? '') === 'calificacionesSecundario.planilla.pdf',
                    ])
@@ -566,7 +499,7 @@
                 </a>
                 <a href="{{ route('calificacionesSecundario.planillaResumen') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.planillaResumen'
                            || ($route ?? '') === 'calificacionesSecundario.planillaResumen.pdf',
                    ])
@@ -580,7 +513,7 @@
                 @if (tienePermiso(10))
                 <a href="{{ route('calificacionesSecundario.coloquios') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.coloquios',
                    ])
                    title="Carga de coloquios Dic / Feb (secundario)">
@@ -593,7 +526,7 @@
                 @endif
                 <a href="{{ route('calificacionesSecundario.actaVolanteColoquios') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.actaVolanteColoquios'
                            || ($route ?? '') === 'calificacionesSecundario.actaVolanteColoquios.pdf',
                    ])
@@ -607,7 +540,7 @@
                 @if (tienePermiso(15))
                 <a href="{{ route('calificacionesSecundario.cierreAnual') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.cierreAnual'
                            || ($route ?? '') === 'calificacionesSecundario.cierreAnual.historial',
                    ])
@@ -624,7 +557,7 @@
         {{-- Seguimiento disciplinario --}}
             <div class="mt-4"></div>
             <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.disciplinario && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('disciplinario')"
                     title="Seguimiento disciplinario v1.0">
@@ -646,7 +579,7 @@
                  x-cloak>
                     <a href="{{ route('seguimiento.disciplinario') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'seguimiento.disciplinario'),
                        ])
                        title="Seguimiento Disciplinario v1.0">
@@ -661,7 +594,7 @@
         {{-- Asistencia estudiantes --}}
             <div class="mt-4"></div>
             <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.inasistenciasEstudiantes && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('inasistenciasEstudiantes')"
                     title="Asistencia estudiantes v1.0">
@@ -683,7 +616,7 @@
                  x-cloak>
                 <a href="{{ route('seguimiento.inasistencias') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'seguimiento.inasistencias'
                            || ($route ?? '') === 'seguimiento.inasistencias.create'
                            || ($route ?? '') === 'seguimiento.inasistencias.edit',
@@ -698,7 +631,7 @@
                 @if (tienePermiso(24))
                 <a href="{{ route('seguimiento.inasistencias.sincroCidi') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'seguimiento.inasistencias.sincroCidi',
                    ])
                    title="Importar inasistencias desde CSV CIDI/GE">
@@ -711,7 +644,7 @@
                 @endif
                 <a href="{{ route('seguimiento.partes-diarios') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'seguimiento.partes-diarios'),
                    ])
                    title="Parte diario del preceptor (PDF por curso(s) y fecha)">
@@ -723,7 +656,7 @@
                 </a>
                 <a href="{{ route('seguimiento.inasistencias.informe') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'seguimiento.inasistencias.informe',
                    ])
                    title="Informe de inasistencias por curso (PDF, mismo formato que autogestión)">
@@ -739,7 +672,7 @@
         @if(tienePermiso(1))
             <div class="mt-4"></div>
             <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.docentes && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('docentes')"
                     title="Docentes v1.0">
@@ -763,7 +696,7 @@
                  x-cloak>
                 <a href="{{ route('abm.legajos-profesor') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.legajos-profesor'),
                    ])
                    title="Legajos del docente v1.0">
@@ -776,7 +709,7 @@
 
                 <a href="{{ route('abm.profesores-por-materia') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.profesores-por-materia'),
                    ])
                    title="Asignación de profesores por materia y curso · ppc · v1.0">
@@ -792,7 +725,7 @@
                 @if (tienePermiso(23))
                     <a href="{{ route('docentes.inasistencias') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'docentes.inasistencias'),
                        ])
                        title="Inasistencias docentes">
@@ -810,7 +743,7 @@
         {{-- Exámenes --}}
             <div class="mt-4"></div>
             <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.examenes && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('examenes')"
                     title="Exámenes">
@@ -832,7 +765,7 @@
                  x-cloak>
                 <a href="{{ route('examenes.materias-adeudadas.gestion.entrar') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('examenes.materias-adeudadas.gestion', 'examenes.materias-adeudadas.gestion.entrar'),
                    ])
                    title="Gestión de materias adeudadas (secundario)">
@@ -844,7 +777,7 @@
                 </a>
                 <a href="{{ route('examenes.borrar-inscripciones') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('examenes.borrar-inscripciones'),
                    ])
                    title="Borrar todas las inscripciones a examen">
@@ -856,7 +789,7 @@
                 </a>
                 <a href="{{ route('examenes.materias-adeudadas.entrar') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('examenes.materias-adeudadas', 'examenes.materias-adeudadas.entrar', 'examenes.materias-adeudadas.pdf'),
                    ])
                    title="Listado de materias adeudadas">
@@ -868,7 +801,7 @@
                 </a>
                 <a href="{{ route('examenes.acta-volante-previos.entrar') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('examenes.acta-volante-previos', 'examenes.acta-volante-previos.entrar', 'examenes.acta-volante-previos.pdf'),
                    ])
                    title="Actas volante de examen (previas)">
@@ -880,7 +813,7 @@
                 </a>
                 <a href="{{ route('examenes.permiso-examen.entrar') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('examenes.permiso-examen', 'examenes.permiso-examen.entrar', 'examenes.permiso-examen.pdf', 'examenes.permiso-examen.pdf.preparar'),
                    ])
                    title="Permisos de examen por alumno">
@@ -893,7 +826,7 @@
                 @if (tenantBoletinMuestraTercerMateria())
                 <a href="{{ route('examenes.tercer-materia') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('examenes.tercer-materia', 'examenes.tercer-materia.pdf', 'examenes.tercer-materia.acta-compromiso.pdf'),
                    ])
                    title="Gestión de tercer materia (condición TM)">
@@ -910,7 +843,7 @@
         @if (tienePermiso(16))
             <div class="mt-4"></div>
             <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.matrizAnaliticos && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('matrizAnaliticos')"
                     title="Matríz y analíticos">
@@ -932,7 +865,7 @@
                  x-cloak>
                 <a href="{{ route('matrizAnaliticos.libroMatriz') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'matrizAnaliticos.'),
                    ])
                    title="Libro matriz, pase y certificado analítico">
@@ -948,7 +881,7 @@
         @if (tienePermiso(17) || tienePermiso(18) || tienePermiso(19) || tienePermiso(20) || tienePermiso(21))
             <div class="mt-4"></div>
             <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.certificados && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('certificados')"
                     title="Certificados">
@@ -971,7 +904,7 @@
                 @if (tienePermiso(17))
                     <a href="{{ route('certificados.alumnoRegular') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'certificados.alumnoRegular',
                        ])
                        title="Constancia de Alumno Regular">
@@ -985,7 +918,7 @@
                 @if (tienePermiso(18))
                     <a href="{{ route('certificados.estudiosTramite') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'certificados.estudiosTramite',
                        ])
                        title="Constancia de Certificado en Trámite">
@@ -999,7 +932,7 @@
                 @if (tienePermiso(19))
                     <a href="{{ route('certificados.constanciaDocumentos') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'certificados.constanciaDocumentos',
                        ])
                        title="Constancia de Documentos">
@@ -1013,7 +946,7 @@
                 @if (tienePermiso(20))
                     <a href="{{ route('certificados.asistenciaProfesor') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'certificados.asistenciaProfesor',
                        ])
                        title="Certificado de Asistencia del Profesor">
@@ -1027,7 +960,7 @@
                 @if (tienePermiso(21))
                     <a href="{{ route('certificados.paseParcial') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'certificados.paseParcial',
                        ])
                        title="Pase Parcial">
@@ -1041,7 +974,7 @@
                 @if (tienePermiso(22))
                     <a href="{{ route('certificados.solicitudDePase') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'certificados.solicitudDePase',
                        ])
                        title="Solicitud de Pase">
@@ -1058,7 +991,7 @@
         {{-- Horarios --}}
             <div class="mt-4"></div>
             <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.horarios && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('horarios')"
                     title="Horarios de profesores">
@@ -1081,7 +1014,7 @@
                 @if (tienePermiso(13))
                     <a href="{{ route('horarios.config') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'horarios.config',
                        ])
                        title="Turnos, días de clase y horario reloj">
@@ -1097,7 +1030,7 @@
                 @if (tienePermiso(13))
                     <a href="{{ route('horarios.carga') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'horarios.carga',
                        ])
                        title="Carga de horas cátedra por docente">
@@ -1111,7 +1044,7 @@
 
                     <a href="{{ route('horarios.impresion') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'horarios.impresion') || str_starts_with($route ?? '', 'horarios.pdf.'),
                        ])
                        title="Impresión PDF por curso o docente">
@@ -1127,7 +1060,7 @@
         @if (tienePermiso(14))
             <div class="mt-4"></div>
             <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.config && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('config')"
                     title="Configuración v1.0">
@@ -1148,7 +1081,7 @@
                  x-cloak>
                 <a href="{{ route('abm.terlec') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.terlec'),
                    ])
                    title="Términos Lectivos v1.0">
@@ -1161,7 +1094,7 @@
 
                 <a href="{{ route('abm.niveles') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.niveles'),
                    ])
                    title="Niveles v1.0">
@@ -1174,7 +1107,7 @@
 
                 <a href="{{ route('param.campos-listado-alumnos') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'param.campos-listado-alumnos'),
                    ])
                    title="Campos activos (Legajo del estudiante) v1.0">
@@ -1187,7 +1120,7 @@
 
                 <a href="{{ route('param.solapas-legajo') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'param.solapas-legajo'),
                    ])
                    title="Solapas del Legajo v1.0">
@@ -1200,7 +1133,7 @@
 
                 <a href="{{ route('param.campos-legajo-profesor') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'param.campos-legajo-profesor'),
                    ])
                    title="Campos activos (Legajo del docente) v1.0">
@@ -1213,7 +1146,7 @@
 
                 <a href="{{ route('param.solapas-legajo-profesor') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'param.solapas-legajo-profesor'),
                    ])
                    title="Solapas del Legajo del docente v1.0">
@@ -1226,7 +1159,7 @@
 
                 <a href="{{ route('param.parametros-sistema') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'param.parametros-sistema'),
                    ])
                    title="Parámetros del sistema v1.0">
@@ -1239,7 +1172,7 @@
 
                 <a href="{{ route('push.suscribir') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'push.suscribir',
                    ])
                    title="Notificaciones push en este dispositivo">
@@ -1253,7 +1186,7 @@
                 @if(tienePermiso(0))
                 <a href="{{ route('admin.permisos') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'admin.permisos',
                    ])
                    title="Administración de permisos de usuarios v1.0">
@@ -1272,7 +1205,7 @@
                 @if(tienePermiso(5))
                 <a href="{{ route('param.com-canales') }}"
                    @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'param.com-canales',
                    ])
                    title="Configuración de canales escuela–familia v1.0">
@@ -1286,7 +1219,7 @@
 
                 {{-- Planes + Cursos modelo --}}
                 <button type="button"
-                        class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors mt-2"
+                        class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors mt-2"
                         :class="(groups.planesCursos && !sidebarCollapsed) ? 'is-open' : ''"
                         @click="toggleGroup('planesCursos')"
                         title="Gestión de planes y cursos modelo v1.0">
@@ -1308,7 +1241,7 @@
                      x-cloak>
                     <a href="{{ route('abm.planes') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.planes'),
                        ])
                        title="Gestión de Planes de Estudio v1.0">
@@ -1321,7 +1254,7 @@
 
                     <a href="{{ route('abm.curplan') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.curplan'),
                        ])
                        title="Gestión de Cursos y Materias del Plan v1.0">
@@ -1335,7 +1268,7 @@
 
                 {{-- Cursos + Materias del año --}}
                 <button type="button"
-                        class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-bold uppercase tracking-widest rounded-md transition-colors mt-2"
+                        class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors mt-2"
                         :class="(groups.cursosMateriasAno && !sidebarCollapsed) ? 'is-open' : ''"
                         @click="toggleGroup('cursosMateriasAno')"
                         title="Gestión de cursos y materias del año v1.0">
@@ -1357,7 +1290,7 @@
                      x-cloak>
                     <a href="{{ route('abm.cursos') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.cursos'),
                        ])
                        title="Gestión de Cursos / Grados / Salas v1.0">
@@ -1370,7 +1303,7 @@
 
                     <a href="{{ route('abm.materias-anio') }}"
                        @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors',
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.materias-anio'),
                        ])
                        title="Gestión de asignaturas del año v1.0">
@@ -1391,7 +1324,7 @@
             <a href="{{ route('manual.sistema.pdf') }}"
                target="_blank"
                rel="noopener noreferrer"
-               class="se-sidebar-link flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md font-medium transition-colors"
+               class="se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors"
                title="Abrir manual del sistema (PDF) en una pestaña nueva">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1410,12 +1343,12 @@
              :class="sidebarCollapsed ? 'flex-col gap-2' : ''">
             <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                  style="background: var(--se-primary);">
-                <span class="text-white text-xs font-bold">
+                <span class="text-white text-[13px] font-bold">
                     {{ strtoupper(substr(Auth::user()->apellido ?? 'U', 0, 1)) }}
                 </span>
             </div>
             <div class="flex-1 min-w-0" x-show="!sidebarCollapsed" x-cloak>
-                <p class="text-white text-xs font-medium truncate">
+                <p class="text-white/90 text-[13px] font-medium truncate">
                     {{ Auth::user()->nombre ?? '' }} {{ Auth::user()->apellido ?? '' }}
                 </p>
             </div>

@@ -883,3 +883,89 @@
     padding-left: 5mm;
     padding-right: 0.625rem;
 }
+
+/*
+ * Menú de Secretaría — tema Bosque SE.
+ * Mismo degradé y brillo que .se-hero (headers de formularios / ABM).
+ * Activar con clase .se-sidebar--bosque en layouts/app.blade.php.
+ */
+.se-sidebar--bosque {
+    color: #fff;
+    font-family: "Source Sans 3", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    width: var(--se-sidebar-w);
+    overflow-x: hidden;
+    background-color: var(--color-primary-700);
+    background-image: linear-gradient(
+        to bottom right,
+        var(--color-primary-600) 0%,
+        var(--color-primary-700) 42%,
+        var(--color-neutral-800) 100%
+    );
+}
+.se-sidebar--bosque::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse 80% 70% at 100% 0%, rgba(255, 255, 255, 0.14), transparent 58%);
+}
+@media (min-width: 768px) {
+    .se-sidebar--bosque.is-collapsed {
+        width: var(--se-sidebar-w-collapsed);
+    }
+}
+.se-sidebar--bosque .se-sidebar-sep {
+    border-color: var(--se-sep);
+}
+.se-sidebar--bosque .se-sidebar-iconbtn {
+    color: var(--se-sidebar-text);
+}
+.se-sidebar--bosque .se-sidebar-iconbtn:hover {
+    background: var(--se-hover-bg);
+    color: #fff;
+}
+.se-sidebar--bosque .se-sidebar-groupbtn {
+    font-size: 0.75rem; /* 12px — +1 respecto a 11px */
+    color: var(--se-group-text, #a3cdd3);
+    background: var(--se-group-bg, rgba(34, 69, 73, 0.4));
+    border: 1px solid var(--se-sep);
+}
+.se-sidebar--bosque .se-sidebar-groupbtn:hover {
+    background: var(--se-hover-bg);
+    color: #fff;
+}
+.se-sidebar--bosque .se-sidebar-groupbtn.is-open {
+    background: var(--se-group-open-bg, rgba(44, 90, 96, 0.25));
+    color: #fff;
+}
+.se-sidebar--bosque .se-sidebar-link {
+    font-family: inherit;
+    font-size: 0.875rem; /* 14px — +1 respecto a 13px */
+    font-weight: 400;
+    min-width: 0;
+    color: var(--se-sidebar-text);
+}
+.se-sidebar--bosque .se-sidebar-link span.truncate {
+    min-width: 0;
+    flex: 1 1 0%;
+}
+.se-sidebar--bosque .se-sidebar-link:hover {
+    background: var(--se-hover-bg);
+    color: #fff;
+}
+.se-sidebar--bosque .se-sidebar-link.is-active {
+    background: var(--color-primary-500);
+    color: #fff;
+    font-weight: 500;
+    box-shadow:
+        inset 3px 0 0 var(--color-accent-200),
+        0 1px 0 rgba(0, 0, 0, 0.12);
+}
+@media (min-width: 768px) {
+    .se-sidebar--bosque.is-collapsed .se-sidebar-groupbtn {
+        justify-content: center;
+        gap: 0;
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+    }
+}

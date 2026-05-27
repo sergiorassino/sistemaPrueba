@@ -214,11 +214,13 @@
                                 <td class="!px-2.5 !py-1 text-sm leading-tight text-neutral-700">{{ $a['curso'] !== '' ? $a['curso'] : '—' }}</td>
                                 <td class="!px-2.5 !py-1 text-sm leading-tight text-neutral-600">{{ $a['condicion'] !== '' ? $a['condicion'] : '—' }}</td>
                                 <td class="!px-2 !py-1 text-right">
-                                    <a href="{{ route('calificacionesSecundario.cierreAnual.historial', ['idLegajos' => $a['idLegajos']]) }}"
-                                       wire:navigate
-                                       class="btn-secondary btn-sm !px-2 !py-1 text-[11px]">
-                                        Historial
-                                    </a>
+                                    <x-nav-contexto-estudiante
+                                        destino="calificacionesSecundario.cierreAnual.historial"
+                                        :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CIERRE_ANUAL_SECUNDARIO"
+                                        :id-legajos="$a['idLegajos']"
+                                        class="inline">
+                                        <span class="btn-secondary btn-sm !px-2 !py-1 text-[11px]">Historial</span>
+                                    </x-nav-contexto-estudiante>
                                 </td>
                             </tr>
                         @empty

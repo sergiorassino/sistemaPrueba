@@ -17,8 +17,8 @@ return new class extends Migration
             [
                 'id' => 15,
                 'orden' => 14,
-                'tema' => 'CONFIGURACIÓN',
-                'descripcion' => 'Menú Configuración: términos lectivos, niveles, legajos, parámetros, planes, cursos, materias y notificaciones push.',
+                'tema' => 'ADMINISTRACIÓN',
+                'descripcion' => 'Consultar permisos concedidos por usuario (módulo Permisos por Usuario).',
             ]
         );
     }

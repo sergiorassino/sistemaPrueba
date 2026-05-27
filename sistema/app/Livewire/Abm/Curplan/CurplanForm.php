@@ -3,6 +3,7 @@
 namespace App\Livewire\Abm\Curplan;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
+use App\Support\PermisosConfiguracion;
 use App\Models\Curplan;
 use App\Models\Matplan;
 use App\Models\Plan;
@@ -14,6 +15,11 @@ use Livewire\Component;
 class CurplanForm extends Component
 {
     use RequiresPermisoConfiguracion;
+
+    protected function permisoConfigOrden(): int
+    {
+        return PermisosConfiguracion::CURSOS_MATERIAS_PLAN;
+    }
 
     public ?int $id = null;
 

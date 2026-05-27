@@ -282,6 +282,7 @@
 
 </div>
 
-@livewireScripts
+@include('layouts.partials.livewire-scripts')
+@include('layouts.partials.abrir-pdf-post')
 </body>
 </html>

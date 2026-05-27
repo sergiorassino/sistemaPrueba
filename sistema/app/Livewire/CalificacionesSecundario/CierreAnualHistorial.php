@@ -16,8 +16,13 @@ class CierreAnualHistorial extends Component
     /** @var array<string, string> */
     public array $alumno = [];
 
-    public function mount(int $idLegajos): void
+    public function mount(): void
     {
+        $idLegajos = \App\Support\Navegacion\ContextoEstudianteSesion::legajo(
+            \App\Support\Navegacion\ContextoEstudianteSesion::CIERRE_ANUAL_SECUNDARIO,
+        );
+        abort_if($idLegajos === null, 404);
+
         abort_unless(tienePermiso(15), 403, 'Sin permiso para cierre anual.');
 
         $ctx = schoolCtx();

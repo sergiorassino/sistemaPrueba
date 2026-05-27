@@ -3,6 +3,7 @@
 namespace App\Livewire\Abm\LegajosProfesor;
 
 use App\Models\Profesor;
+use App\Models\ProfesorTipo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
@@ -13,7 +14,21 @@ class LegajosProfesorIndex extends Component
 {
     use WithPagination;
 
+    /** Valor especial del filtro: incluir todos los roles (también «Sin Rol»). */
+    private const FILTRO_ROL_TODOS = 'todos';
+
+    /** IdTipoProf que identifica «Sin Rol» en la tabla profesortipo. */
+    private const ID_TIPO_SIN_ROL = 1;
+
     public string $search = '';
+
+    /**
+     * Filtro de rol (IdTipoProf):
+     *  - ''        → activos: excluye «Sin Rol» (valor por defecto).
+     *  - 'todos'   → incluye todos (también «Sin Rol»).
+     *  - '<id>'    → filtra por ese IdTipoProf específico.
+     */
+    public string $filtroRol = '';
 
     public ?int $focusId = null;
 
@@ -27,11 +42,18 @@ class LegajosProfesorIndex extends Component
 
     public function mount(): void
     {
+        abort_unless(tienePermiso(11), 403, 'Sin permiso para legajos de docentes.');
+
         $focus = request()->integer('focus');
         $this->focusId = $focus > 0 ? $focus : null;
     }
 
     public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFiltroRol(): void
     {
         $this->resetPage();
     }
@@ -140,9 +162,41 @@ class LegajosProfesorIndex extends Component
             $query->buscar($this->search);
         }
 
+        $this->aplicarFiltroRol($query);
+
         $profesores = $query->orderBy('apellido')->orderBy('nombre')->paginate(25);
 
-        return view('livewire.abm.legajos-profesor.index', compact('profesores'))
+        $roles = ProfesorTipo::query()
+            ->orderBy('tipo')
+            ->get(['id', 'tipo']);
+
+        return view('livewire.abm.legajos-profesor.index', compact('profesores', 'roles'))
             ->layout('layouts.app', ['pageTitle' => 'Legajos del docente']);
+    }
+
+    /**
+     * Aplica el filtro por rol al query. Por defecto excluye «Sin Rol» (IdTipoProf = 1):
+     * son docentes que ya no están en la escuela y no deben aparecer salvo selección explícita.
+     */
+    private function aplicarFiltroRol($query): void
+    {
+        $valor = trim($this->filtroRol);
+
+        if ($valor === self::FILTRO_ROL_TODOS) {
+            return;
+        }
+
+        if ($valor === '') {
+            $query->where(function ($w) {
+                $w->whereNull('IdTipoProf')
+                    ->orWhere('IdTipoProf', '<>', self::ID_TIPO_SIN_ROL);
+            });
+
+            return;
+        }
+
+        if (ctype_digit($valor)) {
+            $query->where('IdTipoProf', (int) $valor);
+        }
     }
 }

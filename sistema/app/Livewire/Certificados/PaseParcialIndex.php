@@ -104,8 +104,7 @@ class PaseParcialIndex extends Component
             PaseParcial::guardar($this->idLegajosModal, $validated);
         }
 
-        $url = PaseParcial::urlPdf($this->idLegajosModal, $validated);
-        $this->dispatch('pase-parcial-abrir-pdf', url: $url);
+        $this->dispatch('abrir-pdf-post', ...PaseParcial::pdfPost($this->idLegajosModal, $validated));
     }
 
     public function render()

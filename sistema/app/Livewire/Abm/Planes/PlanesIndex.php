@@ -3,6 +3,7 @@
 namespace App\Livewire\Abm\Planes;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
+use App\Support\PermisosConfiguracion;
 use App\Models\Plan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -11,6 +12,11 @@ use Livewire\Component;
 class PlanesIndex extends Component
 {
     use RequiresPermisoConfiguracion;
+
+    protected function permisoConfigOrden(): int
+    {
+        return PermisosConfiguracion::PLANES_ESTUDIO;
+    }
 
     public bool $showConfirm = false;
 

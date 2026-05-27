@@ -4,12 +4,16 @@ namespace App\Livewire\Administracion\Permisos;
 
 use App\Models\PermisoIa;
 use App\Models\Profesor;
+use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class PermisosUsuariosIndex extends Component
 {
+    /** IdTipoProf que identifica «Sin Rol» en la tabla profesortipo. */
+    private const ID_TIPO_SIN_ROL = 1;
+
     public string $q = '';
     public ?int $profesorId = null;
 
@@ -18,7 +22,6 @@ class PermisosUsuariosIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(14), 403, 'Sin permiso para el módulo de configuración.');
         abort_unless(tienePermiso(0), 403, 'Sin permiso para administrar permisos.');
     }
 
@@ -50,7 +53,10 @@ class PermisosUsuariosIndex extends Component
 
         $this->profesorId = (int) $profesor->id;
 
-        $maxOrden = (int) (PermisoIa::query()->max('orden') ?? 0);
+        $maxOrden = max(
+            (int) (PermisoIa::query()->max('orden') ?? 0),
+            PermisosIaCatalog::maxOrden(),
+        );
         $cadena = trim((string) ($profesor->permisos_ia ?? ''));
         if ($cadena === '') {
             $cadena = str_repeat('0', $maxOrden + 1);
@@ -94,7 +100,10 @@ class PermisosUsuariosIndex extends Component
             ->whereKey($this->profesorId)
             ->firstOrFail(['id', 'permisos_ia']);
 
-        $maxOrden = (int) (PermisoIa::query()->max('orden') ?? 0);
+        $maxOrden = max(
+            (int) (PermisoIa::query()->max('orden') ?? 0),
+            PermisosIaCatalog::maxOrden(),
+        );
         $chars = [];
         foreach (range(0, $maxOrden) as $orden) {
             $chars[] = ($this->permisos[$orden] ?? false) ? '1' : '0';
@@ -116,6 +125,10 @@ class PermisosUsuariosIndex extends Component
 
         $usuarios = Profesor::query()
             ->where('nivel', $nivel)
+            ->where(function ($w) {
+                $w->whereNull('IdTipoProf')
+                    ->orWhere('IdTipoProf', '<>', self::ID_TIPO_SIN_ROL);
+            })
             ->when(trim($this->q) !== '', function ($q) {
                 $term = '%' . trim($this->q) . '%';
                 $q->where(function ($w) use ($term) {
@@ -124,27 +137,33 @@ class PermisosUsuariosIndex extends Component
                         ->orWhere('dni', 'like', $term);
                 });
             })
+            ->with(['tipo:id,tipo'])
             ->orderBy('apellido')
             ->orderBy('nombre')
             ->limit(200)
-            ->get(['id', 'dni', 'nombre', 'apellido']);
+            ->get(['id', 'dni', 'nombre', 'apellido', 'IdTipoProf']);
 
         $profesorSeleccionado = null;
         if ($this->profesorId) {
             $profesorSeleccionado = Profesor::query()
                 ->where('nivel', $nivel)
                 ->whereKey($this->profesorId)
-                ->first(['id', 'dni', 'nombre', 'apellido']);
+                ->with(['tipo:id,tipo'])
+                ->first(['id', 'dni', 'nombre', 'apellido', 'IdTipoProf']);
         }
 
         $catalogo = PermisoIa::query()
             ->orderBy('orden')
             ->get(['id', 'orden', 'tema', 'descripcion']);
 
-        $porTema = $catalogo->groupBy(function (PermisoIa $p) {
-            $tema = trim((string) ($p->tema ?? ''));
-            return $tema !== '' ? $tema : 'OTROS';
-        });
+        $porTema = $catalogo
+            ->groupBy(function (PermisoIa $p) {
+                $tema = trim((string) ($p->tema ?? ''));
+
+                return $tema !== '' ? $tema : 'OTROS';
+            })
+            ->map(fn (Collection $items) => $items->sortBy('orden')->values())
+            ->sortKeysUsing(fn (string $a, string $b) => strcasecmp($a, $b));
 
         return [$usuarios, $profesorSeleccionado, $catalogo, $porTema];
     }
@@ -158,7 +177,7 @@ class PermisosUsuariosIndex extends Component
             'profesorSeleccionado' => $profesorSeleccionado,
             'catalogo' => $catalogo,
             'porTema' => $porTema,
-        ])->layout('layouts.app', ['pageTitle' => 'Permisos de usuarios']);
+        ])->layout('layouts.app', ['pageTitle' => 'Permisos de Usuarios']);
     }
 }
 

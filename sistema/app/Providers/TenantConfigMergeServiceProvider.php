@@ -14,7 +14,12 @@ class TenantConfigMergeServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $slug = env('TENANT_SLUG', 'default');
+        // Usar config cacheada (config/tenant.php); env() en producción con config:cache suele devolver null.
+        $slug = trim((string) config('tenant.slug', ''));
+        if ($slug === '') {
+            $slug = 'default';
+        }
+
         $tenantFile = config_path("tenants/{$slug}.php");
 
         if (file_exists($tenantFile)) {

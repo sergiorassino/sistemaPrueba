@@ -150,7 +150,8 @@ class BoletinesSecundarioIndex extends Component
             ->filter(fn ($v) => (int) $v > 0)
             ->count();
 
-        $pdfLoteUrl = null;
+        $idsPdfLote = [];
+        $puedePdfLote = false;
         if ($this->puedeGenerarPdfLote() && $this->cursoId) {
             $ids = collect($this->matriculasSeleccionadas)
                 ->map(fn ($v) => (int) $v)
@@ -159,10 +160,8 @@ class BoletinesSecundarioIndex extends Component
                 ->values();
 
             if ($ids->count() <= BoletinSecundarioLoteParams::MAX_MATRICULAS) {
-                $pdfLoteUrl = route('boletinesSecundario.pdfLote', [
-                    'curso' => (int) $this->cursoId,
-                    'matriculas' => $ids->implode(','),
-                ]);
+                $idsPdfLote = $ids->all();
+                $puedePdfLote = $idsPdfLote !== [];
             }
         }
 
@@ -170,7 +169,8 @@ class BoletinesSecundarioIndex extends Component
             'cursos' => $this->cursos(),
             'matriculas' => $matriculas,
             'cantidadSeleccionados' => $cantidadSeleccionados,
-            'pdfLoteUrl' => $pdfLoteUrl,
+            'idsPdfLote' => $idsPdfLote,
+            'puedePdfLote' => $puedePdfLote,
             'todasMarcadas' => $this->todasLasMatriculasMarcadas(),
             'hayMatriculas' => $matriculas->isNotEmpty(),
         ])

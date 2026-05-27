@@ -14,13 +14,31 @@ use Illuminate\Support\Str;
 
 class CertificadoEstudiosTramitePdfController extends Controller
 {
-    public function __invoke(Request $request, int $idLegajos): Response
+    public function __invoke(Request $request): Response
     {
         abort_unless(tienePermiso(18), 403, 'Sin permiso para constancias de certificado en trámite.');
 
         $ctx = schoolCtx();
         $idNivel = (int) $ctx->idNivel;
         $idTerlec = (int) $ctx->idTerlec;
+
+        $validator = Validator::make(
+            $request->all(),
+            array_merge(
+                ['idLegajos' => ['required', 'integer', 'min:1']],
+                CertificadoEstudiosTramite::reglasFormulario(),
+            ),
+            CertificadoEstudiosTramite::mensajesValidacion(),
+        );
+
+        if ($validator->fails()) {
+            abort(422, 'Datos de la constancia incompletos o inválidos.');
+        }
+
+        $validated = $validator->validated();
+        $idLegajos = (int) $validated['idLegajos'];
+        unset($validated['idLegajos']);
+
         if ($idNivel < 1 || $idTerlec < 1 || $idLegajos < 1) {
             abort(404);
         }
@@ -35,18 +53,8 @@ class CertificadoEstudiosTramitePdfController extends Controller
         }
         RateLimiter::hit($key, 60);
 
-        $validator = Validator::make(
-            $request->query(),
-            CertificadoEstudiosTramite::reglasFormulario(),
-            CertificadoEstudiosTramite::mensajesValidacion(),
-        );
-
-        if ($validator->fails()) {
-            abort(422, 'Datos de la constancia incompletos o inválidos.');
-        }
-
         /** @var array{mateAdeud: string, idiomaCursado: string, preAnte: string, fechaEmision: string} $form */
-        $form = $validator->validated();
+        $form = $validated;
         $form['mateAdeud'] = trim((string) ($form['mateAdeud'] ?? ''));
         $form['idiomaCursado'] = trim((string) $form['idiomaCursado']);
         $form['preAnte'] = trim((string) $form['preAnte']);

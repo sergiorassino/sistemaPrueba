@@ -118,8 +118,7 @@ class CertificadoAlumnoRegularIndex extends Component
             CertificadoAlumnoRegular::guardar($this->idLegajosModal, $validated);
         }
 
-        $url = CertificadoAlumnoRegular::urlPdf($this->idLegajosModal, $validated);
-        $this->dispatch('certificado-alumno-regular-abrir-pdf', url: $url);
+        $this->dispatch('abrir-pdf-post', ...CertificadoAlumnoRegular::pdfPost($this->idLegajosModal, $validated));
     }
 
     public function render()

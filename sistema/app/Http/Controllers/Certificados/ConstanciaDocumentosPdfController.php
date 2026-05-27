@@ -14,13 +14,31 @@ use Illuminate\Support\Str;
 
 class ConstanciaDocumentosPdfController extends Controller
 {
-    public function __invoke(Request $request, int $idLegajos): Response
+    public function __invoke(Request $request): Response
     {
         abort_unless(tienePermiso(19), 403, 'Sin permiso para constancias de documentos.');
 
         $ctx = schoolCtx();
         $idNivel = (int) $ctx->idNivel;
         $idTerlec = (int) $ctx->idTerlec;
+
+        $validator = Validator::make(
+            $request->all(),
+            array_merge(
+                ['idLegajos' => ['required', 'integer', 'min:1']],
+                ConstanciaDocumentos::reglasFormulario(),
+            ),
+            ConstanciaDocumentos::mensajesValidacion(),
+        );
+
+        if ($validator->fails()) {
+            abort(422, 'Datos de la constancia incompletos o inválidos.');
+        }
+
+        $validated = $validator->validated();
+        $idLegajos = (int) $validated['idLegajos'];
+        unset($validated['idLegajos']);
+
         if ($idNivel < 1 || $idTerlec < 1 || $idLegajos < 1) {
             abort(404);
         }
@@ -35,18 +53,8 @@ class ConstanciaDocumentosPdfController extends Controller
         }
         RateLimiter::hit($key, 60);
 
-        $validator = Validator::make(
-            $request->query(),
-            ConstanciaDocumentos::reglasFormulario(),
-            ConstanciaDocumentos::mensajesValidacion(),
-        );
-
-        if ($validator->fails()) {
-            abort(422, 'Datos de la constancia incompletos o inválidos.');
-        }
-
         /** @var array{certifde: string, otorpor: string, fechotor: string, parnacop: string, parapre: string, fechemis: string} $form */
-        $form = $validator->validated();
+        $form = $validated;
         $form['certifde'] = trim((string) $form['certifde']);
         $form['otorpor'] = trim((string) $form['otorpor']);
         $form['parnacop'] = trim((string) $form['parnacop']);

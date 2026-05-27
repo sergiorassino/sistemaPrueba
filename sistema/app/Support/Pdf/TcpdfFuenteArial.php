@@ -8,9 +8,9 @@ use TCPDF_FONTS;
 /**
  * Fuente Arial para PDFs TCPDF (UTF-8).
  *
- * Copiar en {@see storage_path('fonts/')}: `arial.ttf`, `arialbd.ttf` (opcional negrita).
- * En Windows también se busca en `C:\Windows\Fonts\`.
- * Si no hay TTF disponible, se usa `helvetica` (sin tildes completas).
+ * Ubicación única: {@see storage_path('fonts/')} (`arial.ttf`, `arialbd.ttf` opcional).
+ * Respaldo: `resources/fonts/`. No se usan rutas del sistema operativo.
+ * Sin TTF en el proyecto: `helvetica` (sustituto limitado para tildes y ñ).
  */
 final class TcpdfFuenteArial
 {
@@ -71,22 +71,42 @@ final class TcpdfFuenteArial
 
     private static function resolverRuta(string $archivo): ?string
     {
-        $candidatos = [
-            storage_path('fonts/'.$archivo),
-            base_path('resources/fonts/'.$archivo),
-        ];
-
-        if (PHP_OS_FAMILY === 'Windows') {
-            $candidatos[] = 'C:\\Windows\\Fonts\\'.strtolower($archivo);
-            $candidatos[] = 'C:\\Windows\\Fonts\\'.ucfirst($archivo);
-        } else {
-            $candidatos[] = '/usr/share/fonts/truetype/msttcorefonts/'.$archivo;
-            $candidatos[] = '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf';
+        foreach ([storage_path('fonts'), base_path('resources/fonts')] as $directorio) {
+            $ruta = self::buscarEnDirectorio($directorio, $archivo);
+            if ($ruta !== null) {
+                return $ruta;
+            }
         }
 
-        foreach ($candidatos as $path) {
-            if (is_string($path) && $path !== '' && is_file($path)) {
-                return $path;
+        return null;
+    }
+
+    private static function buscarEnDirectorio(string $directorio, string $archivo): ?string
+    {
+        if (! is_dir($directorio)) {
+            return null;
+        }
+
+        $rutaExacta = $directorio.DIRECTORY_SEPARATOR.$archivo;
+        if (is_file($rutaExacta)) {
+            return $rutaExacta;
+        }
+
+        $archivoLower = strtolower($archivo);
+        $entradas = @scandir($directorio);
+        if (! is_array($entradas)) {
+            return null;
+        }
+
+        foreach ($entradas as $entrada) {
+            if ($entrada === '.' || $entrada === '..') {
+                continue;
+            }
+            if (strtolower($entrada) === $archivoLower) {
+                $ruta = $directorio.DIRECTORY_SEPARATOR.$entrada;
+                if (is_file($ruta)) {
+                    return $ruta;
+                }
             }
         }
 

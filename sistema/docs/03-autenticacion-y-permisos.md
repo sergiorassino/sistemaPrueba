@@ -120,30 +120,28 @@ El sistema usa un **esquema híbrido** de contraseñas por razones legacy:
 
 ---
 
-## 4. Modelo de Permisos
+## 4. Modelo de Permisos (portal de gestión / secretaría)
 
 ### Tablas involucradas
 
-- `profesores.permisos` — varchar con cadena de `0`s y `1`s.
-- `permisosusuarios` — catálogo donde cada registro tiene un campo `orden`.
+- `permisos_ia` — catálogo de permisos del sistema nuevo (`id`, `orden`, `tema`, `descripcion`).
+- `profesores.permisos_ia` — cadena de `0` y `1` (un carácter por cada `orden` del catálogo).
+- `profesores.permisos` + `permisosusuarios` — legado; **no** usar en módulos nuevos.
+
+Catálogo de referencia en código: `App\Support\PermisosIaCatalog`.
+SQL de sincronización: `database/sql/permisos_ia_catalogo_completo.sql`.
 
 ### Mecánica
 
-Cada posición de la cadena en `profesores.permisos` corresponde al campo `orden`
-de un registro en `permisosusuarios`:
+Cada posición de la cadena en `profesores.permisos_ia` corresponde al campo `orden`
+de un registro en `permisos_ia`:
 
 ```
-permisos = "111111111111111..."
-            │││
-            ││└─ orden=2 → tiene permiso
-            │└── orden=1 → tiene permiso
-            └─── orden=0 → tiene permiso
-
-permisos = "001111111111111..."
-            │││
-            ││└─ orden=2 → tiene permiso
-            │└── orden=1 → sin permiso
-            └─── orden=0 → sin permiso
+permisos_ia = "111111111111111..."
+                 │││
+                 ││└─ orden=2 → tiene permiso
+                 │└── orden=1 → tiene permiso
+                 └─── orden=0 → tiene permiso
 ```
 
 - `'1'` en posición N = tiene permiso del ítem con `orden = N`
@@ -151,17 +149,16 @@ permisos = "001111111111111..."
 
 ### Verificación obligatoria
 
-El sistema debe verificar permisos en:
-- Cada **ruta** (middleware o check en controlador)
-- Cada **componente Livewire** (en `mount()` o con policy)
-- Cada **acción** (crear, editar, eliminar)
+- Helper global: `tienePermiso(int $orden)` (lee `profesores.permisos_ia`).
+- Configuración granular (órdenes 25–36): `tienePermisoConfig($orden)` → alias de `tienePermiso`.
+- Seguimiento disciplinario: orden **37** (`PermisosIaCatalog::SEGUIMIENTO_DISCIPLINARIO`).
+- Gestión de inasistencias del estudiante: orden **38** (`PermisosIaCatalog::INASISTENCIAS_ESTUDIANTES_GESTION`).
+- Rutas: middleware `permiso:N` o `permiso-config:N`.
+- Livewire / controladores: `abort_unless(tienePermiso(N), 403)` en `mount()` y acciones sensibles.
+- Menú: `@if (tienePermiso(N))` por ítem o grupo.
 
-### Ejemplo de helper sugerido
+### Ejemplo
 
 ```php
-function tienePermiso(int $orden): bool
-{
-    $permisos = schoolCtx()->profesor()?->permisos ?? '';
-    return isset($permisos[$orden]) && $permisos[$orden] === '1';
-}
+abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_ESTUDIANTES), 403);
 ```

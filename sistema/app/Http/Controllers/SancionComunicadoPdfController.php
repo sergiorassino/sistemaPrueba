@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\PermisosIaCatalog;
 use App\Models\Sancion;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -14,6 +15,8 @@ class SancionComunicadoPdfController extends Controller
 {
     public function __invoke(Request $request, int $id)
     {
+        abort_unless(tienePermiso(PermisosIaCatalog::SEGUIMIENTO_DISCIPLINARIO), 403, 'Sin permiso para seguimiento disciplinario.');
+
         $key = 'sancion-comunicado-pdf:'.(auth()->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 30)) {
             abort(429, 'Demasiadas solicitudes. Intente nuevamente en breve.');

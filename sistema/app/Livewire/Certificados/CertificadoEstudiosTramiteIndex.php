@@ -116,8 +116,7 @@ class CertificadoEstudiosTramiteIndex extends Component
             CertificadoEstudiosTramite::guardar($this->idLegajosModal, $validated);
         }
 
-        $url = CertificadoEstudiosTramite::urlPdf($this->idLegajosModal, $validated);
-        $this->dispatch('certificado-estudios-tramite-abrir-pdf', url: $url);
+        $this->dispatch('abrir-pdf-post', ...CertificadoEstudiosTramite::pdfPost($this->idLegajosModal, $validated));
     }
 
     public function render()

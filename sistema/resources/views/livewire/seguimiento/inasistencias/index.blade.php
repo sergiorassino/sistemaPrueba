@@ -60,21 +60,24 @@
                         </p>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <a class="btn-secondary btn-sm"
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           href="{{ route('seguimiento.inasistencias.informe.pdf', array_filter([
-                               'idMatricula' => $matricula->id,
-                               'tipo' => $tipoFiltroActivo,
-                               'desde' => $fechaDesdeFiltro ?: null,
-                               'hasta' => $fechaHastaFiltro ?: null,
-                           ])) }}">
+                        <x-pdf-post
+                            :action="route('seguimiento.inasistencias.informe.pdf')"
+                            :fields="array_filter([
+                                'matricula' => $matricula->id,
+                                'tipo' => $tipoFiltroActivo,
+                                'desde' => $fechaDesdeFiltro ?: null,
+                                'hasta' => $fechaHastaFiltro ?: null,
+                            ])"
+                            button-class="btn-secondary btn-sm">
                             Informe PDF
-                        </a>
-                        <a class="btn-primary btn-sm"
-                           href="{{ route('seguimiento.inasistencias.create', ['matricula' => $matricula->id]) }}">
-                            + Nueva inasistencia
-                        </a>
+                        </x-pdf-post>
+                        <x-nav-contexto-estudiante
+                            destino="seguimiento.inasistencias.create"
+                            :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::SEGUIMIENTO_INASISTENCIAS"
+                            :matricula="$matricula->id"
+                            class="inline">
+                            <span class="btn-primary btn-sm">+ Nueva inasistencia</span>
+                        </x-nav-contexto-estudiante>
                     </div>
                 </div>
             </div>

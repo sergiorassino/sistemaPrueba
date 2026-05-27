@@ -2,17 +2,21 @@
 
 namespace App\Livewire\Seguimiento\Inasistencias;
 
+use App\Livewire\Seguimiento\Inasistencias\Concerns\RequiresPermisoInasistenciasEstudiantesGestion;
 use App\Models\Curso;
 use App\Models\Inasistencia;
 use App\Models\Matricula;
 use App\Support\InformeInasistencias;
 use App\Support\InasistenciasResumen;
+use App\Support\Navegacion\ContextoEstudianteSesion;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class InasistenciasIndex extends Component
 {
+    use RequiresPermisoInasistenciasEstudiantesGestion;
+
     public int|string $idCurso = '';
 
     public int|string $idMatricula = '';
@@ -32,11 +36,23 @@ class InasistenciasIndex extends Component
 
     public function mount(): void
     {
-        $this->idCurso = (string) request()->query('curso', '');
-        $this->idMatricula = (string) request()->query('matricula', '');
-        $this->idTipoFiltro = (string) request()->query('tipo', '');
-        $this->fechaDesdeFiltro = $this->normalizarFechaFiltro((string) request()->query('desde', ''));
-        $this->fechaHastaFiltro = $this->normalizarFechaFiltro((string) request()->query('hasta', ''));
+        $ctx = ContextoEstudianteSesion::leer(ContextoEstudianteSesion::SEGUIMIENTO_INASISTENCIAS);
+        $this->idCurso = (string) ($ctx['curso'] ?? '');
+        $this->idMatricula = (string) ($ctx['matricula'] ?? '');
+        $this->idTipoFiltro = (string) ($ctx['tipo'] ?? '');
+        $this->fechaDesdeFiltro = $this->normalizarFechaFiltro((string) ($ctx['desde'] ?? ''));
+        $this->fechaHastaFiltro = $this->normalizarFechaFiltro((string) ($ctx['hasta'] ?? ''));
+    }
+
+    private function persistirContextoEnSesion(): void
+    {
+        ContextoEstudianteSesion::fijar(ContextoEstudianteSesion::SEGUIMIENTO_INASISTENCIAS, [
+            'curso' => (int) $this->idCurso ?: null,
+            'matricula' => (int) $this->idMatricula ?: null,
+            'tipo' => $this->idTipoFiltro,
+            'desde' => $this->fechaDesdeFiltro,
+            'hasta' => $this->fechaHastaFiltro,
+        ]);
     }
     public function updatedIdCurso(mixed $value): void
     {
@@ -44,12 +60,14 @@ class InasistenciasIndex extends Component
         $this->idMatricula = '';
         $this->idTipoFiltro = '';
         $this->resetFiltrosFecha();
+        $this->persistirContextoEnSesion();
     }
     public function updatedIdMatricula(mixed $value): void
     {
         $this->idMatricula = is_scalar($value) ? (string) $value : '';
         $this->idTipoFiltro = '';
         $this->resetFiltrosFecha();
+        $this->persistirContextoEnSesion();
     }
 
     public function updatedIdTipoFiltro(mixed $value): void
@@ -61,16 +79,19 @@ class InasistenciasIndex extends Component
         }
 
         $this->idTipoFiltro = is_scalar($value) ? (string) $value : '';
+        $this->persistirContextoEnSesion();
     }
 
     public function updatedFechaDesdeFiltro(mixed $value): void
     {
         $this->fechaDesdeFiltro = $this->normalizarFechaFiltro(is_scalar($value) ? (string) $value : '');
+        $this->persistirContextoEnSesion();
     }
 
     public function updatedFechaHastaFiltro(mixed $value): void
     {
         $this->fechaHastaFiltro = $this->normalizarFechaFiltro(is_scalar($value) ? (string) $value : '');
+        $this->persistirContextoEnSesion();
     }
 
     private function normalizarFechaFiltro(string $value): string

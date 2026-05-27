@@ -14,13 +14,31 @@ use Illuminate\Support\Str;
 
 class CertificadoAlumnoRegularPdfController extends Controller
 {
-    public function __invoke(Request $request, int $idLegajos): Response
+    public function __invoke(Request $request): Response
     {
         abort_unless(tienePermiso(17), 403, 'Sin permiso para certificados de alumno regular.');
 
         $ctx = schoolCtx();
         $idNivel = (int) $ctx->idNivel;
         $idTerlec = (int) $ctx->idTerlec;
+
+        $validator = Validator::make(
+            $request->all(),
+            array_merge(
+                ['idLegajos' => ['required', 'integer', 'min:1']],
+                CertificadoAlumnoRegular::reglasFormulario(),
+            ),
+            CertificadoAlumnoRegular::mensajesValidacion(),
+        );
+
+        if ($validator->fails()) {
+            abort(422, 'Datos del certificado incompletos o inválidos.');
+        }
+
+        $validated = $validator->validated();
+        $idLegajos = (int) $validated['idLegajos'];
+        unset($validated['idLegajos']);
+
         if ($idNivel < 1 || $idTerlec < 1 || $idLegajos < 1) {
             abort(404);
         }
@@ -35,18 +53,8 @@ class CertificadoAlumnoRegularPdfController extends Controller
         }
         RateLimiter::hit($key, 60);
 
-        $validator = Validator::make(
-            $request->query(),
-            CertificadoAlumnoRegular::reglasFormulario(),
-            CertificadoAlumnoRegular::mensajesValidacion(),
-        );
-
-        if ($validator->fails()) {
-            abort(422, 'Datos del certificado incompletos o inválidos.');
-        }
-
         /** @var array{iniFin: int, fechIniFin: string, prePor: string, prePorDni: string, preAnte: string, fechaEmision: string} $form */
-        $form = $validator->validated();
+        $form = $validated;
         $form['iniFin'] = (int) $form['iniFin'];
         $form['prePor'] = trim((string) $form['prePor']);
         $form['prePorDni'] = trim((string) $form['prePorDni']);

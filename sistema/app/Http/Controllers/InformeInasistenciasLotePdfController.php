@@ -9,7 +9,6 @@ use App\Support\InformeInasistenciasTcpdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Validator;
 
 /**
  * Informes de inasistencias en un solo PDF (varias matrículas del mismo curso).
@@ -27,17 +26,18 @@ class InformeInasistenciasLotePdfController extends Controller
         }
         RateLimiter::hit($key, 60);
 
-        $validated = Validator::make($request->query(), [
+        $validated = $request->validate([
             'curso' => ['required', 'integer', 'min:1'],
-            'matriculas' => ['required', 'string', 'max:4000'],
+            'matriculas' => ['required', 'array', 'min:1', 'max:'.InformeInasistenciasLoteParams::MAX_MATRICULAS],
+            'matriculas.*' => ['integer', 'min:1'],
             'tipo' => ['nullable', 'integer', 'min:0'],
             'desde' => ['nullable', 'date_format:Y-m-d'],
             'hasta' => ['nullable', 'date_format:Y-m-d'],
-        ])->validate();
+        ]);
 
         $cursoId = (int) $validated['curso'];
-        $ids = InformeInasistenciasLoteParams::resolverIdsMatriculas(
-            trim((string) $validated['matriculas']),
+        $ids = InformeInasistenciasLoteParams::resolverIdsMatriculasDesdeLista(
+            array_map('intval', $validated['matriculas']),
             $cursoId,
         );
 

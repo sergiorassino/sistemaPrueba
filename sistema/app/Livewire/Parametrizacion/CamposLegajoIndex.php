@@ -3,6 +3,7 @@
 namespace App\Livewire\Parametrizacion;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
+use App\Support\PermisosConfiguracion;
 use App\Listados\CamposLegajoSync;
 use App\Models\CampoLegajo;
 use App\Models\SolapaLegajo;
@@ -11,6 +12,11 @@ use Livewire\Component;
 class CamposLegajoIndex extends Component
 {
     use RequiresPermisoConfiguracion;
+
+    protected function permisoConfigOrden(): int
+    {
+        return PermisosConfiguracion::CAMPOS_LEGAJO_ESTUDIANTE;
+    }
 
     /** '' = todas las columnas; '__sin__' = solo sin solapa; caso contrario id numérico de `solapas_legajo`. */
     public string $filtroSolapa = '';

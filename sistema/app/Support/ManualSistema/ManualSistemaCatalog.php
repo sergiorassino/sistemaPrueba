@@ -475,6 +475,21 @@ final class ManualSistemaCatalog
                         'Permiso de estudiantes (2)',
                     ),
                     self::mod(
+                        'Toma de asistencia a clase',
+                        'Menú Asistencia estudiantes → Toma de asistencia a clase',
+                        'Planilla por curso y fecha: marca presentes o tipos de inasistencia (clase y educación física por separado).',
+                        [
+                            'Elija fecha y curso; pulse Cargar listado.',
+                            'Para cada alumno deje «Presente» o elija el tipo de inasistencia en cada columna.',
+                            'Los cambios se guardan al modificar cada desplegable.',
+                            'Revise el resumen: ausentes, llegadas tarde, retiros anticipados y ausentes a educación física.',
+                        ],
+                        [
+                            'Solo se listan alumnos con condición 1, 2, 3 o 4.',
+                        ],
+                        'Permiso de estudiantes (2)',
+                    ),
+                    self::mod(
                         'Partes diarios',
                         'Menú Asistencia estudiantes → Parte diario del preceptor',
                         'Novedades del día registradas por preceptoría; impresión PDF.',
@@ -546,6 +561,22 @@ final class ManualSistemaCatalog
                         ],
                         [
                             'Necesario para horarios, planillas con firma docente y algunos listados.',
+                        ],
+                        'Permiso de parametrización (1)',
+                    ),
+                    self::mod(
+                        'Cursos por profesor',
+                        'Menú Docentes → Cursos por profesor',
+                        'Vista de consulta: lista cada docente con asignaciones (ppc) en el nivel y ciclo activos, mostrando materias y cursos, situación de revista (situacionrevista vinculada por ppc.idSituRevis) y horas cátedra cargadas en la grilla (horarios26).',
+                        [
+                            'Use el buscador para filtrar por apellido, nombre o DNI del docente.',
+                            'Filtre por curso o por situación de revista para acotar el listado.',
+                            'En cada tarjeta de docente se muestran las asignaciones con sus horas cátedra y la suma total.',
+                            'Para modificar asignaciones use «Asignación de Profesores por Materia y Curso»; para cargar/quitar horas use «Carga de horarios».',
+                        ],
+                        [
+                            'Cada hora cátedra corresponde a un módulo en la grilla de horarios26 (idProfesores + idMateria).',
+                            'Si un docente no aparece, verifique que tenga al menos un registro en ppc para el nivel y ciclo activos.',
                         ],
                         'Permiso de parametrización (1)',
                     ),
@@ -818,7 +849,7 @@ final class ManualSistemaCatalog
                     ),
                     self::mod(
                         'Notificaciones push (personal de gestión)',
-                        'Configuración → Notificaciones Push',
+                        'Menú Comunicación institucional → Notificaciones Push',
                         'Permite recibir alertas en el navegador cuando hay novedades (por ejemplo comunicados).',
                         [
                             'Entre a la pantalla de suscripción.',

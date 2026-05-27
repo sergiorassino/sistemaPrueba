@@ -246,9 +246,9 @@ final class PaseParcial
     /**
      * @param  array{fecha: string, destino: string}  $datos
      */
-    public static function urlPdf(int $idLegajos, array $datos): string
+    public static function pdfPost(int $idLegajos, array $datos): array
     {
-        return route('certificados.paseParcial.pdf', [
+        return \App\Support\Pdf\PdfPost::datos(route('certificados.paseParcial.pdf'), [
             'idLegajos' => $idLegajos,
             'fecha' => $datos['fecha'],
             'destino' => $datos['destino'],

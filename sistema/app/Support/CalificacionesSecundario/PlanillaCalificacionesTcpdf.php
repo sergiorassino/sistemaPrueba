@@ -114,6 +114,10 @@ final class PlanillaCalificacionesTcpdf extends TCPDF
      *     ord: float, ec: float, eval: list<float>, jis: list<float>, dic: float, feb: float, prom: float
      * }
      */
+    /** Ensanche fijo en mm aplicado a la columna del estudiante (aprovecha el
+     * margen libre que dejó la reducción del 10 % en las celdas de notas). */
+    private const ENSANCHE_EC_MM = 5.0;
+
     private function anchosColumnasMm(): array
     {
         $pct = PlanillaCalificacionesSecundario::anchosColumnasPorcentaje();
@@ -121,7 +125,7 @@ final class PlanillaCalificacionesTcpdf extends TCPDF
 
         return [
             'ord' => $total * $pct['ord'] / 100,
-            'ec' => $total * $pct['ec'] / 100,
+            'ec' => ($total * $pct['ec'] / 100) + self::ENSANCHE_EC_MM,
             'eval' => array_map(fn (float $p) => $total * $p / 100, $pct['eval']),
             'jis' => array_map(fn (float $p) => $total * $p / 100, $pct['jis']),
             'dic' => $total * $pct['dic'] / 100,
@@ -248,11 +252,15 @@ final class PlanillaCalificacionesTcpdf extends TCPDF
 
         $yPie = $this->getPageHeight() - self::MARGEN_INF - self::ALTURA_PIE_FIRMAS - self::MARGEN_PIE_DESDE_TABLA;
         $gapV = ((float) ($layout['espacioFilasPx'] ?? 0.94)) * 0.352778;
-        $numFilas = max(1, count($filas));
-        $gapsTotal = max(0, count($filas) - 1) * $gapV;
+        // Se usa un target mínimo de filas por hoja: si el curso tiene menos
+        // alumnos, las filas se calculan como si hubiese FILAS_OBJETIVO_PDF
+        // (filas compactas y aire al pie); si tiene más, se sigue compactando
+        // dinámicamente para que entren todos en una sola hoja.
+        $numFilas = max(PlanillaCalificacionesSecundario::FILAS_OBJETIVO_PDF, count($filas));
+        $gapsTotal = max(0, $numFilas - 1) * $gapV;
         $disponible = $yPie - $y - self::ALTURA_TABLA_ENC;
         $hFila = count($filas) > 0
-            ? max(3.8, ($disponible - $gapsTotal) / $numFilas)
+            ? max(3.4, ($disponible - $gapsTotal) / $numFilas)
             : 4.5;
 
         $y = $this->dibujarEncabezadoGrilla($y, $anchos, $layout);

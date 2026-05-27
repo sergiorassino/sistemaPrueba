@@ -4,6 +4,7 @@ namespace App\Livewire\Abm\ProfesoresPorMateria;
 
 use App\Models\Curso;
 use App\Models\Profesor;
+use App\Models\SituacionRevista;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -24,6 +25,16 @@ class ProfesoresPorMateriaIndex extends Component
     /** Alta rápida: id de profesor a asignar */
     public ?int $nuevoProfesorId = null;
 
+    /** Alta rápida: situación de revista (situacionrevista.id) a guardar en ppc.idSituRevis */
+    public ?int $nuevaSituRevisId = null;
+
+    /** Modal confirmar quitar asignación ppc */
+    public bool $showConfirmQuitar = false;
+
+    public ?int $quitarPpcId = null;
+
+    public string $quitarPpcInfo = '';
+
     /*
      * Depuración SQL en pantalla — desactivada (convención: `docs/05-preferencias-y-convenciones.md` §10).
      * Reactivar: descomentar propiedad, resets en updatedCursoId, línea en selectMateria, pasar valor en render()
@@ -34,6 +45,8 @@ class ProfesoresPorMateriaIndex extends Component
 
     public function mount(): void
     {
+        abort_unless(tienePermiso(11), 403, 'Sin permiso para asignar docentes a materias.');
+
         $ctx = schoolCtx();
 
         $this->cursoId = (int) (Curso::query()
@@ -49,6 +62,7 @@ class ProfesoresPorMateriaIndex extends Component
     public function updatedCursoId(): void
     {
         $this->nuevoProfesorId = null;
+        $this->nuevaSituRevisId = null;
         // $this->consultaEjecutadaClic = null;
         $this->resetValidation();
         $this->syncSelectedMateria();
@@ -127,16 +141,21 @@ class ProfesoresPorMateriaIndex extends Component
          |          p.id           AS idProfesor,
          |          p.apellido,
          |          p.nombre,
-         |          p.IdTipoProf
+         |          p.IdTipoProf,
+         |          ppc.idSituRevis AS idSituRevis,
+         |          sr.sitRev      AS sitRev
          |     FROM ppc
          |     INNER JOIN profesores AS p ON p.id = ppc.idProfesor
+         |     LEFT JOIN situacionrevista AS sr ON sr.id = ppc.idSituRevis
          |    WHERE ppc.idMateria = ?
          | ORDER BY p.apellido ASC, p.nombre ASC, ppc.id ASC
          */
         $filas = DB::select(
-            'SELECT ppc.id AS ppcId, p.id AS idProfesor, p.apellido, p.nombre, p.IdTipoProf '
+            'SELECT ppc.id AS ppcId, p.id AS idProfesor, p.apellido, p.nombre, p.IdTipoProf, '
+            . 'ppc.idSituRevis AS idSituRevis, sr.sitRev AS sitRev '
             . 'FROM ppc '
             . 'INNER JOIN profesores AS p ON p.id = ppc.idProfesor '
+            . 'LEFT JOIN situacionrevista AS sr ON sr.id = ppc.idSituRevis '
             . 'WHERE ppc.idMateria = ? '
             . 'ORDER BY p.apellido ASC, p.nombre ASC, ppc.id ASC',
             [$idMateria],
@@ -148,6 +167,8 @@ class ProfesoresPorMateriaIndex extends Component
             'apellido' => $r->apellido ?? null,
             'nombre' => $r->nombre ?? null,
             'IdTipoProf' => $r->IdTipoProf ?? null,
+            'idSituRevis' => isset($r->idSituRevis) ? (int) $r->idSituRevis : 0,
+            'sitRev' => $r->sitRev ?? null,
         ]);
     }
 
@@ -176,9 +197,12 @@ SELECT ppc.id AS ppcId,
        p.id AS idProfesor,
        p.apellido,
        p.nombre,
-       p.IdTipoProf
+       p.IdTipoProf,
+       ppc.idSituRevis AS idSituRevis,
+       sr.sitRev      AS sitRev
   FROM ppc
  INNER JOIN profesores AS p ON p.id = ppc.idProfesor
+  LEFT JOIN situacionrevista AS sr ON sr.id = ppc.idSituRevis
  WHERE ppc.idMateria = {$idM}
  ORDER BY p.apellido ASC, p.nombre ASC, ppc.id ASC
 SQL;
@@ -226,6 +250,7 @@ TXT;
         // $this->consultaEjecutadaClic = $this->textoConsultasEjecutadasAlElegirMateria((int) $id);
         $this->selectedMateriaId = $id;
         $this->nuevoProfesorId = null;
+        $this->nuevaSituRevisId = null;
         $this->resetValidation();
     }
 
@@ -247,13 +272,16 @@ TXT;
 
         $idMateria = (int) ($this->selectedMateriaId ?? 0);
         $idProf = (int) ($this->nuevoProfesorId ?? 0);
+        $idSituRevis = (int) ($this->nuevaSituRevisId ?? 0);
 
         $this->validate([
             'selectedMateriaId' => ['required', 'integer', 'min:1'],
             'nuevoProfesorId' => ['required', 'integer', 'min:1'],
+            'nuevaSituRevisId' => ['required', 'integer', 'min:1'],
         ], [], [
             'selectedMateriaId' => 'materia',
             'nuevoProfesorId' => 'docente',
+            'nuevaSituRevisId' => 'situación de revista',
         ]);
 
         $m = $this->materiaEnContexto($idMateria);
@@ -263,6 +291,11 @@ TXT;
 
         if (! $this->profesorElegibleParaAsignacion($idProf)) {
             session()->flash('error', 'El docente seleccionado no está disponible para asignación.');
+            return;
+        }
+
+        if (! DB::table('situacionrevista')->where('id', $idSituRevis)->exists()) {
+            session()->flash('error', 'La situación de revista seleccionada no es válida.');
             return;
         }
 
@@ -277,6 +310,7 @@ TXT;
             DB::table('ppc')->insert([
                 'idMateria' => $idMateria,
                 'idProfesor' => $idProf,
+                'idSituRevis' => $idSituRevis,
             ]);
         } catch (\Throwable $e) {
             report($e);
@@ -285,12 +319,116 @@ TXT;
         }
 
         $this->nuevoProfesorId = null;
+        $this->nuevaSituRevisId = null;
         session()->flash('success', 'Docente asignado.');
     }
 
-    public function quitarProfesor(int $ppcId): void
+    /**
+     * Cambia la situación de revista (`ppc.idSituRevis`) de una asignación existente,
+     * validando alcance (materia → curso) y permiso. El catálogo origen es `situacionrevista`.
+     */
+    public function actualizarSituacionRevista(int $ppcId, $idSituRevis): void
+    {
+        abort_unless(tienePermiso(11), 403, 'Sin permiso para modificar la situación de revista.');
+
+        $key = 'ppc-siturev:' . (auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 60)) {
+            session()->flash('error', 'Demasiados intentos. Espere un momento.');
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        if ((int) ($this->cursoId ?? 0) < 1) {
+            abort(404);
+        }
+
+        $idSit = (int) ($idSituRevis ?? 0);
+        if ($idSit < 1) {
+            session()->flash('error', 'Seleccione una situación de revista válida.');
+            return;
+        }
+
+        $ppcRow = DB::table('ppc')->where('id', $ppcId)->first(['id', 'idMateria']);
+        if (! $ppcRow || (int) ($ppcRow->idMateria ?? 0) < 1) {
+            abort(404);
+        }
+
+        $m = $this->materiaEnContexto((int) $ppcRow->idMateria);
+        if (! $m || (int) ($m->idCursos ?? 0) !== (int) $this->cursoId) {
+            abort(404);
+        }
+
+        if (! DB::table('situacionrevista')->where('id', $idSit)->exists()) {
+            session()->flash('error', 'La situación de revista seleccionada no es válida.');
+            return;
+        }
+
+        try {
+            DB::table('ppc')->where('id', $ppcId)->update([
+                'idSituRevis' => $idSit,
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            session()->flash('error', 'No se pudo actualizar la situación de revista.');
+            return;
+        }
+
+        session()->flash('success', 'Situación de revista actualizada.');
+    }
+
+    public function confirmarQuitarProfesor(int $ppcId): void
     {
         abort_unless(tienePermiso(11), 403, 'Sin permiso para quitar asignaciones de docentes.');
+
+        if ((int) ($this->cursoId ?? 0) < 1) {
+            abort(404);
+        }
+
+        $row = DB::table('ppc as ppc')
+            ->join('profesores as p', 'p.id', '=', 'ppc.idProfesor')
+            ->join('materias as m', 'm.id', '=', 'ppc.idMateria')
+            ->where('ppc.id', $ppcId)
+            ->first([
+                'ppc.id',
+                'ppc.idMateria',
+                'p.apellido',
+                'p.nombre',
+                'm.materia',
+                'm.idCursos',
+            ]);
+
+        if (! $row || (int) ($row->idMateria ?? 0) < 1) {
+            abort(404);
+        }
+
+        $m = $this->materiaEnContexto((int) $row->idMateria);
+        if (! $m || (int) ($row->idCursos ?? 0) !== (int) $this->cursoId) {
+            abort(404);
+        }
+
+        $nombre = trim(((string) ($row->apellido ?? '')).', '.((string) ($row->nombre ?? '')));
+        $this->quitarPpcId = $ppcId;
+        $this->quitarPpcInfo = $nombre.' · '.trim((string) ($row->materia ?? ''));
+        $this->showConfirmQuitar = true;
+    }
+
+    public function cerrarConfirmQuitar(): void
+    {
+        $this->showConfirmQuitar = false;
+        $this->quitarPpcId = null;
+        $this->quitarPpcInfo = '';
+    }
+
+    public function quitarProfesor(): void
+    {
+        abort_unless(tienePermiso(11), 403, 'Sin permiso para quitar asignaciones de docentes.');
+
+        $ppcId = (int) ($this->quitarPpcId ?? 0);
+        if ($ppcId < 1) {
+            $this->cerrarConfirmQuitar();
+
+            return;
+        }
 
         $key = 'ppc-unassign:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 40)) {
@@ -321,6 +459,7 @@ TXT;
             return;
         }
 
+        $this->cerrarConfirmQuitar();
         session()->flash('success', 'Asignación eliminada.');
     }
 
@@ -396,6 +535,10 @@ TXT;
 
         $elegiblesParaSelect = $this->profesoresDisponiblesParaAgregar((int) ($this->selectedMateriaId ?? 0));
 
+        $situacionesRevista = SituacionRevista::query()
+            ->orderBy('sitRev')
+            ->get(['id', 'sitRev']);
+
         $selectedMateria = null;
         if ($this->selectedMateriaId) {
             $selectedMateria = $materias->firstWhere('id', (int) $this->selectedMateriaId);
@@ -408,6 +551,7 @@ TXT;
             'countsAsignaciones',
             'asignados',
             'elegiblesParaSelect',
+            'situacionesRevista',
             'selectedMateria',
         ) + ['consultaEjecutadaClic' => ''])
             ->layout('layouts.app', ['pageTitle' => 'Docentes por materia y curso']);

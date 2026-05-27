@@ -3,6 +3,7 @@
 namespace App\Livewire\Abm\Cursos;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
+use App\Support\PermisosConfiguracion;
 use App\Models\Curso;
 use App\Models\Curplan;
 use App\Models\Matplan;
@@ -19,6 +20,11 @@ use Livewire\Component;
 class CursosIndex extends Component
 {
     use RequiresPermisoConfiguracion;
+
+    protected function permisoConfigOrden(): int
+    {
+        return PermisosConfiguracion::CURSOS_ANIO;
+    }
 
     public bool $showConfirm = false;
 

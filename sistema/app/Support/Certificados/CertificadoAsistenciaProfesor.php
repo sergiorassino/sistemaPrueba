@@ -398,22 +398,14 @@ final class CertificadoAsistenciaProfesor
 
      */
 
-    public static function urlPdf(int $idProfesores, array $datos): string
-
+    public static function pdfPost(int $idProfesores, array $datos): array
     {
-
-        return route('certificados.asistenciaProfesor.pdf', [
-
+        return \App\Support\Pdf\PdfPost::datos(route('certificados.asistenciaProfesor.pdf'), [
             'idProfesores' => $idProfesores,
-
             'fecha' => $datos['fecha'],
-
             'texto' => $datos['texto'],
-
             'parapre' => $datos['parapre'],
-
         ]);
-
     }
 
 

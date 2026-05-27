@@ -9,7 +9,6 @@ use App\Support\ConsultaCalificacionesAlumno;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Validator;
 
 /**
  * Informes de progreso escolar en un solo PDF (varias matrículas del mismo curso).
@@ -28,14 +27,15 @@ class BoletinSecundarioLotePdfController extends Controller
         }
         RateLimiter::hit($key, 60);
 
-        $validated = Validator::make($request->query(), [
+        $validated = $request->validate([
             'curso' => ['required', 'integer', 'min:1'],
-            'matriculas' => ['required', 'string', 'max:4000'],
-        ])->validate();
+            'matriculas' => ['required', 'array', 'min:1', 'max:'.BoletinSecundarioLoteParams::MAX_MATRICULAS],
+            'matriculas.*' => ['integer', 'min:1'],
+        ]);
 
         $cursoId = (int) $validated['curso'];
-        $ids = BoletinSecundarioLoteParams::resolverIdsMatriculas(
-            trim((string) $validated['matriculas']),
+        $ids = BoletinSecundarioLoteParams::resolverIdsMatriculasDesdeLista(
+            array_map('intval', $validated['matriculas']),
             $cursoId,
         );
 

@@ -41,6 +41,7 @@ use App\Http\Controllers\SancionComunicadoPdfController;
 use App\Livewire\Abm\Curplan\CurplanForm;
 use App\Livewire\Abm\Curplan\CurplanIndex;
 use App\Livewire\Abm\Cursos\CursosIndex;
+use App\Livewire\Abm\CursosPorProfesor\CursosPorProfesorIndex;
 use App\Livewire\Abm\Legajos\LegajoForm;
 use App\Livewire\Abm\Legajos\LegajosIndex;
 use App\Livewire\Abm\LegajosProfesor\LegajoProfesorForm;
@@ -61,6 +62,7 @@ use App\Livewire\Abm\Niveles\NivelesIndex;
 use App\Livewire\Abm\Planes\PlanesForm;
 use App\Livewire\Abm\Planes\PlanesIndex;
 use App\Livewire\Abm\Terlec\TerlecIndex;
+use App\Livewire\Administracion\Permisos\PermisosPorUsuarioIndex;
 use App\Livewire\Administracion\Permisos\PermisosUsuariosIndex;
 use App\Livewire\Alumnos\Auth\Login as AlumnosLogin;
 use App\Livewire\Alumnos\Comunicaciones\BandejaFamilia;
@@ -84,6 +86,8 @@ use App\Http\Controllers\Certificados\PaseParcialPdfController;
 use App\Http\Controllers\Certificados\SolicitudDePasePdfController;
 use App\Http\Controllers\MatrizAnaliticos\AnaliticoFrentePdfController;
 use App\Http\Controllers\MatrizAnaliticos\AnaliticoReversoPdfController;
+use App\Http\Controllers\Navegacion\AutogestionDocenteController;
+use App\Http\Controllers\Navegacion\EstablecerContextoEstudianteController;
 use App\Livewire\Certificados\CertificadoAlumnoRegularIndex;
 use App\Livewire\Certificados\CertificadoEstudiosTramiteIndex;
 use App\Livewire\Certificados\CertificadoAsistenciaProfesorIndex;
@@ -123,8 +127,10 @@ use App\Livewire\Seguimiento\Inasistencias\InasistenciasIndex;
 use App\Livewire\Seguimiento\Inasistencias\SincroCidiInasistencias;
 use App\Livewire\Seguimiento\Inasistencias\PartesDiariosIndex;
 use App\Livewire\Seguimiento\Inasistencias\InformeInasistenciasLoteIndex;
+use App\Livewire\Seguimiento\Inasistencias\TomaAsistenciaClaseIndex;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionalIconController;
+use App\Http\Controllers\ManualComunicacionInstitucionalPdfController;
 use App\Http\Controllers\ManualSistemaPdfController;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
@@ -188,6 +194,15 @@ Route::middleware(['auth:web,alumno'])->prefix('notificaciones-push/api')->group
     Route::post('/send', [PushApiController::class, 'send'])->name('push.api.send');
 });
 
+Route::middleware(['auth', 'school.context'])->post('/navegacion/contexto-estudiante', EstablecerContextoEstudianteController::class)
+    ->name('navegacion.contexto-estudiante');
+
+// Autogestión Docente: salto manual desde el Menú de Secretaría al Menú de Docentes
+// para usuarios con rol no-docente (p. ej. Preceptor) que también tienen cursos
+// asignados en `ppc`. Ver docs/08-menus-de-navegacion.md.
+Route::middleware(['auth', 'school.context'])->post('/autogestion-docente/activar', AutogestionDocenteController::class)
+    ->name('autogestion.docente.activar');
+
 // Menú de Docentes — IdTipoProf = 6 (profesortipo «Profesor/a»)
 Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('portal-docente')->group(function () {
     Route::get('/', DashboardController::class)->name('portalDocente.home');
@@ -206,8 +221,8 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
     Route::get('/cuaderno-seguimiento/{curso}/{materia}', PortalDocenteRegistroSituacionAulicaIndex::class)
         ->whereNumber(['curso', 'materia'])
         ->name('portalDocente.cuadernoSeguimiento.registro');
-    Route::get('/cuaderno-seguimiento/{curso}/{materia}/alumno/{matricula}', PortalDocenteSituacionAulicaAlumnoShow::class)
-        ->whereNumber(['curso', 'materia', 'matricula'])
+    Route::get('/cuaderno-seguimiento/{curso}/{materia}/alumno', PortalDocenteSituacionAulicaAlumnoShow::class)
+        ->whereNumber(['curso', 'materia'])
         ->name('portalDocente.cuadernoSeguimiento.alumno');
 
     Route::get('/comunicaciones', BandejaGestion::class)->middleware('permiso:3')->name('portalDocente.comunicaciones.index');
@@ -230,6 +245,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('/manual-sistema.pdf', ManualSistemaPdfController::class)->name('manual.sistema.pdf');
+    Route::get('/manual-comunicacion-institucional.pdf', ManualComunicacionInstitucionalPdfController::class)
+        ->middleware('permiso:3')
+        ->name('manual.comunicacion.pdf');
 
     Route::get('/comunicaciones', BandejaGestion::class)->middleware('permiso:3')->name('comunicaciones.index');
     Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:3', 'permiso:8'])->name('comunicaciones.revision');
@@ -240,47 +258,56 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
         ->name('comunicaciones.informe-envio');
     Route::get('/comunicaciones/{id}', HiloShow::class)->middleware('permiso:3')->whereNumber('id')->name('comunicaciones.hilo');
 
-    // Administración: permisos de usuarios (menú Configuración + orden 0)
+    // Administración: permisos del sistema (menú Configuración · subgrupo Permisos del sistema · orden 0)
     Route::get('/administracion/permisos', PermisosUsuariosIndex::class)
-        ->middleware(['permiso:14', 'permiso:0'])
+        ->middleware('permiso:0')
         ->name('admin.permisos');
+    Route::get('/administracion/permisos-por-usuario', PermisosPorUsuarioIndex::class)
+        ->middleware('permiso:14')
+        ->name('admin.permisos-por-usuario');
 
-    Route::middleware('permiso:14')->group(function () {
-        Route::get('/notificaciones/push', SuscribirController::class)->name('push.suscribir');
-        Route::get('/abm/terlec', TerlecIndex::class)->name('abm.terlec');
-        Route::get('/abm/niveles', NivelesIndex::class)->name('abm.niveles');
-        Route::get('/abm/cursos', CursosIndex::class)->name('abm.cursos');
-        Route::get('/abm/planes', PlanesIndex::class)->name('abm.planes');
-        Route::get('/abm/planes/nuevo', PlanesForm::class)->name('abm.planes.create');
-        Route::get('/abm/planes/{id}/editar', PlanesForm::class)->whereNumber('id')->name('abm.planes.edit');
-        Route::get('/abm/curplan', CurplanIndex::class)->name('abm.curplan');
-        Route::get('/abm/curplan/nuevo', CurplanForm::class)->name('abm.curplan.create');
-        Route::get('/abm/curplan/{id}/editar', CurplanForm::class)->whereNumber('id')->name('abm.curplan.edit');
-        Route::get('/abm/materias-anio', MateriasAnioIndex::class)->name('abm.materias-anio');
-        Route::get('/parametrizacion/parametros-sistema', ParametrosSistemaForm::class)
-            ->name('param.parametros-sistema');
-        Route::get('/parametrizacion/campos-legajo', CamposLegajoIndex::class)
-            ->name('param.campos-listado-alumnos'); // nombre conservado para no romper enlaces existentes
-        Route::get('/parametrizacion/solapas-legajo', SolapaLegajoIndex::class)
-            ->name('param.solapas-legajo');
-        Route::get('/parametrizacion/campos-legajo-profesor', CamposProfesorIndex::class)
-            ->name('param.campos-legajo-profesor');
-        Route::get('/parametrizacion/solapas-legajo-profesor', SolapaLegajoProfesorIndex::class)
-            ->name('param.solapas-legajo-profesor');
-    });
+    Route::get('/notificaciones/push', SuscribirController::class)
+        ->middleware('permiso-config:32')
+        ->name('push.suscribir');
+    Route::get('/abm/terlec', TerlecIndex::class)->middleware('permiso-config:25')->name('abm.terlec');
+    Route::get('/abm/niveles', NivelesIndex::class)->middleware('permiso-config:26')->name('abm.niveles');
+    Route::get('/abm/cursos', CursosIndex::class)->middleware('permiso-config:35')->name('abm.cursos');
+    Route::get('/abm/planes', PlanesIndex::class)->middleware('permiso-config:33')->name('abm.planes');
+    Route::get('/abm/planes/nuevo', PlanesForm::class)->middleware('permiso-config:33')->name('abm.planes.create');
+    Route::get('/abm/planes/{id}/editar', PlanesForm::class)->whereNumber('id')->middleware('permiso-config:33')->name('abm.planes.edit');
+    Route::get('/abm/curplan', CurplanIndex::class)->middleware('permiso-config:34')->name('abm.curplan');
+    Route::get('/abm/curplan/nuevo', CurplanForm::class)->middleware('permiso-config:34')->name('abm.curplan.create');
+    Route::get('/abm/curplan/{id}/editar', CurplanForm::class)->whereNumber('id')->middleware('permiso-config:34')->name('abm.curplan.edit');
+    Route::get('/abm/materias-anio', MateriasAnioIndex::class)->middleware('permiso-config:36')->name('abm.materias-anio');
+    Route::get('/parametrizacion/parametros-sistema', ParametrosSistemaForm::class)
+        ->middleware('permiso-config:31')
+        ->name('param.parametros-sistema');
+    Route::get('/parametrizacion/campos-legajo', CamposLegajoIndex::class)
+        ->middleware('permiso-config:27')
+        ->name('param.campos-listado-alumnos'); // nombre conservado para no romper enlaces existentes
+    Route::get('/parametrizacion/solapas-legajo', SolapaLegajoIndex::class)
+        ->middleware('permiso-config:28')
+        ->name('param.solapas-legajo');
+    Route::get('/parametrizacion/campos-legajo-profesor', CamposProfesorIndex::class)
+        ->middleware('permiso-config:29')
+        ->name('param.campos-legajo-profesor');
+    Route::get('/parametrizacion/solapas-legajo-profesor', SolapaLegajoProfesorIndex::class)
+        ->middleware('permiso-config:30')
+        ->name('param.solapas-legajo-profesor');
 
-    Route::get('/abm/profesores-por-materia', ProfesoresPorMateriaIndex::class)->middleware('permiso:1')->name('abm.profesores-por-materia');
+    Route::get('/abm/profesores-por-materia', ProfesoresPorMateriaIndex::class)->middleware('permiso:11')->name('abm.profesores-por-materia');
+    Route::get('/abm/cursos-por-profesor', CursosPorProfesorIndex::class)->middleware('permiso:11')->name('abm.cursos-por-profesor');
     Route::get('/horarios/configuracion', HorariosConfigIndex::class)
         ->middleware('permiso:13')
         ->name('horarios.config');
     Route::get('/parametrizacion/com-canales', ComCanalesIndex::class)
-        ->middleware(['permiso:14', 'permiso:5'])
+        ->middleware('permiso:5')
         ->name('param.com-canales');
     Route::get('/abm/legajos', LegajosIndex::class)->name('abm.legajos');
     Route::get('/abm/legajos/nuevo', LegajoForm::class)->middleware('permiso:2')->name('abm.legajos.create');
-    Route::get('/abm/legajos/{id}/editar', LegajoForm::class)->whereNumber('id')->name('abm.legajos.edit');
+    Route::get('/abm/legajos/editar', LegajoForm::class)->name('abm.legajos.edit');
 
-    Route::get('/abm/legajos-profesor', LegajosProfesorIndex::class)->middleware('permiso:1')->name('abm.legajos-profesor');
+    Route::get('/abm/legajos-profesor', LegajosProfesorIndex::class)->middleware('permiso:11')->name('abm.legajos-profesor');
     Route::get('/abm/legajos-profesor/nuevo', LegajoProfesorForm::class)->middleware('permiso:11')->name('abm.legajos-profesor.create');
     Route::get('/abm/legajos-profesor/{id}/editar', LegajoProfesorForm::class)->whereNumber('id')->name('abm.legajos-profesor.edit');
 
@@ -318,17 +345,13 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
             ->name('examenes.materias-adeudadas.gestion.entrar');
         Route::get('/examenes/materias-adeudadas/gestion', MateriasAdeudadasGestionIndex::class)
             ->name('examenes.materias-adeudadas.gestion');
-        Route::get('/examenes/materias-adeudadas/gestion/carga/{idLegajos}', MateriasAdeudadasCargaManualIndex::class)
-            ->whereNumber('idLegajos')
+        Route::get('/examenes/materias-adeudadas/gestion/carga', MateriasAdeudadasCargaManualIndex::class)
             ->name('examenes.materias-adeudadas.gestion.carga');
-        Route::get('/examenes/materias-adeudadas/gestion/inscribir/{idLegajos}', MateriasAdeudadasInscripcionIndex::class)
-            ->whereNumber('idLegajos')
+        Route::get('/examenes/materias-adeudadas/gestion/inscribir', MateriasAdeudadasInscripcionIndex::class)
             ->name('examenes.materias-adeudadas.gestion.inscribir');
-        Route::get('/examenes/materias-adeudadas/gestion/notas/{idLegajos}', MateriasAdeudadasNotasIndex::class)
-            ->whereNumber('idLegajos')
+        Route::get('/examenes/materias-adeudadas/gestion/notas', MateriasAdeudadasNotasIndex::class)
             ->name('examenes.materias-adeudadas.gestion.notas');
-        Route::get('/examenes/materias-adeudadas/gestion/historial/{idLegajos}', HistorialExamenesIndex::class)
-            ->whereNumber('idLegajos')
+        Route::get('/examenes/materias-adeudadas/gestion/historial', HistorialExamenesIndex::class)
             ->name('examenes.materias-adeudadas.gestion.historial');
         Route::get('/examenes/borrar-inscripciones', BorrarInscripcionesExamenIndex::class)
             ->name('examenes.borrar-inscripciones');
@@ -389,137 +412,131 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
         ->name('calificacionesSecundario.planillaResumen.pdf');
     Route::get('/calificaciones-secundario/consulta', ConsultaCalificacionesSecundario::class)
         ->name('calificacionesSecundario.consulta');
-    Route::get('/calificaciones-secundario/consulta/pdf', ConsultaCalificacionesSecundarioPdfController::class)
+    Route::post('/calificaciones-secundario/consulta/pdf', ConsultaCalificacionesSecundarioPdfController::class)
         ->name('calificacionesSecundario.consulta.pdf');
     Route::get('/calificaciones-secundario/cierre-anual', CierreAnualIndex::class)
         ->middleware('permiso:15')
         ->name('calificacionesSecundario.cierreAnual');
-    Route::get('/calificaciones-secundario/cierre-anual/{idLegajos}/historial', CierreAnualHistorial::class)
+    Route::get('/calificaciones-secundario/cierre-anual/historial', CierreAnualHistorial::class)
         ->middleware('permiso:15')
-        ->whereNumber('idLegajos')
         ->name('calificacionesSecundario.cierreAnual.historial');
 
     // Libro matriz / pase / analítico
     Route::get('/matriz-analiticos/libro-matriz', LibroMatrizIndex::class)
         ->middleware('permiso:16')
         ->name('matrizAnaliticos.libroMatriz');
-    Route::get('/matriz-analiticos/libro-matriz/{idLegajos}/editar', LibroMatrizEditar::class)
+    Route::get('/matriz-analiticos/libro-matriz/editar', LibroMatrizEditar::class)
         ->middleware('permiso:16')
-        ->whereNumber('idLegajos')
         ->name('matrizAnaliticos.libroMatriz.editar');
-    Route::get('/matriz-analiticos/libro-matriz/{idLegajos}/datos-adicionales', LibroMatrizDatosAdicionales::class)
+    Route::get('/matriz-analiticos/libro-matriz/datos-adicionales', LibroMatrizDatosAdicionales::class)
         ->middleware('permiso:16')
-        ->whereNumber('idLegajos')
         ->name('matrizAnaliticos.libroMatriz.datosAdicionales');
-    Route::get('/matriz-analiticos/libro-matriz/{idLegajos}/pdf-frente', AnaliticoFrentePdfController::class)
+    Route::post('/matriz-analiticos/libro-matriz/pdf-frente', AnaliticoFrentePdfController::class)
         ->middleware('permiso:16')
-        ->whereNumber('idLegajos')
         ->name('matrizAnaliticos.libroMatriz.pdfFrente');
-    Route::get('/matriz-analiticos/libro-matriz/{idLegajos}/pdf-reverso', AnaliticoReversoPdfController::class)
+    Route::post('/matriz-analiticos/libro-matriz/pdf-reverso', AnaliticoReversoPdfController::class)
         ->middleware('permiso:16')
-        ->whereNumber('idLegajos')
         ->name('matrizAnaliticos.libroMatriz.pdfReverso');
 
     // Certificados — alumno regular
     Route::get('/certificados/alumno-regular', CertificadoAlumnoRegularIndex::class)
         ->middleware('permiso:17')
         ->name('certificados.alumnoRegular');
-    Route::get('/certificados/alumno-regular/{idLegajos}/pdf', CertificadoAlumnoRegularPdfController::class)
+    Route::post('/certificados/alumno-regular/pdf', CertificadoAlumnoRegularPdfController::class)
         ->middleware('permiso:17')
-        ->whereNumber('idLegajos')
         ->name('certificados.alumnoRegular.pdf');
 
     // Certificados — estudios en trámite
     Route::get('/certificados/estudios-tramite', CertificadoEstudiosTramiteIndex::class)
         ->middleware('permiso:18')
         ->name('certificados.estudiosTramite');
-    Route::get('/certificados/estudios-tramite/{idLegajos}/pdf', CertificadoEstudiosTramitePdfController::class)
+    Route::post('/certificados/estudios-tramite/pdf', CertificadoEstudiosTramitePdfController::class)
         ->middleware('permiso:18')
-        ->whereNumber('idLegajos')
         ->name('certificados.estudiosTramite.pdf');
 
     // Certificados — constancia de documentos
     Route::get('/certificados/constancia-documentos', ConstanciaDocumentosIndex::class)
         ->middleware('permiso:19')
         ->name('certificados.constanciaDocumentos');
-    Route::get('/certificados/constancia-documentos/{idLegajos}/pdf', ConstanciaDocumentosPdfController::class)
+    Route::post('/certificados/constancia-documentos/pdf', ConstanciaDocumentosPdfController::class)
         ->middleware('permiso:19')
-        ->whereNumber('idLegajos')
         ->name('certificados.constanciaDocumentos.pdf');
 
     // Certificados — asistencia del profesor
     Route::get('/certificados/asistencia-profesor', CertificadoAsistenciaProfesorIndex::class)
         ->middleware('permiso:20')
         ->name('certificados.asistenciaProfesor');
-    Route::get('/certificados/asistencia-profesor/{idProfesores}/pdf', CertificadoAsistenciaProfesorPdfController::class)
+    Route::post('/certificados/asistencia-profesor/pdf', CertificadoAsistenciaProfesorPdfController::class)
         ->middleware('permiso:20')
-        ->whereNumber('idProfesores')
         ->name('certificados.asistenciaProfesor.pdf');
 
     // Certificados — pase parcial
     Route::get('/certificados/pase-parcial', PaseParcialIndex::class)
         ->middleware('permiso:21')
         ->name('certificados.paseParcial');
-    Route::get('/certificados/pase-parcial/{idLegajos}/pdf', PaseParcialPdfController::class)
+    Route::post('/certificados/pase-parcial/pdf', PaseParcialPdfController::class)
         ->middleware('permiso:21')
-        ->whereNumber('idLegajos')
         ->name('certificados.paseParcial.pdf');
 
     // Certificados — solicitud de pase
     Route::get('/certificados/solicitud-de-pase', SolicitudDePaseIndex::class)
         ->middleware('permiso:22')
         ->name('certificados.solicitudDePase');
-    Route::get('/certificados/solicitud-de-pase/{idLegajos}/pdf', SolicitudDePasePdfController::class)
+    Route::post('/certificados/solicitud-de-pase/pdf', SolicitudDePasePdfController::class)
         ->middleware('permiso:22')
-        ->whereNumber('idLegajos')
         ->name('certificados.solicitudDePase.pdf');
 
     // Boletines / informe de progreso escolar (nivel secundario)
     Route::get('/boletines-secundario', BoletinesSecundarioIndex::class)
         ->name('boletinesSecundario.index');
-    Route::get('/boletines-secundario/pdf', BoletinSecundarioPdfController::class)
+    Route::post('/boletines-secundario/pdf', BoletinSecundarioPdfController::class)
         ->name('boletinesSecundario.pdf');
-    Route::get('/boletines-secundario/pdf-lote', BoletinSecundarioLotePdfController::class)
+    Route::post('/boletines-secundario/pdf-lote', BoletinSecundarioLotePdfController::class)
         ->name('boletinesSecundario.pdfLote');
 
-    // Seguimiento disciplinario
-    Route::get('/seguimiento/disciplinario', DisciplinarioIndex::class)
-        ->name('seguimiento.disciplinario');
-    Route::get('/seguimiento/disciplinario/nuevo', SancionForm::class)
-        ->name('seguimiento.disciplinario.create');
-    Route::get('/seguimiento/disciplinario/{id}/editar', SancionForm::class)
-        ->whereNumber('id')
-        ->name('seguimiento.disciplinario.edit');
+    // Seguimiento disciplinario (permiso orden 37)
+    Route::middleware('permiso:37')->group(function () {
+        Route::get('/seguimiento/disciplinario', DisciplinarioIndex::class)
+            ->name('seguimiento.disciplinario');
+        Route::get('/seguimiento/disciplinario/nuevo', SancionForm::class)
+            ->name('seguimiento.disciplinario.create');
+        Route::get('/seguimiento/disciplinario/{id}/editar', SancionForm::class)
+            ->whereNumber('id')
+            ->name('seguimiento.disciplinario.edit');
 
-    Route::get('/seguimiento/disciplinario/{id}/imprimir', SancionComunicadoPdfController::class)
-        ->whereNumber('id')
-        ->name('seguimiento.disciplinario.print');
+        Route::get('/seguimiento/disciplinario/{id}/imprimir', SancionComunicadoPdfController::class)
+            ->whereNumber('id')
+            ->name('seguimiento.disciplinario.print');
 
-    Route::get('/seguimiento/disciplinario/{idMatricula}/antecedentes', AntecedentesIndex::class)
-        ->whereNumber('idMatricula')
-        ->name('seguimiento.disciplinario.antecedentes');
+        Route::get('/seguimiento/disciplinario/antecedentes', AntecedentesIndex::class)
+            ->name('seguimiento.disciplinario.antecedentes');
 
-    Route::get('/seguimiento/disciplinario/{idMatricula}/antecedentes/pdf', AntecedentesDisciplinariosPdfController::class)
-        ->whereNumber('idMatricula')
-        ->name('seguimiento.disciplinario.antecedentes.pdf');
+        Route::post('/seguimiento/disciplinario/antecedentes/pdf', AntecedentesDisciplinariosPdfController::class)
+            ->name('seguimiento.disciplinario.antecedentes.pdf');
+    });
 
-    // Gestión de inasistencias
-    Route::get('/seguimiento/inasistencias', InasistenciasIndex::class)
-        ->name('seguimiento.inasistencias');
+    // Gestión de inasistencias (permiso orden 38)
+    Route::middleware('permiso:38')->group(function () {
+        Route::get('/seguimiento/inasistencias', InasistenciasIndex::class)
+            ->name('seguimiento.inasistencias');
+        Route::get('/seguimiento/inasistencias/nuevo', InasistenciaForm::class)
+            ->name('seguimiento.inasistencias.create');
+        Route::get('/seguimiento/inasistencias/{id}/editar', InasistenciaForm::class)
+            ->whereNumber('id')
+            ->name('seguimiento.inasistencias.edit');
+        Route::post('/seguimiento/inasistencias/informe/pdf', InformeInasistenciasPdfController::class)
+            ->name('seguimiento.inasistencias.informe.pdf');
+    });
     Route::get('/seguimiento/inasistencias/sincro-cidi', SincroCidiInasistencias::class)
+        ->middleware('permiso:24')
         ->name('seguimiento.inasistencias.sincroCidi');
-    Route::get('/seguimiento/inasistencias/nuevo', InasistenciaForm::class)
-        ->name('seguimiento.inasistencias.create');
-    Route::get('/seguimiento/inasistencias/{id}/editar', InasistenciaForm::class)
-        ->whereNumber('id')
-        ->name('seguimiento.inasistencias.edit');
+    Route::get('/seguimiento/toma-asistencia-clase', TomaAsistenciaClaseIndex::class)
+        ->middleware('permiso:1')
+        ->name('seguimiento.toma-asistencia-clase');
     Route::get('/seguimiento/inasistencias/informe', InformeInasistenciasLoteIndex::class)
         ->name('seguimiento.inasistencias.informe');
-    Route::get('/seguimiento/inasistencias/informe/lote/pdf', InformeInasistenciasLotePdfController::class)
+    Route::post('/seguimiento/inasistencias/informe/lote/pdf', InformeInasistenciasLotePdfController::class)
         ->name('seguimiento.inasistencias.informe.lote.pdf');
-    Route::get('/seguimiento/inasistencias/{idMatricula}/informe/pdf', InformeInasistenciasPdfController::class)
-        ->whereNumber('idMatricula')
-        ->name('seguimiento.inasistencias.informe.pdf');
 
     Route::get('/seguimiento/partes-diarios', PartesDiariosIndex::class)
         ->name('seguimiento.partes-diarios');

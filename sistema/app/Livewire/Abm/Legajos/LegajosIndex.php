@@ -23,7 +23,7 @@ class LegajosIndex extends Component
     public string $deleteInfo   = '';
     public function mount(): void
     {
-        $focus = request()->integer('focus');
+        $focus = (int) session()->pull('legajo_listado_focus', 0);
         $this->focusId = $focus > 0 ? $focus : null;
     }
 

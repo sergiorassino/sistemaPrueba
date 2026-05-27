@@ -12,9 +12,14 @@ use Illuminate\Support\Str;
 
 class AnaliticoReversoPdfController extends Controller
 {
-    public function __invoke(Request $request, int $idLegajos): Response
+    public function __invoke(Request $request): Response
     {
         abort_unless(tienePermiso(16), 403, 'Sin permiso para Libro Matriz / Analítico.');
+
+        $validated = $request->validate([
+            'idLegajos' => ['required', 'integer', 'min:1'],
+        ]);
+        $idLegajos = (int) $validated['idLegajos'];
 
         $ctx = schoolCtx();
         if (! str_contains(mb_strtolower($ctx->nivelNombre()), 'secundari')) {

@@ -1,0 +1,58 @@
+@props([
+    'destino',
+    'alcance',
+    'matricula' => null,
+    'curso' => null,
+    'idLegajos' => null,
+    'materia' => null,
+    'tipo' => null,
+    'desde' => null,
+    'hasta' => null,
+    'abrirMatriculas' => false,
+    'tag' => 'button',
+])
+
+@php
+    $tag = in_array($tag, ['button', 'a'], true) ? $tag : 'button';
+@endphp
+
+<form method="POST"
+      action="{{ route('navegacion.contexto-estudiante') }}"
+      {{ $attributes->class(['inline']) }}>
+    @csrf
+    <input type="hidden" name="destino" value="{{ $destino }}">
+    <input type="hidden" name="alcance" value="{{ $alcance }}">
+    @if ($matricula)
+        <input type="hidden" name="matricula" value="{{ (int) $matricula }}">
+    @endif
+    @if ($curso)
+        <input type="hidden" name="curso" value="{{ (int) $curso }}">
+    @endif
+    @if ($idLegajos)
+        <input type="hidden" name="idLegajos" value="{{ (int) $idLegajos }}">
+    @endif
+    @if ($materia)
+        <input type="hidden" name="materia" value="{{ (int) $materia }}">
+    @endif
+    @if ($tipo !== null && $tipo !== '')
+        <input type="hidden" name="tipo" value="{{ $tipo }}">
+    @endif
+    @if ($desde)
+        <input type="hidden" name="desde" value="{{ $desde }}">
+    @endif
+    @if ($hasta)
+        <input type="hidden" name="hasta" value="{{ $hasta }}">
+    @endif
+    @if ($abrirMatriculas)
+        <input type="hidden" name="abrir_matriculas" value="1">
+    @endif
+    @if ($tag === 'a')
+        <button type="submit" class="inline p-0 border-0 bg-transparent font-inherit text-inherit cursor-pointer">
+            {{ $slot }}
+        </button>
+    @else
+        <button type="submit">
+            {{ $slot }}
+        </button>
+    @endif
+</form>

@@ -82,7 +82,8 @@
                                             'titulo' => 'Carga manual',
                                             'descripcion' => 'Cargar o borrar materias adeudadas',
                                             'icono' => 'carga',
-                                            'href' => route('examenes.materias-adeudadas.gestion.carga', $alumno['idLegajos']),
+                                            'navDestino' => 'examenes.materias-adeudadas.gestion.carga',
+                                            'idLegajos' => $alumno['idLegajos'],
                                         ])
                                     </td>
                                     <td class="px-3 py-2.5 text-center">
@@ -90,7 +91,8 @@
                                             'titulo' => 'Inscribir',
                                             'descripcion' => 'Inscribir al alumno a rendir exámenes',
                                             'icono' => 'inscribir',
-                                            'href' => route('examenes.materias-adeudadas.gestion.inscribir', $alumno['idLegajos']),
+                                            'navDestino' => 'examenes.materias-adeudadas.gestion.inscribir',
+                                            'idLegajos' => $alumno['idLegajos'],
                                         ])
                                     </td>
                                     <td class="px-3 py-2.5 text-center">
@@ -98,7 +100,8 @@
                                             'titulo' => 'Carga de notas',
                                             'descripcion' => 'Cargar notas de los exámenes',
                                             'icono' => 'notas',
-                                            'href' => route('examenes.materias-adeudadas.gestion.notas', $alumno['idLegajos']),
+                                            'navDestino' => 'examenes.materias-adeudadas.gestion.notas',
+                                            'idLegajos' => $alumno['idLegajos'],
                                         ])
                                     </td>
                                     <td class="px-3 py-2.5 text-center">
@@ -106,7 +109,8 @@
                                             'titulo' => 'Historial de exámenes',
                                             'descripcion' => 'Historial de materias adeudadas, rendiciones y notas',
                                             'icono' => 'historial',
-                                            'href' => route('examenes.materias-adeudadas.gestion.historial', $alumno['idLegajos']),
+                                            'navDestino' => 'examenes.materias-adeudadas.gestion.historial',
+                                            'idLegajos' => $alumno['idLegajos'],
                                         ])
                                     </td>
                                 </tr>

@@ -55,16 +55,13 @@
                                     {{ trim((string) ($mat->legajo?->nombre_completo ?? '')) === '' ? '—' : $mat->legajo->nombre_completo }}
                                 </td>
                                 <td class="py-3 pl-2 pr-5 text-right align-middle">
-                                    <a href="{{ route('calificacionesSecundario.consulta.pdf', ['matricula' => $mat->id]) }}"
-                                       target="_blank"
-                                       rel="noopener noreferrer"
-                                       class="inline-flex max-w-full flex-wrap items-center justify-end gap-1.5 whitespace-normal rounded-xl border border-accent-200 bg-white px-3 py-2 text-xs font-semibold text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-accent-50">
+                                    <x-pdf-post-matricula :action="route('calificacionesSecundario.consulta.pdf')" :matricula="$mat->id">
                                         <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                                         </svg>
                                         CONSULTA DE CALIFICACIONES
-                                    </a>
+                                    </x-pdf-post-matricula>
                                 </td>
                             </tr>
                         @empty

@@ -2,15 +2,19 @@
 
 namespace App\Livewire\Seguimiento\Disciplinario;
 
+use App\Livewire\Seguimiento\Disciplinario\Concerns\RequiresPermisoSeguimientoDisciplinario;
 use App\Models\Matricula;
 use App\Models\Sancion;
 use App\Models\SancionTipo;
+use App\Support\Navegacion\ContextoEstudianteSesion;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class SancionForm extends Component
 {
+    use RequiresPermisoSeguimientoDisciplinario;
+
     public ?int $id = null; // id sancion (edit)
     public int|string $idMatricula = '';
 
@@ -45,7 +49,9 @@ class SancionForm extends Component
             return;
         }
 
-        $this->idMatricula = (string) request()->query('matricula', '');
+        $id = ContextoEstudianteSesion::matricula(ContextoEstudianteSesion::SEGUIMIENTO_DISCIPLINARIO);
+        abort_if($id === null, 404);
+        $this->idMatricula = (string) $id;
         $this->fecha = now()->format('Y-m-d');
     }
 
@@ -128,10 +134,12 @@ class SancionForm extends Component
             session()->flash('success', 'Sanción creada.');
         }
 
-        return redirect()->route('seguimiento.disciplinario', [
-            'curso' => $m->idCursos,
-            'matricula' => $m->id,
+        ContextoEstudianteSesion::fijar(ContextoEstudianteSesion::SEGUIMIENTO_DISCIPLINARIO, [
+            'curso' => (int) $m->idCursos,
+            'matricula' => (int) $m->id,
         ]);
+
+        return redirect()->route('seguimiento.disciplinario');
     }
 
     public function render()

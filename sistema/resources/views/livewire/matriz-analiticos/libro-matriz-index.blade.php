@@ -81,42 +81,43 @@
                                         <span class="se-matriz-list-cell-truncate" title="{{ $a['nivel'] }}">{{ $a['nivel'] !== '' ? $a['nivel'] : '—' }}</span>
                                     </td>
                                     <td class="text-center !px-1">
-                                        <a href="{{ \App\Support\MatrizAnaliticos\LibroMatrizAnalitico::urlEditar($a['idLegajos'], $buscar) }}"
-                                           wire:navigate
-                                           class="se-matriz-list-iconbtn"
-                                           title="Editar calificaciones en matriz">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                            </svg>
-                                            <span class="sr-only">Editar</span>
-                                        </a>
+                                        <x-nav-contexto-estudiante
+                                            destino="matrizAnaliticos.libroMatriz.editar"
+                                            :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::MATRIZ_ANALITICOS"
+                                            :id-legajos="$a['idLegajos']"
+                                            class="inline">
+                                            <span class="se-matriz-list-iconbtn" title="Editar calificaciones en matriz">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                </svg>
+                                                <span class="sr-only">Editar</span>
+                                            </span>
+                                        </x-nav-contexto-estudiante>
                                     </td>
                                     <td class="text-center !px-1">
-                                        <a href="{{ route('matrizAnaliticos.libroMatriz.pdfFrente', ['idLegajos' => $a['idLegajos']]) }}"
-                                           target="_blank"
-                                           rel="noopener noreferrer"
-                                           class="se-matriz-list-iconbtn"
-                                           title="PDF frente del analítico">
+                                        <x-pdf-post
+                                            :action="route('matrizAnaliticos.libroMatriz.pdfFrente')"
+                                            :fields="['idLegajos' => $a['idLegajos']]"
+                                            button-class="se-matriz-list-iconbtn">
                                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                       d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                                             </svg>
                                             <span class="sr-only">PDF frente</span>
-                                        </a>
+                                        </x-pdf-post>
                                     </td>
                                     <td class="text-center !px-1">
-                                        <a href="{{ route('matrizAnaliticos.libroMatriz.pdfReverso', ['idLegajos' => $a['idLegajos']]) }}"
-                                           target="_blank"
-                                           rel="noopener noreferrer"
-                                           class="se-matriz-list-iconbtn"
-                                           title="PDF reverso del analítico">
+                                        <x-pdf-post
+                                            :action="route('matrizAnaliticos.libroMatriz.pdfReverso')"
+                                            :fields="['idLegajos' => $a['idLegajos']]"
+                                            button-class="se-matriz-list-iconbtn">
                                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                       d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                                             </svg>
                                             <span class="sr-only">PDF reverso</span>
-                                        </a>
+                                        </x-pdf-post>
                                     </td>
                                 </tr>
                             @empty

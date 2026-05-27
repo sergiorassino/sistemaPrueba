@@ -2,8 +2,8 @@
     <section class="se-hero">
         <div class="se-hero-inner">
             <div class="min-w-0 space-y-2">
-                <p class="se-eyebrow">Administración</p>
-                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Permisos de usuarios</h2>
+                <p class="se-eyebrow">Configuración · Permisos del sistema</p>
+                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Permisos de Usuarios</h2>
                 <p class="max-w-2xl text-sm text-white/80">
                     Editá los permisos (cadena 0/1) de cada usuario del nivel actual.
                 </p>
@@ -55,7 +55,12 @@
                                     <p class="text-sm font-semibold text-neutral-900">
                                         {{ trim($u->apellido . ', ' . $u->nombre) }}
                                     </p>
-                                    <p class="mt-0.5 text-xs text-neutral-600">DNI: {{ $u->dni }}</p>
+                                    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-neutral-600">
+                                        <span>DNI: {{ $u->dni }}</span>
+                                        <span class="se-pill bg-accent-50 text-neutral-700">
+                                            {{ $u->tipo?->tipo ?? 'Sin rol asignado' }}
+                                        </span>
+                                    </div>
                                 </button>
                             </li>
                         @empty
@@ -80,7 +85,12 @@
                         <p class="mt-1 text-lg font-bold text-neutral-900">
                             {{ trim($profesorSeleccionado->apellido . ', ' . $profesorSeleccionado->nombre) }}
                         </p>
-                        <p class="text-xs text-neutral-600">DNI: {{ $profesorSeleccionado->dni }}</p>
+                        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-neutral-600">
+                            <span>DNI: {{ $profesorSeleccionado->dni }}</span>
+                            <span class="se-pill bg-accent-50 text-neutral-700">
+                                Rol: {{ $profesorSeleccionado->tipo?->tipo ?? 'Sin rol asignado' }}
+                            </span>
+                        </div>
                         <p class="mt-2 text-xs text-neutral-500">Los cambios se guardan al marcar o desmarcar cada permiso.</p>
                     </div>
 

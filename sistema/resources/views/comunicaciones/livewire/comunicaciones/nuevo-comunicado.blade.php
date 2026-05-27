@@ -49,7 +49,7 @@
                                 'border-primary-500 bg-primary-600 text-white' => $bloqueDestinatarios === 'docentes',
                                 'border-accent-200 bg-white text-neutral-700 hover:bg-accent-50' => $bloqueDestinatarios !== 'docentes',
                             ])>
-                        Profesores / Preceptores
+                        Docentes
                     </button>
                 </div>
                 @error('bloqueDestinatarios') <p class="form-error">{{ $message }}</p> @enderror
@@ -162,8 +162,8 @@
                 </div>
             @elseif ($bloqueDestinatarios === 'docentes')
                 <div class="rounded-2xl border border-accent-200 bg-white p-4 shadow-sm sm:p-5">
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">Profesores y preceptores</p>
-                    <p class="mt-1 text-sm text-neutral-600">Elegí el tipo de docente y usá el botón para abrir el listado. Si cambiás entre profesores y preceptores se vacía la selección hasta que vuelvas a elegir.</p>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">Profesores y personal institucional</p>
+                    <p class="mt-1 text-sm text-neutral-600">Elegí el tipo de destinatario y usá el botón para abrir el listado. En «personal institucional» aparecen preceptores, directivos y demás roles que no sean profesor de aula ni «Sin Rol». Si cambiás de tipo se vacía la selección.</p>
 
                     <div class="mt-4">
                         <span class="form-label">Tipo de destinatario</span>
@@ -175,7 +175,7 @@
                                         'border-primary-500 bg-primary-600 text-white' => $tipoDocenteLista === 'profesores',
                                         'border-accent-200 bg-white text-neutral-700 hover:bg-accent-50' => $tipoDocenteLista !== 'profesores',
                                     ])>
-                                Uno o varios profesores
+                                Profesores
                             </button>
                             <button type="button"
                                     wire:click="$set('tipoDocenteLista', 'preceptores')"
@@ -184,7 +184,7 @@
                                         'border-primary-500 bg-primary-600 text-white' => $tipoDocenteLista === 'preceptores',
                                         'border-accent-200 bg-white text-neutral-700 hover:bg-accent-50' => $tipoDocenteLista !== 'preceptores',
                                     ])>
-                                Uno o varios preceptores
+                                Personal
                             </button>
                         </div>
                         @error('tipoDocenteLista') <p class="form-error">{{ $message }}</p> @enderror
@@ -196,7 +196,7 @@
                             <button type="button"
                                     wire:click="abrirModalDocentes"
                                     class="inline-flex items-center justify-center rounded-xl border border-primary-500 bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                                Elegir {{ $tipoDocenteLista === 'preceptores' ? 'preceptores' : 'profesores' }}…
+                                Elegir {{ $tipoDocenteLista === 'preceptores' ? 'personal' : 'profesores' }}…
                             </button>
                             @if (! empty($docentesSeleccionados))
                                 <span class="text-xs font-medium text-neutral-600">{{ count($docentesSeleccionados) }} seleccionado(s)</span>
@@ -438,9 +438,9 @@
             <div class="relative z-10 my-auto flex w-full max-w-xl max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),34rem)]">
                 <div class="border-b border-accent-200 bg-accent-50/60 px-4 py-2.5 sm:px-5 sm:py-3">
                     <p id="com-modal-docentes-titulo" class="text-sm font-bold text-neutral-900">
-                        Elegir {{ $tipoDocenteLista === 'preceptores' ? 'preceptores' : 'profesores' }}
+                        Elegir {{ $tipoDocenteLista === 'preceptores' ? 'personal institucional' : 'profesores' }}
                     </p>
-                    <p class="mt-0.5 text-[11px] leading-snug text-neutral-600">Listado del nivel actual. Podés filtrar por apellido, nombre o DNI.</p>
+                    <p class="mt-0.5 text-[11px] leading-snug text-neutral-600">Listado del nivel actual con el rol de cada persona. Podés filtrar por apellido, nombre, DNI o rol.</p>
                 </div>
 
                 <div class="border-b border-accent-100 bg-white px-4 py-2 sm:px-5 sm:py-2.5">
@@ -474,13 +474,16 @@
                                    class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
                             <span class="min-w-0 flex-1 text-sm leading-tight text-neutral-900">
                                 <span class="font-semibold">{{ $d['label'] }}</span>
+                                @if (! empty($d['rol_label']))
+                                    <span class="ml-1 text-[11px] font-medium leading-tight text-primary-700">{{ $d['rol_label'] }}</span>
+                                @endif
                                 @if (! empty($d['dni']))
                                     <span class="ml-1 text-[11px] font-normal leading-tight text-neutral-400">DNI {{ $d['dni'] }}</span>
                                 @endif
                             </span>
                         </label>
                     @empty
-                        <p class="py-8 text-center text-sm text-neutral-500">No hay docentes con ese rol que coincidan con el filtro.</p>
+                        <p class="py-8 text-center text-sm text-neutral-500">No hay destinatarios que coincidan con el filtro.</p>
                     @endforelse
                 </div>
 

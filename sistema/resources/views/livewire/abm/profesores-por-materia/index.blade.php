@@ -144,10 +144,11 @@
                 @else
                     @if (tienePermiso(11))
                         <div class="border-b border-accent-100 bg-white px-4 py-4">
-                            <label for="se-ppc-nuevo-prof" class="form-label">Agregar docente</label>
+                            <p class="form-label">Agregar docente</p>
                             <div class="mt-1.5 flex flex-col gap-3 sm:flex-row sm:items-end">
                                 <div class="min-w-0 flex-1">
-                                    <select id="se-ppc-nuevo-prof" wire:model="nuevoProfesorId" class="form-select w-full @error('nuevoProfesorId') ring-2 ring-red-400 @enderror">
+                                    <label for="se-ppc-nuevo-prof" class="form-label">Docente</label>
+                                    <select id="se-ppc-nuevo-prof" wire:model="nuevoProfesorId" class="form-select mt-1.5 w-full @error('nuevoProfesorId') ring-2 ring-red-400 @enderror">
                                         <option value="">— Elegir docente —</option>
                                         @foreach ($elegiblesParaSelect as $prof)
                                             <option value="{{ (int) $prof->id }}">
@@ -159,6 +160,18 @@
                                         <div class="mt-1 text-[11px] text-red-700">{{ $message }}</div>
                                     @enderror
                                     @error('selectedMateriaId')
+                                        <div class="mt-1 text-[11px] text-red-700">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <label for="se-ppc-nuevo-siturev" class="form-label">Situación de revista</label>
+                                    <select id="se-ppc-nuevo-siturev" wire:model="nuevaSituRevisId" class="form-select mt-1.5 w-full @error('nuevaSituRevisId') ring-2 ring-red-400 @enderror">
+                                        <option value="">— Elegir situación —</option>
+                                        @foreach ($situacionesRevista as $sr)
+                                            <option value="{{ (int) $sr->id }}">{{ $sr->sitRev }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('nuevaSituRevisId')
                                         <div class="mt-1 text-[11px] text-red-700">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -181,6 +194,7 @@
                                 <thead>
                                 <tr class="border-b border-accent-100 bg-white text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
                                     <th class="px-4 py-2.5">Apellido y nombre</th>
+                                    <th class="px-4 py-2.5 w-60">Situación de revista</th>
                                     @if (tienePermiso(11))
                                         <th class="px-4 py-2.5 w-36 text-right">Acción</th>
                                     @endif
@@ -193,10 +207,27 @@
                                             {{ trim(((string) $row->apellido).', '.((string) $row->nombre)) }}
                                             <span class="ml-2 font-mono text-xs text-neutral-400">#{{ (int) $row->idProfesor }}</span>
                                         </td>
+                                        <td class="px-4 py-2.5">
+                                            @if (tienePermiso(11))
+                                                <select
+                                                    class="form-select w-full text-xs"
+                                                    x-on:change="$wire.actualizarSituacionRevista({{ (int) $row->ppcId }}, $event.target.value)">
+                                                    <option value="" @if ((int) $row->idSituRevis === 0) selected @endif>— Sin definir —</option>
+                                                    @foreach ($situacionesRevista as $sr)
+                                                        <option value="{{ (int) $sr->id }}" @if ((int) $row->idSituRevis === (int) $sr->id) selected @endif>
+                                                            {{ $sr->sitRev }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            @else
+                                                <span class="text-neutral-700">
+                                                    {{ trim((string) ($row->sitRev ?? '')) !== '' ? $row->sitRev : '—' }}
+                                                </span>
+                                            @endif
+                                        </td>
                                         @if (tienePermiso(11))
                                             <td class="px-4 py-2.5 text-right">
-                                                <button type="button" wire:click="quitarProfesor({{ (int) $row->ppcId }})"
-                                                        wire:confirm="¿Quitar esta asignación del docente a la materia?"
+                                                <button type="button" wire:click="confirmarQuitarProfesor({{ (int) $row->ppcId }})"
                                                         class="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50">
                                                     Quitar
                                                 </button>
@@ -212,4 +243,37 @@
             </div>
         </div>
     </div>
+
+    @if ($showConfirmQuitar)
+        <div class="fixed inset-0 z-[60] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm">
+            <div class="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl" @click.stop>
+                <div class="px-6 py-5">
+                    <div class="flex items-start gap-3">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+                            <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="mb-1 text-base font-semibold text-neutral-800">Quitar asignación</h3>
+                            <p class="text-sm text-neutral-600">
+                                ¿Quitar al docente de la materia?
+                                @if ($quitarPpcInfo !== '')
+                                    <span class="mt-1 block font-semibold text-neutral-800">{{ $quitarPpcInfo }}</span>
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 border-t border-accent-200 bg-accent-50/70 px-6 py-4">
+                    <button type="button" wire:click="cerrarConfirmQuitar" class="btn-secondary">Cancelar</button>
+                    <button type="button" wire:click="quitarProfesor" wire:loading.attr="disabled" class="btn-danger">
+                        <span wire:loading.remove wire:target="quitarProfesor">Quitar</span>
+                        <span wire:loading wire:target="quitarProfesor">Quitando…</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

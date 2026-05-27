@@ -62,6 +62,21 @@ Un profesor (`IdTipoProf = 6`) no puede abrir rutas de secretaría (redirección
 
 **Pantalla inicial placeholder:** `portalDocente.home` → vista `resources/views/portal-docente/home.blade.php`.
 
+### Autogestión Docente (rol mixto: Preceptor + Profesor)
+
+Algunos usuarios tienen **dos roles** en el sistema (p. ej. Preceptor y Profesor/a). Como `profesores.IdTipoProf` es único, el login carga el rol "mayor" (Preceptor) y lleva al Menú de Secretaría; quedan sin acceso a sus materias del Menú de Docentes.
+
+Para cubrir ese caso, el Menú de Secretaría incluye un ítem **"Autogestión Docente"** al final del sidebar, **antes** del "Manual del sistema". Se muestra **solo cuando** el usuario actual tiene `IdTipoProf ≠ 6` **y** existe al menos un registro en `ppc` para algún legajo con el **mismo DNI** en el **nivel y ciclo lectivo activos** (`schoolCtx()->idNivel`, `schoolCtx()->idTerlec`).
+
+Al activarse (POST `autogestion.docente.activar` → `AutogestionDocenteController`):
+
+1. Se busca el legajo en `profesores` con el mismo DNI y nivel del contexto que tenga PPC para el ciclo (prioridad: `IdTipoProf = 6`).
+2. Si ese legajo es **distinto** al usuario autenticado, se cambia la identidad de Auth (`Auth::loginUsingId`) y se reescribe `schoolCtx()->idProfesor` para que el Menú de Docentes encuentre sus materias y permisos.
+3. Se setea el override de sesión `school.menu_portal_override = 'docente'` (constantes en `ProfesorMenuPortal::SESSION_OVERRIDE_KEY` / `OVERRIDE_DOCENTE`).
+4. Se redirige a `portalDocente.home`.
+
+Con el override activo, `ProfesorMenuPortal::usaMenuDocentes()` devuelve `true` aunque `IdTipoProf ≠ 6`; el middleware `menu.portal:secretaria` redirige a `portalDocente.home` y el de `menu.portal:docente` deja pasar. **Para volver al Menú de Secretaría hay que cerrar sesión y reingresar** (el logout invalida la sesión y limpia el override).
+
 ---
 
 ## Glosario — qué decir y qué evitar
@@ -101,3 +116,4 @@ En código y PRs, preferir comentarios del tipo:
 - **2026-05-22:** Definición de los tres nombres oficiales; scaffold del menú de Docentes (`layouts/docente.blade.php`, `portalDocente.home`).
 - **2026-05-22:** Redirección post-login y separación de rutas por `IdTipoProf` (6 → Docentes; demás → Secretaría).
 - **2026-05-23:** Menú de Docentes: sección Comunicación institucional (`portalDocente.comunicaciones.*`, mismos componentes que secretaría).
+- **2026-05-26:** "Autogestión Docente" en el Menú de Secretaría (antes del Manual) para usuarios con rol mixto (Preceptor + Profesor): override de sesión `school.menu_portal_override` y cambio de identidad si hay legajo paralelo con PPC. Logout para volver a Secretaría.

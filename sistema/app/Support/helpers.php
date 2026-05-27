@@ -6,6 +6,35 @@ use App\Support\SchoolContext;
 use App\Support\StudentContext;
 use Illuminate\Support\Facades\Storage;
 
+if (! function_exists('se_route_url')) {
+    /**
+     * URL absoluta con el prefijo de APP_URL (subcarpeta en producción).
+     * Evita enlaces a /alumnos/... o /dashboard en la raíz del dominio.
+     */
+    function se_route_url(string $name, mixed $parameters = []): string
+    {
+        return rtrim((string) config('app.url'), '/').route($name, $parameters, false);
+    }
+}
+
+if (! function_exists('tenantSlug')) {
+    /**
+     * Identificador del despliegue (TENANT_SLUG) saneado para rutas de almacenamiento.
+     */
+    function tenantSlug(): string
+    {
+        $slug = trim((string) config('tenant.slug', ''));
+        if ($slug === '') {
+            $slug = 'default';
+        }
+
+        $slug = preg_replace('/[^a-zA-Z0-9\-_]+/', '-', $slug) ?? 'default';
+        $slug = trim((string) $slug, '-');
+
+        return $slug !== '' ? strtolower($slug) : 'default';
+    }
+}
+
 if (! function_exists('schoolCtx')) {
     function schoolCtx(): SchoolContext
     {
@@ -21,8 +50,15 @@ if (! function_exists('studentCtx')) {
 }
 
 if (! function_exists('tienePermiso')) {
+    /**
+     * Permiso concedido en profesores.permisos_ia (cadena 0/1 por orden del catálogo permisos_ia).
+     */
     function tienePermiso(int $orden): bool
     {
+        if ($orden < 0) {
+            return false;
+        }
+
         $profesor = schoolCtx()->profesor();
         if (! $profesor) {
             return false;
@@ -33,7 +69,21 @@ if (! function_exists('tienePermiso')) {
             return false;
         }
 
-        return isset($permisos[$orden]) && $permisos[$orden] === '1';
+        return ($permisos[$orden] ?? '0') === '1';
+    }
+}
+
+if (! function_exists('tienePermisoConfig')) {
+    function tienePermisoConfig(int $orden): bool
+    {
+        return \App\Support\PermisosConfiguracion::tiene($orden);
+    }
+}
+
+if (! function_exists('tieneAlgunPermisoConfiguracion')) {
+    function tieneAlgunPermisoConfiguracion(): bool
+    {
+        return \App\Support\PermisosConfiguracion::tieneAlgunAccesoMenu();
     }
 }
 

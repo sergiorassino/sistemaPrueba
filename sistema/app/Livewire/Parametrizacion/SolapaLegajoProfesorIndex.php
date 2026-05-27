@@ -3,12 +3,18 @@
 namespace App\Livewire\Parametrizacion;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
+use App\Support\PermisosConfiguracion;
 use App\Models\SolapaLegajoProfesor;
 use Livewire\Component;
 
 class SolapaLegajoProfesorIndex extends Component
 {
     use RequiresPermisoConfiguracion;
+
+    protected function permisoConfigOrden(): int
+    {
+        return PermisosConfiguracion::SOLAPAS_LEGAJO_DOCENTE;
+    }
 
     public bool $showModal = false;
 

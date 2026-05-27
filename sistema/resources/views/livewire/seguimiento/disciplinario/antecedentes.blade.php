@@ -10,16 +10,22 @@
                 <p class="text-xs text-white/65">{{ schoolCtx()->nivelNombre() }}</p>
             </div>
             <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
-                <a class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   href="{{ route('seguimiento.disciplinario.antecedentes.pdf', ['idMatricula' => $base->id]) }}">
+                <x-pdf-post
+                    :action="route('seguimiento.disciplinario.antecedentes.pdf')"
+                    :matricula="$base->id"
+                    button-class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20">
                     Imprimir PDF
-                </a>
-                <a href="{{ route('seguimiento.disciplinario', ['curso' => $base->idCursos, 'matricula' => $base->id]) }}"
-                   class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100">
-                    Volver
-                </a>
+                </x-pdf-post>
+                <x-nav-contexto-estudiante
+                    destino="seguimiento.disciplinario"
+                    :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::SEGUIMIENTO_DISCIPLINARIO"
+                    :curso="$base->idCursos"
+                    :matricula="$base->id"
+                    class="inline">
+                    <span class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100">
+                        Volver
+                    </span>
+                </x-nav-contexto-estudiante>
             </div>
         </div>
     </section>

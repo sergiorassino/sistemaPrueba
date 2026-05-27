@@ -425,16 +425,10 @@ class NuevoComunicado extends Component
                 'familia_puede_responder'  => $this->familiaPuedeResponder,
             ], $mediosCanal);
         } elseif ($this->bloqueDestinatarios === 'docentes') {
-            $rolReceptorDoc = $this->tipoDocenteLista === 'preceptores' ? 'preceptor' : 'profesor';
-            if (! CanalesPolicy::puedeIniciar($rolEmisor, $rolReceptorDoc)) {
-                $etiq = $rolReceptorDoc === 'preceptor' ? 'preceptores' : 'profesores';
-                $this->addError('contenido', "Su rol no tiene permiso para iniciar comunicados a {$etiq}.");
-
-                return;
-            }
+            $modoLista = $this->tipoDocenteLista === 'preceptores' ? 'institucional' : 'profesor';
 
             $idsPedidos = array_map(fn ($d) => (int) $d['id'], $this->docentesSeleccionados);
-            $idsProf    = ComunicacionesRepository::filtrarIdsProfesoresPorRolNorm($idsPedidos, $idNivel, $rolReceptorDoc);
+            $idsProf    = ComunicacionesRepository::filtrarIdsProfesoresPorModoSelector($idsPedidos, $idNivel, $modoLista);
             $idsProf    = array_values(array_diff($idsProf, [$idProf]));
 
             if ($idsProf === []) {
@@ -443,7 +437,17 @@ class NuevoComunicado extends Component
                 return;
             }
 
-            $mediosCanal = CanalesPolicy::mediosPermitidos($rolEmisor, $rolReceptorDoc);
+            $rolesTargets = ComunicacionesRepository::rolesNormalizadosUnicosProfesores($idsProf);
+            foreach ($rolesTargets as $rolRec) {
+                if (! CanalesPolicy::puedeIniciar($rolEmisor, $rolRec)) {
+                    $this->addError('contenido', 'Su rol no tiene permiso para iniciar comunicados a uno o más destinatarios seleccionados.');
+
+                    return;
+                }
+            }
+
+            $mediosCanal = ComunicacionesRepository::mediosPermitidosInicioVariosRoles($rolEmisor, $rolesTargets);
+            $rolReceptorDoc = $rolesTargets[0] ?? ($modoLista === 'profesor' ? 'profesor' : 'preceptor');
             if ($mediosCanal === []) {
                 $this->addError('contenido', 'No hay medios habilitados para este tipo de envío. Revise la parametrización de canales.');
 
@@ -534,10 +538,10 @@ class NuevoComunicado extends Component
 
             return;
         }
-        $rolNorm = $this->tipoDocenteLista === 'preceptores' ? 'preceptor' : 'profesor';
+        $modoLista = $this->tipoDocenteLista === 'preceptores' ? 'institucional' : 'profesor';
         $this->modalDocentesLista = ComunicacionesRepository::profesoresDelNivelParaSelector(
             (int) $ctx->idNivel,
-            $rolNorm,
+            $modoLista,
             $this->modalDocentesFiltro,
             800
         );

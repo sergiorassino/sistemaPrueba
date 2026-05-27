@@ -14,6 +14,9 @@ use App\Models\ComPreferencia;
 
 class ComunicacionesRepository
 {
+    /** `profesortipo` «Sin Rol» — excluido de selectores de comunicados. */
+    private const ID_TIPO_SIN_ROL = 1;
+
     /**
      * Verifica si un profesor puede ver un hilo (por ser creador o destinatario),
      * siempre acotado al nivel/terlec del contexto.
@@ -170,13 +173,18 @@ class ComunicacionesRepository
     }
 
     /**
-     * Profesores o preceptores del nivel (para selector con checkboxes), ordenados.
-     * Opcionalmente filtra por texto en apellido, nombre o DNI.
+     * Docentes del nivel para selector con checkboxes (modal de nuevo comunicado).
      *
-     * @return list<array{id:int,label:string,dni:?string}>
+     * @param  'profesor'|'institucional'  $modoLista  `profesor`: solo rol canal profesor;
+     *                                              `institucional`: todo personal con rol distinto de profesor y de «Sin Rol».
+     * @return list<array{id:int,label:string,dni:?string,rol:string,rol_label:string}>
      */
-    public static function profesoresDelNivelParaSelector(int $idNivel, string $rolNormalizado, string $filtro = '', int $limit = 800): array
-    {
+    public static function profesoresDelNivelParaSelector(
+        int $idNivel,
+        string $modoLista,
+        string $filtro = '',
+        int $limit = 800
+    ): array {
         $limit = max(1, min(2000, $limit));
         $t = mb_strtolower(trim($filtro));
 
@@ -185,17 +193,18 @@ class ComunicacionesRepository
             ->where('p.nivel', $idNivel)
             ->orderBy('p.apellido')
             ->orderBy('p.nombre')
-            ->get(['p.id', 'p.apellido', 'p.nombre', 'p.dni', 'pt.tipo']);
+            ->get(['p.id', 'p.apellido', 'p.nombre', 'p.dni', 'p.IdTipoProf', 'pt.tipo']);
 
         $out = [];
         foreach ($rows as $r) {
-            if (CanalesPolicy::normalizarRolProfesor((string) $r->tipo) !== $rolNormalizado) {
+            if (! static::docenteCumpleModoSelector($r, $modoLista)) {
                 continue;
             }
             $label = trim((string) $r->apellido . ', ' . (string) $r->nombre);
             $dni = $r->dni !== null ? (string) $r->dni : null;
+            $rolLabel = trim((string) ($r->tipo ?? ''));
             if ($t !== '') {
-                $blob = mb_strtolower($label . ' ' . ($dni ?? ''));
+                $blob = mb_strtolower($label . ' ' . ($dni ?? '') . ' ' . $rolLabel);
                 if (! str_contains($blob, $t)) {
                     continue;
                 }
@@ -204,9 +213,41 @@ class ComunicacionesRepository
                 'id' => (int) $r->id,
                 'label' => $label,
                 'dni' => $dni,
+                'rol' => CanalesPolicy::normalizarRolProfesor($rolLabel),
+                'rol_label' => $rolLabel !== '' ? $rolLabel : 'Sin rol asignado',
             ];
             if (count($out) >= $limit) {
                 break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Deja solo ids de profesores del nivel que cumplen el modo del selector.
+     *
+     * @param  list<int>  $ids
+     * @param  'profesor'|'institucional'  $modoLista
+     * @return list<int>
+     */
+    public static function filtrarIdsProfesoresPorModoSelector(array $ids, int $idNivel, string $modoLista): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        if ($ids === []) {
+            return [];
+        }
+
+        $rows = DB::table('profesores as p')
+            ->join('profesortipo as pt', 'pt.id', '=', 'p.IdTipoProf')
+            ->where('p.nivel', $idNivel)
+            ->whereIn('p.id', $ids)
+            ->get(['p.id', 'p.IdTipoProf', 'pt.tipo']);
+
+        $out = [];
+        foreach ($rows as $r) {
+            if (static::docenteCumpleModoSelector($r, $modoLista)) {
+                $out[] = (int) $r->id;
             }
         }
 
@@ -240,6 +281,43 @@ class ComunicacionesRepository
         }
 
         return $out;
+    }
+
+    /**
+     * Medios permitidos al iniciar un comunicado hacia varios roles receptores (intersección).
+     *
+     * @param  list<string>  $rolesReceptor
+     * @return list<string>
+     */
+    public static function mediosPermitidosInicioVariosRoles(string $rolEmisor, array $rolesReceptor): array
+    {
+        if ($rolesReceptor === []) {
+            return [];
+        }
+
+        $medios = null;
+        foreach ($rolesReceptor as $rolRec) {
+            $m = CanalesPolicy::mediosPermitidos($rolEmisor, $rolRec);
+            $medios = $medios === null ? $m : array_values(array_intersect($medios, $m));
+        }
+
+        return $medios ?? [];
+    }
+
+    /**
+     * @param  'profesor'|'institucional'  $modoLista
+     */
+    private static function docenteCumpleModoSelector(object $r, string $modoLista): bool
+    {
+        if ((int) ($r->IdTipoProf ?? 0) === self::ID_TIPO_SIN_ROL) {
+            return false;
+        }
+
+        $rolNorm = CanalesPolicy::normalizarRolProfesor((string) ($r->tipo ?? ''));
+
+        return $modoLista === 'profesor'
+            ? $rolNorm === 'profesor'
+            : $rolNorm !== 'profesor';
     }
 
     /**
@@ -993,13 +1071,16 @@ class ComunicacionesRepository
 
             // 4. Destinatarios: profesores (cuando la familia escribe a la escuela)
             foreach (($datos['destinatarios_profesores'] ?? []) as $idProf) {
-                $prof = Profesor::find($idProf);
+                $prof = Profesor::with('tipo')->find($idProf);
+                $rolDest = $prof
+                    ? CanalesPolicy::rolDeProfesor($prof)
+                    : (string) ($datos['rol_receptor'] ?? 'profesor');
                 ComMensajeDestinatario::create([
                     'id_mensaje'        => $mensaje->id,
                     'id_hilo'           => $hilo->id,
                     'tipo_destinatario' => 'profesor',
                     'id_profesor'       => $idProf,
-                    'rol_destinatario'  => $datos['rol_receptor'],
+                    'rol_destinatario'  => $rolDest,
                     'nombre_snapshot'   => $prof ? trim("{$prof->apellido}, {$prof->nombre}") : null,
                     'dni_snapshot'      => $prof?->dni ?? null,
                 ]);

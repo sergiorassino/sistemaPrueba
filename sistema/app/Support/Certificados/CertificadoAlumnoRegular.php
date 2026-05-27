@@ -234,9 +234,20 @@ final class CertificadoAlumnoRegular
      *     fechaEmision: string
      * }  $datos
      */
-    public static function urlPdf(int $idLegajos, array $datos): string
+    /**
+     * @param  array{
+     *     iniFin: int,
+     *     fechIniFin: string,
+     *     prePor: string,
+     *     prePorDni: string,
+     *     preAnte: string,
+     *     fechaEmision: string
+     * }  $datos
+     * @return array{action: string, fields: array<string, mixed>}
+     */
+    public static function pdfPost(int $idLegajos, array $datos): array
     {
-        return route('certificados.alumnoRegular.pdf', [
+        return \App\Support\Pdf\PdfPost::datos(route('certificados.alumnoRegular.pdf'), [
             'idLegajos' => $idLegajos,
             'iniFin' => (int) $datos['iniFin'],
             'fechIniFin' => $datos['fechIniFin'],

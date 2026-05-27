@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\PermisosIaCatalog;
 use App\Models\Matricula;
 use App\Models\Sancion;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -12,8 +13,15 @@ use Illuminate\Support\Str;
 
 class AntecedentesDisciplinariosPdfController extends Controller
 {
-    public function __invoke(Request $request, int $idMatricula)
+    public function __invoke(Request $request)
     {
+        abort_unless(tienePermiso(PermisosIaCatalog::SEGUIMIENTO_DISCIPLINARIO), 403, 'Sin permiso para seguimiento disciplinario.');
+
+        $validated = $request->validate([
+            'matricula' => ['required', 'integer', 'min:1'],
+        ]);
+        $idMatricula = (int) $validated['matricula'];
+
         $key = 'antecedentes-disciplinarios-pdf:'.(auth()->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 30)) {
             abort(429, 'Demasiadas solicitudes. Intente nuevamente en breve.');

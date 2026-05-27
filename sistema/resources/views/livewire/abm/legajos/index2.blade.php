@@ -146,22 +146,36 @@
                             </td>
                             <td class="table-cell align-top">
                                 @if (tienePermiso(2))
-                                    <a href="{{ route('abm.legajos.edit', ['id' => $l->id, 'matriculas' => 1]) }}"
-                                       class="btn-primary btn-sm whitespace-nowrap">
-                                        Gestionar matrículas
-                                    </a>
+                                    <x-nav-contexto-estudiante
+                                        destino="abm.legajos.edit"
+                                        :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::LEGAJO_ABM"
+                                        :id-legajos="$l->id"
+                                        :abrir-matriculas="true"
+                                        class="inline">
+                                        <span class="btn-primary btn-sm whitespace-nowrap">Gestionar matrículas</span>
+                                    </x-nav-contexto-estudiante>
                                 @endif
                             </td>
                             <td class="table-cell text-right">
                                 <div class="flex flex-col items-stretch justify-end gap-2 sm:flex-row sm:items-center">
                                     @if (tienePermiso(2))
-                                        <a data-focus-target href="{{ route('abm.legajos.edit', ['id' => $l->id]) }}"
-                                           class="btn-secondary btn-sm">Editar</a>
+                                        <x-nav-contexto-estudiante
+                                            destino="abm.legajos.edit"
+                                            :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::LEGAJO_ABM"
+                                            :id-legajos="$l->id"
+                                            class="inline">
+                                            <span data-focus-target class="btn-secondary btn-sm">Editar</span>
+                                        </x-nav-contexto-estudiante>
                                         <button wire:click="confirmDelete({{ $l->id }})"
                                                 class="btn-danger btn-sm">Eliminar</button>
                                     @else
-                                        <a data-focus-target href="{{ route('abm.legajos.edit', ['id' => $l->id]) }}"
-                                           class="btn-secondary btn-sm">Ver</a>
+                                        <x-nav-contexto-estudiante
+                                            destino="abm.legajos.edit"
+                                            :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::LEGAJO_ABM"
+                                            :id-legajos="$l->id"
+                                            class="inline">
+                                            <span data-focus-target class="btn-secondary btn-sm">Ver</span>
+                                        </x-nav-contexto-estudiante>
                                     @endif
                                 </div>
                             </td>

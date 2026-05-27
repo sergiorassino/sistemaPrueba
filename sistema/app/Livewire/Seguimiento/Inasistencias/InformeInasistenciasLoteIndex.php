@@ -171,7 +171,8 @@ class InformeInasistenciasLoteIndex extends Component
             ->filter(fn ($v) => (int) $v > 0)
             ->count();
 
-        $pdfLoteUrl = null;
+        $idsPdfLote = [];
+        $puedePdfLote = false;
         if ($this->puedeGenerarPdfLote() && $this->cursoId) {
             $ids = collect($this->matriculasSeleccionadas)
                 ->map(fn ($v) => (int) $v)
@@ -180,10 +181,8 @@ class InformeInasistenciasLoteIndex extends Component
                 ->values();
 
             if ($ids->count() <= InformeInasistenciasLoteParams::MAX_MATRICULAS) {
-                $pdfLoteUrl = route('seguimiento.inasistencias.informe.lote.pdf', [
-                    'curso' => (int) $this->cursoId,
-                    'matriculas' => $ids->implode(','),
-                ]);
+                $idsPdfLote = $ids->all();
+                $puedePdfLote = $idsPdfLote !== [];
             }
         }
 
@@ -192,7 +191,8 @@ class InformeInasistenciasLoteIndex extends Component
             'cursoActivo' => $this->cursoActivo(),
             'matriculas' => $matriculas,
             'cantidadSeleccionados' => $cantidadSeleccionados,
-            'pdfLoteUrl' => $pdfLoteUrl,
+            'idsPdfLote' => $idsPdfLote,
+            'puedePdfLote' => $puedePdfLote,
             'todasMarcadas' => $this->todasLasMatriculasMarcadas(),
             'hayMatriculas' => $matriculas->isNotEmpty(),
             'maxMatriculasPdf' => InformeInasistenciasLoteParams::MAX_MATRICULAS,

@@ -147,9 +147,9 @@ final class ConstanciaDocumentos
      *     fechemis: string
      * }  $datos
      */
-    public static function urlPdf(int $idLegajos, array $datos): string
+    public static function pdfPost(int $idLegajos, array $datos): array
     {
-        return route('certificados.constanciaDocumentos.pdf', [
+        return \App\Support\Pdf\PdfPost::datos(route('certificados.constanciaDocumentos.pdf'), [
             'idLegajos' => $idLegajos,
             'certifde' => $datos['certifde'],
             'otorpor' => $datos['otorpor'],

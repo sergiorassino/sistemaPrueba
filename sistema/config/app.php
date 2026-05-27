@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Asset URL (CSS/JS de Vite, imágenes estáticas)
+    |--------------------------------------------------------------------------
+    |
+    | En despliegue bajo subcarpeta (sin /public en la URL), suele coincidir con APP_URL.
+    | Con subcarpeta, AppServiceProvider aplica URL::forceRootUrl; Livewire se ajusta en LivewireDeploymentScripts.
+    |
+    */
+
+    'asset_url' => env('ASSET_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

@@ -90,17 +90,26 @@
                     @if ($cantidadSeleccionados > 0)
                         <span class="se-pill">{{ $cantidadSeleccionados }} seleccionado{{ $cantidadSeleccionados === 1 ? '' : 's' }}</span>
                     @endif
-                    @if ($pdfLoteUrl)
-                        <a href="{{ $pdfLoteUrl }}"
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500">
-                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            Generar informes (PDF)
-                        </a>
+                    @if ($puedePdfLote ?? false)
+                        <form method="POST"
+                              action="{{ route('seguimiento.inasistencias.informe.lote.pdf') }}"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="inline">
+                            @csrf
+                            <input type="hidden" name="curso" value="{{ (int) $cursoId }}">
+                            @foreach ($idsPdfLote as $idMat)
+                                <input type="hidden" name="matriculas[]" value="{{ (int) $idMat }}">
+                            @endforeach
+                            <button type="submit"
+                                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                Generar informes (PDF)
+                            </button>
+                        </form>
                     @elseif ($cantidadSeleccionados > $maxMatriculasPdf)
                         <p class="text-xs text-amber-800">
                             Máximo {{ $maxMatriculasPdf }} estudiantes por PDF.
@@ -142,12 +151,12 @@
                                     @endif
                                 </td>
                                 <td class="py-2 text-right align-middle">
-                                    <a href="{{ route('seguimiento.inasistencias.informe.pdf', ['idMatricula' => $mat->id]) }}"
-                                       target="_blank"
-                                       rel="noopener noreferrer"
-                                       class="inline-flex items-center justify-end gap-1.5 rounded-xl border border-accent-200 bg-white px-3 py-2 text-xs font-semibold text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-accent-50">
+                                    <x-pdf-post
+                                        :action="route('seguimiento.inasistencias.informe.pdf')"
+                                        :matricula="$mat->id"
+                                        button-class="inline-flex items-center justify-end gap-1.5 rounded-xl border border-accent-200 bg-white px-3 py-2 text-xs font-semibold text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-accent-50">
                                         PDF
-                                    </a>
+                                    </x-pdf-post>
                                 </td>
                             </tr>
                         @empty

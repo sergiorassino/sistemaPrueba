@@ -32,8 +32,13 @@ class MateriasAdeudadasNotasIndex extends Component
 
     public string $folio = '';
 
-    public function mount(int $idLegajos): void
+    public function mount(): void
     {
+        $idLegajos = \App\Support\Navegacion\ContextoEstudianteSesion::legajo(
+            \App\Support\Navegacion\ContextoEstudianteSesion::EXAMENES_MATERIAS_ADEUDADAS,
+        );
+        abort_if($idLegajos === null, 404);
+
         $ctx = schoolCtx();
         if (! $ctx->isValid() || ! MateriasAdeudadasAlumnosListado::esNivelSecundario($ctx)) {
             abort(403, 'Este módulo requiere contexto de Secundario.');

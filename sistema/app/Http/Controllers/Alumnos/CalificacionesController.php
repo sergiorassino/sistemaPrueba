@@ -25,7 +25,9 @@ class CalificacionesController extends Controller
 
         $data = ConsultaCalificacionesAlumno::build();
         if (! $data['ok']) {
-            abort(404, $data['error'] ?? 'No disponible.');
+            return response()->view('errors.alumno-pdf', [
+                'mensaje' => $data['error'] ?? 'No hay datos disponibles para este ciclo lectivo.',
+            ], 422);
         }
 
         $slugBase = trim((string) ($data['alumnoLinea'] ?? ''));

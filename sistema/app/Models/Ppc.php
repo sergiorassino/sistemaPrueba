@@ -15,4 +15,14 @@ class Ppc extends Model
         'idProfesor',
         'idSituRevis',
     ];
+
+    public function profesor()
+    {
+        return $this->belongsTo(Profesor::class, 'idProfesor');
+    }
+
+    public function situacionRevista()
+    {
+        return $this->belongsTo(SituacionRevista::class, 'idSituRevis');
+    }
 }

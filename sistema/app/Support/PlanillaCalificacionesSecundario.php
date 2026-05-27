@@ -15,6 +15,13 @@ final class PlanillaCalificacionesSecundario
     /** Cantidad de filas de referencia para calibrar el alto de celda en una hoja A4 vertical. */
     public const FILAS_REFERENCIA_DISENO = 35;
 
+    /**
+     * Cantidad objetivo de filas por hoja para dimensionar el alto de fila en la planilla TCPDF.
+     * Si el curso tiene menos alumnos, las filas se calculan como si hubiese esta cantidad
+     * (deja aire al pie); si tiene más, se sigue compactando dinámicamente.
+     */
+    public const FILAS_OBJETIVO_PDF = 42;
+
     /** Factor sobre padding / interlineado de filas de datos (1.44 ≈ +44 % sobre base compacta). */
     public const FACTOR_ALTO_FILA = 1.44;
 
@@ -294,6 +301,18 @@ final class PlanillaCalificacionesSecundario
         $ahorroNotasPct -= (8 * $wEvPct) + (2 * $wJisPct) + $wDicPct * 2 + $wPromPct;
         $wOrdPct = 2.5;
         $wEcPct = (19.54 - $wOrdPct) + $ahorroNotasPct;
+
+        // Reducción adicional del 10 % sobre el ancho de cada celda de notas para
+        // que la tabla no se salga del margen derecho de la hoja A4. Se aplica
+        // después del cálculo de $ahorroNotasPct para NO redistribuir este recorte
+        // al ancho de la columna del estudiante: el espacio liberado queda como
+        // margen libre a la derecha de la planilla.
+        $reduccionExtraNotas = 0.9;
+        $wEvPct *= $reduccionExtraNotas;
+        $wJisPct *= $reduccionExtraNotas;
+        $wDicPct *= $reduccionExtraNotas;
+        $wFebPct *= $reduccionExtraNotas;
+        $wPromPct *= $reduccionExtraNotas;
 
         return [
             'ord' => $wOrdPct,

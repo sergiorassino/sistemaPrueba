@@ -2,15 +2,19 @@
 
 namespace App\Livewire\Seguimiento\Disciplinario;
 
+use App\Livewire\Seguimiento\Disciplinario\Concerns\RequiresPermisoSeguimientoDisciplinario;
 use App\Models\Curso;
 use App\Models\Matricula;
 use App\Models\Sancion;
+use App\Support\Navegacion\ContextoEstudianteSesion;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class DisciplinarioIndex extends Component
 {
+    use RequiresPermisoSeguimientoDisciplinario;
+
     public int|string $idCurso = '';
     public int|string $idMatricula = '';
 
@@ -20,19 +24,30 @@ class DisciplinarioIndex extends Component
 
     public function mount(): void
     {
-        $this->idCurso = (string) request()->query('curso', '');
-        $this->idMatricula = (string) request()->query('matricula', '');
+        $ctx = ContextoEstudianteSesion::leer(ContextoEstudianteSesion::SEGUIMIENTO_DISCIPLINARIO);
+        $this->idCurso = (string) ($ctx['curso'] ?? '');
+        $this->idMatricula = (string) ($ctx['matricula'] ?? '');
+    }
+
+    private function persistirContextoEnSesion(): void
+    {
+        ContextoEstudianteSesion::fijar(ContextoEstudianteSesion::SEGUIMIENTO_DISCIPLINARIO, [
+            'curso' => (int) $this->idCurso ?: null,
+            'matricula' => (int) $this->idMatricula ?: null,
+        ]);
     }
 
     public function updatedIdCurso(mixed $value): void
     {
         $this->idCurso = is_scalar($value) ? (string) $value : '';
         $this->idMatricula = '';
+        $this->persistirContextoEnSesion();
     }
 
     public function updatedIdMatricula(mixed $value): void
     {
         $this->idMatricula = is_scalar($value) ? (string) $value : '';
+        $this->persistirContextoEnSesion();
     }
 
     /** @return Collection<int, Curso> */

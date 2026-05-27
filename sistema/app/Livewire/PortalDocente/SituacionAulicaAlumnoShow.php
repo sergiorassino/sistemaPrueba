@@ -28,10 +28,15 @@ class SituacionAulicaAlumnoShow extends Component
 
     public bool $mostrarFormNuevo = false;
 
-    public function mount(int $curso, int $materia, int $matricula): void
+    public function mount(int $curso, int $materia): void
     {
         CuadernoSeguimientoAulicoDocente::abortSiNoEsSecundario();
         CuadernoSeguimientoAulicoDocente::abortSiProfesorSinMateria($materia, $curso);
+
+        $matricula = \App\Support\Navegacion\ContextoEstudianteSesion::matricula(
+            \App\Support\Navegacion\ContextoEstudianteSesion::PORTAL_DOCENTE_CUADERNO,
+        );
+        abort_if($matricula === null, 404);
 
         $this->cursoId = $curso;
         $this->materiaId = $materia;

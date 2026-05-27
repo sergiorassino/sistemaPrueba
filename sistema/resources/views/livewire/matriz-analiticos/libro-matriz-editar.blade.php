@@ -19,11 +19,15 @@
                     @endif
                 </div>
                 <div class="flex shrink-0 flex-wrap gap-1.5">
-                    <a href="{{ \App\Support\MatrizAnaliticos\LibroMatrizAnalitico::urlDatosAdicionales($idLegajos, $buscarRetorno) }}"
-                       wire:navigate
-                       class="inline-flex items-center justify-center rounded-lg border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20">
-                        Datos adicionales
-                    </a>
+                    <x-nav-contexto-estudiante
+                        destino="matrizAnaliticos.libroMatriz.datosAdicionales"
+                        :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::MATRIZ_ANALITICOS"
+                        :id-legajos="$idLegajos"
+                        class="inline">
+                        <span class="inline-flex items-center justify-center rounded-lg border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20">
+                            Datos adicionales
+                        </span>
+                    </x-nav-contexto-estudiante>
                     <button type="button"
                             wire:click="solicitarVolver"
                             class="inline-flex items-center justify-center gap-1 rounded-lg border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">

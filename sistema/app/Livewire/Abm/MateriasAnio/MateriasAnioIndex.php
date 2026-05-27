@@ -3,6 +3,7 @@
 namespace App\Livewire\Abm\MateriasAnio;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
+use App\Support\PermisosConfiguracion;
 use App\Models\Curso;
 use App\Models\Curplan;
 use App\Models\Matplan;
@@ -16,6 +17,11 @@ use Livewire\Component;
 class MateriasAnioIndex extends Component
 {
     use RequiresPermisoConfiguracion;
+
+    protected function permisoConfigOrden(): int
+    {
+        return PermisosConfiguracion::MATERIAS_ANIO;
+    }
 
     public bool $showConfirm = false;
     public ?int $deleteId = null;

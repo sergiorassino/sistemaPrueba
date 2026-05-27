@@ -26,7 +26,6 @@ return new class extends Migration
 
         $permisos = [
             ['id' => 1, 'orden' => 0, 'tema' => 'ADMINISTRACIÓN', 'descripcion' => 'Administrar permisos del portal de gestión (sistema nuevo).'],
-            ['id' => 2, 'orden' => 1, 'tema' => 'PARAMETRIZACIÓN', 'descripcion' => 'Términos lectivos, niveles, cursos, planes, materias del año, legajos de docentes y parametrización relacionada.'],
             ['id' => 3, 'orden' => 2, 'tema' => 'LEGAJOS ESTUDIANTES', 'descripcion' => 'Crear, editar y eliminar legajos de estudiantes; gestionar matrículas.'],
             ['id' => 4, 'orden' => 3, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Ver la bandeja de comunicados y los hilos de conversación.'],
             ['id' => 5, 'orden' => 4, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Iniciar nuevos comunicados hacia familias.'],
@@ -39,7 +38,7 @@ return new class extends Migration
             ['id' => 12, 'orden' => 11, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Crear, editar y eliminar legajos de docentes; asignar y quitar docentes en materias (ppc).'],
             ['id' => 13, 'orden' => 12, 'tema' => 'EXÁMENES', 'descripcion' => 'Módulo de exámenes: materias adeudadas, gestión, listados y borrado de inscripciones.'],
             ['id' => 14, 'orden' => 13, 'tema' => 'HORARIOS', 'descripcion' => 'Configuración de horarios (turnos, días, reloj) y carga de horas cátedra por docente.'],
-            ['id' => 15, 'orden' => 14, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Menú Configuración: términos lectivos, niveles, legajos, parámetros, planes, cursos, materias y notificaciones push.'],
+            ['id' => 15, 'orden' => 14, 'tema' => 'ADMINISTRACIÓN', 'descripcion' => 'Consultar permisos concedidos por usuario (módulo Permisos por Usuario).'],
         ];
 
         foreach ($permisos as $permiso) {

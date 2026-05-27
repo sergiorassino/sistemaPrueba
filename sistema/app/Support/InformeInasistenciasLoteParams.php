@@ -14,11 +14,22 @@ final class InformeInasistenciasLoteParams
     public const MAX_MATRICULAS = 50;
 
     /**
+     * @param  list<int>  $idsSolicitados
      * @return list<int> IDs de matrícula en el curso/contexto, orden apellido y nombre.
      */
-    public static function resolverIdsMatriculas(string $matriculasParam, int $cursoId): array
+    public static function resolverIdsMatriculasDesdeLista(array $idsSolicitados, int $cursoId): array
     {
-        if ($cursoId <= 0 || trim($matriculasParam) === '') {
+        if ($cursoId <= 0) {
+            return [];
+        }
+
+        $parsed = collect($idsSolicitados)
+            ->map(fn ($v) => (int) $v)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($parsed->isEmpty() || $parsed->count() > self::MAX_MATRICULAS) {
             return [];
         }
 
@@ -31,16 +42,6 @@ final class InformeInasistenciasLoteParams
             ->exists();
 
         if (! $cursoOk) {
-            return [];
-        }
-
-        $parsed = collect(explode(',', $matriculasParam))
-            ->map(fn ($v) => (int) trim((string) $v))
-            ->filter(fn ($id) => $id > 0)
-            ->unique()
-            ->values();
-
-        if ($parsed->isEmpty() || $parsed->count() > self::MAX_MATRICULAS) {
             return [];
         }
 
@@ -81,5 +82,24 @@ final class InformeInasistenciasLoteParams
         });
 
         return $ordenados;
+    }
+
+    /**
+     * @return list<int>
+     */
+    public static function resolverIdsMatriculas(string $matriculasParam, int $cursoId): array
+    {
+        if ($cursoId <= 0 || trim($matriculasParam) === '') {
+            return [];
+        }
+
+        $parsed = collect(explode(',', $matriculasParam))
+            ->map(fn ($v) => (int) trim((string) $v))
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        return self::resolverIdsMatriculasDesdeLista($parsed, $cursoId);
     }
 }

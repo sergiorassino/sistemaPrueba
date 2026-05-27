@@ -44,10 +44,17 @@
                                     {{ $a->dni ?: '—' }}
                                 </td>
                                 <td class="whitespace-nowrap text-right">
-                                    <a href="{{ route('portalDocente.cuadernoSeguimiento.alumno', ['curso' => $cursoId, 'materia' => $materiaId, 'matricula' => $a->id]) }}"
-                                       class="inline-flex items-center justify-center rounded-xl border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 shadow-sm hover:border-primary-500 hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                                        Ver
-                                    </a>
+                                    <x-nav-contexto-estudiante
+                                        destino="portalDocente.cuadernoSeguimiento.alumno"
+                                        :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::PORTAL_DOCENTE_CUADERNO"
+                                        :matricula="$a->id"
+                                        :curso="$cursoId"
+                                        :materia="$materiaId"
+                                        class="inline">
+                                        <span class="inline-flex items-center justify-center rounded-xl border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 shadow-sm hover:border-primary-500 hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                                            Ver
+                                        </span>
+                                    </x-nav-contexto-estudiante>
                                 </td>
                             </tr>
                         @endforeach

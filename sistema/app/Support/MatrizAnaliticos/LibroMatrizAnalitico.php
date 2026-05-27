@@ -483,19 +483,13 @@ final class LibroMatrizAnalitico
         return route('matrizAnaliticos.libroMatriz', self::queryFiltroListado($buscar));
     }
 
-    public static function urlEditar(int $idLegajos, ?string $buscar = null): string
+    public static function rutaEditar(): string
     {
-        return route('matrizAnaliticos.libroMatriz.editar', [
-            'idLegajos' => $idLegajos,
-            ...self::queryFiltroListado($buscar),
-        ]);
+        return route('matrizAnaliticos.libroMatriz.editar', self::queryFiltroListado(null));
     }
 
-    public static function urlDatosAdicionales(int $idLegajos, ?string $buscar = null): string
+    public static function rutaDatosAdicionales(): string
     {
-        return route('matrizAnaliticos.libroMatriz.datosAdicionales', [
-            'idLegajos' => $idLegajos,
-            ...self::queryFiltroListado($buscar),
-        ]);
+        return route('matrizAnaliticos.libroMatriz.datosAdicionales', self::queryFiltroListado(null));
     }
 }

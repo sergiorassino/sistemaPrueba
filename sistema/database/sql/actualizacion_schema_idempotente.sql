@@ -383,7 +383,7 @@ CALL sp_add_column_if_missing('profesores', 'permisos_ia', 'varchar(50) NULL DEF
 
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES
 (1, 0, 'ADMINISTRACIÓN', 'Administrar permisos del portal de gestión (sistema nuevo).'),
-(2, 1, 'PARAMETRIZACIÓN', 'Términos lectivos, niveles, cursos, planes, materias del año, legajos de docentes y parametrización relacionada.'),
+(2, 1, 'ASISTENCIA ESTUDIANTES', 'Toma de asistencia a clase por curso, fecha y tipo (clase / educación física).'),
 (3, 2, 'LEGAJOS ESTUDIANTES', 'Crear, editar y eliminar legajos de estudiantes; gestionar matrículas.'),
 (4, 3, 'COMUNICACIONES', 'Ver la bandeja de comunicados y los hilos de conversación.'),
 (5, 4, 'COMUNICACIONES', 'Iniciar nuevos comunicados hacia familias.'),
@@ -396,7 +396,21 @@ INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES
 (12, 11, 'LEGAJOS DOCENTES', 'Crear, editar y eliminar legajos de docentes; asignar y quitar docentes en materias (ppc).'),
 (13, 12, 'EXÁMENES', 'Módulo de exámenes: materias adeudadas, gestión, listados y borrado de inscripciones.'),
 (14, 13, 'HORARIOS', 'Configuración de horarios (turnos, días, reloj) y carga de horas cátedra por docente.'),
-(15, 14, 'CONFIGURACIÓN', 'Menú Configuración: términos lectivos, niveles, legajos, parámetros, planes, cursos, materias y notificaciones push.'),
+(15, 14, 'ADMINISTRACIÓN', 'Consultar permisos concedidos por usuario (módulo Permisos por Usuario).'),
+(17, 15, 'CALIFICACIONES SECUNDARIO', 'Cierre anual: historial de calificaciones y pasaje al matriz (Dic / Feb).'),
+(18, 16, 'MATRÍZ Y ANALÍTICOS', 'Libro matriz, pase y certificado analítico: consulta y edición de calificaciones en matriz.'),
+(27, 25, 'CONFIGURACIÓN', 'Términos lectivos.'),
+(28, 26, 'CONFIGURACIÓN', 'Niveles educativos.'),
+(29, 27, 'CONFIGURACIÓN', 'Campos activos del legajo del estudiante.'),
+(30, 28, 'CONFIGURACIÓN', 'Solapas del legajo del estudiante.'),
+(31, 29, 'CONFIGURACIÓN', 'Campos activos del legajo del docente.'),
+(32, 30, 'CONFIGURACIÓN', 'Solapas del legajo del docente.'),
+(33, 31, 'CONFIGURACIÓN', 'Parámetros del sistema.'),
+(34, 32, 'CONFIGURACIÓN', 'Notificaciones push (suscripción en este dispositivo).'),
+(35, 33, 'CONFIGURACIÓN', 'Gestión de planes de estudio.'),
+(36, 34, 'CONFIGURACIÓN', 'Gestión de cursos y materias del plan.'),
+(37, 35, 'CONFIGURACIÓN', 'Gestión de cursos / grados / salas del año.'),
+(38, 36, 'CONFIGURACIÓN', 'Gestión de asignaturas del año.'),
 (19, 17, 'CERTIFICADOS', 'Certificado escolar de alumno/a regular: listado de matriculados del año en curso y emisión de PDF.'),
 (20, 18, 'CERTIFICADOS', 'Constancia de certificado de estudios en trámite: listado de matriculados y emisión de PDF.'),
 (21, 19, 'CERTIFICADOS', 'Constancia de documentos: listado de matriculados y emisión de PDF.'),
@@ -404,7 +418,9 @@ INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES
 (23, 21, 'CERTIFICADOS', 'Pase parcial: listado de legajos de nivel medio, solicitud y emisión de PDF.'),
 (24, 22, 'CERTIFICADOS', 'Solicitud de pase: listado de legajos de nivel medio, datos en paseprovisorio y emisión de PDF.'),
 (25, 23, 'INASISTENCIAS DOCENTES', 'Gestión de inasistencias docentes: cargos, registros, informes por bimestre y PDF.'),
-(26, 24, 'ASISTENCIA ESTUDIANTES', 'Importar inasistencias de estudiantes desde CSV CIDI/GE (InasistenciasDetalle).')
+(26, 24, 'ASISTENCIA ESTUDIANTES', 'Importar inasistencias de estudiantes desde CSV CIDI/GE (InasistenciasDetalle).'),
+(39, 37, 'SEGUIMIENTO DISCIPLINARIO', 'Registro de sanciones, antecedentes disciplinarios e impresión de comunicados.'),
+(40, 38, 'ASISTENCIA ESTUDIANTES', 'Gestión de inasistencias del estudiante: alta, edición, baja e informe individual en PDF.')
 ON DUPLICATE KEY UPDATE
   `orden` = VALUES(`orden`),
   `tema` = VALUES(`tema`),

@@ -24,10 +24,11 @@
                    class="inline-flex items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
                     Volver
                 </a>
-                <button type="button" wire:click="save" wire:loading.attr="disabled"
+                <button type="button" wire:click="save" wire:loading.attr="disabled" wire:target="save,logo"
                         class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 disabled:opacity-60">
-                    <span wire:loading.remove wire:target="save">Guardar</span>
+                    <span wire:loading.remove wire:target="save,logo">Guardar</span>
                     <span wire:loading wire:target="save">Guardando…</span>
+                    <span wire:loading wire:target="logo">Subiendo logo…</span>
                 </button>
             </div>
         </div>
@@ -119,6 +120,11 @@
                         <label class="form-label">Subir logo</label>
                         <input wire:model="logo" type="file" accept="image/jpeg,image/png"
                                class="form-input mt-1.5 @error('logo') border-red-400 @enderror"
+                               x-on:livewire-upload-error.window="
+                                   if ($event.detail?.property === 'logo') {
+                                       $wire.onLogoUploadFailed();
+                                   }
+                               "
                                x-on:change="
                                    const file = $event.target.files?.[0];
                                    if (! file || ! file.type.startsWith('image/')) return;

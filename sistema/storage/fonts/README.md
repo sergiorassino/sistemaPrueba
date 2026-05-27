@@ -1,11 +1,11 @@
 # Fuentes para PDFs TCPDF
 
-Colocar aquí los archivos TrueType de **Arial** para que los PDF generados con TCPDF usen esa tipografía (UTF-8):
+Colocar aquí los archivos TrueType de **Arial** (desarrollo local y producción):
 
-- `arial.ttf` (regular) — obligatorio para Arial real
+- `arial.ttf` (regular) — obligatorio para Arial en PDFs TCPDF
 - `arialbd.ttf` (negrita) — opcional
 
-En Windows el sistema también puede tomarlos de `C:\Windows\Fonts\` si no están en esta carpeta.
+El código **solo** lee esta carpeta (`storage/fonts/`) o, en su defecto, `resources/fonts/`. No usa fuentes de Windows ni de `/usr/share/fonts/`.
 
 Sin `arial.ttf`, TCPDF usará `helvetica` (sustituto limitado para tildes y ñ).
 

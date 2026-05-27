@@ -2,15 +2,19 @@
 
 namespace App\Livewire\Seguimiento\Inasistencias;
 
+use App\Livewire\Seguimiento\Inasistencias\Concerns\RequiresPermisoInasistenciasEstudiantesGestion;
 use App\Models\Inasistencia;
 use App\Models\InasistenciaValor;
 use App\Models\Matricula;
+use App\Support\Navegacion\ContextoEstudianteSesion;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class InasistenciaForm extends Component
 {
+    use RequiresPermisoInasistenciasEstudiantesGestion;
+
     public ?int $id = null;
 
     public int|string $idMatricula = '';
@@ -51,7 +55,9 @@ class InasistenciaForm extends Component
             return;
         }
 
-        $this->idMatricula = (string) request()->query('matricula', '');
+        $id = ContextoEstudianteSesion::matricula(ContextoEstudianteSesion::SEGUIMIENTO_INASISTENCIAS);
+        abort_if($id === null, 404);
+        $this->idMatricula = (string) $id;
         $this->fecha = now()->format('Y-m-d');
         $this->just = 'N';
     }
@@ -160,10 +166,12 @@ class InasistenciaForm extends Component
             session()->flash('success', 'Inasistencia registrada.');
         }
 
-        return redirect()->route('seguimiento.inasistencias', [
-            'curso' => $m->idCursos,
-            'matricula' => $m->id,
+        ContextoEstudianteSesion::fijar(ContextoEstudianteSesion::SEGUIMIENTO_INASISTENCIAS, [
+            'curso' => (int) $m->idCursos,
+            'matricula' => (int) $m->id,
         ]);
+
+        return redirect()->route('seguimiento.inasistencias');
     }
 
     public function render()

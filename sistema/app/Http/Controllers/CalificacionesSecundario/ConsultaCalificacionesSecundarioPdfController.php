@@ -18,7 +18,10 @@ class ConsultaCalificacionesSecundarioPdfController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $idMatricula = (int) $request->query('matricula', 0);
+        $validated = $request->validate([
+            'matricula' => ['required', 'integer', 'min:1'],
+        ]);
+        $idMatricula = (int) $validated['matricula'];
         $uid = (string) (auth()->id() ?? '');
         $key = 'staff-consulta-calificaciones-sec-pdf:'.$uid.':'.($request->ip() ?? '');
         if (RateLimiter::tooManyAttempts($key, 40)) {

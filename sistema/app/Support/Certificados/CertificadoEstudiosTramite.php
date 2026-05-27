@@ -148,9 +148,9 @@ final class CertificadoEstudiosTramite
      *     fechaEmision: string
      * }  $datos
      */
-    public static function urlPdf(int $idLegajos, array $datos): string
+    public static function pdfPost(int $idLegajos, array $datos): array
     {
-        return route('certificados.estudiosTramite.pdf', [
+        return \App\Support\Pdf\PdfPost::datos(route('certificados.estudiosTramite.pdf'), [
             'idLegajos' => $idLegajos,
             'mateAdeud' => $datos['mateAdeud'],
             'idiomaCursado' => $datos['idiomaCursado'],

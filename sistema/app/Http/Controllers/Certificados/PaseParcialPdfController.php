@@ -14,12 +14,30 @@ use Illuminate\Support\Str;
 
 class PaseParcialPdfController extends Controller
 {
-    public function __invoke(Request $request, int $idLegajos): Response
+    public function __invoke(Request $request): Response
     {
         abort_unless(tienePermiso(21), 403, 'Sin permiso para pase parcial.');
 
         $ctx = schoolCtx();
         $idTerlec = (int) $ctx->idTerlec;
+
+        $validator = Validator::make(
+            $request->all(),
+            array_merge(
+                ['idLegajos' => ['required', 'integer', 'min:1']],
+                PaseParcial::reglasFormulario(),
+            ),
+            PaseParcial::mensajesValidacion(),
+        );
+
+        if ($validator->fails()) {
+            abort(422, 'Datos de la solicitud incompletos o inválidos.');
+        }
+
+        $validated = $validator->validated();
+        $idLegajos = (int) $validated['idLegajos'];
+        unset($validated['idLegajos']);
+
         if ($idLegajos < 1 || $idTerlec < 1) {
             abort(404);
         }
@@ -34,18 +52,8 @@ class PaseParcialPdfController extends Controller
         }
         RateLimiter::hit($key, 60);
 
-        $validator = Validator::make(
-            $request->query(),
-            PaseParcial::reglasFormulario(),
-            PaseParcial::mensajesValidacion(),
-        );
-
-        if ($validator->fails()) {
-            abort(422, 'Datos de la solicitud incompletos o inválidos.');
-        }
-
         /** @var array{fecha: string, destino: string} $form */
-        $form = $validator->validated();
+        $form = $validated;
         $form['destino'] = trim((string) $form['destino']);
 
         $datos = PaseParcialDatos::paraLegajo($idLegajos, $idTerlec, $form);

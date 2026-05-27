@@ -3,6 +3,7 @@
 namespace App\Livewire\Parametrizacion;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
+use App\Support\PermisosConfiguracion;
 use App\Listados\CamposProfesorSync;
 use App\Models\CampoProfesor;
 use App\Models\SolapaLegajoProfesor;
@@ -11,6 +12,11 @@ use Livewire\Component;
 class CamposProfesorIndex extends Component
 {
     use RequiresPermisoConfiguracion;
+
+    protected function permisoConfigOrden(): int
+    {
+        return PermisosConfiguracion::CAMPOS_LEGAJO_DOCENTE;
+    }
 
     public string $filtroSolapa = '';
 

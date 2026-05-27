@@ -241,8 +241,12 @@ class LegajoForm extends Component
     /** Columnas extra de `legajos` (p. ej. telealte1_nom) sin control dedicado en el Blade. */
     public array $legajoExtras = [];
 
-    public function mount(?int $id = null): void
+    public function mount(): void
     {
+        $id = \App\Support\Navegacion\ContextoEstudianteSesion::legajo(
+            \App\Support\Navegacion\ContextoEstudianteSesion::LEGAJO_ABM,
+        );
+
         if (! $id && ! tienePermiso(2)) {
             abort(403, 'Sin permiso para crear legajos de estudiantes.');
         }
@@ -251,8 +255,7 @@ class LegajoForm extends Component
         if ($id) {
             $this->loadLegajo($id);
 
-            if (request()->boolean('matriculas')) {
-                abort_unless(tienePermiso(2), 403, 'Sin permiso para gestionar matrículas.');
+            if (session()->pull('legajo_abrir_matriculas', false)) {
                 $this->matriculasDesdeListado = true;
                 $this->openMatriculas();
             }
@@ -353,22 +356,25 @@ class LegajoForm extends Component
         $focusId = (int) $this->id;
         $page = $this->pageForLegajo($focusId, 25);
 
+        session()->flash('legajo_listado_focus', $focusId);
+
         return redirect()->route('abm.legajos', [
             'page' => $page,
-            'focus' => $focusId,
         ]);
     }
 
     public function cancel(): mixed
     {
-        return redirect()->route('abm.legajos', ['focus' => $this->id]);
+        if ($this->id) {
+            session()->flash('legajo_listado_focus', (int) $this->id);
+        }
+
+        return redirect()->route('abm.legajos');
     }
 
     // ─── Matrículas ───────────────────────────────────────────────────────────
     public function openMatriculas(): void
     {
-        $this->requireModificarLegajo();
-
         if (! $this->id) {
             return;
         }
@@ -388,9 +394,10 @@ class LegajoForm extends Component
             $focusId = (int) $this->id;
             $page = $this->pageForLegajo($focusId, 25);
 
+            session()->flash('legajo_listado_focus', $focusId);
+
             return redirect()->route('abm.legajos', [
                 'page' => $page,
-                'focus' => $focusId,
             ]);
         }
 

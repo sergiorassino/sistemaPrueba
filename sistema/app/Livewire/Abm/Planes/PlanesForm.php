@@ -3,6 +3,7 @@
 namespace App\Livewire\Abm\Planes;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
+use App\Support\PermisosConfiguracion;
 use App\Models\Plan;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
@@ -11,6 +12,11 @@ use Livewire\Component;
 class PlanesForm extends Component
 {
     use RequiresPermisoConfiguracion;
+
+    protected function permisoConfigOrden(): int
+    {
+        return PermisosConfiguracion::PLANES_ESTUDIO;
+    }
 
     public ?int $id = null;
 

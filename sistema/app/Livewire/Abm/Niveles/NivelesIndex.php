@@ -3,6 +3,7 @@
 namespace App\Livewire\Abm\Niveles;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
+use App\Support\PermisosConfiguracion;
 use App\Models\Nivel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -11,6 +12,11 @@ use Livewire\Component;
 class NivelesIndex extends Component
 {
     use RequiresPermisoConfiguracion;
+
+    protected function permisoConfigOrden(): int
+    {
+        return PermisosConfiguracion::NIVELES;
+    }
 
     public bool $showModal   = false;
     public bool $showConfirm = false;

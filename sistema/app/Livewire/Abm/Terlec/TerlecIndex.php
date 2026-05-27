@@ -4,6 +4,7 @@ namespace App\Livewire\Abm\Terlec;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use App\Models\Terlec;
+use App\Support\PermisosConfiguracion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
@@ -11,6 +12,11 @@ use Livewire\Component;
 class TerlecIndex extends Component
 {
     use RequiresPermisoConfiguracion;
+
+    protected function permisoConfigOrden(): int
+    {
+        return PermisosConfiguracion::TERLEC;
+    }
 
     public bool $showModal    = false;
     public bool $showConfirm  = false;

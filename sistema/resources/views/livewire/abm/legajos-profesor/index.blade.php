@@ -42,6 +42,17 @@
             </svg>
             <input wire:model.live.debounce.400ms="search" type="search" placeholder="Buscar por apellido, nombre o DNI…" class="form-input pl-9">
         </div>
+        <div class="sm:w-64">
+            <label for="filtroRol" class="sr-only">Filtrar por rol</label>
+            <select id="filtroRol" wire:model.live="filtroRol" class="form-select">
+                <option value="">Activos (excluye «Sin Rol»)</option>
+                <option value="todos">Todos los roles</option>
+                <option disabled>──────────</option>
+                @foreach ($roles as $r)
+                    <option value="{{ $r->id }}">{{ $r->tipo }}</option>
+                @endforeach
+            </select>
+        </div>
     </div>
 
     <div class="se-card overflow-hidden">
@@ -88,7 +99,9 @@
             </table>
         </div>
         @if ($profesores->hasPages())
-            <div class="border-t border-accent-200 px-5 py-3">{{ $profesores->links() }}</div>
+            <div class="border-t border-accent-200 bg-accent-50/70 px-4 py-3">
+                {{ $profesores->links('vendor.pagination.se') }}
+            </div>
         @endif
     </div>
 

@@ -36,8 +36,13 @@ class LibroMatrizDatosAdicionales extends Component
 
     public string $buscarRetorno = '';
 
-    public function mount(int $idLegajos): void
+    public function mount(): void
     {
+        $idLegajos = \App\Support\Navegacion\ContextoEstudianteSesion::legajo(
+            \App\Support\Navegacion\ContextoEstudianteSesion::MATRIZ_ANALITICOS,
+        );
+        abort_if($idLegajos === null, 404);
+
         abort_unless(tienePermiso(16), 403, 'Sin permiso para Libro Matriz / Analítico.');
 
         $ctx = schoolCtx();
@@ -88,10 +93,12 @@ class LibroMatrizDatosAdicionales extends Component
 
         session()->flash('success', 'Datos adicionales guardados.');
 
-        $this->redirect(
-            LibroMatrizAnalitico::urlEditar($this->idLegajos, $this->buscarRetorno ?: null),
-            navigate: true,
+        \App\Support\Navegacion\ContextoEstudianteSesion::fijar(
+            \App\Support\Navegacion\ContextoEstudianteSesion::MATRIZ_ANALITICOS,
+            ['idLegajos' => $this->idLegajos],
         );
+
+        $this->redirect(LibroMatrizAnalitico::rutaEditar(), navigate: true);
     }
 
     /**

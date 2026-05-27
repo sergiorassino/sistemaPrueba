@@ -2,18 +2,24 @@
 
 namespace App\Livewire\Seguimiento\Disciplinario;
 
+use App\Livewire\Seguimiento\Disciplinario\Concerns\RequiresPermisoSeguimientoDisciplinario;
 use App\Models\Matricula;
 use App\Models\Sancion;
+use App\Support\Navegacion\ContextoEstudianteSesion;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
 class AntecedentesIndex extends Component
 {
+    use RequiresPermisoSeguimientoDisciplinario;
+
     public int $idMatricula;
 
-    public function mount(int $idMatricula): void
+    public function mount(): void
     {
-        $this->idMatricula = $idMatricula;
+        $id = ContextoEstudianteSesion::matricula(ContextoEstudianteSesion::SEGUIMIENTO_DISCIPLINARIO_ANTECEDENTES);
+        abort_if($id === null, 404);
+        $this->idMatricula = $id;
     }
 
     private function matriculaBase(): Matricula

@@ -122,8 +122,7 @@ class ConstanciaDocumentosIndex extends Component
             ConstanciaDocumentos::guardar($this->idLegajosModal, $validated);
         }
 
-        $url = ConstanciaDocumentos::urlPdf($this->idLegajosModal, $validated);
-        $this->dispatch('constancia-documentos-abrir-pdf', url: $url);
+        $this->dispatch('abrir-pdf-post', ...ConstanciaDocumentos::pdfPost($this->idLegajosModal, $validated));
     }
 
     public function render()

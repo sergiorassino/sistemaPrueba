@@ -142,7 +142,7 @@
          :class="sidebarCollapsed ? '!px-1 !py-2' : ''"
          @click.capture="$event.target.closest('a[href]') && (sidebarOpen = false)">
 
-        <a href="{{ route('alumnos.calificaciones') }}"
+        <a href="{{ se_route_url('alumnos.calificaciones') }}"
            target="_blank"
            rel="noopener noreferrer"
            class="se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors"
@@ -154,7 +154,7 @@
             <span x-show="!sidebarCollapsed" x-cloak class="truncate">Consulta de Calificaciones</span>
         </a>
 
-        <a href="{{ route('alumnos.inasistencias.informe') }}"
+        <a href="{{ se_route_url('alumnos.inasistencias.informe') }}"
            target="_blank"
            rel="noopener noreferrer"
            class="se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors"
@@ -302,12 +302,12 @@
 
 </div>
 
-@livewireScripts
+@include('layouts.partials.livewire-scripts')
 <script>
     (() => {
         const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
-        const LOGOUT_URL = @json(route('alumnos.logout'));
-        const LOGIN_URL = @json(route('alumnos.login'));
+        const LOGOUT_URL = @json(se_route_url('alumnos.logout'));
+        const LOGIN_URL = @json(se_route_url('alumnos.login'));
 
         let timer = null;
         let hasTriggered = false;

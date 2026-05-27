@@ -24,7 +24,9 @@ class InformeInasistenciasController extends Controller
 
         $matricula = InformeInasistencias::matriculaAutogestion();
         if ($matricula === null) {
-            abort(404, 'No hay matrícula registrada para este ciclo lectivo. Contacte a secretaría.');
+            return response()->view('errors.alumno-pdf', [
+                'mensaje' => 'No hay matrícula registrada para este ciclo lectivo. Contacte a secretaría.',
+            ], 422);
         }
 
         $idTipo = InformeInasistencias::tipoFiltroValido((int) $request->query('tipo', 0) ?: null);

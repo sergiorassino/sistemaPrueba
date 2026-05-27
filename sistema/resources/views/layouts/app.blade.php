@@ -28,15 +28,16 @@
     _sidebarNavScrollTop: 0,
     _sidebarPeekTimer: null,
     groups: {
-        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'param.') || ($route ?? '') === 'push.suscribir') ? 'true' : 'false' }},
+        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'param.') || ($route ?? '') === 'admin.permisos' || ($route ?? '') === 'admin.permisos-por-usuario') ? 'true' : 'false' }},
+        permisosSistema: {{ (($route ?? '') === 'admin.permisos' || ($route ?? '') === 'admin.permisos-por-usuario') ? 'true' : 'false' }},
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.')) ? 'true' : 'false' }},
-        cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales') && tienePermiso(3)) ? 'true' : 'false' }},
+        cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales' || ($route ?? '') === 'push.suscribir') && tienePermiso(3)) ? 'true' : 'false' }},
         calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.') || str_starts_with($route ?? '', 'boletinesSecundario.')) ? 'true' : 'false' }},
         disciplinario: {{ str_starts_with($route ?? '', 'seguimiento.disciplinario') ? 'true' : 'false' }},
-        inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') || str_starts_with($route ?? '', 'seguimiento.partes-diarios') ? 'true' : 'false' }},
-        docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.legajos-profesor') || str_starts_with($route ?? '', 'docentes.inasistencias')) ? 'true' : 'false' }},
+        inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') || str_starts_with($route ?? '', 'seguimiento.partes-diarios') || ($route ?? '') === 'seguimiento.toma-asistencia-clase' ? 'true' : 'false' }},
+        docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.cursos-por-profesor') || str_starts_with($route ?? '', 'abm.legajos-profesor') || str_starts_with($route ?? '', 'docentes.inasistencias')) ? 'true' : 'false' }},
         examenes: {{ str_starts_with($route ?? '', 'examenes.') ? 'true' : 'false' }},
         matrizAnaliticos: {{ str_starts_with($route ?? '', 'matrizAnaliticos.') ? 'true' : 'false' }},
         certificados: {{ str_starts_with($route ?? '', 'certificados.') ? 'true' : 'false' }},
@@ -380,6 +381,21 @@
                     <span class="truncate">Configuración de Canales</span>
                 </a>
                 @endif
+
+                @if (tienePermisoConfig(32))
+                <a href="{{ route('push.suscribir') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'push.suscribir',
+                   ])
+                   title="Notificaciones push en este dispositivo">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    <span class="truncate">Notificaciones Push</span>
+                </a>
+                @endif
             </div>
         @endif
 
@@ -527,6 +543,7 @@
                 @endif
             </div>
 
+        @if (tienePermiso(37))
         {{-- Seguimiento disciplinario --}}
             <div class="mt-4"></div>
             <button type="button"
@@ -563,6 +580,7 @@
                         <span class="truncate">Seguimiento Disciplinario</span>
                     </a>
             </div>
+        @endif
 
         {{-- Asistencia estudiantes --}}
             <div class="mt-4"></div>
@@ -587,6 +605,7 @@
                  x-show="groups.inasistenciasEstudiantes && !sidebarCollapsed"
                  x-collapse
                  x-cloak>
+                @if (tienePermiso(38))
                 <a href="{{ route('seguimiento.inasistencias') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -601,6 +620,21 @@
                     </svg>
                     <span class="truncate">Gestión de Inasistencias del Estudiante</span>
                 </a>
+                @endif
+                @if (tienePermiso(1))
+                <a href="{{ route('seguimiento.toma-asistencia-clase') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'seguimiento.toma-asistencia-clase',
+                   ])
+                   title="Toma de asistencia por curso, materia y fecha">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                    <span class="truncate">Toma de asistencia a clase</span>
+                </a>
+                @endif
                 @if (tienePermiso(24))
                 <a href="{{ route('seguimiento.inasistencias.sincroCidi') }}"
                    @class([
@@ -642,7 +676,7 @@
             </div>
 
         {{-- Menú de Secretaría: grupo DOCENTES (ABM desde secretaría; no es el Menú de Docentes) --}}
-        @if(tienePermiso(1))
+        @if (tienePermiso(11) || tienePermiso(23))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
@@ -667,6 +701,7 @@
                  x-show="groups.docentes && !sidebarCollapsed"
                  x-collapse
                  x-cloak>
+                @if (tienePermiso(11))
                 <a href="{{ route('abm.legajos-profesor') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -694,6 +729,20 @@
                     </svg>
                     <span class="truncate">Asignación de Profesores por Materia y Curso</span>
                 </a>
+
+                <a href="{{ route('abm.cursos-por-profesor') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.cursos-por-profesor'),
+                   ])
+                   title="Cursos por profesor · ppc + horarios26 · consulta">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="truncate">Cursos por profesor</span>
+                </a>
+                @endif
 
                 @if (tienePermiso(23))
                     <a href="{{ route('docentes.inasistencias') }}"
@@ -1030,7 +1079,7 @@
             </div>
 
         {{-- Configuración --}}
-        @if (tienePermiso(14))
+        @if (tieneAlgunPermisoConfiguracion())
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
@@ -1052,6 +1101,7 @@
                  x-show="groups.config && !sidebarCollapsed"
                  x-collapse
                  x-cloak>
+                @if (tienePermisoConfig(25))
                 <a href="{{ route('abm.terlec') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -1064,7 +1114,9 @@
                     </svg>
                     <span class="truncate">Términos Lectivos</span>
                 </a>
+                @endif
 
+                @if (tienePermisoConfig(26))
                 <a href="{{ route('abm.niveles') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -1077,7 +1129,9 @@
                     </svg>
                     <span class="truncate">Niveles</span>
                 </a>
+                @endif
 
+                @if (tienePermisoConfig(27))
                 <a href="{{ route('param.campos-listado-alumnos') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -1090,7 +1144,9 @@
                     </svg>
                     <span class="truncate">Campos activos (Legajo del estudiante)</span>
                 </a>
+                @endif
 
+                @if (tienePermisoConfig(28))
                 <a href="{{ route('param.solapas-legajo') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -1103,7 +1159,9 @@
                     </svg>
                     <span class="truncate">Solapas del Legajo</span>
                 </a>
+                @endif
 
+                @if (tienePermisoConfig(29))
                 <a href="{{ route('param.campos-legajo-profesor') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -1116,7 +1174,9 @@
                     </svg>
                     <span class="truncate">Campos activos (Legajo del docente)</span>
                 </a>
+                @endif
 
+                @if (tienePermisoConfig(30))
                 <a href="{{ route('param.solapas-legajo-profesor') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -1129,7 +1189,9 @@
                     </svg>
                     <span class="truncate">Solapas del Legajo del docente</span>
                 </a>
+                @endif
 
+                @if (tienePermisoConfig(31))
                 <a href="{{ route('param.parametros-sistema') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -1142,55 +1204,65 @@
                     </svg>
                     <span class="truncate">Parámetros del sistema</span>
                 </a>
+                @endif
 
-                <a href="{{ route('push.suscribir') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'push.suscribir',
-                   ])
-                   title="Notificaciones push en este dispositivo">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                    </svg>
-                    <span class="truncate">Notificaciones Push</span>
-                </a>
-
-                @if(tienePermiso(0))
-                <a href="{{ route('admin.permisos') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'admin.permisos',
-                   ])
-                   title="Administración de permisos de usuarios v1.0">
+                @if (\App\Support\PermisosConfiguracion::tieneAlgunPermisoSistemaMenu())
+                <button type="button"
+                        class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors mt-2"
+                        :class="(groups.permisosSistema && !sidebarCollapsed) ? 'is-open' : ''"
+                        @click="toggleGroup('permisosSistema')"
+                        title="Permisos del sistema v1.0">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 8.49 1.65 1.65 0 004.27 6.67l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 008.91 4.2 1.65 1.65 0 009.92 2.7V2a2 2 0 014 0v.09c0 .69.4 1.31 1.02 1.6.62.29 1.34.19 1.82-.28l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06c-.47.47-.57 1.19-.28 1.82.29.62.91 1.02 1.6 1.02H21a2 2 0 010 4h-.09c-.69 0-1.31.4-1.6 1.02z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 15a3 3 0 100-6 3 3 0 000 6z"/>
+                              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                     </svg>
-                    <span class="truncate">Permisos de usuarios</span>
-                </a>
-                @endif
+                    <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Permisos del sistema</span>
+                    <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                         :class="groups.permisosSistema ? 'rotate-180' : ''"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
 
-                @if(tienePermiso(5))
-                <a href="{{ route('param.com-canales') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'param.com-canales',
-                   ])
-                   title="Configuración de canales escuela–familia v1.0">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3-3-3z"/>
-                    </svg>
-                    <span class="truncate">Configuración de Canales</span>
-                </a>
+                <div class="space-y-0.5 se-sidebar-group-items"
+                     x-show="groups.permisosSistema && !sidebarCollapsed"
+                     x-collapse
+                     x-cloak>
+                    @if (tienePermiso(0))
+                    <a href="{{ route('admin.permisos') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => ($route ?? '') === 'admin.permisos',
+                       ])
+                       title="Asignación de permisos de usuario v1.0">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                        <span class="truncate">Asignación de Permisos de Usuario</span>
+                    </a>
+                    @endif
+                    @if (tienePermiso(14))
+                    <a href="{{ route('admin.permisos-por-usuario') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => ($route ?? '') === 'admin.permisos-por-usuario',
+                       ])
+                       title="Consulta de permisos concedidos por usuario v1.0">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                        </svg>
+                        <span class="truncate">Permisos por Usuario</span>
+                    </a>
+                    @endif
+                </div>
                 @endif
 
                 {{-- Planes + Cursos modelo --}}
+                @if (\App\Support\PermisosConfiguracion::tieneAlgunPlanCursoModelo())
                 <button type="button"
                         class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors mt-2"
                         :class="(groups.planesCursos && !sidebarCollapsed) ? 'is-open' : ''"
@@ -1212,6 +1284,7 @@
                      x-show="groups.planesCursos && !sidebarCollapsed"
                      x-collapse
                      x-cloak>
+                    @if (tienePermisoConfig(33))
                     <a href="{{ route('abm.planes') }}"
                        @class([
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -1224,7 +1297,9 @@
                         </svg>
                         <span class="truncate">Gestión de Planes de Estudio</span>
                     </a>
+                    @endif
 
+                    @if (tienePermisoConfig(34))
                     <a href="{{ route('abm.curplan') }}"
                        @class([
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -1237,9 +1312,12 @@
                         </svg>
                         <span class="truncate">Gestión de Cursos y Materias del Plan</span>
                     </a>
+                    @endif
                 </div>
+                @endif
 
                 {{-- Cursos + Materias del año --}}
+                @if (\App\Support\PermisosConfiguracion::tieneAlgunCursoMateriaAnio())
                 <button type="button"
                         class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors mt-2"
                         :class="(groups.cursosMateriasAno && !sidebarCollapsed) ? 'is-open' : ''"
@@ -1261,6 +1339,7 @@
                      x-show="groups.cursosMateriasAno && !sidebarCollapsed"
                      x-collapse
                      x-cloak>
+                    @if (tienePermisoConfig(35))
                     <a href="{{ route('abm.cursos') }}"
                        @class([
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -1273,7 +1352,9 @@
                         </svg>
                         <span class="truncate">Gestión de Cursos / Grados / Salas</span>
                     </a>
+                    @endif
 
+                    @if (tienePermisoConfig(36))
                     <a href="{{ route('abm.materias-anio') }}"
                        @class([
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -1286,10 +1367,34 @@
                         </svg>
                         <span class="truncate">Gestión de asignaturas del año</span>
                     </a>
+                    @endif
                 </div>
+                @endif
 
             </div>
 
+        @endif
+
+        {{-- Autogestión Docente: aparece SOLO si el usuario (no-docente) tiene cursos en ppc.
+             Cambia al Menú de Docentes; para volver a Secretaría hay que cerrar sesión.
+             Ver docs/08-menus-de-navegacion.md. --}}
+        @if (\App\Support\ProfesorMenuPortal::tieneAccesoAutogestion(Auth::user()))
+            <div class="mt-4 pt-3 border-t se-sidebar-sep">
+                <form method="POST" action="{{ route('autogestion.docente.activar') }}" class="m-0 p-0">
+                    @csrf
+                    <button type="submit"
+                            class="se-sidebar-link w-full flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors text-left appearance-none bg-transparent border-0 cursor-pointer"
+                            title="Abrir el Menú de Docentes con sus materias asignadas. Para volver a Secretaría, cerrar sesión y reingresar.">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 14l9-5-9-5-9 5 9 5z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+                        </svg>
+                        <span class="truncate" x-show="!sidebarCollapsed" x-cloak>Autogestión Docente</span>
+                    </button>
+                </form>
+            </div>
         @endif
 
         {{-- Manual del sistema (todos los usuarios de gestión) --}}
@@ -1375,7 +1480,7 @@
 
 </div>
 
-@livewireScripts
+@include('layouts.partials.livewire-scripts')
 <script>
     (() => {
         const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
@@ -1435,5 +1540,6 @@
         resetTimer();
     })();
 </script>
+@include('layouts.partials.abrir-pdf-post')
 </body>
 </html>

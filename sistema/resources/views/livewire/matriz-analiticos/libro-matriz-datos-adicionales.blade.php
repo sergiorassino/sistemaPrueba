@@ -33,14 +33,18 @@
                     <span wire:loading.remove wire:target="guardar">Guardar</span>
                     <span wire:loading wire:target="guardar">Guardando…</span>
                 </button>
-                <a href="{{ \App\Support\MatrizAnaliticos\LibroMatrizAnalitico::urlEditar($idLegajos, $buscarRetorno) }}"
-                   wire:navigate
-                   class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                    Volver a matriz
-                </a>
+                <x-nav-contexto-estudiante
+                    destino="matrizAnaliticos.libroMatriz.editar"
+                    :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::MATRIZ_ANALITICOS"
+                    :id-legajos="$idLegajos"
+                    class="inline">
+                    <span class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        Volver a matriz
+                    </span>
+                </x-nav-contexto-estudiante>
             </div>
         </div>
     </section>

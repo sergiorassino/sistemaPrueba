@@ -3,6 +3,7 @@
 namespace App\Livewire\Abm\Curplan;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
+use App\Support\PermisosConfiguracion;
 use App\Models\Curplan;
 use App\Models\Plan;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,11 @@ use Livewire\Component;
 class CurplanIndex extends Component
 {
     use RequiresPermisoConfiguracion;
+
+    protected function permisoConfigOrden(): int
+    {
+        return PermisosConfiguracion::CURSOS_MATERIAS_PLAN;
+    }
 
     public bool $showConfirm = false;
 

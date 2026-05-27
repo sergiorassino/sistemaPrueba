@@ -3,12 +3,18 @@
 namespace App\Livewire\Parametrizacion;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
+use App\Support\PermisosConfiguracion;
 use App\Models\SolapaLegajo;
 use Livewire\Component;
 
 class SolapaLegajoIndex extends Component
 {
     use RequiresPermisoConfiguracion;
+
+    protected function permisoConfigOrden(): int
+    {
+        return PermisosConfiguracion::SOLAPAS_LEGAJO_ESTUDIANTE;
+    }
 
     // ── Modal crear/editar ────────────────────────────────────────────────────
     public bool   $showModal    = false;

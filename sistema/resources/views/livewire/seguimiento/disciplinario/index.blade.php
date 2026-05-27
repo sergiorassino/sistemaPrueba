@@ -60,14 +60,20 @@
                         </p>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <a class="btn-secondary btn-sm"
-                           href="{{ route('seguimiento.disciplinario.antecedentes', ['idMatricula' => $matricula->id]) }}">
-                            Antecedentes
-                        </a>
-                        <a class="btn-primary btn-sm"
-                           href="{{ route('seguimiento.disciplinario.create', ['matricula' => $matricula->id]) }}">
-                            + Nueva sanción
-                        </a>
+                        <x-nav-contexto-estudiante
+                            destino="seguimiento.disciplinario.antecedentes"
+                            :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::SEGUIMIENTO_DISCIPLINARIO_ANTECEDENTES"
+                            :matricula="$matricula->id"
+                            class="inline">
+                            <span class="btn-secondary btn-sm">Antecedentes</span>
+                        </x-nav-contexto-estudiante>
+                        <x-nav-contexto-estudiante
+                            destino="seguimiento.disciplinario.create"
+                            :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::SEGUIMIENTO_DISCIPLINARIO"
+                            :matricula="$matricula->id"
+                            class="inline">
+                            <span class="btn-primary btn-sm">+ Nueva sanción</span>
+                        </x-nav-contexto-estudiante>
                     </div>
                 </div>
             </div>

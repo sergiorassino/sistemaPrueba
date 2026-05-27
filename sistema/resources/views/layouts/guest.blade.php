@@ -87,7 +87,7 @@
     </div>
 </div>
 
-@livewireScripts
+@include('layouts.partials.livewire-scripts')
 <script>
     if (window.seSidebarPurgeLegacyGroupsStorage) {
         window.seSidebarPurgeLegacyGroupsStorage();

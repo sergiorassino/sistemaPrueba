@@ -3,6 +3,7 @@
 namespace App\Livewire\Alumnos\Comunicaciones;
 
 use Livewire\Component;
+use App\Comunicaciones\ComunicacionesFamiliaSession;
 use App\Comunicaciones\ComunicacionesRepository;
 
 class BandejaFamilia extends Component
@@ -14,6 +15,23 @@ class BandejaFamilia extends Component
         if (! in_array($this->filtro, ['todos', 'no_leidos'], true)) {
             $this->filtro = 'todos';
         }
+    }
+
+    public function abrirHilo(int $idHilo): void
+    {
+        $ctx = studentCtx();
+        abort_unless(
+            ComunicacionesRepository::familiaPuedeVerHilo(
+                $idHilo,
+                (int) $ctx->idLegajo,
+                (int) $ctx->idNivel,
+                (int) $ctx->idTerlec
+            ),
+            404
+        );
+
+        ComunicacionesFamiliaSession::abrir($idHilo);
+        $this->redirectRoute('alumnos.comunicaciones.hilo', navigate: true);
     }
 
     public function render()

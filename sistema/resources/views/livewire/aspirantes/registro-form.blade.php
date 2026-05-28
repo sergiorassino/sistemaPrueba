@@ -141,6 +141,12 @@
                         </div>
                     @endforeach
 
+                    @error('_registro')
+                        <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                            {{ $message }}
+                        </div>
+                    @enderror
+
                     <div class="pt-2">
                         <button type="submit" class="btn-primary w-full sm:w-auto">
                             <span wire:loading.remove wire:target="registrar">Enviar registro</span>

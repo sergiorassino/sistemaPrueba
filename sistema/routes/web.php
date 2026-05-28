@@ -72,6 +72,7 @@ use App\Livewire\Administracion\Permisos\PermisosPorUsuarioIndex;
 use App\Livewire\Administracion\Permisos\PermisosUsuariosIndex;
 use App\Livewire\Alumnos\Auth\Login as AlumnosLogin;
 use App\Livewire\Alumnos\Comunicaciones\BandejaFamilia;
+use App\Http\Controllers\Alumnos\AbrirHiloComunicacionFamiliaController;
 use App\Livewire\Alumnos\Comunicaciones\HiloShowFamilia;
 use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
 use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
@@ -107,6 +108,7 @@ use App\Livewire\BoletinesSecundario\BoletinesSecundarioIndex;
 use App\Livewire\CalificacionesSecundario\SincroGe;
 use App\Livewire\Comunicaciones\BandejaGestion;
 use App\Livewire\Comunicaciones\BandejaRevision;
+use App\Livewire\Comunicaciones\ComAuditoriaIndex;
 use App\Livewire\Comunicaciones\HiloShow;
 use App\Livewire\Comunicaciones\InformeEnvioComunicado;
 use App\Livewire\Comunicaciones\NuevoComunicado;
@@ -148,7 +150,8 @@ Route::get('/favicon.ico', InstitutionalIconController::class);
 
 // Registro público de aspirantes (sin auth, sin school.context).
 // El token es opaco por instancia: no expone idNivel ni permite saltar de nivel.
-Route::middleware('throttle:30,1')->group(function () {
+// Límite amplio para abrir/recargar la página; el envío del formulario se limita en RegistroAspiranteForm::registrar().
+Route::middleware('throttle:120,1')->group(function () {
     Route::get('/aspirantes/r/{token}', [RegistroAspiranteController::class, 'show'])
         ->where('token', '[A-Za-z0-9]{8,80}')
         ->name('aspirantes.publico.registro');
@@ -198,7 +201,10 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/comunicaciones', BandejaFamilia::class)->name('alumnos.comunicaciones.index');
     Route::get('/comunicaciones/nuevo', NuevoComunicadoFamilia::class)->name('alumnos.comunicaciones.nuevo');
     Route::get('/comunicaciones/preferencias', PreferenciasMedios::class)->name('alumnos.comunicaciones.preferencias');
-    Route::get('/comunicaciones/{id}', HiloShowFamilia::class)->whereNumber('id')->name('alumnos.comunicaciones.hilo');
+    Route::get('/comunicaciones/hilo', HiloShowFamilia::class)->name('alumnos.comunicaciones.hilo');
+    Route::get('/comunicaciones/abrir/{id}', AbrirHiloComunicacionFamiliaController::class)
+        ->whereNumber('id')
+        ->name('alumnos.comunicaciones.abrir');
 });
 
 // API Push (sesión alumno o docente; fuera del prefix /alumnos para que el SW tenga scope simple)
@@ -265,6 +271,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
 
     Route::get('/comunicaciones', BandejaGestion::class)->middleware('permiso:3')->name('comunicaciones.index');
     Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:3', 'permiso:8'])->name('comunicaciones.revision');
+    Route::get('/comunicaciones/auditoria', ComAuditoriaIndex::class)
+        ->middleware('permiso:43')
+        ->name('comunicaciones.auditoria');
     Route::get('/comunicaciones/nuevo', NuevoComunicado::class)->middleware('permiso:4')->name('comunicaciones.nuevo');
     Route::get('/comunicaciones/informe-envio/{id}', InformeEnvioComunicado::class)
         ->middleware(['permiso:3', 'permiso:4'])

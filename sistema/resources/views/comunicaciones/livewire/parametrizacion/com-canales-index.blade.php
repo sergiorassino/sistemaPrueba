@@ -6,10 +6,19 @@
                 <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Canales de comunicación</h2>
                 <p class="max-w-2xl text-sm text-white/80">
                     Quién puede iniciar y responder comunicados, y por qué medios.
+                    @if ($idNivel > 0 && $nivelNombre !== '')
+                        <span class="mt-1 block font-medium text-white">Nivel: {{ $nivelNombre }}</span>
+                    @endif
                 </p>
             </div>
         </div>
     </section>
+
+    @if ($idNivel <= 0)
+        <div class="se-soft-card border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Seleccione un <strong>nivel activo</strong> en el menú de secretaría para configurar los canales de ese nivel.
+        </div>
+    @endif
 
     @if (session('success'))
         <div class="se-soft-card flex items-center gap-3 border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
@@ -22,9 +31,9 @@
 
     <div class="se-toolbar flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p class="text-sm text-neutral-600">
-            Defina pares <span class="font-medium text-neutral-800">emisor → receptor</span> además de los canales predefinidos.
+            Canales del nivel activo. Defina pares <span class="font-medium text-neutral-800">emisor → receptor</span>; primario y secundario pueden diferir.
         </p>
-        @if (! $mostrandoFormNuevo)
+        @if (! $mostrandoFormNuevo && $idNivel > 0)
             <button type="button" wire:click="abrirFormNuevo" class="btn-primary btn-sm shrink-0">
                 Agregar canal
             </button>
@@ -35,7 +44,7 @@
         <div class="se-card overflow-hidden">
             <div class="border-b border-accent-200 bg-accent-50 px-4 py-3">
                 <h3 class="text-sm font-semibold text-neutral-800">Nuevo canal</h3>
-                <p class="mt-0.5 text-xs text-neutral-500">Solo se permiten combinaciones que aún no existan en la tabla.</p>
+                <p class="mt-0.5 text-xs text-neutral-500">Solo combinaciones que aún no existan para este nivel.</p>
             </div>
             <div class="space-y-4 p-4 sm:p-6">
                 <div class="grid gap-4 sm:grid-cols-2">
@@ -122,7 +131,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-accent-200 bg-white">
-                        @foreach ($canales as $canal)
+                        @forelse ($canales as $canal)
                             <tr wire:key="com-canal-{{ $canal->id }}" @class([
                                 'bg-amber-50/50' => $editandoId === $canal->id,
                                 'hover:bg-accent-50/50' => $editandoId !== $canal->id,
@@ -210,7 +219,17 @@
                                     </td>
                                 @endif
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="7" class="table-cell py-8 text-center text-neutral-500">
+                                    @if ($idNivel <= 0)
+                                        Elija un nivel en el contexto de secretaría.
+                                    @else
+                                        No hay canales configurados para este nivel. Use «Agregar canal» o ejecute la migración de datos.
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -218,7 +237,7 @@
     </div>
 
     <p class="text-xs text-neutral-500">
-        Los cambios se aplican al guardar. El caché de cada canal se invalida al guardar o al eliminar un canal.
+        Los cambios aplican solo al nivel activo. Al cambiar de nivel en secretaría verá la parametrización correspondiente.
     </p>
 
     @if ($showConfirmEliminar)

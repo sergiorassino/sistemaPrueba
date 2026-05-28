@@ -28,8 +28,8 @@ class PushAdapter
             return static::registrar($destinatario, 'no_aplicable', 'Sin suscripción push activa');
         }
 
-        $hiloId    = $destinatario->id_hilo;
-        $urlDestino = url("/alumnos/comunicaciones/{$hiloId}");
+        $hiloId     = (int) $destinatario->id_hilo;
+        $urlDestino = route('alumnos.comunicaciones.abrir', ['id' => $hiloId]);
 
         $asunto    = mb_substr((string) $mensaje->hilo?->asunto, 0, 80);
         $contenido = mb_substr((string) $mensaje->contenido, 0, 280);

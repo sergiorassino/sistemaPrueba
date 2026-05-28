@@ -10,18 +10,60 @@ class ComCanal extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'rol_emisor', 'rol_receptor', 'puede_iniciar', 'puede_responder',
+        'id_nivel', 'rol_emisor', 'rol_receptor', 'puede_iniciar', 'puede_responder',
         'medios_permitidos', 'activo',
     ];
 
     protected $casts = [
-        'puede_iniciar'    => 'boolean',
-        'puede_responder'  => 'boolean',
-        'medios_permitidos' => 'array',
-        'activo'           => 'boolean',
-        'created_at'       => 'datetime',
-        'updated_at'       => 'datetime',
+        'puede_iniciar'     => 'boolean',
+        'puede_responder'   => 'boolean',
+        'activo'            => 'boolean',
+        'created_at'        => 'datetime',
+        'updated_at'        => 'datetime',
     ];
+
+    /**
+     * @param  array<int, string>|string|null  $value
+     */
+    public function setMediosPermitidosAttribute(mixed $value): void
+    {
+        if ($value === null || $value === '') {
+            $this->attributes['medios_permitidos'] = null;
+
+            return;
+        }
+
+        if (is_string($value)) {
+            $this->attributes['medios_permitidos'] = $value;
+
+            return;
+        }
+
+        $lista = array_values(array_unique(array_filter(
+            is_array($value) ? $value : [],
+            static fn ($m) => is_string($m) && $m !== ''
+        )));
+
+        $this->attributes['medios_permitidos'] = json_encode($lista, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function getMediosPermitidosAttribute(mixed $value): array
+    {
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        if (is_array($value)) {
+            return array_values($value);
+        }
+
+        $decoded = json_decode((string) $value, true);
+
+        return is_array($decoded) ? array_values($decoded) : [];
+    }
 
     /**
      * Etiquetas legibles para la UI.

@@ -45,7 +45,7 @@
         @endif
 
         <div class="cta">
-            <a href="{{ url('/alumnos/comunicaciones/' . $mensaje->id_hilo) }}">
+            <a href="{{ route('alumnos.comunicaciones.abrir', ['id' => (int) $mensaje->id_hilo]) }}">
                 Ver comunicado completo
             </a>
         </div>

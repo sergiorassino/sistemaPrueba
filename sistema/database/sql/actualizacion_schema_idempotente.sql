@@ -133,6 +133,8 @@ CREATE TABLE IF NOT EXISTS `com_canales` (
   UNIQUE KEY `uq_canal_par` (`rol_emisor`,`rol_receptor`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CALL sp_add_column_if_missing('com_canales', 'id_nivel', 'INT UNSIGNED NULL AFTER `id`');
+
 CREATE TABLE IF NOT EXISTS `com_hilos` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `asunto` varchar(200) NOT NULL,
@@ -276,6 +278,58 @@ ON DUPLICATE KEY UPDATE
   `medios_permitidos` = VALUES(`medios_permitidos`),
   `activo` = VALUES(`activo`),
   `updated_at` = CURRENT_TIMESTAMP;
+
+-- 3.1 Canales por nivel — índice único (id_nivel + roles)
+-- Si al guardar un canal aparece: Duplicate entry 'profesor-familia' for key 'uq_canal_par',
+-- ejecutar database/sql/com_canales_indice_por_nivel.sql o la migración 2026_05_28_220000_fix_com_canales_unique_for_nivel.php
+
+DROP PROCEDURE IF EXISTS sp_drop_index_if_exists;
+DELIMITER $$
+CREATE PROCEDURE sp_drop_index_if_exists(
+    IN p_table VARCHAR(64),
+    IN p_index VARCHAR(64)
+)
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.statistics
+        WHERE table_schema = DATABASE()
+          AND table_name = p_table
+          AND index_name = p_index
+    ) THEN
+        SET @ddl = CONCAT('ALTER TABLE `', p_table, '` DROP INDEX `', p_index, '`');
+        PREPARE stmt FROM @ddl;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END$$
+DELIMITER ;
+
+UPDATE `com_canales` c
+SET c.`id_nivel` = (SELECT MIN(n.`id`) FROM `niveles` n)
+WHERE c.`id_nivel` IS NULL;
+
+CALL sp_drop_index_if_exists('com_canales', 'uq_canal_par');
+
+-- Crear uq_canal_nivel_par solo si no existe (MySQL 8+ / MariaDB 10.5.2+ no tienen ADD INDEX IF NOT EXISTS estándar)
+SET @idx_nivel_par := (
+    SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'com_canales'
+      AND index_name = 'uq_canal_nivel_par'
+);
+SET @ddl_idx := IF(
+    @idx_nivel_par = 0,
+    'ALTER TABLE `com_canales` ADD UNIQUE KEY `uq_canal_nivel_par` (`id_nivel`,`rol_emisor`,`rol_receptor`)',
+    'SELECT 1'
+);
+PREPARE stmt_idx FROM @ddl_idx;
+EXECUTE stmt_idx;
+DEALLOCATE PREPARE stmt_idx;
+
+UPDATE `com_canales` SET `id_nivel` = (SELECT MIN(n.`id`) FROM `niveles` n) WHERE `id_nivel` IS NULL;
+ALTER TABLE `com_canales` MODIFY `id_nivel` INT UNSIGNED NOT NULL;
+
+DROP PROCEDURE IF EXISTS sp_drop_index_if_exists;
 
 -- =============================================================================
 -- 4. Push, boletín, legajos (dnitut)
@@ -604,6 +658,57 @@ CREATE TABLE IF NOT EXISTS `aspicursosmodelo` (
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES
 (41, 39, 'ASPIRANTES', 'Gestión de aspirantes: parametrización de la instancia de registro, cursos disponibles y listado de inscriptos.'),
 (42, 40, 'CONFIGURACIÓN', 'Campos activos del formulario público de aspirantes.')
+ON DUPLICATE KEY UPDATE
+  `orden` = VALUES(`orden`),
+  `tema` = VALUES(`tema`),
+  `descripcion` = VALUES(`descripcion`);
+
+-- =============================================================================
+-- 8b. Auditoría comunicación institucional
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS `com_auditoria` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `accion` enum('marcar_leido','marcar_no_leido','borrar_mensaje','borrar_hilo') NOT NULL,
+  `portal` enum('secretaria','docente','familia') NOT NULL,
+  `tipo_actor` enum('profesor','familia') NOT NULL,
+  `actor_categoria` enum('estudiante','profesor','personal') NOT NULL,
+  `id_profesor_actor` int unsigned DEFAULT NULL,
+  `id_legajo_actor` int unsigned DEFAULT NULL,
+  `nombre_actor_snapshot` varchar(150) NOT NULL,
+  `dni_actor_snapshot` varchar(20) DEFAULT NULL,
+  `id_hilo` bigint unsigned NOT NULL,
+  `hilo_asunto_snapshot` varchar(200) NOT NULL,
+  `id_mensaje` bigint unsigned DEFAULT NULL,
+  `mensaje_contenido_snapshot` text DEFAULT NULL,
+  `mensaje_fecha_snapshot` date DEFAULT NULL,
+  `mensaje_remitente_snapshot` varchar(200) DEFAULT NULL,
+  `mensaje_destinatario_snapshot` text DEFAULT NULL,
+  `id_nivel` int unsigned NOT NULL,
+  `id_terlec` int unsigned NOT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_com_aud_nivel_terlec` (`id_nivel`,`id_terlec`,`created_at`),
+  KEY `idx_com_aud_prof` (`tipo_actor`,`id_profesor_actor`,`created_at`),
+  KEY `idx_com_aud_legajo` (`tipo_actor`,`id_legajo_actor`,`created_at`),
+  KEY `idx_com_aud_categoria` (`actor_categoria`,`created_at`),
+  KEY `idx_com_aud_accion` (`accion`,`created_at`),
+  KEY `com_auditoria_id_hilo_index` (`id_hilo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CALL sp_add_column_if_missing(
+    'com_auditoria',
+    'mensaje_remitente_snapshot',
+    'varchar(200) DEFAULT NULL AFTER `mensaje_fecha_snapshot`'
+);
+CALL sp_add_column_if_missing(
+    'com_auditoria',
+    'mensaje_destinatario_snapshot',
+    'text DEFAULT NULL AFTER `mensaje_remitente_snapshot`'
+);
+
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES
+(43, 43, 'COMUNICACIONES', 'Auditoría de comunicación institucional: consultar borrados y marcas de lectura en bandejas.')
 ON DUPLICATE KEY UPDATE
   `orden` = VALUES(`orden`),
   `tema` = VALUES(`tema`),

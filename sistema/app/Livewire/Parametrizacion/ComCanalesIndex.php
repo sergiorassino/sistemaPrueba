@@ -2,13 +2,17 @@
 
 namespace App\Livewire\Parametrizacion;
 
-use Illuminate\Support\Facades\Cache;
+use App\Comunicaciones\CanalesPolicy;
+use App\Models\ComCanal;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
-use App\Models\ComCanal;
 
 class ComCanalesIndex extends Component
 {
+    public int $idNivel = 0;
+
+    public string $nivelNombre = '';
+
     // Edición inline de un canal
     public ?int $editandoId = null;
     public bool $editPuedeIniciar   = false;
@@ -33,6 +37,9 @@ class ComCanalesIndex extends Component
     public function mount(): void
     {
         abort_unless(tienePermiso(5), 403, 'Sin permiso para administrar canales de comunicación.');
+
+        $this->idNivel = (int) (schoolCtx()->idNivel ?? 0);
+        $this->nivelNombre = schoolCtx()->nivelNombre();
     }
 
     public function abrirFormNuevo(): void
@@ -56,6 +63,12 @@ class ComCanalesIndex extends Component
     {
         abort_unless(tienePermiso(5), 403);
 
+        if ($this->idNivel <= 0) {
+            $this->addError('nuevoRolReceptor', 'Seleccione un nivel activo en el menú de secretaría antes de crear canales.');
+
+            return;
+        }
+
         $roles = ComCanal::rolesClave();
 
         $this->validate([
@@ -78,27 +91,33 @@ class ComCanalesIndex extends Component
         }
 
         $yaExiste = ComCanal::query()
+            ->where('id_nivel', $this->idNivel)
             ->where('rol_emisor', $this->nuevoRolEmisor)
             ->where('rol_receptor', $this->nuevoRolReceptor)
             ->exists();
 
         if ($yaExiste) {
-            $this->addError('nuevoRolReceptor', 'Ya existe un canal para esta combinación de emisor y receptor.');
+            $this->addError('nuevoRolReceptor', 'Ya existe un canal para esta combinación en este nivel.');
 
             return;
         }
 
+        $medios = array_values(array_unique($this->nuevoMedios));
+
         $canal = new ComCanal([
-            'rol_emisor'        => $this->nuevoRolEmisor,
-            'rol_receptor'      => $this->nuevoRolReceptor,
-            'puede_iniciar'     => $this->nuevoPuedeIniciar,
-            'puede_responder'   => $this->nuevoPuedeResponder,
-            'medios_permitidos' => array_values(array_unique($this->nuevoMedios)),
-            'activo'            => $this->nuevoActivo,
+            'id_nivel'        => $this->idNivel,
+            'rol_emisor'      => $this->nuevoRolEmisor,
+            'rol_receptor'    => $this->nuevoRolReceptor,
+            'puede_iniciar'   => $this->nuevoPuedeIniciar,
+            'puede_responder' => $this->nuevoPuedeResponder,
+            'activo'          => $this->nuevoActivo,
         ]);
+        $canal->medios_permitidos = $medios;
         $canal->created_at = now();
         $canal->updated_at = now();
         $canal->save();
+
+        CanalesPolicy::invalidar($canal->rol_emisor, $canal->rol_receptor, $this->idNivel);
 
         $this->mostrandoFormNuevo = false;
         session()->flash('success', 'Canal creado correctamente.');
@@ -116,7 +135,7 @@ class ComCanalesIndex extends Component
     public function iniciarEdicion(int $id): void
     {
         $this->cancelarFormNuevo();
-        $canal = ComCanal::findOrFail($id);
+        $canal = $this->canalDelNivel($id);
         $this->editandoId         = $id;
         $this->editPuedeIniciar   = $canal->puede_iniciar;
         $this->editPuedeResponder = $canal->puede_responder;
@@ -141,16 +160,16 @@ class ComCanalesIndex extends Component
             'editActivo'         => 'boolean',
         ]);
 
-        $canal = ComCanal::findOrFail($this->editandoId);
-        $canal->update([
-            'puede_iniciar'     => $this->editPuedeIniciar,
-            'puede_responder'   => $this->editPuedeResponder,
-            'medios_permitidos' => array_values(array_unique($this->editMedios)),
-            'activo'            => $this->editActivo,
-        ]);
+        $canal = $this->canalDelNivel((int) $this->editandoId);
+        $canal->puede_iniciar   = $this->editPuedeIniciar;
+        $canal->puede_responder = $this->editPuedeResponder;
+        $canal->medios_permitidos = array_values(array_unique($this->editMedios));
+        $canal->activo          = $this->editActivo;
+        $canal->updated_at      = now();
+        $canal->save();
 
-        Cache::forget("com_canal:{$canal->rol_emisor}:{$canal->rol_receptor}");
-        Cache::forget("com_canal:{$canal->rol_receptor}:{$canal->rol_emisor}");
+        CanalesPolicy::invalidar($canal->rol_emisor, $canal->rol_receptor, $this->idNivel);
+        CanalesPolicy::invalidar($canal->rol_receptor, $canal->rol_emisor, $this->idNivel);
 
         $this->editandoId = null;
         session()->flash('success', 'Canal actualizado correctamente.');
@@ -169,7 +188,7 @@ class ComCanalesIndex extends Component
     {
         abort_unless(tienePermiso(5), 403);
 
-        $canal = ComCanal::findOrFail($id);
+        $canal = $this->canalDelNivel($id);
         $etiquetas = ComCanal::etiquetasRoles();
         $de = $etiquetas[$canal->rol_emisor] ?? $canal->rol_emisor;
         $para = $etiquetas[$canal->rol_receptor] ?? $canal->rol_receptor;
@@ -201,14 +220,14 @@ class ComCanalesIndex extends Component
             return;
         }
 
-        $canal = ComCanal::findOrFail($this->eliminarId);
+        $canal = $this->canalDelNivel($this->eliminarId);
         $rolEmisor = $canal->rol_emisor;
         $rolReceptor = $canal->rol_receptor;
 
         $canal->delete();
 
-        Cache::forget("com_canal:{$rolEmisor}:{$rolReceptor}");
-        Cache::forget("com_canal:{$rolReceptor}:{$rolEmisor}");
+        CanalesPolicy::invalidar($rolEmisor, $rolReceptor, $this->idNivel);
+        CanalesPolicy::invalidar($rolReceptor, $rolEmisor, $this->idNivel);
 
         if ($this->editandoId === $this->eliminarId) {
             $this->cancelarEdicion();
@@ -220,7 +239,14 @@ class ComCanalesIndex extends Component
 
     public function render()
     {
-        $canales = ComCanal::query()->orderBy('rol_emisor')->orderBy('rol_receptor')->get();
+        $canales = $this->idNivel > 0
+            ? ComCanal::query()
+                ->where('id_nivel', $this->idNivel)
+                ->orderBy('rol_emisor')
+                ->orderBy('rol_receptor')
+                ->get()
+            : collect();
+
         $etiquetas = ComCanal::etiquetasRoles();
         $mediosDisponibles = ComCanal::mediosDisponibles();
 
@@ -229,5 +255,15 @@ class ComCanalesIndex extends Component
             'etiquetas'         => $etiquetas,
             'mediosDisponibles' => $mediosDisponibles,
         ])->layout('layouts.app', ['pageTitle' => 'Canales de Comunicación']);
+    }
+
+    private function canalDelNivel(int $id): ComCanal
+    {
+        abort_if($this->idNivel <= 0, 403, 'Sin nivel activo.');
+
+        return ComCanal::query()
+            ->where('id', $id)
+            ->where('id_nivel', $this->idNivel)
+            ->firstOrFail();
     }
 }

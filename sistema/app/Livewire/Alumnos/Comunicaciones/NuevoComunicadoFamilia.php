@@ -31,7 +31,8 @@ class NuevoComunicadoFamilia extends Component
 
     public function mount(): void
     {
-        $this->rolesReceptoresPermitidos = CanalesPolicy::receptoresPermitidosParaIniciar('familia');
+        $idNivel = (int) (studentCtx()->idNivel ?? 0);
+        $this->rolesReceptoresPermitidos = CanalesPolicy::receptoresPermitidosParaIniciar('familia', $idNivel);
     }
 
     public function updatedRolReceptor(): void
@@ -74,20 +75,20 @@ class NuevoComunicadoFamilia extends Component
             'contenido'      => 'required|string|max:' . config('comunicaciones.max_contenido', 2000),
         ]);
 
-        if (! CanalesPolicy::puedeIniciar('familia', $this->rolReceptor)) {
-            $this->addError('rolReceptor', 'La familia no puede iniciar conversaciones con ese rol en este momento.');
-            return;
-        }
-
         $ctx      = studentCtx();
         $idLegajo = (int) $ctx->idLegajo;
         $idNivel  = (int) $ctx->idNivel;
         $idTerlec = (int) $ctx->idTerlec;
 
+        if (! CanalesPolicy::puedeIniciar('familia', $this->rolReceptor, $idNivel)) {
+            $this->addError('rolReceptor', 'La familia no puede iniciar conversaciones con ese rol en este momento.');
+            return;
+        }
+
         $legajo = Legajo::find($idLegajo);
         [$nombreSnap, $dniSnap] = $this->snapshotDatosFamiliares($legajo, $this->vinculo);
 
-        $mediosCanal = CanalesPolicy::mediosPermitidos('familia', $this->rolReceptor);
+        $mediosCanal = CanalesPolicy::mediosPermitidos('familia', $this->rolReceptor, $idNivel);
 
         ComunicacionesRepository::crearHiloConMensaje([
             'asunto'                   => $this->asunto,

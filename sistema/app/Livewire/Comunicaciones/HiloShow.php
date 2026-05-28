@@ -3,6 +3,7 @@
 namespace App\Livewire\Comunicaciones;
 
 use App\Comunicaciones\CanalesPolicy;
+use App\Comunicaciones\ComAuditoriaLogger;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Support\ComunicacionesRutasGestion;
 use Illuminate\Support\Facades\DB;
@@ -56,7 +57,19 @@ class HiloShow extends Component
 
     private function marcarLeido(): void
     {
-        ComunicacionesRepository::marcarLeidoHiloProfesor($this->idHilo, (int) schoolCtx()->idProfesor);
+        $ctx = schoolCtx();
+        $idsMensajes = ComunicacionesRepository::marcarLeidoHiloProfesor($this->idHilo, (int) $ctx->idProfesor);
+        if ($idsMensajes === []) {
+            return;
+        }
+
+        ComAuditoriaLogger::registrarMarcarLeidoHilo(
+            $this->idHilo,
+            (int) $ctx->idNivel,
+            (int) $ctx->idTerlec,
+            $idsMensajes,
+            idProfesor: (int) $ctx->idProfesor
+        );
     }
 
     public function marcarMensajeNoLeido(int $idMensaje): void
@@ -84,6 +97,20 @@ class HiloShow extends Component
             $this->addError('marcarNoLeido', 'No se pudo marcar como no leído.');
 
             return;
+        }
+
+        $msg = ComMensaje::query()
+            ->where('id', $idMensaje)
+            ->where('id_hilo', $this->idHilo)
+            ->first();
+        if ($msg !== null) {
+            ComAuditoriaLogger::registrarMarcarNoLeido(
+                $msg,
+                $this->idHilo,
+                (int) $ctx->idNivel,
+                (int) $ctx->idTerlec,
+                idProfesor: (int) $ctx->idProfesor
+            );
         }
 
         $this->resetErrorBag('marcarNoLeido');
@@ -251,6 +278,8 @@ class HiloShow extends Component
             abort_unless(tienePermiso(7), 403, 'Sin permiso para borrar mensajes ajenos.');
         }
 
+        ComAuditoriaLogger::registrarBorrado($hilo, $msg, $borrarHilo, idProfesor: $idProf);
+
         DB::transaction(function () use ($msg, $hilo, $borrarHilo) {
             if ($borrarHilo) {
                 ComHilo::query()
@@ -349,12 +378,13 @@ class HiloShow extends Component
             }
         } else {
             $rolReceptor = 'familia';
-            if (! CanalesPolicy::puedeResponder($rolEmisor, $rolReceptor)) {
+            $idNivelHilo = (int) ($hiloCtx->id_nivel ?? $ctx->idNivel);
+            if (! CanalesPolicy::puedeResponder($rolEmisor, $rolReceptor, $idNivelHilo)) {
                 $this->addError('respuesta', 'Su rol no puede responder a este comunicado.');
 
                 return;
             }
-            $medios = CanalesPolicy::mediosPermitidos($rolEmisor, $rolReceptor);
+            $medios = CanalesPolicy::mediosPermitidos($rolEmisor, $rolReceptor, $idNivelHilo);
         }
 
         $nombreProf = trim("{$profesor->apellido}, {$profesor->nombre}");
@@ -413,7 +443,8 @@ class HiloShow extends Component
                 $puedeResponder = $hilo->docentesDestinatariosPuedenResponder()
                     && ComunicacionesRepository::puedeResponderVariosRoles($rolEmisor, $rolesTargets, true);
             } else {
-                $puedeResponder = CanalesPolicy::puedeResponder($rolEmisor, 'familia');
+                $idNivelHilo = (int) ($hilo->id_nivel ?? $ctx->idNivel);
+                $puedeResponder = CanalesPolicy::puedeResponder($rolEmisor, 'familia', $idNivelHilo);
             }
         }
 

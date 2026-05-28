@@ -163,7 +163,7 @@
             @elseif ($bloqueDestinatarios === 'docentes')
                 <div class="rounded-2xl border border-accent-200 bg-white p-4 shadow-sm sm:p-5">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">Profesores y personal institucional</p>
-                    <p class="mt-1 text-sm text-neutral-600">Elegí el tipo de destinatario y usá el botón para abrir el listado. En «personal institucional» aparecen preceptores, directivos y demás roles que no sean profesor de aula ni «Sin Rol». Si cambiás de tipo se vacía la selección.</p>
+                    <p class="mt-1 text-sm text-neutral-600">Elegí el tipo de destinatario y usá el botón para abrir el listado. <strong class="font-medium text-neutral-700">Profesores</strong>: Profesor/a y ATP/DOE. <strong class="font-medium text-neutral-700">Personal</strong>: directivos, secretarios, preceptores y bibliotecarios. Si cambiás de tipo se vacía la selección.</p>
 
                     <div class="mt-4">
                         <span class="form-label">Tipo de destinatario</span>

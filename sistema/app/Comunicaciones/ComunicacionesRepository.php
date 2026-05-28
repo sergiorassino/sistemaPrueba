@@ -4,6 +4,7 @@ namespace App\Comunicaciones;
 
 use App\Models\Legajo;
 use App\Models\Profesor;
+use App\Support\ProfesorMenuPortal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\ComHilo;
@@ -47,13 +48,47 @@ class ComunicacionesRepository
     }
 
     /**
+     * Verifica si una familia (legajo) puede ver un hilo (creador o destinatario),
+     * siempre acotado al nivel/terlec del contexto.
+     */
+    public static function familiaPuedeVerHilo(
+        int $idHilo,
+        int $idLegajo,
+        int $idNivel,
+        int $idTerlec
+    ): bool {
+        return DB::table('com_hilos as h')
+            ->where('h.id', $idHilo)
+            ->where('h.id_nivel', $idNivel)
+            ->where('h.id_terlec', $idTerlec)
+            ->where(function ($q) use ($idLegajo) {
+                $q->where(function ($q2) use ($idLegajo) {
+                    $q2->where('h.creado_por_tipo', 'familia')
+                        ->where('h.creado_por_id', $idLegajo);
+                })->orWhereExists(function ($sub) use ($idLegajo) {
+                    $sub->select(DB::raw(1))
+                        ->from('com_mensajes_destinatarios as d')
+                        ->whereColumn('d.id_hilo', 'h.id')
+                        ->where('d.tipo_destinatario', 'familia')
+                        ->where('d.id_legajo', $idLegajo);
+                });
+            })
+            ->exists();
+    }
+
+    /**
      * Buscar profesores del nivel actual (para pantalla de revisión o destinatarios docentes).
      *
      * @param  string|null  $rolNormalizado  Si se indica ('profesor'|'preceptor'|'directivo'), solo ese rol.
      * @return list<array{id:int,label:string,dni:?string}>
      */
-    public static function buscarProfesores(int $idNivel, string $q, int $limit = 15, ?string $rolNormalizado = null): array
-    {
+    public static function buscarProfesores(
+        int $idNivel,
+        string $q,
+        int $limit = 15,
+        ?string $rolNormalizado = null,
+        ?bool $soloProfesorAula = null
+    ): array {
         $q = trim($q);
         if ($q === '') {
             return [];
@@ -64,6 +99,8 @@ class ComunicacionesRepository
         $query = DB::table('profesores as p')
             ->join('profesortipo as pt', 'pt.id', '=', 'p.IdTipoProf')
             ->where('p.nivel', $idNivel)
+            ->when($soloProfesorAula === true, fn ($w) => $w->where('p.IdTipoProf', ProfesorMenuPortal::ID_TIPO_PROFESOR_AULA))
+            ->when($soloProfesorAula === false, fn ($w) => $w->where('p.IdTipoProf', '!=', ProfesorMenuPortal::ID_TIPO_PROFESOR_AULA))
             ->where(function ($w) use ($like) {
                 $w->where('p.apellido', 'like', $like)
                     ->orWhere('p.nombre', 'like', $like)
@@ -173,10 +210,91 @@ class ComunicacionesRepository
     }
 
     /**
+     * Búsqueda de usuarios para el módulo de auditoría de comunicaciones.
+     *
+     * @param  'todos'|'estudiante'|'profesor'|'personal'  $categoria
+     * @return list<array{tipo:string,id:int,label:string,dni:?string,categoria:string}>
+     */
+    public static function buscarUsuariosAuditoria(
+        int $idNivel,
+        int $idTerlec,
+        string $q,
+        string $categoria = 'todos',
+        int $limit = 15
+    ): array {
+        $limit = max(1, min(30, $limit));
+        $categoria = in_array($categoria, ['todos', 'estudiante', 'profesor', 'personal'], true)
+            ? $categoria
+            : 'todos';
+
+        $out = [];
+
+        if ($categoria === 'estudiante' || $categoria === 'todos') {
+            $limEst = $categoria === 'todos' ? (int) ceil($limit / 2) : $limit;
+            foreach (static::buscarEstudiantes($idNivel, $idTerlec, $q, $limEst) as $e) {
+                $out[] = [
+                    'tipo'      => 'estudiante',
+                    'categoria' => 'estudiante',
+                    'id'        => $e['id'],
+                    'label'     => $e['label'],
+                    'dni'       => $e['dni'],
+                ];
+            }
+        }
+
+        if ($categoria === 'profesor' || $categoria === 'personal' || $categoria === 'todos') {
+            $restante = $limit - count($out);
+            if ($restante > 0) {
+                $soloAula = $categoria === 'profesor' ? true : ($categoria === 'personal' ? false : null);
+                $mitad    = $categoria === 'todos' ? (int) ceil($restante / 2) : $restante;
+
+                if ($categoria === 'todos') {
+                    foreach (static::buscarProfesores($idNivel, $q, $mitad, null, true) as $p) {
+                        $out[] = [
+                            'tipo'      => 'profesor',
+                            'categoria' => 'profesor',
+                            'id'        => $p['id'],
+                            'label'     => $p['label'],
+                            'dni'       => $p['dni'],
+                        ];
+                    }
+                    $restante = $limit - count($out);
+                    if ($restante > 0) {
+                        foreach (static::buscarProfesores($idNivel, $q, $restante, null, false) as $p) {
+                            $out[] = [
+                                'tipo'      => 'profesor',
+                                'categoria' => 'personal',
+                                'id'        => $p['id'],
+                                'label'     => $p['label'],
+                                'dni'       => $p['dni'],
+                            ];
+                        }
+                    }
+                } else {
+                    $cat = $categoria === 'profesor' ? 'profesor' : 'personal';
+                    foreach (static::buscarProfesores($idNivel, $q, $restante, null, $soloAula) as $p) {
+                        $out[] = [
+                            'tipo'      => 'profesor',
+                            'categoria' => $cat,
+                            'id'        => $p['id'],
+                            'label'     => $p['label'],
+                            'dni'       => $p['dni'],
+                        ];
+                    }
+                }
+            }
+        }
+
+        usort($out, fn (array $a, array $b): int => strcasecmp($a['label'], $b['label']));
+
+        return array_slice($out, 0, $limit);
+    }
+
+    /**
      * Docentes del nivel para selector con checkboxes (modal de nuevo comunicado).
      *
-     * @param  'profesor'|'institucional'  $modoLista  `profesor`: solo rol canal profesor;
-     *                                              `institucional`: todo personal con rol distinto de profesor y de «Sin Rol».
+     * @param  'profesor'|'institucional'  $modoLista  `profesor`: Profesor/a y ATP/DOE;
+     *                                              `institucional`: directivos, secretarios, preceptores, bibliotecarios y similares (no «Sin Rol»).
      * @return list<array{id:int,label:string,dni:?string,rol:string,rol_label:string}>
      */
     public static function profesoresDelNivelParaSelector(
@@ -313,11 +431,9 @@ class ComunicacionesRepository
             return false;
         }
 
-        $rolNorm = CanalesPolicy::normalizarRolProfesor((string) ($r->tipo ?? ''));
+        $modoTipo = CanalesPolicy::modoSelectorNuevoComunicadoDocente((string) ($r->tipo ?? ''));
 
-        return $modoLista === 'profesor'
-            ? $rolNorm === 'profesor'
-            : $rolNorm !== 'profesor';
+        return $modoTipo !== null && $modoTipo === $modoLista;
     }
 
     /**
@@ -882,25 +998,58 @@ class ComunicacionesRepository
 
     /**
      * Marca como leído todos los mensajes de un hilo para un destinatario.
+     *
+     * @return list<int> IDs de mensajes que pasaron de no leído a leído
      */
-    public static function marcarLeidoHiloProfesor(int $idHilo, int $idProfesor): void
+    public static function marcarLeidoHiloProfesor(int $idHilo, int $idProfesor): array
     {
-        ComMensajeDestinatario::query()
+        $base = ComMensajeDestinatario::query()
             ->where('id_hilo', $idHilo)
             ->where('tipo_destinatario', 'profesor')
             ->where('id_profesor', $idProfesor)
-            ->whereNull('leido_at')
-            ->update(['leido_at' => now()]);
+            ->whereNull('leido_at');
+
+        $idsMensajes = $base->clone()
+            ->distinct()
+            ->pluck('id_mensaje')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+
+        if ($idsMensajes === []) {
+            return [];
+        }
+
+        $base->update(['leido_at' => now()]);
+
+        return $idsMensajes;
     }
 
-    public static function marcarLeidoHiloFamilia(int $idHilo, int $idLegajo): void
+    /**
+     * @return list<int> IDs de mensajes que pasaron de no leído a leído
+     */
+    public static function marcarLeidoHiloFamilia(int $idHilo, int $idLegajo): array
     {
-        ComMensajeDestinatario::query()
+        $base = ComMensajeDestinatario::query()
             ->where('id_hilo', $idHilo)
             ->where('tipo_destinatario', 'familia')
             ->where('id_legajo', $idLegajo)
-            ->whereNull('leido_at')
-            ->update(['leido_at' => now()]);
+            ->whereNull('leido_at');
+
+        $idsMensajes = $base->clone()
+            ->distinct()
+            ->pluck('id_mensaje')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+
+        if ($idsMensajes === []) {
+            return [];
+        }
+
+        $base->update(['leido_at' => now()]);
+
+        return $idsMensajes;
     }
 
     /**

@@ -33,7 +33,7 @@
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || str_starts_with($route ?? '', 'listados.')) ? 'true' : 'false' }},
-        cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales' || ($route ?? '') === 'push.suscribir') && tienePermiso(3)) ? 'true' : 'false' }},
+        cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales' || ($route ?? '') === 'push.suscribir') && (tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5))) ? 'true' : 'false' }},
         calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.') || str_starts_with($route ?? '', 'boletinesSecundario.')) ? 'true' : 'false' }},
         disciplinario: {{ str_starts_with($route ?? '', 'seguimiento.disciplinario') ? 'true' : 'false' }},
         inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') || str_starts_with($route ?? '', 'seguimiento.partes-diarios') || ($route ?? '') === 'seguimiento.toma-asistencia-clase' ? 'true' : 'false' }},
@@ -302,7 +302,7 @@
             </div>
 
         {{-- Comunicación institucional --}}
-        @if(tienePermiso(3))
+        @if(tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
@@ -325,10 +325,11 @@
                  x-show="groups.cuadernoComunicados && !sidebarCollapsed"
                  x-collapse
                  x-cloak>
+                @if(tienePermiso(3))
                 <a href="{{ route('comunicaciones.index') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'comunicaciones.') && ! in_array(($route ?? ''), ['comunicaciones.nuevo', 'comunicaciones.revision'], true),
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'comunicaciones.') && ! in_array(($route ?? ''), ['comunicaciones.nuevo', 'comunicaciones.revision', 'comunicaciones.auditoria'], true),
                    ])
                    title="Bandeja de comunicados v1.0">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -337,6 +338,7 @@
                     </svg>
                     <span class="truncate">Bandeja de comunicados</span>
                 </a>
+                @endif
 
                 @if(tienePermiso(4))
                 <a href="{{ route('comunicaciones.nuevo') }}"
@@ -364,6 +366,21 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                     </svg>
                     <span class="truncate">Control Cuaderno de Comunicados</span>
+                </a>
+                @endif
+
+                @if(tienePermiso(43))
+                <a href="{{ route('comunicaciones.auditoria') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.auditoria',
+                   ])
+                   title="Auditoría de borrados y marcas de lectura en bandejas">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                    <span class="truncate">Auditoría Comunicación</span>
                 </a>
                 @endif
 

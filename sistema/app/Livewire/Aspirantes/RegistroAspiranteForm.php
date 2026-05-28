@@ -9,6 +9,7 @@ use App\Models\Aspiento;
 use App\Models\CampoAspirante;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -127,6 +128,14 @@ class RegistroAspiranteForm extends Component
 
             return;
         }
+
+        $rateKey = 'aspirantes-registro:'.(request()->ip() ?? 'unknown');
+        if (RateLimiter::tooManyAttempts($rateKey, 10)) {
+            $this->addError('_registro', 'Demasiados intentos de envío. Esperá un minuto e intentá de nuevo.');
+
+            return;
+        }
+        RateLimiter::hit($rateKey, 60);
 
         $instancia = $this->instancia();
         if (! $instancia || ! $instancia->aceptaRegistros()) {

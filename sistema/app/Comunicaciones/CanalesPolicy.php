@@ -2,13 +2,30 @@
 
 namespace App\Comunicaciones;
 
+use App\Models\ComCanal;
 use App\Models\Profesor;
 use Illuminate\Support\Facades\Cache;
-use App\Models\ComCanal;
 
 class CanalesPolicy
 {
     private const CACHE_TTL = 60; // segundos
+
+    /**
+     * Nivel activo: parámetro explícito, contexto de secretaría o portal familia.
+     */
+    public static function resolveIdNivel(?int $idNivel = null): int
+    {
+        if ($idNivel !== null && $idNivel > 0) {
+            return $idNivel;
+        }
+
+        $fromSchool = (int) (schoolCtx()->idNivel ?? 0);
+        if ($fromSchool > 0) {
+            return $fromSchool;
+        }
+
+        return (int) (studentCtx()->idNivel ?? 0);
+    }
 
     /**
      * Normaliza el tipo de un profesor (desde profesortipo.tipo) al rol del canal.
@@ -35,23 +52,74 @@ class CanalesPolicy
     }
 
     /**
+     * Clasifica un `profesortipo.tipo` para el selector de destinatarios docentes
+     * en «Nuevo comunicado» (botones Profesores / Personal).
+     *
+     * Distinto de {@see normalizarRolProfesor}: aquí se discrimina por cargo real
+     * (p. ej. bibliotecario → Personal; ATP/DOE → Profesores).
+     *
+     * @return 'profesor'|'institucional'|null  null = excluir del selector (p. ej. «Sin Rol»).
+     */
+    public static function modoSelectorNuevoComunicadoDocente(?string $tipo): ?string
+    {
+        if ($tipo === null || trim($tipo) === '') {
+            return null;
+        }
+
+        $t = mb_strtolower(trim($tipo));
+
+        if (str_contains($t, 'sin rol')) {
+            return null;
+        }
+
+        if (str_contains($t, 'direct') || str_contains($t, 'secret')) {
+            return 'institucional';
+        }
+        if (str_contains($t, 'preceptor')) {
+            return 'institucional';
+        }
+        if (str_contains($t, 'bibliotec')) {
+            return 'institucional';
+        }
+        if (str_contains($t, 'no docente')) {
+            return 'institucional';
+        }
+
+        if (str_contains($t, 'atp') || str_contains($t, 'doe')) {
+            return 'profesor';
+        }
+        if (str_contains($t, 'profesor')) {
+            return 'profesor';
+        }
+
+        return null;
+    }
+
+    /**
      * Normaliza el rol de un Profesor model.
      */
     public static function rolDeProfesor(Profesor $profesor): string
     {
         $tipo = (string) ($profesor->tipo?->tipo ?? '');
+
         return static::normalizarRolProfesor($tipo);
     }
 
     /**
-     * Obtiene el canal entre dos roles, con caché.
+     * Obtiene el canal entre dos roles para un nivel, con caché.
      */
-    public static function obtenerCanal(string $rolEmisor, string $rolReceptor): ?ComCanal
+    public static function obtenerCanal(string $rolEmisor, string $rolReceptor, ?int $idNivel = null): ?ComCanal
     {
-        $cacheKey = "com_canal:{$rolEmisor}:{$rolReceptor}";
+        $idNivel = static::resolveIdNivel($idNivel);
+        if ($idNivel <= 0) {
+            return null;
+        }
 
-        return Cache::remember($cacheKey, static::CACHE_TTL, function () use ($rolEmisor, $rolReceptor) {
+        $cacheKey = "com_canal:{$idNivel}:{$rolEmisor}:{$rolReceptor}";
+
+        return Cache::remember($cacheKey, static::CACHE_TTL, function () use ($rolEmisor, $rolReceptor, $idNivel) {
             return ComCanal::query()
+                ->where('id_nivel', $idNivel)
                 ->where('rol_emisor', $rolEmisor)
                 ->where('rol_receptor', $rolReceptor)
                 ->where('activo', true)
@@ -59,14 +127,14 @@ class CanalesPolicy
         });
     }
 
-    public static function puedeIniciar(string $rolEmisor, string $rolReceptor): bool
+    public static function puedeIniciar(string $rolEmisor, string $rolReceptor, ?int $idNivel = null): bool
     {
-        return (bool) static::obtenerCanal($rolEmisor, $rolReceptor)?->puede_iniciar;
+        return (bool) static::obtenerCanal($rolEmisor, $rolReceptor, $idNivel)?->puede_iniciar;
     }
 
-    public static function puedeResponder(string $rolEmisor, string $rolReceptor): bool
+    public static function puedeResponder(string $rolEmisor, string $rolReceptor, ?int $idNivel = null): bool
     {
-        return (bool) static::obtenerCanal($rolEmisor, $rolReceptor)?->puede_responder;
+        return (bool) static::obtenerCanal($rolEmisor, $rolReceptor, $idNivel)?->puede_responder;
     }
 
     /**
@@ -74,31 +142,43 @@ class CanalesPolicy
      *
      * @return list<string>
      */
-    public static function mediosPermitidos(string $rolEmisor, string $rolReceptor): array
+    public static function mediosPermitidos(string $rolEmisor, string $rolReceptor, ?int $idNivel = null): array
     {
-        $canal = static::obtenerCanal($rolEmisor, $rolReceptor);
+        $canal = static::obtenerCanal($rolEmisor, $rolReceptor, $idNivel);
         if ($canal === null) {
             return [];
         }
         $medios = $canal->medios_permitidos ?? [];
         $disponibles = ComCanal::mediosDisponibles();
+
         return array_values(array_intersect($medios, $disponibles));
     }
 
-    /** Invalida la caché de un par de roles */
-    public static function invalidar(string $rolEmisor, string $rolReceptor): void
+    /** Invalida la caché de un par de roles en un nivel */
+    public static function invalidar(string $rolEmisor, string $rolReceptor, ?int $idNivel = null): void
     {
-        Cache::forget("com_canal:{$rolEmisor}:{$rolReceptor}");
+        $idNivel = static::resolveIdNivel($idNivel);
+        if ($idNivel <= 0) {
+            return;
+        }
+
+        Cache::forget("com_canal:{$idNivel}:{$rolEmisor}:{$rolReceptor}");
     }
 
     /**
-     * Devuelve todos los roles receptores a los que un emisor puede iniciar conversación.
+     * Devuelve todos los roles receptores a los que un emisor puede iniciar conversación en un nivel.
      *
      * @return list<string>
      */
-    public static function receptoresPermitidosParaIniciar(string $rolEmisor): array
+    public static function receptoresPermitidosParaIniciar(string $rolEmisor, ?int $idNivel = null): array
     {
+        $idNivel = static::resolveIdNivel($idNivel);
+        if ($idNivel <= 0) {
+            return [];
+        }
+
         return ComCanal::query()
+            ->where('id_nivel', $idNivel)
             ->where('rol_emisor', $rolEmisor)
             ->where('puede_iniciar', true)
             ->where('activo', true)

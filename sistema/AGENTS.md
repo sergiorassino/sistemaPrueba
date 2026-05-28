@@ -21,6 +21,19 @@ Si lo habitual en el entorno es aplicar migraciones con Artisan en lugar de SQL 
 
 Detalle y matices: `docs/06-reglas-de-seguridad.md` sección **9**.
 
+## Despliegue a producción (obligatorio al cerrar tareas)
+
+Si el cambio implica **código o vistas** (no solo consulta o documentación), al **final** de la respuesta o del PR debe figurar un bloque **Archivos para producción** con:
+
+1. **Lista de rutas** relativas a `sistema/` (una por línea), solo los archivos que hay que **subir o reemplazar** en el servidor.
+2. **Assets compilados**, si aplica: indicar si hay que ejecutar `npm run build` en el servidor o subir `public/build/` (y recordar borrar `public/hot` si existe).
+3. **Comandos post-despliegue** opcionales en una línea (por ejemplo `php artisan view:clear`, `php artisan config:clear`), **sin ejecutarlos** desde la herramienta del asistente.
+4. Si **no** hubo cambios desplegables, decirlo explícitamente.
+
+Usar el mismo criterio que para SQL: rutas concretas, sin carpetas genéricas salvo que todo un directorio nuevo deba subirse entero. Si además hay SQL, incluir **ambos** bloques (SQL y archivos).
+
+Referencia de despliegue: `docs/09-despliegue-sin-public-en-url.md`.
+
 ## Promedio de calificaciones (secundario)
 
 No calcular promedios salvo en **carga manual** (`CargaCalificacionesSecundario`, al guardar `ic01..ic28` → `calif`). El resto del sistema solo **lee** `calificaciones.calif`. Detalle: `docs/05-preferencias-y-convenciones.md` §7.

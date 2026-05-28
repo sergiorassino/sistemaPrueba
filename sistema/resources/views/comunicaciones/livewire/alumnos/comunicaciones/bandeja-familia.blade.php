@@ -86,9 +86,11 @@
                     }
                 }
             @endphp
-            <a href="{{ route('alumnos.comunicaciones.hilo', $hilo->id) }}"
+            <button type="button"
+                    wire:click="abrirHilo({{ (int) $hilo->id }})"
+                    wire:key="hilo-fam-{{ (int) $hilo->id }}"
                @class([
-                   'se-card block p-4 transition hover:shadow-md sm:p-5',
+                   'se-card block w-full p-4 text-left transition hover:shadow-md sm:p-5',
                    'border-l-4 border-l-primary-600 bg-primary-50/20' => $esEnviados && ! $tieneNoLeidos,
                    'border-l-4 border-l-primary-600 bg-pink-100' => $esEnviados && $tieneNoLeidos,
                    'border-r-4 border-r-accent-300 bg-white' => ! $esEnviados && ! $tieneNoLeidos,
@@ -151,7 +153,7 @@
                             </div>
                         </div>
                 </div>
-            </a>
+            </button>
         @empty
             <div class="se-card p-10">
                 <div class="flex flex-col items-center justify-center gap-3 text-center sm:flex-row sm:text-left">

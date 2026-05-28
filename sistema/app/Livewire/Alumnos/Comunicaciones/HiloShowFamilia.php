@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 use App\Comunicaciones\CanalesPolicy;
+use App\Comunicaciones\ComAuditoriaLogger;
+use App\Comunicaciones\ComunicacionesFamiliaSession;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Models\ComHilo;
 use App\Models\ComMensaje;
@@ -28,22 +30,31 @@ class HiloShowFamilia extends Component
 
     public bool $modalBorrarEliminaHiloCompleto = false;
 
-    public function mount(int $id): void
+    public function mount(): void
     {
-        $ctx = studentCtx();
-        $hilo = ComHilo::where('id', $id)
-            ->where('id_nivel', (int) $ctx->idNivel)
-            ->where('id_terlec', (int) $ctx->idTerlec)
-            ->first();
-
-        abort_if($hilo === null, 404);
+        $id = ComunicacionesFamiliaSession::idHiloActivo();
+        abort_if($id <= 0, 404);
 
         $this->idHilo = $id;
-        ComunicacionesRepository::marcarLeidoHiloFamilia($id, (int) $ctx->idLegajo);
+        $this->assertHiloAccesible();
+
+        $ctx = studentCtx();
+        $idsMensajes = ComunicacionesRepository::marcarLeidoHiloFamilia($id, (int) $ctx->idLegajo);
+        if ($idsMensajes !== []) {
+            ComAuditoriaLogger::registrarMarcarLeidoHilo(
+                $id,
+                (int) $ctx->idNivel,
+                (int) $ctx->idTerlec,
+                $idsMensajes,
+                idLegajo: (int) $ctx->idLegajo
+            );
+        }
     }
 
     public function marcarMensajeNoLeido(int $idMensaje): void
     {
+        $this->assertHiloAccesible();
+
         $key = 'com:unread:fam:' . (auth('alumno')->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 40)) {
             $this->addError('marcarNoLeido', 'Demasiadas acciones. Espere un momento.');
@@ -65,6 +76,20 @@ class HiloShowFamilia extends Component
             $this->addError('marcarNoLeido', 'No se pudo marcar como no leído.');
 
             return;
+        }
+
+        $msg = ComMensaje::query()
+            ->where('id', $idMensaje)
+            ->where('id_hilo', $this->idHilo)
+            ->first();
+        if ($msg !== null) {
+            ComAuditoriaLogger::registrarMarcarNoLeido(
+                $msg,
+                $this->idHilo,
+                (int) $ctx->idNivel,
+                (int) $ctx->idTerlec,
+                idLegajo: (int) $ctx->idLegajo
+            );
         }
 
         $this->resetErrorBag('marcarNoLeido');
@@ -114,6 +139,8 @@ class HiloShowFamilia extends Component
 
     public function abrirModalBorrar(int $idMensaje): void
     {
+        $this->assertHiloAccesible();
+
         $ctx = studentCtx();
 
         $hilo = ComHilo::query()
@@ -171,6 +198,8 @@ class HiloShowFamilia extends Component
 
     public function borrarMensaje(int $idMensaje): void
     {
+        $this->assertHiloAccesible();
+
         $key = 'com:del:fam:' . (auth('alumno')->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 10)) {
             session()->flash('success', 'Demasiadas acciones. Espere un momento.');
@@ -213,6 +242,8 @@ class HiloShowFamilia extends Component
         }
 
         abort_if((int) $msg->respuestas_count > 0, 403, 'No se puede borrar un mensaje que tiene respuestas.');
+
+        ComAuditoriaLogger::registrarBorrado($hilo, $msg, $borrarHilo, idLegajo: $idLegajo);
 
         DB::transaction(function () use ($msg, $hilo, $borrarHilo) {
             if ($borrarHilo) {
@@ -262,6 +293,8 @@ class HiloShowFamilia extends Component
 
     public function responder(): void
     {
+        $this->assertHiloAccesible();
+
         $key = 'com:resp:fam:' . (auth('alumno')->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, config('comunicaciones.rate_limit_max', 20))) {
             $this->addError('respuesta', 'Demasiados envíos. Espere un momento.');
@@ -286,12 +319,14 @@ class HiloShowFamilia extends Component
             return;
         }
 
-        if (! CanalesPolicy::puedeResponder('familia', $rolReceptor)) {
+        $idNivelHilo = (int) ($hilo->id_nivel ?? $ctx->idNivel);
+
+        if (! CanalesPolicy::puedeResponder('familia', $rolReceptor, $idNivelHilo)) {
             $this->addError('respuesta', 'No puede responder a este tipo de comunicado.');
             return;
         }
 
-        $medios = CanalesPolicy::mediosPermitidos('familia', $rolReceptor);
+        $medios = CanalesPolicy::mediosPermitidos('familia', $rolReceptor, $idNivelHilo);
 
         [$nombreSnap, $dniSnap] = $this->snapshotDatosFamiliares($legajo, $this->vinculo);
 
@@ -326,8 +361,24 @@ class HiloShowFamilia extends Component
         };
     }
 
+    private function assertHiloAccesible(): void
+    {
+        $ctx = studentCtx();
+        abort_unless(
+            ComunicacionesRepository::familiaPuedeVerHilo(
+                (int) $this->idHilo,
+                (int) $ctx->idLegajo,
+                (int) $ctx->idNivel,
+                (int) $ctx->idTerlec
+            ),
+            404
+        );
+    }
+
     public function render()
     {
+        $this->assertHiloAccesible();
+
         $ctx  = studentCtx();
         $hilo = ComHilo::with([
             'mensajes' => function ($q) {
@@ -337,14 +388,10 @@ class HiloShowFamilia extends Component
             },
         ])->findOrFail($this->idHilo);
 
-        abort_if(
-            $hilo->id_nivel !== (int) $ctx->idNivel || $hilo->id_terlec !== (int) $ctx->idTerlec,
-            404
-        );
-
         $rolHilo   = (string) ($hilo->creado_por_rol ?? 'preceptor');
+        $idNivelHilo = (int) ($hilo->id_nivel ?? $ctx->idNivel);
         $puedeResp = $hilo->familiaPuedeEnviarRespuestas()
-            && CanalesPolicy::puedeResponder('familia', $rolHilo);
+            && CanalesPolicy::puedeResponder('familia', $rolHilo, $idNivelHilo);
 
         $mensajesPorDia = $hilo->mensajes->groupBy(fn ($m) => $m->created_at?->toDateString());
 

@@ -68,6 +68,8 @@ final class PermisosIaCatalog
 
     public const ASPIRANTES_CAMPOS = 40;
 
+    public const COM_AUDITORIA = 43;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -113,6 +115,7 @@ final class PermisosIaCatalog
             ['id' => 40, 'orden' => self::INASISTENCIAS_ESTUDIANTES_GESTION, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Gestión de inasistencias del estudiante: alta, edición, baja e informe individual en PDF.'],
             ['id' => 41, 'orden' => self::ASPIRANTES_GESTION, 'tema' => 'ASPIRANTES', 'descripcion' => 'Gestión de aspirantes: parametrización de la instancia de registro, cursos disponibles y listado de inscriptos.'],
             ['id' => 42, 'orden' => self::ASPIRANTES_CAMPOS, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Campos activos del formulario público de aspirantes.'],
+            ['id' => 43, 'orden' => self::COM_AUDITORIA, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Auditoría de comunicación institucional: consultar borrados y marcas de lectura en bandejas.'],
         ];
     }
 

@@ -41,6 +41,33 @@ BEGIN
 END$$
 DELIMITER ;
 
+-- -----------------------------------------------------------------------------
+-- Utilidad: quitar columna solo si existe
+-- -----------------------------------------------------------------------------
+DROP PROCEDURE IF EXISTS sp_drop_column_if_exists;
+DELIMITER $$
+CREATE PROCEDURE sp_drop_column_if_exists(
+    IN p_table VARCHAR(64),
+    IN p_column VARCHAR(64)
+)
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = p_table
+          AND COLUMN_NAME = p_column
+    ) THEN
+        SET @ddl = CONCAT(
+            'ALTER TABLE `', p_table, '` DROP COLUMN `', p_column, '`'
+        );
+        PREPARE stmt FROM @ddl;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END$$
+DELIMITER ;
+
 -- =============================================================================
 -- 1. Legajo alumnos — solapas y campos
 -- =============================================================================
@@ -430,6 +457,157 @@ ON DUPLICATE KEY UPDATE
 -- 8. Inasistencias estudiantes — texto CIDI en catálogo de tipos
 -- =============================================================================
 CALL sp_add_column_if_missing('inasistencias_valores', 'texto_cidi', 'varchar(120) NULL DEFAULT NULL AFTER `concepto`');
+
+-- =============================================================================
+-- 10. Aspirantes (gestión de aspirantes + form público)
+-- =============================================================================
+-- Tabla parametrización de campos del form público (nueva)
+CREATE TABLE IF NOT EXISTS `campos_aspirantes` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `columna` varchar(80) NOT NULL,
+  `orden` int(10) unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `campos_aspirantes_columna_unique` (`columna`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Limpieza legacy (columnas globales ya no se usan; viven en campos_aspirantes_nivel)
+CALL sp_drop_column_if_exists('campos_aspirantes', 'visible');
+CALL sp_drop_column_if_exists('campos_aspirantes', 'obligatorio');
+
+-- Campos visibles/obligatorios/etiqueta/opciones por nivel
+CREATE TABLE IF NOT EXISTS `campos_aspirantes_nivel` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `campo_aspirante_id` bigint(20) unsigned NOT NULL,
+  `idNivel` int(10) unsigned NOT NULL,
+  `visible` tinyint(1) NOT NULL DEFAULT 0,
+  `obligatorio` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_campo_aspirante_nivel` (`campo_aspirante_id`,`idNivel`),
+  KEY `idx_campos_asp_nivel_idNivel` (`idNivel`),
+  CONSTRAINT `fk_campos_asp_nivel_campo`
+    FOREIGN KEY (`campo_aspirante_id`) REFERENCES `campos_aspirantes` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CALL sp_add_column_if_missing('campos_aspirantes_nivel', 'etiqueta', 'varchar(100) NULL DEFAULT NULL AFTER `obligatorio`');
+CALL sp_add_column_if_missing('campos_aspirantes_nivel', 'opciones', 'varchar(500) NULL DEFAULT NULL AFTER `etiqueta`');
+CALL sp_add_column_if_missing('campos_aspirantes_nivel', 'ayuda', 'varchar(500) NULL DEFAULT NULL AFTER `opciones`');
+
+-- Copiar etiqueta/opciones globales → por nivel (solo si aún existen en campos_aspirantes)
+DROP PROCEDURE IF EXISTS sp_migrate_etiqueta_opciones_aspirantes_nivel;
+DELIMITER $$
+CREATE PROCEDURE sp_migrate_etiqueta_opciones_aspirantes_nivel()
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'campos_aspirantes_nivel'
+          AND COLUMN_NAME = 'etiqueta'
+    ) AND EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'campos_aspirantes'
+          AND COLUMN_NAME = 'etiqueta'
+    ) THEN
+        UPDATE campos_aspirantes_nivel cn
+        INNER JOIN campos_aspirantes ca ON ca.id = cn.campo_aspirante_id
+        SET cn.etiqueta = COALESCE(cn.etiqueta, ca.etiqueta);
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'campos_aspirantes_nivel'
+          AND COLUMN_NAME = 'opciones'
+    ) AND EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'campos_aspirantes'
+          AND COLUMN_NAME = 'opciones'
+    ) THEN
+        UPDATE campos_aspirantes_nivel cn
+        INNER JOIN campos_aspirantes ca ON ca.id = cn.campo_aspirante_id
+        SET cn.opciones = COALESCE(cn.opciones, ca.opciones);
+    END IF;
+END$$
+DELIMITER ;
+CALL sp_migrate_etiqueta_opciones_aspirantes_nivel();
+DROP PROCEDURE IF EXISTS sp_migrate_etiqueta_opciones_aspirantes_nivel;
+
+CALL sp_drop_column_if_exists('campos_aspirantes', 'etiqueta');
+CALL sp_drop_column_if_exists('campos_aspirantes', 'opciones');
+
+-- Columnas a agregar en tablas legacy (solo si faltan)
+CALL sp_add_column_if_missing('aspiento', 'titulo', 'varchar(150) NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspiento', 'token', 'varchar(64) NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspiento', 'activo', 'tinyint(1) NOT NULL DEFAULT 0');
+CALL sp_add_column_if_missing('aspiento', 'idTerlec', 'int(10) unsigned NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspiento', 'mensaje_publico', 'text NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspiento', 'created_at', 'timestamp NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspiento', 'updated_at', 'timestamp NULL DEFAULT NULL');
+
+-- Índice único en aspiento.token (solo si no existe)
+SET @idx_aspiento_token := (
+  SELECT COUNT(*) FROM information_schema.statistics
+  WHERE table_schema = DATABASE() AND table_name = 'aspiento' AND index_name = 'aspiento_token_unique'
+);
+SET @ddl := IF(@idx_aspiento_token = 0,
+  'ALTER TABLE `aspiento` ADD UNIQUE KEY `aspiento_token_unique` (`token`)',
+  'SELECT 1'
+);
+PREPARE st FROM @ddl; EXECUTE st; DEALLOCATE PREPARE st;
+
+CALL sp_add_column_if_missing('aspicursos', 'idAspiento', 'int(10) unsigned NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspicursos', 'idCursos', 'int(10) unsigned NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspicursos', 'idCursoModelo', 'bigint(20) unsigned NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspicursos', 'activo', 'tinyint(1) NOT NULL DEFAULT 1');
+
+SET @idx_aspicursos := (
+  SELECT COUNT(*) FROM information_schema.statistics
+  WHERE table_schema = DATABASE() AND table_name = 'aspicursos' AND index_name = 'aspicursos_aspiento_curso_unique'
+);
+SET @ddl := IF(@idx_aspicursos = 0,
+  'ALTER TABLE `aspicursos` ADD UNIQUE KEY `aspicursos_aspiento_curso_unique` (`idAspiento`, `idCursos`)',
+  'SELECT 1'
+);
+PREPARE st FROM @ddl; EXECUTE st; DEALLOCATE PREPARE st;
+
+SET @idx_aspicursos_modelo := (
+  SELECT COUNT(*) FROM information_schema.statistics
+  WHERE table_schema = DATABASE() AND table_name = 'aspicursos' AND index_name = 'aspicursos_aspiento_modelo_unique'
+);
+SET @ddl := IF(@idx_aspicursos_modelo = 0,
+  'ALTER TABLE `aspicursos` ADD UNIQUE KEY `aspicursos_aspiento_modelo_unique` (`idAspiento`, `idCursoModelo`)',
+  'SELECT 1'
+);
+PREPARE st FROM @ddl; EXECUTE st; DEALLOCATE PREPARE st;
+
+CALL sp_add_column_if_missing('aspirantes', 'idAspiento', 'int(10) unsigned NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspirantes', 'idCursos', 'int(10) unsigned NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspirantes', 'idCursoModelo', 'bigint(20) unsigned NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspirantes', 'idNivel', 'int(10) unsigned NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspirantes', 'ip_origen', 'varchar(45) NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspirantes', 'user_agent', 'varchar(255) NULL DEFAULT NULL');
+CALL sp_add_column_if_missing('aspirantes', 'created_at', 'timestamp NULL DEFAULT NULL');
+
+-- Catálogo de cursos modelo (sin sección) por nivel
+CREATE TABLE IF NOT EXISTS `aspicursosmodelo` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `idNivel` int(10) unsigned NOT NULL,
+  `nombre` varchar(80) NOT NULL,
+  `orden` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `aspicursosmodelo_idnivel_index` (`idNivel`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Permisos nuevos para el módulo (orden 39 / 40)
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES
+(41, 39, 'ASPIRANTES', 'Gestión de aspirantes: parametrización de la instancia de registro, cursos disponibles y listado de inscriptos.'),
+(42, 40, 'CONFIGURACIÓN', 'Campos activos del formulario público de aspirantes.')
+ON DUPLICATE KEY UPDATE
+  `orden` = VALUES(`orden`),
+  `tema` = VALUES(`tema`),
+  `descripcion` = VALUES(`descripcion`);
 
 -- =============================================================================
 -- 9. Inasistencias docentes

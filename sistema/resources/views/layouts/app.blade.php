@@ -42,6 +42,7 @@
         matrizAnaliticos: {{ str_starts_with($route ?? '', 'matrizAnaliticos.') ? 'true' : 'false' }},
         certificados: {{ str_starts_with($route ?? '', 'certificados.') ? 'true' : 'false' }},
         horarios: {{ str_starts_with($route ?? '', 'horarios.') ? 'true' : 'false' }},
+        aspirantes: {{ str_starts_with($route ?? '', 'aspirantes.') ? 'true' : 'false' }},
         comunicaciones: false,
     },
     isDesktopPeekLayout() {
@@ -1078,6 +1079,69 @@
                     </a>
             </div>
 
+        {{-- Aspirantes --}}
+        @if (tienePermiso(\App\Support\PermisosIaCatalog::ASPIRANTES_GESTION))
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
+                    :class="(groups.aspirantes && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('aspirantes')"
+                    title="Gestión de aspirantes">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">ASPIRANTES</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.aspirantes ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.aspirantes && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                <a href="{{ route('aspirantes.cursos-modelo') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'aspirantes.cursos-modelo',
+                   ])
+                   title="Cursos modelo (sin sección) que ofrece el nivel">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 7h18M3 12h18M3 17h18"/>
+                    </svg>
+                    <span class="truncate">Cursos modelo</span>
+                </a>
+                <a href="{{ route('aspirantes.instancia') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', ['aspirantes.instancia', 'aspirantes.instancia.create', 'aspirantes.instancia.edit'], true),
+                   ])
+                   title="Instancia de registro: fechas, cursos y URL pública">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="truncate">Instancia de registro</span>
+                </a>
+                <a href="{{ route('aspirantes.listado') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'aspirantes.listado',
+                   ])
+                   title="Aspirantes registrados">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="truncate">Aspirantes registrados</span>
+                </a>
+            </div>
+        @endif
+
         {{-- Configuración --}}
         @if (tieneAlgunPermisoConfiguracion())
             <div class="mt-4"></div>
@@ -1203,6 +1267,21 @@
                               d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
                     </svg>
                     <span class="truncate">Parámetros del sistema</span>
+                </a>
+                @endif
+
+                @if (tienePermisoConfig(\App\Support\PermisosConfiguracion::ASPIRANTES_CAMPOS))
+                <a href="{{ route('param.campos-aspirantes') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'param.campos-aspirantes',
+                   ])
+                   title="Campos activos (Aspirantes) — qué columnas aparecen en el form público">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                    <span class="truncate">Campos activos (Aspirantes)</span>
                 </a>
                 @endif
 

@@ -35,6 +35,8 @@ final class PermisosConfiguracion
 
     public const MATERIAS_ANIO = 36;
 
+    public const ASPIRANTES_CAMPOS = PermisosIaCatalog::ASPIRANTES_CAMPOS;
+
     /** Administrar permisos (módulo Permisos de Usuarios). */
     public const ADMIN_PERMISOS = 0;
 
@@ -61,6 +63,7 @@ final class PermisosConfiguracion
             self::CURSOS_MATERIAS_PLAN,
             self::CURSOS_ANIO,
             self::MATERIAS_ANIO,
+            self::ASPIRANTES_CAMPOS,
         ];
     }
 

@@ -64,6 +64,10 @@ final class PermisosIaCatalog
 
     public const INASISTENCIAS_ESTUDIANTES_GESTION = 38;
 
+    public const ASPIRANTES_GESTION = 39;
+
+    public const ASPIRANTES_CAMPOS = 40;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -107,6 +111,8 @@ final class PermisosIaCatalog
             ['id' => 38, 'orden' => PermisosConfiguracion::MATERIAS_ANIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Gestión de asignaturas del año.'],
             ['id' => 39, 'orden' => self::SEGUIMIENTO_DISCIPLINARIO, 'tema' => 'SEGUIMIENTO DISCIPLINARIO', 'descripcion' => 'Registro de sanciones, antecedentes disciplinarios e impresión de comunicados.'],
             ['id' => 40, 'orden' => self::INASISTENCIAS_ESTUDIANTES_GESTION, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Gestión de inasistencias del estudiante: alta, edición, baja e informe individual en PDF.'],
+            ['id' => 41, 'orden' => self::ASPIRANTES_GESTION, 'tema' => 'ASPIRANTES', 'descripcion' => 'Gestión de aspirantes: parametrización de la instancia de registro, cursos disponibles y listado de inscriptos.'],
+            ['id' => 42, 'orden' => self::ASPIRANTES_CAMPOS, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Campos activos del formulario público de aspirantes.'],
         ];
     }
 

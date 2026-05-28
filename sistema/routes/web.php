@@ -5,6 +5,7 @@ use App\Http\Controllers\Alumnos\InformeInasistenciasController;
 use App\Http\Controllers\Alumnos\PushApiController;
 use App\Http\Controllers\Alumnos\PushController;
 use App\Http\Controllers\AntecedentesDisciplinariosPdfController;
+use App\Http\Controllers\Aspirantes\RegistroAspiranteController;
 use App\Http\Controllers\BoletinesSecundario\BoletinSecundarioLotePdfController;
 use App\Http\Controllers\BoletinesSecundario\BoletinSecundarioPdfController;
 use App\Http\Controllers\CalificacionesSecundario\ConsultaCalificacionesSecundarioPdfController;
@@ -39,6 +40,11 @@ use App\Livewire\Examenes\MateriasAdeudadasListadoIndex;
 use App\Livewire\Examenes\TercerMateriaIndex;
 use App\Http\Controllers\SancionComunicadoPdfController;
 use App\Livewire\Abm\Curplan\CurplanForm;
+use App\Livewire\Aspirantes\AspirantesIndex;
+use App\Livewire\Aspirantes\CursosModeloIndex as AspirantesCursosModeloIndex;
+use App\Livewire\Aspirantes\InstanciaForm as AspirantesInstanciaForm;
+use App\Livewire\Aspirantes\InstanciaIndex as AspirantesInstanciaIndex;
+use App\Livewire\Parametrizacion\CamposAspirantesIndex;
 use App\Livewire\Abm\Curplan\CurplanIndex;
 use App\Livewire\Abm\Cursos\CursosIndex;
 use App\Livewire\Abm\CursosPorProfesor\CursosPorProfesorIndex;
@@ -139,6 +145,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/icono-escuela.png', InstitutionalIconController::class)->name('institutional.icon');
 Route::get('/favicon.ico', InstitutionalIconController::class);
+
+// Registro público de aspirantes (sin auth, sin school.context).
+// El token es opaco por instancia: no expone idNivel ni permite saltar de nivel.
+Route::middleware('throttle:30,1')->group(function () {
+    Route::get('/aspirantes/r/{token}', [RegistroAspiranteController::class, 'show'])
+        ->where('token', '[A-Za-z0-9]{8,80}')
+        ->name('aspirantes.publico.registro');
+});
 
 // Guest routes
 Route::middleware('guest')->group(function () {
@@ -294,6 +308,21 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
     Route::get('/parametrizacion/solapas-legajo-profesor', SolapaLegajoProfesorIndex::class)
         ->middleware('permiso-config:30')
         ->name('param.solapas-legajo-profesor');
+
+    Route::get('/parametrizacion/campos-aspirantes', CamposAspirantesIndex::class)
+        ->middleware('permiso-config:'.\App\Support\PermisosConfiguracion::ASPIRANTES_CAMPOS)
+        ->name('param.campos-aspirantes');
+
+    // Gestión de Aspirantes (permiso orden 39)
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::ASPIRANTES_GESTION)
+        ->prefix('aspirantes')
+        ->group(function () {
+            Route::get('/cursos-modelo', AspirantesCursosModeloIndex::class)->name('aspirantes.cursos-modelo');
+            Route::get('/instancia', AspirantesInstanciaIndex::class)->name('aspirantes.instancia');
+            Route::get('/instancia/nueva', AspirantesInstanciaForm::class)->name('aspirantes.instancia.create');
+            Route::get('/instancia/{id}/editar', AspirantesInstanciaForm::class)->whereNumber('id')->name('aspirantes.instancia.edit');
+            Route::get('/listado', AspirantesIndex::class)->name('aspirantes.listado');
+        });
 
     Route::get('/abm/profesores-por-materia', ProfesoresPorMateriaIndex::class)->middleware('permiso:11')->name('abm.profesores-por-materia');
     Route::get('/abm/cursos-por-profesor', CursosPorProfesorIndex::class)->middleware('permiso:11')->name('abm.cursos-por-profesor');

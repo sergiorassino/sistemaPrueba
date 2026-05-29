@@ -42,6 +42,35 @@ return [
             'habilitado' => false,
             'implementacion' => null,
         ],
+
+        /**
+         * Listado de cuotas pendientes y comprobante de pago (portal familia).
+         * `implementacion`: clave de variante en código (ej. sanfranciscoasis).
+         */
+        'aranceles_escolares' => [
+            'habilitado' => false,
+            'implementacion' => null,
+            /**
+             * Banner + PDF de adhesión a débito automático (opcional, por tenant).
+             * `banner`: ruta bajo `public/` servida con asset().
+             * `formulario_pdf`: ruta bajo `resources/` servida por ruta autenticada.
+             */
+            'debito_automatico' => [
+                'banner' => null,
+                'formulario_pdf' => null,
+            ],
+            /**
+             * Banner de medios de pago debajo del listado de cuotas (opcional, por tenant).
+             * `banner`: ruta bajo `public/` servida con asset().
+             * `url`: enlace al hacer clic en la imagen.
+             */
+            'medios_pago' => [
+                'banner' => null,
+                'url' => null,
+            ],
+            /** URL del servicio SIRO para QR (legacy obtenerQR). Opcional. */
+            'siro_qr_url' => null,
+        ],
     ],
 
     /**

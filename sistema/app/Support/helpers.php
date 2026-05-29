@@ -416,6 +416,15 @@ if (! function_exists('studentPdfHeaderData')) {
                 $logoFile = $abs;
             }
         }
+        if ($logoFile === null) {
+            $fallbackPath = entoInstitutionalLogoStoragePath();
+            if (is_string($fallbackPath) && $fallbackPath !== '') {
+                $abs = Storage::disk('public')->path($fallbackPath);
+                if (is_string($abs) && $abs !== '' && file_exists($abs)) {
+                    $logoFile = $abs;
+                }
+            }
+        }
 
         $memo = [
             'insti' => $insti,
@@ -509,6 +518,81 @@ if (! function_exists('tenantAutogestionFichaMatriculaHabilitada')) {
         }
 
         return filled(config('tenant.autogestion.ficha_matricula.implementacion'));
+    }
+}
+
+if (! function_exists('tenantAutogestionArancelesEscolaresHabilitada')) {
+    /**
+     * Si el portal familia incluye aranceles escolares (cuotas pendientes + comprobante).
+     * Default false; activar en `config/tenants/{slug}.php` con `implementacion` definida.
+     */
+    function tenantAutogestionArancelesEscolaresHabilitada(): bool
+    {
+        if (! (bool) config('tenant.autogestion.aranceles_escolares.habilitado', false)) {
+            return false;
+        }
+
+        return filled(config('tenant.autogestion.aranceles_escolares.implementacion'));
+    }
+}
+
+if (! function_exists('tenantArancelesEscolaresDebitoAutomatico')) {
+    /**
+     * Banner y enlace al formulario PDF de débito automático (si el tenant lo define).
+     *
+     * @return array{banner_url: string, pdf_url: string}|null
+     */
+    function tenantArancelesEscolaresDebitoAutomatico(): ?array
+    {
+        if (! tenantAutogestionArancelesEscolaresHabilitada()) {
+            return null;
+        }
+
+        $cfg = config('tenant.autogestion.aranceles_escolares.debito_automatico');
+        if (! is_array($cfg)) {
+            return null;
+        }
+
+        $banner = trim((string) ($cfg['banner'] ?? ''));
+        $pdf = trim((string) ($cfg['formulario_pdf'] ?? ''));
+        if ($banner === '' || $pdf === '') {
+            return null;
+        }
+
+        return [
+            'banner_url' => asset($banner),
+            'pdf_url' => se_route_url('alumnos.aranceles-escolares.formulario-debito-automatico'),
+        ];
+    }
+}
+
+if (! function_exists('tenantArancelesEscolaresMediosPago')) {
+    /**
+     * Banner clicable de medios de pago debajo del listado de cuotas (si el tenant lo define).
+     *
+     * @return array{banner_url: string, url: string}|null
+     */
+    function tenantArancelesEscolaresMediosPago(): ?array
+    {
+        if (! tenantAutogestionArancelesEscolaresHabilitada()) {
+            return null;
+        }
+
+        $cfg = config('tenant.autogestion.aranceles_escolares.medios_pago');
+        if (! is_array($cfg)) {
+            return null;
+        }
+
+        $banner = trim((string) ($cfg['banner'] ?? ''));
+        $url = trim((string) ($cfg['url'] ?? ''));
+        if ($banner === '' || $url === '') {
+            return null;
+        }
+
+        return [
+            'banner_url' => asset($banner),
+            'url' => $url,
+        ];
     }
 }
 

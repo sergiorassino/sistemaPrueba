@@ -32,6 +32,8 @@ class Ento extends Model
         'telefono',
         'mail',
         'replegal',
+        'siroIniPrim',
+        'siroSecu',
 
         // Logo (nuevo)
         'logo_path',

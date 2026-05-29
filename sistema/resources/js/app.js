@@ -18,6 +18,20 @@ window.seSwalExito = function (mensaje, titulo = '¡Guardado!') {
     });
 };
 
+/** SweetAlert2 — aviso / advertencia institucional (portal alumno). */
+window.seSwalAviso = function (mensaje, titulo = 'Atención') {
+    if (typeof Swal === 'undefined') {
+        return;
+    }
+    Swal.fire({
+        icon: 'warning',
+        title: titulo,
+        text: mensaje,
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#40848D',
+    });
+};
+
 /**
  * Carga de calificaciones (secundario / calificacionesSecundario): validación de notas permitidas en el cliente (sin request si es inválida).
  * Delegación `focusout` en `tbody[data-se-calif-tbody]` + toast liviano (sin SweetAlert).

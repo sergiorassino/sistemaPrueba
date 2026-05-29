@@ -144,6 +144,21 @@
         @apply px-2 py-1 flex items-center justify-end gap-2;
     }
 
+    /* Alineación vertical centrada en celdas (listados puntuales) */
+    .gf-vcenter .gf-head,
+    .gf-vcenter .gf-row {
+        @apply items-stretch;
+    }
+    .gf-vcenter .gf-th,
+    .gf-vcenter .gf-th-right,
+    .gf-vcenter .gf-td:not(.gf-td-actions) {
+        @apply flex items-center;
+    }
+    .gf-vcenter .gf-th-right,
+    .gf-vcenter .gf-td.gf-th-right {
+        @apply justify-end;
+    }
+
     /*
      * Inline edit en listados (.gf-td)
      * Debe ocupar exactamente el ancho de la celda sin “mover” columnas.

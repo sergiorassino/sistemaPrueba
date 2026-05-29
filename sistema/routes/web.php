@@ -1,6 +1,8 @@
 ﻿<?php
 
 use App\Http\Controllers\Alumnos\CalificacionesController;
+use App\Http\Controllers\Alumnos\ComprobantePagoPdfController;
+use App\Http\Controllers\Alumnos\FormularioDebitoAutomaticoPdfController;
 use App\Http\Controllers\Alumnos\FichaMatriculaPdfController;
 use App\Http\Controllers\Alumnos\HorarioClasePdfController;
 use App\Http\Controllers\Alumnos\InformeInasistenciasController;
@@ -80,6 +82,7 @@ use App\Livewire\Alumnos\Comunicaciones\HiloShowFamilia;
 use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
 use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
 use App\Livewire\Alumnos\ActualizacionDatosPersonalesForm;
+use App\Livewire\Alumnos\ArancelesEscolaresIndex;
 use App\Livewire\Alumnos\AceptacionDocumentoFamilia;
 use App\Livewire\Auth\Login;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
@@ -205,6 +208,12 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/inasistencias/informe', InformeInasistenciasController::class)->name('alumnos.inasistencias.informe');
     Route::get('/horario-clase', HorarioClasePdfController::class)->name('alumnos.horario-clase');
     Route::get('/ficha-matricula', FichaMatriculaPdfController::class)->name('alumnos.ficha-matricula');
+    Route::get('/aranceles-escolares', ArancelesEscolaresIndex::class)->name('alumnos.aranceles-escolares');
+    Route::get('/aranceles-escolares/comprobante/{id}', ComprobantePagoPdfController::class)
+        ->whereNumber('id')
+        ->name('alumnos.aranceles-escolares.comprobante');
+    Route::get('/aranceles-escolares/formulario-debito-automatico', FormularioDebitoAutomaticoPdfController::class)
+        ->name('alumnos.aranceles-escolares.formulario-debito-automatico');
 
     Route::get('/actualizacion-datos', ActualizacionDatosPersonalesForm::class)->name('alumnos.actualizacion-datos');
     Route::get('/actualizacion-datos/aceptacion/{tipo}', AceptacionDocumentoFamilia::class)

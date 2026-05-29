@@ -195,6 +195,21 @@
             </a>
         @endif
 
+        @if (tenantAutogestionArancelesEscolaresHabilitada())
+            <a href="{{ route('alumnos.aranceles-escolares') }}"
+               @class([
+                   'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
+                   'is-active shadow-sm' => str_starts_with($route ?? '', 'alumnos.aranceles-escolares'),
+               ])
+               title="Cuotas pendientes de pago y comprobantes">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="truncate">Aranceles Escolares</span>
+            </a>
+        @endif
+
         @if(studentEsNivelSecundario())
             <a href="{{ se_route_url('alumnos.horario-clase') }}"
                target="_blank"

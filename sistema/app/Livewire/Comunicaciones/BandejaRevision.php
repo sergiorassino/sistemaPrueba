@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Comunicaciones;
 
+use App\Comunicaciones\ComunicacionesGestionSession;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Support\ComunicacionesRutasGestion;
 use Livewire\Component;
@@ -73,6 +74,14 @@ class BandejaRevision extends Component
         $this->profesorObjetivoLabel = trim($label);
         $this->profesorSearch = '';
         $this->profesorResults = [];
+    }
+
+    public function abrirHilo(int $idHilo): void
+    {
+        abort_unless(ComunicacionesGestionSession::puedeVerHilo($idHilo), 404);
+
+        ComunicacionesGestionSession::abrir($idHilo);
+        $this->redirectRoute(ComunicacionesRutasGestion::nombreRuta('hilo'), navigate: true);
     }
 
     public function render()

@@ -30,6 +30,7 @@ class SituacionAulicaAlumnoShow extends Component
 
     public function mount(int $curso, int $materia): void
     {
+        CuadernoSeguimientoAulicoDocente::abortSiNoHabilitadoEnTenant();
         CuadernoSeguimientoAulicoDocente::abortSiNoEsSecundario();
         CuadernoSeguimientoAulicoDocente::abortSiProfesorSinMateria($materia, $curso);
 

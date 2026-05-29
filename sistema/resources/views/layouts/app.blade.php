@@ -43,6 +43,7 @@
         certificados: {{ str_starts_with($route ?? '', 'certificados.') ? 'true' : 'false' }},
         horarios: {{ str_starts_with($route ?? '', 'horarios.') ? 'true' : 'false' }},
         aspirantes: {{ str_starts_with($route ?? '', 'aspirantes.') ? 'true' : 'false' }},
+        matriculaWeb: {{ str_starts_with($route ?? '', 'matricula-web.') ? 'true' : 'false' }},
         comunicaciones: false,
     },
     isDesktopPeekLayout() {
@@ -1156,6 +1157,47 @@
                     </svg>
                     <span class="truncate">Aspirantes registrados</span>
                 </a>
+            </div>
+        @endif
+
+        {{-- Matrícula web --}}
+        @if (\App\Support\PermisosMatriculaWeb::tieneAlgunAccesoMenu())
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
+                    :class="(groups.matriculaWeb && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('matriculaWeb')"
+                    title="Matrícula web">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">MATRÍCULA WEB</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.matriculaWeb ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.matriculaWeb && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                @if (\App\Support\PermisosMatriculaWeb::tiene())
+                    <a href="{{ route('matricula-web.documentos') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => str_starts_with($route ?? '', 'matricula-web.documentos'),
+                       ])
+                       title="PDF de aceptación por nivel (compromiso, AEC, normas, traslado)">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="truncate">Documentos de aceptación</span>
+                    </a>
+                @endif
             </div>
         @endif
 

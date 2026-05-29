@@ -19,12 +19,20 @@ class Matricula extends Model
         'nroMatricula',
         'fechaMatricula',
         'fechaBaja',
+        'acept1',
+        'acept2',
+        'acept3',
+        'acept4',
     ];
 
     protected $casts = [
         'fechaMatricula' => 'date',
         'fechaBaja' => 'date',
         'inscripto' => 'boolean',
+        'acept1' => 'boolean',
+        'acept2' => 'boolean',
+        'acept3' => 'boolean',
+        'acept4' => 'boolean',
     ];
 
     public function legajo()

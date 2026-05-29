@@ -2,22 +2,28 @@
 
 namespace App\Livewire\Alumnos\Comunicaciones;
 
-use App\Models\Legajo;
-use Illuminate\Support\Facades\RateLimiter;
-use Livewire\Component;
 use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComunicacionesRepository;
+use App\Models\Legajo;
+use App\Models\ProfesorTipo;
+use App\Support\Comunicaciones\ComCanalRolCatalog;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
+use Livewire\Component;
 
 class NuevoComunicadoFamilia extends Component
 {
     public string $vinculo   = '';  // madre|padre|tutor|resp_admin|otro
     public string $asunto    = '';
     public string $contenido = '';
-    public string $rolReceptor = ''; // preceptor|directivo
+    /** Clave de canal receptor: `tipo:{id}` (profesortipo) */
+    public string $rolReceptor = '';
 
-    // Destinatarios escolares disponibles según rol seleccionado
     public array $destinatariosDisponibles = [];
     public ?int $idDestinatario = null;
+
+    /** @var list<array{value:string,label:string}> */
+    public array $opcionesRolReceptor = [];
 
     public array $vinculos = [
         'madre'      => 'Madre',
@@ -27,12 +33,24 @@ class NuevoComunicadoFamilia extends Component
         'otro'       => 'Otro responsable',
     ];
 
-    public array $rolesReceptoresPermitidos = [];
-
     public function mount(): void
     {
         $idNivel = (int) (studentCtx()->idNivel ?? 0);
-        $this->rolesReceptoresPermitidos = CanalesPolicy::receptoresPermitidosParaIniciar('familia', $idNivel);
+        $claves  = CanalesPolicy::receptoresPermitidosParaIniciar(ComCanalRolCatalog::CLAVE_FAMILIA, $idNivel);
+
+        $catalogo = ComCanalRolCatalog::catalogo();
+        $opciones = [];
+        foreach ($claves as $clave) {
+            if ($clave === ComCanalRolCatalog::CLAVE_FAMILIA || ! isset($catalogo[$clave])) {
+                continue;
+            }
+            $opciones[] = [
+                'value' => $clave,
+                'label' => $catalogo[$clave],
+            ];
+        }
+        usort($opciones, static fn (array $a, array $b): int => strcasecmp($a['label'], $b['label']));
+        $this->opcionesRolReceptor = $opciones;
     }
 
     public function updatedRolReceptor(): void
@@ -44,17 +62,31 @@ class NuevoComunicadoFamilia extends Component
             return;
         }
 
+        $parsed = ComCanalRolCatalog::parseClave($this->rolReceptor);
+        $idTipo = $parsed['id_tipo_prof'];
+        if ($idTipo === null) {
+            return;
+        }
+
         $ctx = studentCtx();
         $idNivel  = (int) $ctx->idNivel;
         $idLegajo = (int) $ctx->idLegajo;
         $idTerlec = (int) $ctx->idTerlec;
 
-        if ($this->rolReceptor === 'preceptor') {
+        $tipoStr = trim((string) (ProfesorTipo::query()->whereKey($idTipo)->value('tipo') ?? ''));
+        $t       = mb_strtolower($tipoStr);
+
+        if (str_contains($t, 'preceptor')) {
             $this->destinatariosDisponibles = ComunicacionesRepository::preceptoresDeCurso(
                 $idLegajo, $idNivel, $idTerlec
             );
-        } elseif ($this->rolReceptor === 'directivo') {
-            $this->destinatariosDisponibles = ComunicacionesRepository::profesoresPorRol($idNivel, 'directivo');
+        } else {
+            $this->destinatariosDisponibles = ComunicacionesRepository::profesoresDelNivelParaSelectorPorIdTipoProf(
+                $idNivel,
+                $idTipo,
+                '',
+                200
+            );
         }
     }
 
@@ -67,9 +99,11 @@ class NuevoComunicadoFamilia extends Component
         }
         RateLimiter::hit($key, config('comunicaciones.rate_limit_decay', 60));
 
+        $valoresRol = array_column($this->opcionesRolReceptor, 'value');
+
         $this->validate([
             'vinculo'        => 'required|in:madre,padre,tutor,resp_admin,otro',
-            'rolReceptor'    => 'required|in:preceptor,profesor,directivo',
+            'rolReceptor'    => ['required', 'string', Rule::in($valoresRol)],
             'idDestinatario' => 'required|integer',
             'asunto'         => 'required|string|max:' . config('comunicaciones.max_asunto', 200),
             'contenido'      => 'required|string|max:' . config('comunicaciones.max_contenido', 2000),
@@ -80,15 +114,19 @@ class NuevoComunicadoFamilia extends Component
         $idNivel  = (int) $ctx->idNivel;
         $idTerlec = (int) $ctx->idTerlec;
 
-        if (! CanalesPolicy::puedeIniciar('familia', $this->rolReceptor, $idNivel)) {
-            $this->addError('rolReceptor', 'La familia no puede iniciar conversaciones con ese rol en este momento.');
+        if (! CanalesPolicy::puedeIniciar(ComCanalRolCatalog::CLAVE_FAMILIA, $this->rolReceptor, $idNivel)) {
+            $this->addError('rolReceptor', 'La familia no puede iniciar conversaciones con ese destinatario en este momento.');
             return;
         }
 
         $legajo = Legajo::find($idLegajo);
         [$nombreSnap, $dniSnap] = $this->snapshotDatosFamiliares($legajo, $this->vinculo);
 
-        $mediosCanal = CanalesPolicy::mediosPermitidos('familia', $this->rolReceptor, $idNivel);
+        $mediosCanal = CanalesPolicy::mediosPermitidos(
+            ComCanalRolCatalog::CLAVE_FAMILIA,
+            $this->rolReceptor,
+            $idNivel
+        );
 
         ComunicacionesRepository::crearHiloConMensaje([
             'asunto'                   => $this->asunto,
@@ -100,7 +138,7 @@ class NuevoComunicadoFamilia extends Component
             'id_terlec'                => $idTerlec,
             'creado_por_tipo'          => 'familia',
             'creado_por_id'            => $idLegajo,
-            'creado_por_rol'           => 'familia',
+            'creado_por_rol'           => ComCanalRolCatalog::CLAVE_FAMILIA,
             'rol_receptor'             => $this->rolReceptor,
             'vinculo_familiar'         => $this->vinculo,
             'nombre_remitente'         => $nombreSnap,

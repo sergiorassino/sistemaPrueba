@@ -1,4 +1,22 @@
 import './bootstrap';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
+
+window.Swal = Swal;
+
+/** SweetAlert2 — éxito institucional (portal alumno / formularios SE). */
+window.seSwalExito = function (mensaje, titulo = '¡Guardado!') {
+    if (typeof Swal === 'undefined') {
+        return;
+    }
+    Swal.fire({
+        icon: 'success',
+        title: titulo,
+        text: mensaje,
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#40848D',
+    });
+};
 
 /**
  * Carga de calificaciones (secundario / calificacionesSecundario): validación de notas permitidas en el cliente (sin request si es inválida).

@@ -5,20 +5,26 @@ namespace App\Livewire\Comunicaciones;
 use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Push\DestinatariosRepository;
+use App\Support\Comunicaciones\ComCanalRolCatalog;
 use App\Support\ComunicacionesRutasGestion;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class NuevoComunicado extends Component
 {
-    /** estudiantes (familias) | docentes — null hasta que el usuario elija */
-    public ?string $bloqueDestinatarios = null;
+    /** `familia` o `tipo:{id}` de profesortipo — vacío hasta elegir destinatario */
+    public string $destinatarioTipo = '';
+
+    /**
+     * Opciones del selector (canales con «Iniciar conversación» para el rol del usuario).
+     *
+     * @var list<array{value:string,label:string,es_familia:bool,id_tipo_prof:?int}>
+     */
+    public array $opcionesDestinatarios = [];
 
     /** alumnos: uno o varios · cursos: uno o varios · colegio */
     public string $tipoDestino = 'alumnos';
-
-    /** profesores | preceptores — solo bloque docentes */
-    public string $tipoDocenteLista = 'profesores';
 
     public string $asunto    = '';
     public string $contenido = '';
@@ -71,6 +77,15 @@ class NuevoComunicado extends Component
     public function mount(): void
     {
         abort_unless(tienePermiso(3) && tienePermiso(4), 403, 'Sin permiso para iniciar comunicados.');
+
+        $ctx = schoolCtx();
+        $profesor = $ctx->profesor();
+        if ($profesor !== null) {
+            $this->opcionesDestinatarios = CanalesPolicy::opcionesDestinatarioNuevoComunicado(
+                CanalesPolicy::claveRolDeProfesor($profesor),
+                (int) $ctx->idNivel
+            );
+        }
     }
 
     public function updatedModalAlumnosFiltro(): void
@@ -280,24 +295,20 @@ class NuevoComunicado extends Component
         );
     }
 
-    public function updatedBloqueDestinatarios(): void
+    public function updatedDestinatarioTipo(): void
     {
-        if ($this->bloqueDestinatarios === 'estudiantes') {
+        if ($this->esDestinatarioFamilia()) {
             $this->docentesSeleccionados = [];
-            $this->tipoDocenteLista      = 'profesores';
             $this->cerrarModalDocentes();
-        } elseif ($this->bloqueDestinatarios === 'docentes') {
+        } else {
             $this->alumnosSeleccionados = [];
             $this->cursosSeleccionados  = [];
+            $this->tipoDestino          = 'alumnos';
             $this->cerrarModalAlumnos();
             $this->cerrarModalCursos();
+            $this->docentesSeleccionados = [];
+            $this->cerrarModalDocentes();
         }
-    }
-
-    public function updatedTipoDocenteLista(): void
-    {
-        $this->docentesSeleccionados = [];
-        $this->cerrarModalDocentes();
     }
 
     public function updatedTipoDestino(): void
@@ -320,25 +331,27 @@ class NuevoComunicado extends Component
         }
         RateLimiter::hit($key, config('comunicaciones.rate_limit_decay', 60));
 
+        $ctx      = schoolCtx();
+        $profesor = $ctx->profesor();
+        $rolEmisor = $profesor !== null ? CanalesPolicy::claveRolDeProfesor($profesor) : '';
+        $valoresDest = CanalesPolicy::valoresDestinatarioNuevoComunicado($rolEmisor, (int) $ctx->idNivel);
+
         $rules = [
-            'bloqueDestinatarios' => 'required|in:estudiantes,docentes',
-            'asunto'              => 'required|string|max:' . config('comunicaciones.max_asunto', 200),
-            'contenido'           => 'required|string|max:' . config('comunicaciones.max_contenido', 2000),
+            'destinatarioTipo' => ['required', 'string', Rule::in($valoresDest)],
+            'asunto'           => 'required|string|max:' . config('comunicaciones.max_asunto', 200),
+            'contenido'        => 'required|string|max:' . config('comunicaciones.max_contenido', 2000),
         ];
-        if ($this->bloqueDestinatarios === 'estudiantes') {
+        if ($this->esDestinatarioFamilia()) {
             $rules['tipoDestino']           = 'required|in:alumnos,cursos,colegio';
             $rules['familiaPuedeResponder'] = 'boolean';
-        } elseif ($this->bloqueDestinatarios === 'docentes') {
-            $rules['tipoDocenteLista']                     = 'required|in:profesores,preceptores';
+        } else {
             $rules['docentesDestinatariosPuedenResponder'] = 'boolean';
         }
         $this->validate($rules);
 
-        $ctx      = schoolCtx();
         $idNivel  = (int) $ctx->idNivel;
         $idTerlec = (int) $ctx->idTerlec;
         $idProf   = (int) $ctx->idProfesor;
-        $profesor = $ctx->profesor();
 
         if ($profesor === null) {
             $this->addError('contenido', 'No se pudo identificar al usuario.');
@@ -346,11 +359,10 @@ class NuevoComunicado extends Component
             return;
         }
 
-        $rolEmisor = CanalesPolicy::rolDeProfesor($profesor);
         $nombreProfesor = trim("{$profesor->apellido}, {$profesor->nombre}");
 
-        if ($this->bloqueDestinatarios === 'estudiantes') {
-            if (! CanalesPolicy::puedeIniciar($rolEmisor, 'familia')) {
+        if ($this->esDestinatarioFamilia()) {
+            if (! CanalesPolicy::puedeIniciar($rolEmisor, ComCanalRolCatalog::CLAVE_FAMILIA)) {
                 $this->addError('contenido', 'Su rol no tiene permiso para iniciar comunicados a familias.');
 
                 return;
@@ -417,37 +429,39 @@ class NuevoComunicado extends Component
                 'creado_por_tipo'          => 'profesor',
                 'creado_por_id'            => $idProf,
                 'creado_por_rol'           => $rolEmisor,
-                'rol_receptor'             => 'familia',
+                'rol_receptor'             => ComCanalRolCatalog::CLAVE_FAMILIA,
                 'vinculo_familiar'         => null,
                 'nombre_remitente'         => $nombreProfesor,
                 'dni_remitente'            => (string) ($profesor->dni ?? ''),
                 'destinatarios_profesores' => [],
                 'familia_puede_responder'  => $this->familiaPuedeResponder,
             ], $mediosCanal);
-        } elseif ($this->bloqueDestinatarios === 'docentes') {
-            $modoLista = $this->tipoDocenteLista === 'preceptores' ? 'institucional' : 'profesor';
-
-            $idsPedidos = array_map(fn ($d) => (int) $d['id'], $this->docentesSeleccionados);
-            $idsProf    = ComunicacionesRepository::filtrarIdsProfesoresPorModoSelector($idsPedidos, $idNivel, $modoLista);
-            $idsProf    = array_values(array_diff($idsProf, [$idProf]));
-
-            if ($idsProf === []) {
-                $this->addError('bloqueDestinatarios', 'Seleccione al menos un destinatario del nivel actual. No puede incluirse a usted mismo.');
+        } else {
+            $idTipoProf = $this->idTipoProfDestinatario();
+            if ($idTipoProf === null) {
+                $this->addError('destinatarioTipo', 'Seleccione un tipo de destinatario válido.');
 
                 return;
             }
 
-            $rolesTargets = ComunicacionesRepository::rolesNormalizadosUnicosProfesores($idsProf);
-            foreach ($rolesTargets as $rolRec) {
-                if (! CanalesPolicy::puedeIniciar($rolEmisor, $rolRec)) {
-                    $this->addError('contenido', 'Su rol no tiene permiso para iniciar comunicados a uno o más destinatarios seleccionados.');
+            $claveReceptor = $this->destinatarioTipo;
+            if (! CanalesPolicy::puedeIniciar($rolEmisor, $claveReceptor, $idNivel)) {
+                $this->addError('destinatarioTipo', 'Su rol no tiene permiso para iniciar comunicados a este tipo de destinatario según los canales del nivel.');
 
-                    return;
-                }
+                return;
             }
 
-            $mediosCanal = ComunicacionesRepository::mediosPermitidosInicioVariosRoles($rolEmisor, $rolesTargets);
-            $rolReceptorDoc = $rolesTargets[0] ?? ($modoLista === 'profesor' ? 'profesor' : 'preceptor');
+            $idsPedidos = array_map(fn ($d) => (int) $d['id'], $this->docentesSeleccionados);
+            $idsProf    = ComunicacionesRepository::filtrarIdsProfesoresPorIdTipoProf($idsPedidos, $idNivel, $idTipoProf);
+            $idsProf    = array_values(array_diff($idsProf, [$idProf]));
+
+            if ($idsProf === []) {
+                $this->addError('destinatarioTipo', 'Seleccione al menos un destinatario del nivel actual. No puede incluirse a usted mismo.');
+
+                return;
+            }
+
+            $mediosCanal = CanalesPolicy::mediosPermitidos($rolEmisor, $claveReceptor, $idNivel);
             if ($mediosCanal === []) {
                 $this->addError('contenido', 'No hay medios habilitados para este tipo de envío. Revise la parametrización de canales.');
 
@@ -466,7 +480,7 @@ class NuevoComunicado extends Component
                 'creado_por_tipo'          => 'profesor',
                 'creado_por_id'            => $idProf,
                 'creado_por_rol'           => $rolEmisor,
-                'rol_receptor'             => $rolReceptorDoc,
+                'rol_receptor'             => $claveReceptor,
                 'vinculo_familiar'         => null,
                 'nombre_remitente'         => $nombreProfesor,
                 'dni_remitente'            => (string) ($profesor->dni ?? ''),
@@ -474,10 +488,6 @@ class NuevoComunicado extends Component
                 'familia_puede_responder'  => true,
                 'docentes_permite_respuestas' => $this->docentesDestinatariosPuedenResponder,
             ], $mediosCanal);
-        } else {
-            $this->addError('bloqueDestinatarios', 'Seleccione si el mensaje va a familias o a docentes.');
-
-            return;
         }
 
         $idPrimerMensaje = (int) ($hilo->cuerpo_inicial_id ?? 0);
@@ -533,18 +543,45 @@ class NuevoComunicado extends Component
     private function recargarModalDocentesLista(): void
     {
         $ctx = schoolCtx();
-        if (! $ctx->idNivel || ($this->bloqueDestinatarios ?? '') !== 'docentes') {
+        $idTipoProf = $this->idTipoProfDestinatario();
+        if (! $ctx->idNivel || $idTipoProf === null) {
             $this->modalDocentesLista = [];
 
             return;
         }
-        $modoLista = $this->tipoDocenteLista === 'preceptores' ? 'institucional' : 'profesor';
-        $this->modalDocentesLista = ComunicacionesRepository::profesoresDelNivelParaSelector(
+        $this->modalDocentesLista = ComunicacionesRepository::profesoresDelNivelParaSelectorPorIdTipoProf(
             (int) $ctx->idNivel,
-            $modoLista,
+            $idTipoProf,
             $this->modalDocentesFiltro,
             800
         );
+    }
+
+    public function esDestinatarioFamilia(): bool
+    {
+        return $this->destinatarioTipo === 'familia';
+    }
+
+    public function idTipoProfDestinatario(): ?int
+    {
+        if (! str_starts_with($this->destinatarioTipo, 'tipo:')) {
+            return null;
+        }
+
+        $id = (int) substr($this->destinatarioTipo, 5);
+
+        return $id > 0 ? $id : null;
+    }
+
+    public function etiquetaDestinatarioSeleccionado(): string
+    {
+        foreach ($this->opcionesDestinatarios as $op) {
+            if (($op['value'] ?? '') === $this->destinatarioTipo) {
+                return (string) ($op['label'] ?? '');
+            }
+        }
+
+        return 'destinatarios';
     }
 
     private function variasAlumnoIds(): array

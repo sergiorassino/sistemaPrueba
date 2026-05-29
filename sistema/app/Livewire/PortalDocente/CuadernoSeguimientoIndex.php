@@ -12,6 +12,7 @@ class CuadernoSeguimientoIndex extends Component
 {
     public function mount(): void
     {
+        CuadernoSeguimientoAulicoDocente::abortSiNoHabilitadoEnTenant();
         CuadernoSeguimientoAulicoDocente::abortSiNoEsSecundario();
     }
 

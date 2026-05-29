@@ -30,32 +30,26 @@
 
         <div class="space-y-8 border-t border-accent-100 bg-accent-50/30 p-5 sm:p-6">
             <div>
-                <span class="form-label">Destinatarios</span>
-                <p class="mt-1 text-xs text-neutral-500">Elegí primero si el mensaje va a <strong class="font-medium text-neutral-700">familias de estudiantes</strong> o a <strong class="font-medium text-neutral-700">docentes</strong> del nivel actual. Recién entonces se muestran las opciones de alcance y el listado se abre solo con el botón correspondiente.</p>
-                <div class="mt-3 flex flex-wrap gap-2">
-                    <button type="button"
-                            wire:click="$set('bloqueDestinatarios', 'estudiantes')"
-                            @class([
-                                'inline-flex cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                                'border-primary-500 bg-primary-600 text-white' => $bloqueDestinatarios === 'estudiantes',
-                                'border-accent-200 bg-white text-neutral-700 hover:bg-accent-50' => $bloqueDestinatarios !== 'estudiantes',
-                            ])>
-                        Estudiantes (familias)
-                    </button>
-                    <button type="button"
-                            wire:click="$set('bloqueDestinatarios', 'docentes')"
-                            @class([
-                                'inline-flex cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                                'border-primary-500 bg-primary-600 text-white' => $bloqueDestinatarios === 'docentes',
-                                'border-accent-200 bg-white text-neutral-700 hover:bg-accent-50' => $bloqueDestinatarios !== 'docentes',
-                            ])>
-                        Docentes
-                    </button>
-                </div>
-                @error('bloqueDestinatarios') <p class="form-error">{{ $message }}</p> @enderror
+                <label for="destinatario-tipo-com" class="form-label">Destinatario</label>
+                <p class="mt-1 text-xs text-neutral-500">Solo se listan destinatarios autorizados por los canales del nivel (permiso <strong class="font-medium text-neutral-700">Iniciar conversación</strong> para su rol).</p>
+                @if (empty($opcionesDestinatarios))
+                    <p class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                        No hay destinatarios habilitados para iniciar comunicados con su rol en este nivel. Revise la parametrización de canales.
+                    </p>
+                @else
+                    <select id="destinatario-tipo-com"
+                            wire:model.live="destinatarioTipo"
+                            class="form-input mt-3 max-w-md">
+                        <option value="">— Elegir destinatario —</option>
+                        @foreach ($opcionesDestinatarios as $op)
+                            <option value="{{ $op['value'] }}">{{ $op['label'] }}</option>
+                        @endforeach
+                    </select>
+                @endif
+                @error('destinatarioTipo') <p class="form-error">{{ $message }}</p> @enderror
             </div>
 
-            @if ($bloqueDestinatarios === 'estudiantes')
+            @if ($destinatarioTipo === 'familia')
                 <div class="rounded-2xl border border-accent-200 bg-white p-4 shadow-sm sm:p-5">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">Estudiantes</p>
                     <p class="mt-1 text-sm text-neutral-600">El envío respeta canales y preferencias de cada familia.</p>
@@ -160,35 +154,10 @@
                         </div>
                     @endif
                 </div>
-            @elseif ($bloqueDestinatarios === 'docentes')
+            @elseif (str_starts_with($destinatarioTipo, 'tipo:'))
                 <div class="rounded-2xl border border-accent-200 bg-white p-4 shadow-sm sm:p-5">
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">Profesores y personal institucional</p>
-                    <p class="mt-1 text-sm text-neutral-600">Elegí el tipo de destinatario y usá el botón para abrir el listado. <strong class="font-medium text-neutral-700">Profesores</strong>: Profesor/a y ATP/DOE. <strong class="font-medium text-neutral-700">Personal</strong>: directivos, secretarios, preceptores y bibliotecarios. Si cambiás de tipo se vacía la selección.</p>
-
-                    <div class="mt-4">
-                        <span class="form-label">Tipo de destinatario</span>
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            <button type="button"
-                                    wire:click="$set('tipoDocenteLista', 'profesores')"
-                                    @class([
-                                        'inline-flex cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                                        'border-primary-500 bg-primary-600 text-white' => $tipoDocenteLista === 'profesores',
-                                        'border-accent-200 bg-white text-neutral-700 hover:bg-accent-50' => $tipoDocenteLista !== 'profesores',
-                                    ])>
-                                Profesores
-                            </button>
-                            <button type="button"
-                                    wire:click="$set('tipoDocenteLista', 'preceptores')"
-                                    @class([
-                                        'inline-flex cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                                        'border-primary-500 bg-primary-600 text-white' => $tipoDocenteLista === 'preceptores',
-                                        'border-accent-200 bg-white text-neutral-700 hover:bg-accent-50' => $tipoDocenteLista !== 'preceptores',
-                                    ])>
-                                Personal
-                            </button>
-                        </div>
-                        @error('tipoDocenteLista') <p class="form-error">{{ $message }}</p> @enderror
-                    </div>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">{{ $this->etiquetaDestinatarioSeleccionado() }}</p>
+                    <p class="mt-1 text-sm text-neutral-600">Personas del nivel con ese rol. Abrí el listado con el botón y confirmá la selección en el panel.</p>
 
                     <div class="mt-5">
                         <span class="form-label">Destinatarios</span>
@@ -196,7 +165,7 @@
                             <button type="button"
                                     wire:click="abrirModalDocentes"
                                     class="inline-flex items-center justify-center rounded-xl border border-primary-500 bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                                Elegir {{ $tipoDocenteLista === 'preceptores' ? 'personal' : 'profesores' }}…
+                                Elegir {{ $this->etiquetaDestinatarioSeleccionado() }}…
                             </button>
                             @if (! empty($docentesSeleccionados))
                                 <span class="text-xs font-medium text-neutral-600">{{ count($docentesSeleccionados) }} seleccionado(s)</span>
@@ -223,7 +192,7 @@
                 </div>
             @endif
 
-            @if ($bloqueDestinatarios)
+            @if ($destinatarioTipo !== '')
                 <div>
                     <label for="asunto-com" class="form-label">Asunto</label>
                     <input id="asunto-com"
@@ -249,7 +218,7 @@
                     @error('contenido') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
 
-                @if ($bloqueDestinatarios === 'estudiantes')
+                @if ($destinatarioTipo === 'familia')
                     <div class="rounded-2xl border border-accent-200 bg-white p-4 shadow-sm">
                         <label class="flex cursor-pointer select-none items-start gap-3">
                             <input type="checkbox"
@@ -263,7 +232,7 @@
                             </span>
                         </label>
                     </div>
-                @elseif ($bloqueDestinatarios === 'docentes')
+                @elseif (str_starts_with($destinatarioTipo, 'tipo:'))
                     <div class="rounded-2xl border border-accent-200 bg-white p-4 shadow-sm">
                         <label class="flex cursor-pointer select-none items-start gap-3">
                             <input type="checkbox"
@@ -438,7 +407,7 @@
             <div class="relative z-10 my-auto flex w-full max-w-xl max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),34rem)]">
                 <div class="border-b border-accent-200 bg-accent-50/60 px-4 py-2.5 sm:px-5 sm:py-3">
                     <p id="com-modal-docentes-titulo" class="text-sm font-bold text-neutral-900">
-                        Elegir {{ $tipoDocenteLista === 'preceptores' ? 'personal institucional' : 'profesores' }}
+                        Elegir {{ $this->etiquetaDestinatarioSeleccionado() }}
                     </p>
                     <p class="mt-0.5 text-[11px] leading-snug text-neutral-600">Listado del nivel actual con el rol de cada persona. Podés filtrar por apellido, nombre, DNI o rol.</p>
                 </div>

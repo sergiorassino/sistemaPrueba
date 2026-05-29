@@ -106,9 +106,4 @@
             </table>
         </div>
     </div>
-
-    <div class="flex flex-wrap gap-3">
-        <a href="{{ route('aspirantes.listado') }}" class="btn-secondary">Ver aspirantes registrados</a>
-        <a href="{{ route('aspirantes.cursos-modelo') }}" class="btn-secondary">Cursos modelo</a>
-    </div>
 </div>

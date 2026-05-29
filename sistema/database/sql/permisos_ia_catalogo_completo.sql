@@ -54,7 +54,8 @@ INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (40, 38,
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (41, 39, 'ASPIRANTES', 'Gestión de aspirantes: parametrización de la instancia de registro, cursos disponibles y listado de inscriptos.');
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (42, 40, 'CONFIGURACIÓN', 'Campos activos del formulario público de aspirantes.');
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (43, 43, 'COMUNICACIONES', 'Auditoría de comunicación institucional: consultar borrados y marcas de lectura en bandejas.');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (44, 44, 'MATRÍCULA WEB', 'Documentos de aceptación (PDF por nivel): compromiso educativo, AEC, normativas y traslado para el portal de estudiantes.');
 
-ALTER TABLE `permisos_ia` AUTO_INCREMENT = 44;
+ALTER TABLE `permisos_ia` AUTO_INCREMENT = 45;
 
 SET FOREIGN_KEY_CHECKS = 1;

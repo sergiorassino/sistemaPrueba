@@ -1,6 +1,8 @@
 ﻿<?php
 
 use App\Http\Controllers\Alumnos\CalificacionesController;
+use App\Http\Controllers\Alumnos\FichaMatriculaPdfController;
+use App\Http\Controllers\Alumnos\HorarioClasePdfController;
 use App\Http\Controllers\Alumnos\InformeInasistenciasController;
 use App\Http\Controllers\Alumnos\PushApiController;
 use App\Http\Controllers\Alumnos\PushController;
@@ -73,9 +75,12 @@ use App\Livewire\Administracion\Permisos\PermisosUsuariosIndex;
 use App\Livewire\Alumnos\Auth\Login as AlumnosLogin;
 use App\Livewire\Alumnos\Comunicaciones\BandejaFamilia;
 use App\Http\Controllers\Alumnos\AbrirHiloComunicacionFamiliaController;
+use App\Http\Controllers\Comunicaciones\AbrirHiloComunicacionGestionController;
 use App\Livewire\Alumnos\Comunicaciones\HiloShowFamilia;
 use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
 use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
+use App\Livewire\Alumnos\ActualizacionDatosPersonalesForm;
+use App\Livewire\Alumnos\AceptacionDocumentoFamilia;
 use App\Livewire\Auth\Login;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\CargaColoquiosSecundario;
@@ -118,6 +123,9 @@ use App\Livewire\Parametrizacion\CamposLegajoIndex;
 use App\Livewire\Parametrizacion\CamposProfesorIndex;
 use App\Livewire\Parametrizacion\ComCanalesIndex;
 use App\Livewire\Parametrizacion\ParametrosSistemaForm;
+use App\Livewire\MatriculaWeb\DocumentosAceptacionForm;
+use App\Http\Controllers\MatriculaWeb\DocumentoAceptacionArchivoController;
+use App\Support\PermisosMatriculaWeb;
 use App\Livewire\PortalDocente\CalificacionesIndex as PortalDocenteCalificacionesIndex;
 use App\Livewire\PortalDocente\CuadernoSeguimientoIndex as PortalDocenteCuadernoSeguimientoIndex;
 use App\Livewire\PortalDocente\RegistroSituacionAulicaIndex as PortalDocenteRegistroSituacionAulicaIndex;
@@ -195,6 +203,16 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
 
     Route::get('/calificaciones', CalificacionesController::class)->name('alumnos.calificaciones');
     Route::get('/inasistencias/informe', InformeInasistenciasController::class)->name('alumnos.inasistencias.informe');
+    Route::get('/horario-clase', HorarioClasePdfController::class)->name('alumnos.horario-clase');
+    Route::get('/ficha-matricula', FichaMatriculaPdfController::class)->name('alumnos.ficha-matricula');
+
+    Route::get('/actualizacion-datos', ActualizacionDatosPersonalesForm::class)->name('alumnos.actualizacion-datos');
+    Route::get('/actualizacion-datos/aceptacion/{tipo}', AceptacionDocumentoFamilia::class)
+        ->where('tipo', 'compromiso|aec|normas|traslado')
+        ->name('alumnos.actualizacion-datos.aceptacion');
+    Route::get('/documentos-aceptacion/{tipo}/archivo', DocumentoAceptacionArchivoController::class)
+        ->where('tipo', 'compromiso|aec|normas|traslado')
+        ->name('alumnos.documentos-aceptacion.archivo');
 
     Route::get('/notificaciones', [PushController::class, 'index'])->name('alumnos.push.index');
 
@@ -252,7 +270,11 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
         ->middleware(['permiso:3', 'permiso:4'])
         ->whereNumber('id')
         ->name('portalDocente.comunicaciones.informe-envio');
-    Route::get('/comunicaciones/{id}', HiloShow::class)->middleware('permiso:3')->whereNumber('id')->name('portalDocente.comunicaciones.hilo');
+    Route::get('/comunicaciones/hilo', HiloShow::class)->middleware('permiso:3')->name('portalDocente.comunicaciones.hilo');
+    Route::get('/comunicaciones/abrir/{id}', AbrirHiloComunicacionGestionController::class)
+        ->middleware('permiso:3')
+        ->whereNumber('id')
+        ->name('portalDocente.comunicaciones.abrir');
 });
 
 // Menú de Secretaría — directivos, secretarios, preceptores, administración, gabinete, etc.
@@ -279,7 +301,11 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
         ->middleware(['permiso:3', 'permiso:4'])
         ->whereNumber('id')
         ->name('comunicaciones.informe-envio');
-    Route::get('/comunicaciones/{id}', HiloShow::class)->middleware('permiso:3')->whereNumber('id')->name('comunicaciones.hilo');
+    Route::get('/comunicaciones/hilo', HiloShow::class)->middleware('permiso:3')->name('comunicaciones.hilo');
+    Route::get('/comunicaciones/abrir/{id}', AbrirHiloComunicacionGestionController::class)
+        ->middleware('permiso:3')
+        ->whereNumber('id')
+        ->name('comunicaciones.abrir');
 
     // Administración: permisos del sistema (menú Configuración · subgrupo Permisos del sistema · orden 0)
     Route::get('/administracion/permisos', PermisosUsuariosIndex::class)
@@ -321,6 +347,13 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
     Route::get('/parametrizacion/campos-aspirantes', CamposAspirantesIndex::class)
         ->middleware('permiso-config:'.\App\Support\PermisosConfiguracion::ASPIRANTES_CAMPOS)
         ->name('param.campos-aspirantes');
+
+    Route::middleware('permiso:'.PermisosMatriculaWeb::DOCUMENTOS_ACEPTACION)->prefix('matricula-web')->group(function () {
+        Route::get('/documentos', DocumentosAceptacionForm::class)->name('matricula-web.documentos');
+        Route::get('/documentos/{tipo}/archivo', DocumentoAceptacionArchivoController::class)
+            ->where('tipo', 'compromiso|aec|normas|traslado')
+            ->name('matricula-web.documentos.archivo');
+    });
 
     // Gestión de Aspirantes (permiso orden 39)
     Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::ASPIRANTES_GESTION)

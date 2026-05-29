@@ -43,26 +43,25 @@
 
             <div>
                 <span class="form-label">Quiero comunicarme con…</span>
-                <div class="mt-2 flex flex-wrap gap-2">
-                    @foreach ($rolesReceptoresPermitidos as $rol)
-                        @php
-                            $labels = [
-                                'preceptor' => 'El/La preceptor/a',
-                                'directivo' => 'Dirección / secretaría',
-                                'profesor'  => 'Un profesor/a',
-                            ];
-                        @endphp
-                        <button type="button"
-                                wire:click="$set('rolReceptor', '{{ $rol }}')"
-                                @class([
-                                    'inline-flex cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                                    'border-primary-500 bg-primary-600 text-white' => $rolReceptor === $rol,
-                                    'border-accent-200 bg-white text-neutral-700 hover:bg-accent-50' => $rolReceptor !== $rol,
-                                ])>
-                            {{ $labels[$rol] ?? ucfirst($rol) }}
-                        </button>
-                    @endforeach
-                </div>
+                @if (empty($opcionesRolReceptor))
+                    <p class="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                        No hay destinatarios habilitados para familias en este nivel. Consulte con la institución.
+                    </p>
+                @else
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        @foreach ($opcionesRolReceptor as $op)
+                            <button type="button"
+                                    wire:click="$set('rolReceptor', '{{ $op['value'] }}')"
+                                    @class([
+                                        'inline-flex cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+                                        'border-primary-500 bg-primary-600 text-white' => $rolReceptor === $op['value'],
+                                        'border-accent-200 bg-white text-neutral-700 hover:bg-accent-50' => $rolReceptor !== $op['value'],
+                                    ])>
+                                {{ $op['label'] }}
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
                 @error('rolReceptor') <p class="form-error">{{ $message }}</p> @enderror
             </div>
 

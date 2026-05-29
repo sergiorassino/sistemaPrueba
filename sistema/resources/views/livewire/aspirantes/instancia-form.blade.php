@@ -1,6 +1,6 @@
 <div class="se-page max-w-5xl" x-data="{ copiado: false }">
     <section class="se-hero">
-        <div class="se-hero-inner">
+        <div class="se-hero-inner flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div class="min-w-0 space-y-2">
                 <p class="se-eyebrow">Aspirantes</p>
                 <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -10,6 +10,18 @@
                     Completá las secciones en orden: contexto, textos del formulario público, ventana de inscripción,
                     cursos habilitados y enlace para publicar.
                 </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 shrink-0">
+                <button type="submit" form="form-instancia-aspirantes" class="btn-primary">
+                    <span wire:loading.remove wire:target="guardar">Guardar instancia</span>
+                    <span wire:loading wire:target="guardar">Guardando…</span>
+                </button>
+                <a href="{{ route('aspirantes.instancia') }}" class="btn-secondary">Volver al listado</a>
+                @if (! $esNueva && $instanciaId)
+                    <a href="{{ route('aspirantes.listado', ['instancia' => $instanciaId]) }}" class="btn-secondary">
+                        Ver aspirantes registrados
+                    </a>
+                @endif
             </div>
         </div>
     </section>
@@ -21,7 +33,7 @@
         </div>
     @endif
 
-    <form wire:submit.prevent="guardar" class="space-y-6">
+    <form wire:submit.prevent="guardar" id="form-instancia-aspirantes" class="space-y-6">
 
         {{-- 1. Contexto --}}
         <div class="se-card overflow-hidden">
@@ -204,14 +216,5 @@
                 </p>
             </div>
         @endif
-
-        <div class="flex flex-wrap items-center gap-3 border-t border-accent-200 pt-2">
-            <button type="submit" class="btn-primary">
-                <span wire:loading.remove wire:target="guardar">Guardar instancia</span>
-                <span wire:loading wire:target="guardar">Guardando…</span>
-            </button>
-            <a href="{{ route('aspirantes.instancia') }}" class="btn-secondary">Volver al listado</a>
-            <a href="{{ route('aspirantes.listado') }}" class="btn-secondary">Ver aspirantes registrados</a>
-        </div>
     </form>
 </div>

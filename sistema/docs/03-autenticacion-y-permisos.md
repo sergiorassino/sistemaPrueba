@@ -86,8 +86,25 @@ El sistema usa un **esquema híbrido** de contraseñas por razones legacy:
 2. Si no → comparar con `hash_equals()` (texto plano legacy).
 
 **Regla para código nuevo:**
-- Al crear usuario nuevo o blanquear contraseña → guardar con `bcrypt()`.
-- Mismo criterio aplica a ambas tablas (`profesores` y `legajos`).
+- Al crear usuario nuevo o blanquear contraseña → guardar con `bcrypt()` (salvo la excepción §2.1).
+- Mismo criterio aplica a ambas tablas (`profesores` y `legajos`), salvo la excepción §2.1.
+
+### 2.1 Alta de legajo docente (Menú de Secretaría)
+
+Al **crear** un legajo nuevo en **Legajos del docente** (`LegajoProfesorForm`), el sistema asigna automáticamente:
+
+| Campo   | Valor |
+|---------|--------|
+| `nivel` | Nivel activo en sesión (`schoolCtx()->idNivel`) |
+| `pwrd`  | `1234` en **texto plano** |
+
+**Motivo:** alineado con el esquema legacy de `profesores.pwrd` y con la operativa del colegio (secretaría informa la clave inicial al docente; el usuario ingresa con DNI + `1234`).
+
+**Implementación:** `App\Livewire\Abm\LegajosProfesor\LegajoProfesorForm::save()` — los campos `nivel` y `pwrd` están en `$guarded` del modelo `Profesor`, por lo que se asignan con asignación directa y un segundo `save()` tras el `create()`.
+
+**Login:** `ProfesorUserProvider` compara texto plano con `hash_equals()` cuando `pwrd` no es hash bcrypt.
+
+**Edición:** al modificar un legajo existente **no** se altera `pwrd`; solo se establece en el alta.
 
 ---
 

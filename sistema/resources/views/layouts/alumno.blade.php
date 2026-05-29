@@ -166,6 +166,49 @@
             <span x-show="!sidebarCollapsed" x-cloak class="truncate">Informe de inasistencias</span>
         </a>
 
+        @if (tenantAutogestionActualizacionDatosHabilitada())
+            <a href="{{ route('alumnos.actualizacion-datos') }}"
+               @class([
+                   'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
+                   'is-active shadow-sm' => str_starts_with($route ?? '', 'alumnos.actualizacion-datos'),
+               ])
+               title="Actualización de datos personales del legajo">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="truncate">Actualización de Datos Personales</span>
+            </a>
+        @endif
+
+        @if (tenantAutogestionFichaMatriculaHabilitada())
+            <a href="{{ se_route_url('alumnos.ficha-matricula') }}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors"
+               title="Imprimir ficha de matrícula (se abre en una nueva pestaña)">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="truncate">Imprimir Ficha de Matrícula</span>
+            </a>
+        @endif
+
+        @if(studentEsNivelSecundario())
+            <a href="{{ se_route_url('alumnos.horario-clase') }}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors"
+               title="Horario de clase de su curso (se abre en una nueva pestaña)">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="truncate">Horario de Clase</span>
+            </a>
+        @endif
+
         @if(filled(config('tenant.autogestion.aranceles_aulica_url')))
             <a href="{{ config('tenant.autogestion.aranceles_aulica_url') }}"
                target="_blank"

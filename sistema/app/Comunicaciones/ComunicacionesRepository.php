@@ -4,6 +4,7 @@ namespace App\Comunicaciones;
 
 use App\Models\Legajo;
 use App\Models\Profesor;
+use App\Support\Comunicaciones\ComCanalRolCatalog;
 use App\Support\ProfesorMenuPortal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -402,6 +403,78 @@ class ComunicacionesRepository
     }
 
     /**
+     * Docentes del nivel con un `IdTipoProf` concreto (modal «Elegir …» por rol).
+     *
+     * @return list<array{id:int,label:string,dni:?string,rol:string,rol_label:string}>
+     */
+    public static function profesoresDelNivelParaSelectorPorIdTipoProf(
+        int $idNivel,
+        int $idTipoProf,
+        string $filtro = '',
+        int $limit = 800
+    ): array {
+        if ($idTipoProf <= 0 || $idTipoProf === self::ID_TIPO_SIN_ROL) {
+            return [];
+        }
+
+        $limit = max(1, min(2000, $limit));
+        $t = mb_strtolower(trim($filtro));
+
+        $rows = DB::table('profesores as p')
+            ->join('profesortipo as pt', 'pt.id', '=', 'p.IdTipoProf')
+            ->where('p.nivel', $idNivel)
+            ->where('p.IdTipoProf', $idTipoProf)
+            ->orderBy('p.apellido')
+            ->orderBy('p.nombre')
+            ->get(['p.id', 'p.apellido', 'p.nombre', 'p.dni', 'pt.tipo']);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $label = trim((string) $r->apellido . ', ' . (string) $r->nombre);
+            $dni = $r->dni !== null ? (string) $r->dni : null;
+            $rolLabel = trim((string) ($r->tipo ?? ''));
+            if ($t !== '') {
+                $blob = mb_strtolower($label . ' ' . ($dni ?? '') . ' ' . $rolLabel);
+                if (! str_contains($blob, $t)) {
+                    continue;
+                }
+            }
+            $out[] = [
+                'id'        => (int) $r->id,
+                'label'     => $label,
+                'dni'       => $dni,
+                'rol'       => CanalesPolicy::normalizarRolProfesor($rolLabel),
+                'rol_label' => $rolLabel !== '' ? $rolLabel : 'Sin rol asignado',
+            ];
+            if (count($out) >= $limit) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  list<int>  $ids
+     * @return list<int>
+     */
+    public static function filtrarIdsProfesoresPorIdTipoProf(array $ids, int $idNivel, int $idTipoProf): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        if ($ids === [] || $idTipoProf <= 0) {
+            return [];
+        }
+
+        return DB::table('profesores as p')
+            ->where('p.nivel', $idNivel)
+            ->where('p.IdTipoProf', $idTipoProf)
+            ->whereIn('p.id', $ids)
+            ->pluck('p.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    /**
      * Medios permitidos al iniciar un comunicado hacia varios roles receptores (intersección).
      *
      * @param  list<string>  $rolesReceptor
@@ -530,27 +603,26 @@ class ComunicacionesRepository
     }
 
     /**
-     * Roles de los destinatarios de una respuesta en hilo docentes (excluye a quien responde),
-     * con resolución robusta si falta tipo en BD o el join con profesortipo no devuelve fila.
+     * Claves de canal (`tipo:{id}`) de destinatarios en respuesta de hilo docentes.
      *
      * @return list<string>
      */
     public static function rolesDestinatariosRespuestaDocente(int $idHilo, int $idRemitenteExcluido, ComHilo $hilo): array
     {
         $idsDest = static::idsProfesoresDestinoRespuestaDocente($idHilo, $idRemitenteExcluido);
-        $roles   = [];
+        $claves  = [];
         foreach ($idsDest as $idProf) {
             $idProf = (int) $idProf;
             if ($idProf <= 0) {
                 continue;
             }
-            $rol = static::rolDocenteParticipanteParaCanal($idHilo, $hilo, $idProf);
-            if ($rol !== '') {
-                $roles[] = $rol;
+            $clave = static::claveDocenteParticipanteParaCanal($idHilo, $hilo, $idProf);
+            if ($clave !== '') {
+                $claves[] = $clave;
             }
         }
 
-        return array_values(array_unique($roles));
+        return array_values(array_unique($claves));
     }
 
     /**
@@ -596,25 +668,77 @@ class ComunicacionesRepository
             return [];
         }
 
-        $rol = static::rolDocenteParticipanteParaCanal($idHilo, $hilo, $idAutor);
-        if ($rol === '') {
-            $r = mb_strtolower(trim((string) ($ini->rol_remitente ?? '')));
-            foreach (['directivo', 'preceptor', 'profesor', 'familia'] as $canon) {
-                if ($r === $canon) {
-                    $rol = $canon;
-                    break;
-                }
-            }
-            if ($rol === '' && $r !== '') {
-                $rol = CanalesPolicy::normalizarRolProfesor($r);
-            }
+        $clave = static::claveDocenteParticipanteParaCanal($idHilo, $hilo, $idAutor);
+        if ($clave === '') {
+            $clave = static::resolverClaveRolAlmacenado((string) ($ini->rol_remitente ?? '')) ?? '';
         }
 
-        return $rol !== '' ? [$rol] : [];
+        return $clave !== '' ? [$clave] : [];
     }
 
     /**
-     * Rol normalizado (directivo|preceptor|profesor|familia) para política de canales.
+     * Clave de canal del participante docente (`tipo:{id}`).
+     */
+    private static function claveDocenteParticipanteParaCanal(int $idHilo, ComHilo $hilo, int $idProf): string
+    {
+        $prof = Profesor::with('tipo')->find($idProf);
+        if ($prof !== null) {
+            return CanalesPolicy::claveRolDeProfesor($prof);
+        }
+
+        if ($hilo->creado_por_tipo === 'profesor' && (int) $hilo->creado_por_id === $idProf) {
+            $clave = static::resolverClaveRolAlmacenado((string) ($hilo->creado_por_rol ?? ''));
+            if ($clave !== null) {
+                return $clave;
+            }
+        }
+
+        $rolMsg = ComMensaje::query()
+            ->where('id_hilo', $idHilo)
+            ->where('tipo_remitente', 'profesor')
+            ->where('id_profesor', $idProf)
+            ->orderByDesc('id')
+            ->value('rol_remitente');
+
+        $clave = static::resolverClaveRolAlmacenado($rolMsg !== null ? (string) $rolMsg : null);
+        if ($clave !== null) {
+            return $clave;
+        }
+
+        $canon = static::rolDocenteParticipanteParaCanal($idHilo, $hilo, $idProf);
+        if ($canon === '') {
+            return '';
+        }
+
+        $ids = ComCanalRolCatalog::idsTipoProfConRolCanonicoLegacy($canon);
+
+        return $ids !== [] ? ComCanalRolCatalog::claveTipoProf($ids[0]) : '';
+    }
+
+    private static function resolverClaveRolAlmacenado(?string $rolAlmacenado): ?string
+    {
+        if ($rolAlmacenado === null || trim($rolAlmacenado) === '') {
+            return null;
+        }
+
+        $parsed = ComCanalRolCatalog::parseClave(trim($rolAlmacenado));
+        if ($parsed['id_tipo_prof'] !== null) {
+            return ComCanalRolCatalog::claveDeIdTipoProf($parsed['id_tipo_prof']);
+        }
+        if ($parsed['familia']) {
+            return ComCanalRolCatalog::CLAVE_FAMILIA;
+        }
+        if ($parsed['legacy'] !== null) {
+            $ids = ComCanalRolCatalog::idsTipoProfConRolCanonicoLegacy($parsed['legacy']);
+
+            return $ids !== [] ? ComCanalRolCatalog::claveTipoProf($ids[0]) : null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Rol normalizado legacy (directivo|preceptor|profesor) para metadatos antiguos.
      */
     private static function rolDocenteParticipanteParaCanal(int $idHilo, ComHilo $hilo, int $idProf): string
     {

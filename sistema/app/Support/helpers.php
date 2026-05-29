@@ -49,6 +49,18 @@ if (! function_exists('studentCtx')) {
     }
 }
 
+if (! function_exists('studentEsNivelSecundario')) {
+    /**
+     * Nivel secundario / medio en el portal alumno (nombre en tabla `niveles`).
+     */
+    function studentEsNivelSecundario(): bool
+    {
+        $nombre = mb_strtolower((string) studentCtx()->nivelNombre());
+
+        return str_contains($nombre, 'secundari') || str_contains($nombre, 'medio');
+    }
+}
+
 if (! function_exists('tienePermiso')) {
     /**
      * Permiso concedido en profesores.permisos_ia (cadena 0/1 por orden del catálogo permisos_ia).
@@ -232,6 +244,34 @@ if (! function_exists('entoInstitutionalLogoUrlFallback')) {
         $path = entoInstitutionalLogoStoragePath();
 
         return $path !== null ? Storage::disk('public')->url($path) : null;
+    }
+}
+
+if (! function_exists('matriculaWebDocumentoUrl')) {
+    /**
+     * URL para ver/descargar un PDF de aceptación de matrícula web del nivel indicado (o el activo en secretaría).
+     *
+     * @param  string  $tipo  compromiso|aec|normas|traslado
+     */
+    function matriculaWebDocumentoUrl(string $tipo, ?int $idNivel = null): ?string
+    {
+        if (! \App\Support\MatriculaWeb\MatriculaWebDocumentos::claveValida($tipo)) {
+            return null;
+        }
+
+        if (\App\Support\MatriculaWeb\MatriculaWebDocumentos::nombreRegistrado($tipo, $idNivel) === null) {
+            return null;
+        }
+
+        if (\App\Support\MatriculaWeb\MatriculaWebDocumentos::pathAlmacenado($tipo, $idNivel) === null) {
+            return null;
+        }
+
+        if (auth('alumno')->check()) {
+            return route('alumnos.documentos-aceptacion.archivo', ['tipo' => $tipo]);
+        }
+
+        return route('matricula-web.documentos.archivo', ['tipo' => $tipo]);
     }
 }
 
@@ -428,6 +468,47 @@ if (! function_exists('tenantBoletinMuestraTercerMateria')) {
     function tenantBoletinMuestraTercerMateria(): bool
     {
         return (bool) config('tenant.boletin.mostrar_tercer_materia', false);
+    }
+}
+
+if (! function_exists('tenantPortalDocenteCuadernoSeguimientoAulico')) {
+    /**
+     * Si el Menú de Docentes incluye el Cuaderno de Seguimiento Áulico (secundario).
+     * Default false; activar en `config/tenants/{slug}.php`.
+     */
+    function tenantPortalDocenteCuadernoSeguimientoAulico(): bool
+    {
+        return (bool) config('tenant.portal_docente.cuaderno_seguimiento_aulico', false);
+    }
+}
+
+if (! function_exists('tenantAutogestionActualizacionDatosHabilitada')) {
+    /**
+     * Si el portal familia incluye actualización de datos personales del legajo.
+     * Default false; activar en `config/tenants/{slug}.php` con `implementacion` definida.
+     */
+    function tenantAutogestionActualizacionDatosHabilitada(): bool
+    {
+        if (! (bool) config('tenant.autogestion.actualizacion_datos.habilitado', false)) {
+            return false;
+        }
+
+        return filled(config('tenant.autogestion.actualizacion_datos.implementacion'));
+    }
+}
+
+if (! function_exists('tenantAutogestionFichaMatriculaHabilitada')) {
+    /**
+     * Si el portal familia incluye impresión de ficha de matrícula en PDF.
+     * Default false; activar en `config/tenants/{slug}.php` con `implementacion` definida.
+     */
+    function tenantAutogestionFichaMatriculaHabilitada(): bool
+    {
+        if (! (bool) config('tenant.autogestion.ficha_matricula.habilitado', false)) {
+            return false;
+        }
+
+        return filled(config('tenant.autogestion.ficha_matricula.implementacion'));
     }
 }
 

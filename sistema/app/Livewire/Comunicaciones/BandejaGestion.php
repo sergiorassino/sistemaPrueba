@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Comunicaciones;
 
+use App\Comunicaciones\ComunicacionesGestionSession;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Support\ComunicacionesRutasGestion;
 use Livewire\Component;
@@ -31,6 +32,14 @@ class BandejaGestion extends Component
     public function updatedFiltro(): void
     {
         // Reactivo: Livewire re-renderiza automáticamente
+    }
+
+    public function abrirHilo(int $idHilo): void
+    {
+        abort_unless(ComunicacionesGestionSession::puedeVerHilo($idHilo), 404);
+
+        ComunicacionesGestionSession::abrir($idHilo);
+        $this->redirectRoute(ComunicacionesRutasGestion::nombreRuta('hilo'), navigate: true);
     }
 
     public function render()

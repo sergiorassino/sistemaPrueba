@@ -4,6 +4,7 @@ namespace App\Livewire\Parametrizacion;
 
 use App\Comunicaciones\CanalesPolicy;
 use App\Models\ComCanal;
+use App\Support\Comunicaciones\ComCanalRolCatalog;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -22,8 +23,8 @@ class ComCanalesIndex extends Component
 
     // Alta de canal
     public bool $mostrandoFormNuevo = false;
-    public string $nuevoRolEmisor = 'profesor';
-    public string $nuevoRolReceptor = 'familia';
+    public string $nuevoRolEmisor = '';
+    public string $nuevoRolReceptor = '';
     public bool $nuevoPuedeIniciar = false;
     public bool $nuevoPuedeResponder = false;
     public array $nuevoMedios = [];
@@ -46,8 +47,15 @@ class ComCanalesIndex extends Component
     {
         $this->cancelarEdicion();
         $this->mostrandoFormNuevo = true;
-        $this->nuevoRolEmisor = 'profesor';
-        $this->nuevoRolReceptor = 'familia';
+        $claves = ComCanal::rolesClave();
+        $this->nuevoRolEmisor = $claves[0] ?? ComCanalRolCatalog::CLAVE_FAMILIA;
+        $this->nuevoRolReceptor = ComCanalRolCatalog::CLAVE_FAMILIA;
+        foreach ($claves as $clave) {
+            if ($clave !== $this->nuevoRolEmisor) {
+                $this->nuevoRolReceptor = $clave;
+                break;
+            }
+        }
         $this->nuevoPuedeIniciar = false;
         $this->nuevoPuedeResponder = false;
         $this->nuevoMedios = ['push', 'email'];

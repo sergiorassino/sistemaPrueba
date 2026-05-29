@@ -40,8 +40,14 @@ final class NotificarPreceptorSituacionAulica
             return false;
         }
 
-        $rolEmisor = CanalesPolicy::rolDeProfesor($profesor);
-        if (! CanalesPolicy::puedeIniciar($rolEmisor, 'preceptor')) {
+        $rolEmisor = CanalesPolicy::claveRolDeProfesor($profesor);
+
+        $preceptorRef = Profesor::query()->find($idsPreceptor[0]);
+        if ($preceptorRef === null) {
+            return false;
+        }
+        $claveReceptor = CanalesPolicy::claveRolDeProfesor($preceptorRef);
+        if (! CanalesPolicy::puedeIniciar($rolEmisor, $claveReceptor)) {
             return false;
         }
 
@@ -67,7 +73,7 @@ final class NotificarPreceptorSituacionAulica
         $lineas[] = '';
         $lineas[] = 'Registrado por: '.$profesor->nombre_completo;
 
-        $mediosCanal = CanalesPolicy::mediosPermitidos($rolEmisor, 'preceptor');
+        $mediosCanal = CanalesPolicy::mediosPermitidos($rolEmisor, $claveReceptor);
 
         ComunicacionesRepository::crearHiloConMensaje([
             'asunto' => $asunto,
@@ -81,7 +87,7 @@ final class NotificarPreceptorSituacionAulica
             'creado_por_tipo' => 'profesor',
             'creado_por_id' => $idProfesor,
             'creado_por_rol' => $rolEmisor,
-            'rol_receptor' => 'preceptor',
+            'rol_receptor' => $claveReceptor,
             'vinculo_familiar' => null,
             'nombre_remitente' => $profesor->nombre_completo,
             'dni_remitente' => (string) ($profesor->dni ?? ''),

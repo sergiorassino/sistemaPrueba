@@ -31,4 +31,4 @@ Estas reglas aplican a **todo módulo nuevo** y a cambios en módulos existentes
 
 - Legacy: texto plano → `hash_equals()`.
 - Nuevos/blanqueo: bcrypt → `password_verify()`.
-- Al crear usuario o blanquear clave: siempre guardar con `bcrypt()`.
+- Al crear usuario o blanquear clave: guardar con `bcrypt()`, **excepto** alta de legajo docente (`LegajoProfesorForm`), que usa `1234` en texto plano — ver `docs/03-autenticacion-y-permisos.md` §2.1.

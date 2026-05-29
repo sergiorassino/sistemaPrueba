@@ -16,6 +16,15 @@ class AspirantesIndex extends Component
 
     public string $buscar = '';
 
+    /** Id de aspiento (instancia de registro) a listar; si no viene, se usa la más reciente del ciclo activo. */
+    public ?int $instanciaId = null;
+
+    /** @var array<string, array{except?: mixed, as?: string}> */
+    protected $queryString = [
+        'instanciaId' => ['except' => null, 'as' => 'instancia'],
+        'buscar'      => ['except' => ''],
+    ];
+
     public function mount(): void
     {
         abort_unless(tienePermiso(PermisosIaCatalog::ASPIRANTES_GESTION), 403);
@@ -30,11 +39,20 @@ class AspirantesIndex extends Component
     {
         $ctx = schoolCtx();
 
-        $instancia = Aspiento::query()
-            ->where('idNivel', $ctx->idNivel)
-            ->where('idTerlec', $ctx->idTerlec)
-            ->orderByDesc('Id')
-            ->first();
+        $instancia = null;
+        if ($this->instanciaId !== null && $this->instanciaId > 0) {
+            $instancia = Aspiento::query()
+                ->whereKey($this->instanciaId)
+                ->where('idNivel', $ctx->idNivel)
+                ->first();
+        }
+        if ($instancia === null) {
+            $instancia = Aspiento::query()
+                ->where('idNivel', $ctx->idNivel)
+                ->where('idTerlec', $ctx->idTerlec)
+                ->orderByDesc('Id')
+                ->first();
+        }
 
         $columnas = collect();
 

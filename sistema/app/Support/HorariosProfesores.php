@@ -136,6 +136,53 @@ final class HorariosProfesores
     }
 
     /**
+     * Nivel y ciclo para consultas de horarios (secretaría o portal alumno).
+     *
+     * @return array{0: int, 1: int}
+     */
+    private static function contextoHorariosNivelTerlec(?int $idNivel = null, ?int $idTerlec = null): array
+    {
+        if ($idNivel !== null && $idNivel > 0 && $idTerlec !== null && $idTerlec > 0) {
+            return [$idNivel, $idTerlec];
+        }
+
+        $school = schoolCtx();
+        if ($school->isValid()) {
+            if ($idNivel === null || $idNivel <= 0) {
+                $idNivel = (int) $school->idNivel;
+            }
+            if ($idTerlec === null || $idTerlec <= 0) {
+                $idTerlec = (int) $school->idTerlec;
+            }
+        }
+
+        if ($idNivel === null || $idNivel <= 0 || $idTerlec === null || $idTerlec <= 0) {
+            $student = studentCtx();
+            if ($student->isValid()) {
+                if ($idNivel === null || $idNivel <= 0) {
+                    $idNivel = (int) $student->idNivel;
+                }
+                if ($idTerlec === null || $idTerlec <= 0) {
+                    $idTerlec = (int) $student->idTerlec;
+                }
+            }
+        }
+
+        return [(int) ($idNivel ?? 0), (int) ($idTerlec ?? 0)];
+    }
+
+    private static function idNivelHorariosSesion(?int $explicito = null): int
+    {
+        if ($explicito !== null && $explicito > 0) {
+            return $explicito;
+        }
+
+        [$idNivel] = self::contextoHorariosNivelTerlec(null, null);
+
+        return $idNivel;
+    }
+
+    /**
      * @return list<int> IDs de turnos_clase
      */
     public static function turnosActivos(?int $idNivel = null): array
@@ -145,7 +192,7 @@ final class HorariosProfesores
         $soloMadre = array_values(array_filter($validos, fn (int $t) => ! self::esTurnoClaseDobleJornada($t)));
         $default = $soloMadre !== [] ? [$soloMadre[0]] : [1];
 
-        $idNivel = $idNivel ?? (int) (schoolCtx()->idNivel ?? 0);
+        $idNivel = self::idNivelHorariosSesion($idNivel);
         if ($idNivel <= 0) {
             return $default;
         }
@@ -165,7 +212,7 @@ final class HorariosProfesores
      */
     public static function diasActivos(?int $idNivel = null): array
     {
-        $idNivel = $idNivel ?? (int) (schoolCtx()->idNivel ?? 0);
+        $idNivel = self::idNivelHorariosSesion($idNivel);
         if ($idNivel <= 0) {
             return [1, 2, 3, 4, 5];
         }
@@ -517,7 +564,7 @@ final class HorariosProfesores
      */
     public static function relojPorTurnoClase(int $idTurnoClase, ?int $idNivel = null): array
     {
-        $idNivel = $idNivel ?? (int) (schoolCtx()->idNivel ?? 0);
+        $idNivel = self::idNivelHorariosSesion($idNivel);
         $out = [];
         for ($h = 1; $h <= self::HORAS_POR_TURNO; $h++) {
             $out[$h] = '';
@@ -888,13 +935,14 @@ final class HorariosProfesores
      *     celdas: array<string, list<string>>
      * }
      */
-    public static function grillaCurso(int $idCurso, int $idTurnoClase): array
+    public static function grillaCurso(int $idCurso, int $idTurnoClase, ?int $idNivel = null, ?int $idTerlec = null): array
     {
-        $dias = self::diasActivos();
+        [$idNivel, $idTerlec] = self::contextoHorariosNivelTerlec($idNivel, $idTerlec);
+        $dias = self::diasActivos($idNivel > 0 ? $idNivel : null);
         $horas = range(1, self::HORAS_POR_TURNO);
         $celdas = [];
 
-        $idsMat = self::idsMateriasSoloEsteCurso($idCurso);
+        $idsMat = self::idsMateriasSoloEsteCurso($idCurso, $idNivel, $idTerlec);
         $q26 = DB::table('horarios26 as h')
             ->leftJoin('materias as m', 'm.id', '=', 'h.idMaterias')
             ->leftJoin('profesores as p', 'p.id', '=', 'h.idProfesores');
@@ -952,7 +1000,7 @@ final class HorariosProfesores
         return [
             'dias' => $dias,
             'horas' => $horas,
-            'reloj' => self::relojPorTurnoClase($idTurnoClase),
+            'reloj' => self::relojPorTurnoClase($idTurnoClase, $idNivel > 0 ? $idNivel : null),
             'celdas' => $celdas,
         ];
     }
@@ -1364,9 +1412,9 @@ final class HorariosProfesores
     /**
      * @return list<int> IDs de turnos_clase
      */
-    public static function turnosParaImpresionCurso(Curso $curso): array
+    public static function turnosParaImpresionCurso(Curso $curso, ?int $idNivel = null): array
     {
-        $activos = self::turnosActivos();
+        $activos = self::turnosActivos(self::idNivelHorariosSesion($idNivel));
         $fk = isset($curso->idTurnoClase) && (int) $curso->idTurnoClase > 0 ? (int) $curso->idTurnoClase : null;
         $idNorm = self::idTurnoClaseParaCurso($fk);
 
@@ -1891,18 +1939,21 @@ TXT;
      *
      * @return list<int>
      */
-    private static function idsMateriasSoloEsteCurso(int $idCurso): array
+    private static function idsMateriasSoloEsteCurso(int $idCurso, ?int $idNivel = null, ?int $idTerlec = null): array
     {
         if ($idCurso <= 0) {
             return [];
         }
 
-        $ctx = schoolCtx();
+        [$idNivel, $idTerlec] = self::contextoHorariosNivelTerlec($idNivel, $idTerlec);
+        if ($idNivel <= 0 || $idTerlec <= 0) {
+            return [];
+        }
 
         return DB::table('materias')
             ->where('idCursos', $idCurso)
-            ->where('idNivel', (int) $ctx->idNivel)
-            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
             ->orderBy('id')
             ->pluck('id')
             ->map(fn ($id) => (int) $id)

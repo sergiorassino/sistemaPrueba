@@ -19,6 +19,11 @@ final class CuadernoSeguimientoAulicoDocente
         CalificacionesDocenteSecundario::abortSiNoEsSecundario();
     }
 
+    public static function abortSiNoHabilitadoEnTenant(): void
+    {
+        abort_unless(tenantPortalDocenteCuadernoSeguimientoAulico(), 404);
+    }
+
     public static function abortSiProfesorSinMateria(int $idMateria, int $idCurso): void
     {
         CalificacionesDocenteSecundario::abortSiProfesorSinMateria($idMateria, $idCurso);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Comunicaciones\ComCanalRolCatalog;
 use Illuminate\Database\Eloquent\Model;
 
 class ComCanal extends Model
@@ -65,30 +66,21 @@ class ComCanal extends Model
         return is_array($decoded) ? array_values($decoded) : [];
     }
 
-    /**
-     * Etiquetas legibles para la UI.
-     *
-     * @return array<string,string>
-     */
+    /** @return array<string, string> clave => etiqueta (profesortipo + familias) */
     public static function etiquetasRoles(): array
     {
-        return [
-            'directivo' => 'Directivo / Secretario',
-            'preceptor' => 'Preceptor',
-            'profesor'  => 'Profesor',
-            'familia'   => 'Familia',
-        ];
+        return ComCanalRolCatalog::catalogo();
     }
 
     /** @return list<string> */
     public static function rolesClave(): array
     {
-        return array_keys(static::etiquetasRoles());
+        return ComCanalRolCatalog::claves();
     }
 
     public static function etiquetaRol(string $rol): string
     {
-        return static::etiquetasRoles()[$rol] ?? ucfirst($rol);
+        return ComCanalRolCatalog::etiqueta($rol);
     }
 
     /** Medios disponibles en el sistema */

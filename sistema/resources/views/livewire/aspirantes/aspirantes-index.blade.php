@@ -31,6 +31,10 @@
                            class="form-input w-full">
                 </div>
                 <div class="text-xs text-neutral-500">
+                    @if ($instancia->titulo)
+                        <span class="font-medium text-neutral-700">{{ $instancia->titulo }}</span>
+                        ·
+                    @endif
                     Instancia
                     <span @class([
                         'inline-block rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide',

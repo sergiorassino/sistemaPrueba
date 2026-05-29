@@ -36,6 +36,12 @@ class Ento extends Model
         // Logo (nuevo)
         'logo_path',
         'logo_original_name',
+
+        // Matrícula web — nombre del PDF vigente por documento (legacy)
+        'documAcept1',
+        'documAcept2',
+        'documAcept3',
+        'documAcept4',
     ];
 }
 

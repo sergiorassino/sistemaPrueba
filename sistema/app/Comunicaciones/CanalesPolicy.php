@@ -4,6 +4,8 @@ namespace App\Comunicaciones;
 
 use App\Models\ComCanal;
 use App\Models\Profesor;
+use App\Models\ProfesorTipo;
+use App\Support\Comunicaciones\ComCanalRolCatalog;
 use Illuminate\Support\Facades\Cache;
 
 class CanalesPolicy
@@ -28,10 +30,9 @@ class CanalesPolicy
     }
 
     /**
-     * Normaliza el tipo de un profesor (desde profesortipo.tipo) al rol del canal.
+     * Normaliza el tipo de un profesor (desde profesortipo.tipo) al rol del canal legacy.
      *
-     * Los tipos legacy pueden ser: Directivo, Secretario, Preceptor, Profesor,
-     * Bibliotecario, No Docente, etc.
+     * Se conserva para hilos antiguos, búsquedas y compatibilidad; los canales usan `tipo:{id}`.
      */
     public static function normalizarRolProfesor(?string $tipo): string
     {
@@ -54,9 +55,6 @@ class CanalesPolicy
     /**
      * Clasifica un `profesortipo.tipo` para el selector de destinatarios docentes
      * en «Nuevo comunicado» (botones Profesores / Personal).
-     *
-     * Distinto de {@see normalizarRolProfesor}: aquí se discrimina por cargo real
-     * (p. ej. bibliotecario → Personal; ATP/DOE → Profesores).
      *
      * @return 'profesor'|'institucional'|null  null = excluir del selector (p. ej. «Sin Rol»).
      */
@@ -96,13 +94,38 @@ class CanalesPolicy
     }
 
     /**
-     * Normaliza el rol de un Profesor model.
+     * Clave de canal del profesor (`tipo:{IdTipoProf}`).
+     */
+    public static function claveRolDeProfesor(Profesor $profesor): string
+    {
+        $idTipo = (int) ($profesor->IdTipoProf ?? 0);
+        $clave  = ComCanalRolCatalog::claveDeIdTipoProf($idTipo);
+        if ($clave !== null) {
+            return $clave;
+        }
+
+        $tipo = (string) ($profesor->tipo?->tipo ?? '');
+        $canon = static::normalizarRolProfesor($tipo);
+        $ids   = ComCanalRolCatalog::idsTipoProfConRolCanonicoLegacy($canon);
+
+        return $ids !== []
+            ? ComCanalRolCatalog::claveTipoProf($ids[0])
+            : ComCanalRolCatalog::claveTipoProf(6);
+    }
+
+    /**
+     * Rol canónico legacy (directivo|preceptor|profesor) para metadatos de hilos antiguos.
      */
     public static function rolDeProfesor(Profesor $profesor): string
     {
         $tipo = (string) ($profesor->tipo?->tipo ?? '');
 
         return static::normalizarRolProfesor($tipo);
+    }
+
+    public static function claveRolDeIdTipoProf(int $idTipoProf): ?string
+    {
+        return ComCanalRolCatalog::claveDeIdTipoProf($idTipoProf);
     }
 
     /**
@@ -118,10 +141,30 @@ class CanalesPolicy
         $cacheKey = "com_canal:{$idNivel}:{$rolEmisor}:{$rolReceptor}";
 
         return Cache::remember($cacheKey, static::CACHE_TTL, function () use ($rolEmisor, $rolReceptor, $idNivel) {
-            return ComCanal::query()
+            $canal = ComCanal::query()
                 ->where('id_nivel', $idNivel)
                 ->where('rol_emisor', $rolEmisor)
                 ->where('rol_receptor', $rolReceptor)
+                ->where('activo', true)
+                ->first();
+
+            if ($canal !== null) {
+                return $canal;
+            }
+
+            $emLegacy = ComCanalRolCatalog::rolCanonicoLegacy($rolEmisor);
+            $recLegacy = ComCanalRolCatalog::rolCanonicoLegacy($rolReceptor);
+            if ($emLegacy === null || $recLegacy === null) {
+                return null;
+            }
+            if ($emLegacy === $rolEmisor && $recLegacy === $rolReceptor) {
+                return null;
+            }
+
+            return ComCanal::query()
+                ->where('id_nivel', $idNivel)
+                ->where('rol_emisor', $emLegacy)
+                ->where('rol_receptor', $recLegacy)
                 ->where('activo', true)
                 ->first();
         });
@@ -163,10 +206,16 @@ class CanalesPolicy
         }
 
         Cache::forget("com_canal:{$idNivel}:{$rolEmisor}:{$rolReceptor}");
+
+        $emLegacy = ComCanalRolCatalog::rolCanonicoLegacy($rolEmisor);
+        $recLegacy = ComCanalRolCatalog::rolCanonicoLegacy($rolReceptor);
+        if ($emLegacy !== null && $recLegacy !== null && ($emLegacy !== $rolEmisor || $recLegacy !== $rolReceptor)) {
+            Cache::forget("com_canal:{$idNivel}:{$emLegacy}:{$recLegacy}");
+        }
     }
 
     /**
-     * Devuelve todos los roles receptores a los que un emisor puede iniciar conversación en un nivel.
+     * Claves receptoras (`familia` o `tipo:{id}`) a las que el emisor puede iniciar conversación.
      *
      * @return list<string>
      */
@@ -184,5 +233,59 @@ class CanalesPolicy
             ->where('activo', true)
             ->pluck('rol_receptor')
             ->all();
+    }
+
+    public static function emisorPuedeIniciarHaciaIdTipoProf(string $rolEmisor, int $idTipoProf, ?int $idNivel = null): bool
+    {
+        $clave = ComCanalRolCatalog::claveDeIdTipoProf($idTipoProf);
+        if ($clave === null) {
+            return false;
+        }
+
+        return static::puedeIniciar($rolEmisor, $clave, $idNivel);
+    }
+
+    /**
+     * Opciones del selector de destinatario en «Nuevo comunicado» (gestión / portal docente).
+     *
+     * @return list<array{value:string,label:string,es_familia:bool,id_tipo_prof:?int}>
+     */
+    public static function opcionesDestinatarioNuevoComunicado(string $rolEmisor, ?int $idNivel = null): array
+    {
+        $idNivel = static::resolveIdNivel($idNivel);
+        if ($idNivel <= 0) {
+            return [];
+        }
+
+        $receptores = static::receptoresPermitidosParaIniciar($rolEmisor, $idNivel);
+        if ($receptores === []) {
+            return [];
+        }
+
+        $catalogo = ComCanalRolCatalog::catalogo();
+        $opciones = [];
+
+        foreach ($receptores as $clave) {
+            if (! isset($catalogo[$clave])) {
+                continue;
+            }
+            $parsed = ComCanalRolCatalog::parseClave($clave);
+            $opciones[] = [
+                'value'        => $clave,
+                'label'        => $catalogo[$clave],
+                'es_familia'   => $parsed['familia'],
+                'id_tipo_prof' => $parsed['id_tipo_prof'],
+            ];
+        }
+
+        usort($opciones, static fn (array $a, array $b): int => strcasecmp($a['label'], $b['label']));
+
+        return $opciones;
+    }
+
+    /** Valores permitidos para validación (`familia` o `tipo:{id}`). */
+    public static function valoresDestinatarioNuevoComunicado(string $rolEmisor, ?int $idNivel = null): array
+    {
+        return array_column(static::opcionesDestinatarioNuevoComunicado($rolEmisor, $idNivel), 'value');
     }
 }

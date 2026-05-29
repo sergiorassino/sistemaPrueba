@@ -188,14 +188,14 @@ class LegajoProfesorForm extends Component
             $prof->update($allData);
             session()->flash('success', "Legajo de {$allData['apellido']}, {$allData['nombre']} actualizado.");
         } else {
-            $allData['nivel'] = $idNivel;
-            if (! isset($allData['pwrd'])) {
-                $allData['pwrd'] = '';
-            }
-            if (! isset($allData['permisos'])) {
-                $allData['permisos'] = str_repeat('0', 100);
-            }
             $prof = Profesor::create($allData);
+            $prof->nivel = $idNivel;
+            // Texto plano legacy: ver docs/03-autenticacion-y-permisos.md §2.1
+            $prof->pwrd = '1234';
+            if ($prof->permisos === null || $prof->permisos === '') {
+                $prof->permisos = str_repeat('0', 100);
+            }
+            $prof->save();
             $this->id = (int) $prof->id;
             session()->flash('success', "Legajo de {$allData['apellido']}, {$allData['nombre']} creado.");
         }

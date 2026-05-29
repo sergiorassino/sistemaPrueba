@@ -4,6 +4,7 @@ namespace App\Livewire\Comunicaciones;
 
 use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComAuditoriaLogger;
+use App\Comunicaciones\ComunicacionesGestionSession;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Support\ComunicacionesRutasGestion;
 use Illuminate\Support\Facades\DB;
@@ -28,28 +29,13 @@ class HiloShow extends Component
 
     public bool $modalBorrarEliminaHiloCompleto = false;
 
-    public function mount(int $id): void
+    public function mount(): void
     {
         abort_unless(tienePermiso(3), 403, 'Sin permiso para ver comunicaciones.');
 
-        $ctx = schoolCtx();
-
-        $hilo = ComHilo::where('id', $id)
-            ->where('id_nivel', (int) $ctx->idNivel)
-            ->where('id_terlec', (int) $ctx->idTerlec)
-            ->first();
-
-        abort_if($hilo === null, 404);
-
-        if (! tienePermiso(8)) {
-            $puede = ComunicacionesRepository::profesorPuedeVerHilo(
-                (int) $hilo->id,
-                (int) $ctx->idProfesor,
-                (int) $ctx->idNivel,
-                (int) $ctx->idTerlec
-            );
-            abort_unless($puede, 403, 'Sin permiso para ver este hilo.');
-        }
+        $id = ComunicacionesGestionSession::idHiloActivo();
+        abort_if($id <= 0, 404);
+        abort_unless(ComunicacionesGestionSession::puedeVerHilo($id), 404);
 
         $this->idHilo = $id;
         $this->marcarLeido();
@@ -347,7 +333,7 @@ class HiloShow extends Component
 
         abort_if($profesor === null, 403);
 
-        $rolEmisor = CanalesPolicy::rolDeProfesor($profesor);
+        $rolEmisor = CanalesPolicy::claveRolDeProfesor($profesor);
 
         $hiloCtx = ComHilo::query()
             ->where('id', $this->idHilo)
@@ -377,7 +363,7 @@ class HiloShow extends Component
                 $medios = ['push'];
             }
         } else {
-            $rolReceptor = 'familia';
+            $rolReceptor = \App\Support\Comunicaciones\ComCanalRolCatalog::CLAVE_FAMILIA;
             $idNivelHilo = (int) ($hiloCtx->id_nivel ?? $ctx->idNivel);
             if (! CanalesPolicy::puedeResponder($rolEmisor, $rolReceptor, $idNivelHilo)) {
                 $this->addError('respuesta', 'Su rol no puede responder a este comunicado.');
@@ -430,7 +416,7 @@ class HiloShow extends Component
         );
 
         $profesor        = $ctx->profesor();
-        $rolEmisor       = $profesor ? CanalesPolicy::rolDeProfesor($profesor) : null;
+        $rolEmisor       = $profesor ? CanalesPolicy::claveRolDeProfesor($profesor) : null;
         $esHiloDocentes = $hilo->esComunicacionInternaDocentes();
         $puedeResponder  = false;
         if ($rolEmisor !== null) {
@@ -444,7 +430,11 @@ class HiloShow extends Component
                     && ComunicacionesRepository::puedeResponderVariosRoles($rolEmisor, $rolesTargets, true);
             } else {
                 $idNivelHilo = (int) ($hilo->id_nivel ?? $ctx->idNivel);
-                $puedeResponder = CanalesPolicy::puedeResponder($rolEmisor, 'familia', $idNivelHilo);
+                $puedeResponder = CanalesPolicy::puedeResponder(
+                    $rolEmisor,
+                    \App\Support\Comunicaciones\ComCanalRolCatalog::CLAVE_FAMILIA,
+                    $idNivelHilo
+                );
             }
         }
 

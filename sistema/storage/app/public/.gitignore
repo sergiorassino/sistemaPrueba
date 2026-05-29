@@ -1,2 +1,5 @@
 *
 !.gitignore
+!ento/
+!ento/logos/
+!ento/logos/**

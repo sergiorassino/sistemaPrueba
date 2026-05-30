@@ -89,4 +89,13 @@ return [
         'cuaderno_seguimiento_aulico' => false,
     ],
 
+    /**
+     * Solicitud de evaluación (tabla evaluac) — Menú de Secretaría y Menú de Docentes.
+     * Sin permiso IA: visible para todo el personal en secundario (tenant activo).
+     * Activar solo en `config/tenants/{slug}.php` para colegios que lo usan.
+     */
+    'modulos' => [
+        'solicitud_evaluacion' => false,
+    ],
+
 ];

@@ -163,6 +163,20 @@
                 </svg>
                 <span x-show="!sidebarCollapsed" x-cloak class="truncate">Calificaciones</span>
             </a>
+            @if (tenantSolicitudEvaluacionHabilitada())
+                <a href="{{ route('portalDocente.solicitudEvaluacion') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
+                       'is-active shadow-sm' => request()->routeIs('portalDocente.solicitudEvaluacion', 'portalDocente.solicitudEvaluacion.create'),
+                   ])
+                   title="Registrar próximas evaluaciones del curso (máx. 2 por día)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span x-show="!sidebarCollapsed" x-cloak class="truncate">Solicitud de evaluación</span>
+                </a>
+            @endif
             @if (tenantPortalDocenteCuadernoSeguimientoAulico())
                 <a href="{{ route('portalDocente.cuadernoSeguimiento') }}"
                    @class([

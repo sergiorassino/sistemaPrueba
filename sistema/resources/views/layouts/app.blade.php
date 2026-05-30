@@ -560,6 +560,24 @@
                     <span class="truncate">Cierre anual</span>
                 </a>
                 @endif
+                @if (tenantSolicitudEvaluacionHabilitada()
+                    && str_contains(mb_strtolower((string) schoolCtx()->nivelNombre()), 'secundari')
+                    && tienePermiso(\App\Support\PermisosIaCatalog::SOLICITUDES_EVALUACION_GESTION))
+                <a href="{{ route('calificacionesSecundario.gestionSolicitudesEvaluacion.index') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => request()->routeIs(
+                           'calificacionesSecundario.gestionSolicitudesEvaluacion.*'
+                       ),
+                   ])
+                   title="Listado, alta, edición y baja de evaluaciones programadas">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="truncate">Gestión de Solicitudes de Evaluación</span>
+                </a>
+                @endif
             </div>
 
         @if (tienePermiso(37))

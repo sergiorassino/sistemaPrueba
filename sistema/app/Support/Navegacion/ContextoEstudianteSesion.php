@@ -21,6 +21,8 @@ final class ContextoEstudianteSesion
 
     public const CIERRE_ANUAL_SECUNDARIO = 'cierre_anual_secundario';
 
+    public const SOLICITUD_EVALUACION = 'solicitud_evaluacion';
+
     public const LEGAJO_ABM = 'legajo_abm';
 
     private const SESSION_KEY = 'contexto_estudiante_navegacion';
@@ -129,12 +131,16 @@ final class ContextoEstudianteSesion
     private static function filtrarDatos(array $datos): array
     {
         $out = [];
-        foreach (['matricula', 'curso', 'idLegajos', 'materia', 'tipo', 'desde', 'hasta'] as $clave) {
+        if (array_key_exists('portal_docente', $datos)) {
+            $out['portal_docente'] = (int) $datos['portal_docente'] === 1 ? 1 : 0;
+        }
+
+        foreach (['matricula', 'curso', 'idLegajos', 'materia', 'tipo', 'desde', 'hasta', 'fecha'] as $clave) {
             if (! array_key_exists($clave, $datos)) {
                 continue;
             }
             $valor = $datos[$clave];
-            if ($clave === 'desde' || $clave === 'hasta') {
+            if ($clave === 'desde' || $clave === 'hasta' || $clave === 'fecha') {
                 $out[$clave] = is_scalar($valor) ? trim((string) $valor) : '';
 
                 continue;

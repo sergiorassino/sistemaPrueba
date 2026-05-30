@@ -72,6 +72,8 @@ final class PermisosIaCatalog
 
     public const MATRICULA_WEB_DOCUMENTOS = 44;
 
+    public const SOLICITUDES_EVALUACION_GESTION = 45;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -119,6 +121,7 @@ final class PermisosIaCatalog
             ['id' => 42, 'orden' => self::ASPIRANTES_CAMPOS, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Campos activos del formulario público de aspirantes.'],
             ['id' => 43, 'orden' => self::COM_AUDITORIA, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Auditoría de comunicación institucional: consultar borrados y marcas de lectura en bandejas.'],
             ['id' => 44, 'orden' => self::MATRICULA_WEB_DOCUMENTOS, 'tema' => 'MATRÍCULA WEB', 'descripcion' => 'Documentos de aceptación (PDF por nivel): compromiso educativo, AEC, normativas y traslado para el portal de estudiantes.'],
+            ['id' => 45, 'orden' => self::SOLICITUDES_EVALUACION_GESTION, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Gestión de solicitudes de evaluación: listado por fecha, alta, edición y baja de evaluaciones programadas (tabla evaluac).'],
         ];
     }
 

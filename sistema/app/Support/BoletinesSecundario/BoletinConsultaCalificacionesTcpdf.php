@@ -440,6 +440,15 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
         if ($adeudadas !== []) {
             $yPie = $this->dibujarMateriasPrevias($yPie, $adeudadas, $xPie, $wPie);
         }
+        if (! $this->mostrarFirmas) {
+            /** @var list<object{linea: string}> $proximasEvaluaciones */
+            $proximasEvaluaciones = is_array($consulta['proximas_evaluaciones'] ?? null)
+                ? $consulta['proximas_evaluaciones']
+                : [];
+            if ($proximasEvaluaciones !== []) {
+                $yPie = $this->dibujarProximasEvaluaciones($yPie, $proximasEvaluaciones, $xPie, $wPie);
+            }
+        }
         foreach ($tercerMateria as $tm) {
             $yPie = $this->dibujarTercerMateria($yPie, $tm, $xPie, $wPie);
         }
@@ -497,6 +506,27 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
         $this->Cell(self::PIE_FIRMA_W_LINEA, 3, 'Firma Padre / Madre / Tutor', 0, 0, 'C');
         $this->SetXY($xDirectivo, $yLineaBase + 2.5);
         $this->Cell(self::PIE_FIRMA_W_LINEA, 3, 'Firma Directivo', 0, 0, 'C');
+    }
+
+    /**
+     * @param  list<object{linea: string}>  $proximas
+     */
+    private function dibujarProximasEvaluaciones(float $y, array $proximas, float $x, float $w): float
+    {
+        $this->SetFont(self::FUENTE, 'B', 6.9);
+        $this->SetXY($x, $y);
+        $this->Cell(50, 3, 'PRÓXIMAS EVALUACIONES:', 0, 1, 'L');
+        $this->SetFont(self::FUENTE, '', 6.8);
+        foreach ($proximas as $ev) {
+            $linea = trim((string) ($ev->linea ?? ''));
+            if ($linea === '') {
+                continue;
+            }
+            $this->SetXY($x, $this->GetY());
+            $this->MultiCell($w, 3, $linea, 0, 'L');
+        }
+
+        return $this->GetY() + 1;
     }
 
     /**

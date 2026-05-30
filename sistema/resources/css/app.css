@@ -673,6 +673,36 @@
         border-color: var(--color-accent-200);
     }
 
+    /* Gestión solicitudes de evaluación — bloque unificado por día */
+    .se-gest-eval-dia {
+        overflow: hidden;
+        border-radius: 1rem;
+        border: 1px solid #86efac;
+        background-color: #dcfce7;
+        box-shadow: 0 1px 3px 0 rgb(22 101 52 / 0.12);
+    }
+    .se-gest-eval-dia__fecha {
+        border-bottom: 1px solid #86efac;
+        background-color: #dcfce7;
+        padding: 0.75rem 1.25rem;
+    }
+    .se-gest-eval-dia__tabla {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #dcfce7;
+    }
+    .se-gest-eval-dia__tabla thead th.table-header,
+    .se-gest-eval-dia__tabla tbody td.table-cell {
+        background-color: #dcfce7;
+        border-color: #86efac;
+    }
+    .se-gest-eval-dia__tabla tbody tr:hover td.table-cell {
+        background-color: #bbf7d0;
+    }
+    .se-gest-eval-dia__tabla tbody tr + tr td.table-cell {
+        border-top: 1px solid #86efac;
+    }
+
     /* Listado inasistencias docentes: caber en ~17" sin scroll horizontal */
     .se-inas-docentes-table {
         @apply w-full table-fixed border-collapse text-[11px];

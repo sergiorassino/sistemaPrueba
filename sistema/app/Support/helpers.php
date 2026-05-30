@@ -491,6 +491,17 @@ if (! function_exists('tenantPortalDocenteCuadernoSeguimientoAulico')) {
     }
 }
 
+if (! function_exists('tenantSolicitudEvaluacionHabilitada')) {
+    /**
+     * Si el colegio usa el módulo Solicitud de evaluación (tabla evaluac).
+     * Default false; activar en `config/tenants/{slug}.php` → `modulos.solicitud_evaluacion`.
+     */
+    function tenantSolicitudEvaluacionHabilitada(): bool
+    {
+        return (bool) config('tenant.modulos.solicitud_evaluacion', false);
+    }
+}
+
 if (! function_exists('tenantAutogestionActualizacionDatosHabilitada')) {
     /**
      * Si el portal familia incluye actualización de datos personales del legajo.

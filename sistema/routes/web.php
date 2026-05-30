@@ -130,6 +130,10 @@ use App\Livewire\MatriculaWeb\DocumentosAceptacionForm;
 use App\Http\Controllers\MatriculaWeb\DocumentoAceptacionArchivoController;
 use App\Support\PermisosMatriculaWeb;
 use App\Livewire\PortalDocente\CalificacionesIndex as PortalDocenteCalificacionesIndex;
+use App\Livewire\SolicitudEvaluacion\SolicitudEvaluacionForm;
+use App\Livewire\SolicitudEvaluacion\SolicitudEvaluacionIndex;
+use App\Livewire\SolicitudEvaluacion\Gestion\GestionSolicitudEvaluacionForm;
+use App\Livewire\SolicitudEvaluacion\Gestion\GestionSolicitudEvaluacionIndex;
 use App\Livewire\PortalDocente\CuadernoSeguimientoIndex as PortalDocenteCuadernoSeguimientoIndex;
 use App\Livewire\PortalDocente\RegistroSituacionAulicaIndex as PortalDocenteRegistroSituacionAulicaIndex;
 use App\Livewire\PortalDocente\SituacionAulicaAlumnoShow as PortalDocenteSituacionAulicaAlumnoShow;
@@ -271,6 +275,11 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
     Route::get('/cuaderno-seguimiento/{curso}/{materia}/alumno', PortalDocenteSituacionAulicaAlumnoShow::class)
         ->whereNumber(['curso', 'materia'])
         ->name('portalDocente.cuadernoSeguimiento.alumno');
+
+    Route::get('/solicitud-evaluacion', SolicitudEvaluacionIndex::class)
+        ->name('portalDocente.solicitudEvaluacion');
+    Route::get('/solicitud-evaluacion/nueva', SolicitudEvaluacionForm::class)
+        ->name('portalDocente.solicitudEvaluacion.create');
 
     Route::get('/comunicaciones', BandejaGestion::class)->middleware('permiso:3')->name('portalDocente.comunicaciones.index');
     Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:3', 'permiso:8'])->name('portalDocente.comunicaciones.revision');
@@ -500,6 +509,14 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
     Route::get('/calificaciones-secundario/cierre-anual/historial', CierreAnualHistorial::class)
         ->middleware('permiso:15')
         ->name('calificacionesSecundario.cierreAnual.historial');
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::SOLICITUDES_EVALUACION_GESTION)
+        ->prefix('calificaciones-secundario/gestion-solicitudes-evaluacion')
+        ->name('calificacionesSecundario.gestionSolicitudesEvaluacion.')
+        ->group(function () {
+            Route::get('/', GestionSolicitudEvaluacionIndex::class)->name('index');
+            Route::get('/nueva', GestionSolicitudEvaluacionForm::class)->name('create');
+            Route::get('/{id}/editar', GestionSolicitudEvaluacionForm::class)->whereNumber('id')->name('edit');
+        });
 
     // Libro matriz / pase / analítico
     Route::get('/matriz-analiticos/libro-matriz', LibroMatrizIndex::class)

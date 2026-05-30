@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Matricula;
 use App\Support\Examenes\TercerMateriaGestor;
+use App\Support\SolicitudEvaluacion\SolicitudEvaluacionConsulta;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -28,7 +29,8 @@ final class ConsultaCalificacionesAlumno
      *     rows: list<object>,
      *     materias_adeudadas: list<object{materia: string, curso: string, linea: string}>,
      *     tercer_materia: list<array{materia: string, curso: string, ano_lectivo: int|string, nombre_boletin: string, linea: string, tm1: string, tm2: string, tm3: string, tm4: string, tm5: string, tm6: string, tmNota: string}>,
-     *     items_boletin: list<object{etiqueta: string, fuente: string, total: float}>
+     *     items_boletin: list<object{etiqueta: string, fuente: string, total: float}>,
+     *     proximas_evaluaciones: list<object{fecha: string, materia: string, temas: string, obs: string, linea: string}>
      * }
      */
     public static function build(): array
@@ -95,6 +97,7 @@ final class ConsultaCalificacionesAlumno
                 'materias_adeudadas' => [],
                 'tercer_materia' => [],
                 'items_boletin' => [],
+                'proximas_evaluaciones' => [],
             ];
         }
 
@@ -128,6 +131,7 @@ final class ConsultaCalificacionesAlumno
             'materias_adeudadas' => [],
             'tercer_materia' => [],
             'items_boletin' => [],
+            'proximas_evaluaciones' => [],
         ];
     }
 
@@ -142,7 +146,8 @@ final class ConsultaCalificacionesAlumno
      *     rows: list<object>,
      *     materias_adeudadas: list<object{materia: string, curso: string, linea: string}>,
      *     tercer_materia: list<array{materia: string, curso: string, ano_lectivo: int|string, nombre_boletin: string, linea: string, tm1: string, tm2: string, tm3: string, tm4: string, tm5: string, tm6: string, tmNota: string}>,
-     *     items_boletin: list<object{etiqueta: string, fuente: string, total: float}>
+     *     items_boletin: list<object{etiqueta: string, fuente: string, total: float}>,
+     *     proximas_evaluaciones: list<object{fecha: string, materia: string, temas: string, obs: string, linea: string}>
      * }
      */
     private static function datasetDesdeMatricula(Matricula $matricula): array
@@ -186,6 +191,9 @@ final class ConsultaCalificacionesAlumno
         $idNivel = (int) $matricula->idNivel;
         $materiasAdeudadas = self::materiasAdeudadasCiclosAnteriores($idLegajo, $idTerlec, $idNivel);
         $tercerMateria = self::tercerMateriaParaLegajo($idLegajo, $idNivel, $idTerlec);
+        $proximasEvaluaciones = tenantSolicitudEvaluacionHabilitada()
+            ? SolicitudEvaluacionConsulta::proximasEvaluacionesParaCursoMatricula($idCurso, $idNivel, $idTerlec)
+            : [];
 
         return [
             'ok' => true,
@@ -198,6 +206,7 @@ final class ConsultaCalificacionesAlumno
             'materias_adeudadas' => $materiasAdeudadas,
             'tercer_materia' => $tercerMateria,
             'items_boletin' => self::itemsBoletinParaMatricula($idMat, $idTerlec),
+            'proximas_evaluaciones' => $proximasEvaluaciones,
         ];
     }
 

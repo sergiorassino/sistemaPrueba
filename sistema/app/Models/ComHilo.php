@@ -32,11 +32,6 @@ class ComHilo extends Model
         return $this->hasMany(ComMensaje::class, 'id_hilo')->orderBy('created_at');
     }
 
-    public function participantes()
-    {
-        return $this->hasMany(ComHiloParticipante::class, 'id_hilo');
-    }
-
     public function destinatarios()
     {
         return $this->hasMany(ComMensajeDestinatario::class, 'id_hilo');

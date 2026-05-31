@@ -52,25 +52,6 @@ return new class extends Migration
             });
         }
 
-        if (! Schema::hasTable('com_hilos_participantes')) {
-            Schema::create('com_hilos_participantes', function (Blueprint $table) {
-                $table->bigIncrements('id');
-                $table->unsignedBigInteger('id_hilo');
-                $table->enum('tipo', ['profesor', 'familia']);
-                $table->unsignedInteger('id_profesor')->nullable();
-                $table->unsignedInteger('id_legajo')->nullable();
-                $table->string('rol', 30)->nullable();
-                $table->enum('vinculo', ['madre', 'padre', 'tutor', 'resp_admin', 'otro'])->nullable();
-                $table->string('nombre_snapshot', 150)->nullable();
-                $table->string('dni_snapshot', 20)->nullable();
-                $table->timestamp('agregado_at')->useCurrent();
-
-                $table->foreign('id_hilo')->references('id')->on('com_hilos')->onDelete('cascade');
-                $table->index(['id_hilo', 'tipo', 'id_profesor']);
-                $table->index(['id_hilo', 'tipo', 'id_legajo']);
-            });
-        }
-
         if (! Schema::hasTable('com_mensajes')) {
             Schema::create('com_mensajes', function (Blueprint $table) {
                 $table->bigIncrements('id');
@@ -161,7 +142,6 @@ return new class extends Migration
         Schema::dropIfExists('com_mensajes_envios');
         Schema::dropIfExists('com_mensajes_destinatarios');
         Schema::dropIfExists('com_mensajes');
-        Schema::dropIfExists('com_hilos_participantes');
         Schema::dropIfExists('com_hilos');
         Schema::dropIfExists('com_canales');
     }

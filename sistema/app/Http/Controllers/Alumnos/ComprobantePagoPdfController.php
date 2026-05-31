@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\Alumnos\ArancelesEscolares;
 use App\Support\Alumnos\ComprobantePagoDatos;
 use App\Support\Alumnos\ComprobantePagoTcpdf;
+use App\Support\Security\OpaqueRouteToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -15,9 +16,21 @@ use Illuminate\Support\Str;
  */
 class ComprobantePagoPdfController extends Controller
 {
-    public function __invoke(Request $request, int $id)
+    public function __invoke(Request $request, string $ref)
     {
         abort_unless(tenantAutogestionArancelesEscolaresHabilitada(), 404);
+
+        $decoded = OpaqueRouteToken::decode($ref, OpaqueRouteToken::PURPOSE_COMPROBANTE_PAGO);
+        if ($decoded === null) {
+            abort(404);
+        }
+
+        $ctx = studentCtx();
+        if (! $ctx->isValid() || $decoded['legajo'] !== (int) $ctx->idLegajo) {
+            abort(404);
+        }
+
+        $id = $decoded['id'];
 
         $key = 'alumnos-comprobante-pago-pdf:'.(auth('alumno')->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 30)) {
@@ -45,12 +58,13 @@ class ComprobantePagoPdfController extends Controller
             ], 422);
         }
 
+        $nombreCuota = trim((string) ($datos['nombreCuota'] ?? $datos['cuota'] ?? ''));
         $slug = Str::slug(
-            'comprobante-pago-'.trim($datos['apellido'].'-'.$datos['nombre'].'-'.$id),
+            'comprobante-pago-'.trim(($datos['apellido'] ?? '').'-'.($datos['nombre'] ?? '').'-'.$nombreCuota),
             '_',
         );
         if ($slug === '') {
-            $slug = 'comprobante_pago_'.$id;
+            $slug = 'comprobante_pago';
         }
 
         $pdf = ComprobantePagoTcpdf::generar($datos);

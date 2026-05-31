@@ -87,6 +87,35 @@ Antes de considerar completo un módulo o PR:
 - [ ] ¿Se evitó cualquier operación destructiva o recreación masiva de BD sin backup y aprobación explícita?
 - [ ] Si hubo cambios de esquema o datos vía SQL o migraciones, ¿se ejecutaron solo bajo revisión humana (no automatizada por herramientas)?
 - [ ] ¿Quedó documentado al cierre el **SQL equivalente** (o comando Artisan explícito) para reproducir el cambio en BD, según §9.1?
+- [ ] ¿Las URLs visibles (rutas GET, PDF, descargas) **no** exponen IDs de BD, DNI, legajo ni otros identificadores enumerables (ver §10)?
+
+---
+
+## 10. URLs sin identificadores reveladores
+
+Las URLs que el usuario ve (barra de direcciones, historial, referrers, logs de proxy) **no deben** incluir:
+
+- IDs numéricos de tablas (`/recurso/44205`, `?id=123`).
+- DNI, número de legajo, CUIL u otros documentos.
+- Códigos internos predecibles o secuenciales.
+
+### Qué hacer en su lugar
+
+| Caso | Patrón |
+|------|--------|
+| Enlace GET a PDF/descarga con sesión (portal familia, docentes) | Parámetro de ruta **opaco** con `App\Support\Security\OpaqueRouteToken` (cifrado con `APP_KEY`). Ejemplo: comprobante de pago de aranceles. |
+| Formulario público sin sesión previa | Token aleatorio persistido en BD (ej. `AspirantesTokenService` en `aspiento.token`). |
+| Pantallas internas de ABM (secretaría) | Rutas con `{id}` solo tras `auth` + permisos; no usar ese patrón en autogestión ni enlaces que se comparten/abren en pestaña nueva. |
+
+### Implementación obligatoria
+
+1. **Generar** el token al armar el enlace (`OpaqueRouteToken::for…` o servicio equivalente), incluyendo el **alcance** (ej. `idLegajo` del contexto de sesión).
+2. **Decodificar** en el controlador y responder **404** si el token es inválido (no 403 detallado).
+3. **Revalidar** el registro con los mismos filtros que sin token (`cuotaPendienteParaAutogestion`, `schoolCtx`, permisos).
+4. **Nombre de archivo** de descarga sin IDs internos.
+5. Registrar un **propósito** distinto (`PURPOSE_*`) por cada tipo de enlace.
+
+Referencia de código: `app/Support/Security/OpaqueRouteToken.php`, `ComprobantePagoPdfController`, regla Cursor `urls-sin-identificadores.mdc`.
 
 ---
 

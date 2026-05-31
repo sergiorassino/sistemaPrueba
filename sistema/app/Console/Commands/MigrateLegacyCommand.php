@@ -96,8 +96,7 @@ class MigrateLegacyCommand extends Command
         $this->line('  Resumen de lo que se agregó a la BD legacy:');
         $this->line('    • Tablas SE nuevas : push_subscriptions');
         $this->line('    • Tablas módulo Listados   : solapas_legajo, campos_legajo');
-        $this->line('    • Tablas módulo Comunicaciones : com_canales, com_hilos,');
-        $this->line('                         com_hilos_participantes, com_mensajes,');
+        $this->line('    • Tablas módulo Comunicaciones : com_canales, com_hilos, com_mensajes,');
         $this->line('                         com_mensajes_destinatarios, com_mensajes_envios,');
         $this->line('                         com_preferencias');
         $this->line('    • Columnas nuevas  : calificaciones.tea, ento.logo_path,');

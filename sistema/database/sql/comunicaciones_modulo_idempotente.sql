@@ -100,23 +100,6 @@ CALL sp_add_column_if_missing('com_hilos', 'cursos_envio', 'json DEFAULT NULL AF
 CALL sp_add_column_if_missing('com_hilos', 'familia_puede_responder', 'tinyint(1) NOT NULL DEFAULT 1 AFTER `estado`');
 CALL sp_add_column_if_missing('com_hilos', 'docentes_permite_respuestas', 'tinyint(1) DEFAULT NULL AFTER `familia_puede_responder`');
 
-CREATE TABLE IF NOT EXISTS `com_hilos_participantes` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `id_hilo` bigint(20) unsigned NOT NULL,
-  `tipo` enum('profesor','familia') NOT NULL,
-  `id_profesor` int(10) unsigned DEFAULT NULL,
-  `id_legajo` int(10) unsigned DEFAULT NULL,
-  `rol` varchar(30) DEFAULT NULL,
-  `vinculo` enum('madre','padre','tutor','resp_admin','otro') DEFAULT NULL,
-  `nombre_snapshot` varchar(150) DEFAULT NULL,
-  `dni_snapshot` varchar(20) DEFAULT NULL,
-  `agregado_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `com_hilos_participantes_id_hilo_tipo_id_profesor_index` (`id_hilo`,`tipo`,`id_profesor`),
-  KEY `com_hilos_participantes_id_hilo_tipo_id_legajo_index` (`id_hilo`,`tipo`,`id_legajo`),
-  CONSTRAINT `com_hilos_participantes_id_hilo_foreign` FOREIGN KEY (`id_hilo`) REFERENCES `com_hilos` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 CREATE TABLE IF NOT EXISTS `com_mensajes` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id_hilo` bigint(20) unsigned NOT NULL,

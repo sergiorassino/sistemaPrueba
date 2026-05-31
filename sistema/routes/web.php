@@ -17,6 +17,7 @@ use App\Http\Controllers\CalificacionesSecundario\PlanillaCalificacionesPdfContr
 use App\Http\Controllers\PortalDocente\PortalDocentePlanillaCalificacionesPdfController;
 use App\Http\Controllers\CalificacionesSecundario\ActaVolanteColoquiosPdfController;
 use App\Http\Controllers\CalificacionesSecundario\PlanillaResumenCalificacionesPdfController;
+use App\Http\Controllers\EstudiantesDatosExcelController;
 use App\Http\Controllers\EstudiantesExcelController;
 use App\Http\Controllers\InformeInasistenciasPdfController;
 use App\Http\Controllers\InformeInasistenciasLotePdfController;
@@ -52,6 +53,7 @@ use App\Livewire\Parametrizacion\CamposAspirantesIndex;
 use App\Livewire\Abm\Curplan\CurplanIndex;
 use App\Livewire\Abm\Cursos\CursosIndex;
 use App\Livewire\Abm\CursosPorProfesor\CursosPorProfesorIndex;
+use App\Livewire\Abm\Legajos\LegajoCargaPorCurso;
 use App\Livewire\Abm\Legajos\LegajoForm;
 use App\Livewire\Abm\Legajos\LegajosIndex;
 use App\Livewire\Abm\LegajosProfesor\LegajoProfesorForm;
@@ -120,6 +122,7 @@ use App\Livewire\Comunicaciones\ComAuditoriaIndex;
 use App\Livewire\Comunicaciones\HiloShow;
 use App\Livewire\Comunicaciones\InformeEnvioComunicado;
 use App\Livewire\Comunicaciones\NuevoComunicado;
+use App\Livewire\Listados\EstudiantesDatosExport;
 use App\Livewire\Listados\LibroMatricula;
 use App\Livewire\Listados\ListadoPorCurso;
 use App\Livewire\Parametrizacion\CamposLegajoIndex;
@@ -155,8 +158,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionalIconController;
 use App\Http\Controllers\ManualComunicacionInstitucionalPdfController;
 use App\Http\Controllers\ManualSistemaPdfController;
-use App\Support\SchoolContext;
-use App\Support\StudentContext;
+use App\Support\Auth\CerrarSesionAplicacion;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -172,32 +174,22 @@ Route::middleware('throttle:120,1')->group(function () {
         ->name('aspirantes.publico.registro');
 });
 
-// Guest routes
-Route::middleware('guest')->group(function () {
-    Route::get('/loginUsuario', Login::class)->middleware('no-store')->name('login');
-});
-
-// Guest routes (alumnos)
-Route::middleware('guest:alumno')->group(function () {
-    Route::get('/loginEstudiante', AlumnosLogin::class)->middleware('no-store')->name('alumnos.login');
+// Login: siempre limpia sesión previa (equipos compartidos; no usar middleware `guest`).
+Route::middleware(['login.limpiar-sesion', 'no-store'])->group(function () {
+    Route::get('/loginUsuario', Login::class)->name('login');
+    Route::get('/loginEstudiante', AlumnosLogin::class)->name('alumnos.login');
 });
 
 // Logout
 Route::post('/logout', function () {
-    SchoolContext::clear();
-    Auth::logout();
-    request()->session()->invalidate();
-    request()->session()->regenerateToken();
+    CerrarSesionAplicacion::ejecutar();
 
     return redirect()->route('login');
 })->middleware('auth')->name('logout');
 
 // Logout alumnos
 Route::post('/alumnos/logout', function () {
-    StudentContext::clear();
-    Auth::guard('alumno')->logout();
-    request()->session()->invalidate();
-    request()->session()->regenerateToken();
+    CerrarSesionAplicacion::ejecutar();
 
     return redirect()->route('alumnos.login');
 })->middleware('auth:alumno')->name('alumnos.logout');
@@ -213,8 +205,8 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/horario-clase', HorarioClasePdfController::class)->name('alumnos.horario-clase');
     Route::get('/ficha-matricula', FichaMatriculaPdfController::class)->name('alumnos.ficha-matricula');
     Route::get('/aranceles-escolares', ArancelesEscolaresIndex::class)->name('alumnos.aranceles-escolares');
-    Route::get('/aranceles-escolares/comprobante/{id}', ComprobantePagoPdfController::class)
-        ->whereNumber('id')
+    Route::get('/aranceles-escolares/comprobante/{ref}', ComprobantePagoPdfController::class)
+        ->where('ref', '[A-Za-z0-9_-]+')
         ->name('alumnos.aranceles-escolares.comprobante');
     Route::get('/aranceles-escolares/formulario-debito-automatico', FormularioDebitoAutomaticoPdfController::class)
         ->name('alumnos.aranceles-escolares.formulario-debito-automatico');
@@ -393,6 +385,7 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
         ->middleware('permiso:5')
         ->name('param.com-canales');
     Route::get('/abm/legajos', LegajosIndex::class)->name('abm.legajos');
+    Route::get('/abm/legajos/carga-por-curso', LegajoCargaPorCurso::class)->middleware('permiso:2')->name('abm.legajos.carga-por-curso');
     Route::get('/abm/legajos/nuevo', LegajoForm::class)->middleware('permiso:2')->name('abm.legajos.create');
     Route::get('/abm/legajos/editar', LegajoForm::class)->name('abm.legajos.edit');
 
@@ -422,6 +415,10 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
     Route::get('/listados/libro-matricula', LibroMatricula::class)->name('listados.libro-matricula');
     Route::get('/listados/libro-matricula/pdf', LibroMatriculaPdfController::class)
         ->name('listados.libro-matricula.pdf');
+    Route::get('/listados/estudiantes-datos', EstudiantesDatosExport::class)
+        ->name('listados.estudiantes-datos');
+    Route::get('/listados/estudiantes-datos/excel', EstudiantesDatosExcelController::class)
+        ->name('listados.estudiantes-datos.excel');
 
     Route::middleware('permiso:12')->group(function () {
         Route::get('/examenes/materias-adeudadas/entrar', [MateriasAdeudadasEntradaController::class, 'listado'])

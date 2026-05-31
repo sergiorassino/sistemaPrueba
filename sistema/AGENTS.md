@@ -51,6 +51,10 @@ Todo desplegable de ciclo lectivo: **orden decreciente** (año más reciente pri
 
 Usar siempre: **Menú de Secretaría** (`layouts/app`), **Menú de Alumnos** (`layouts/alumno`), **Menú de Docentes** (`layouts/docente`). No llamar “staff” ni mezclar con el grupo sidebar “DOCENTES” de secretaría. Detalle: `docs/08-menus-de-navegacion.md`.
 
+## URLs sin IDs reveladores
+
+En autogestión, PDFs y descargas por GET: **no** poner IDs de BD, DNI ni legajo en la URL. Usar `App\Support\Security\OpaqueRouteToken` o token en BD (aspirantes). Detalle: `docs/06-reglas-de-seguridad.md` §10 y `.cursor/rules/urls-sin-identificadores.mdc`.
+
 ## Resto del baseline
 
 Seguridad, permisos, `schoolCtx`, Blade, etc.: `docs/06-reglas-de-seguridad.md` y las reglas en `.cursor/rules/` (por ejemplo `seguridad-php-mysql-laravel.mdc`, `preferencias-del-proyecto.mdc`).

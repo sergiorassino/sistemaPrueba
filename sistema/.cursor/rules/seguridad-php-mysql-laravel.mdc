@@ -26,6 +26,7 @@ Estas reglas aplican a **todo módulo nuevo** y a cambios en módulos existentes
 8. ¿Sin `DB::raw()` con input de usuario?
 9. ¿Rate-limit en acciones sensibles?
 10. ¿Permisos verificados (cadena `0/1` de `profesores.permisos`)?
+11. ¿URLs de PDF/descarga/autogestión sin IDs ni documentos en la ruta (§10 de `docs/06-reglas-de-seguridad.md`, `OpaqueRouteToken`)?
 
 ## Contraseñas — modo híbrido
 

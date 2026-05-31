@@ -9,7 +9,6 @@ use App\Support\ProfesorMenuPortal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\ComHilo;
-use App\Models\ComHiloParticipante;
 use App\Models\ComMensaje;
 use App\Models\ComMensajeDestinatario;
 use App\Models\ComPreferencia;
@@ -1560,8 +1559,8 @@ class ComunicacionesRepository
     }
 
     /**
-     * Para una respuesta, los destinatarios son los participantes del hilo
-     * del tipo opuesto al remitente.
+     * Para una respuesta, los destinatarios son los remitentes previos del hilo
+     * del tipo opuesto al que responde.
      */
     private static function crearDestinatariosRespuesta(
         ComHilo $hilo,
@@ -1579,29 +1578,17 @@ class ComunicacionesRepository
 
         $tipoDestino = $tipoRemitente === 'profesor' ? 'familia' : 'profesor';
 
-        $participantes = ComHiloParticipante::query()
+        $idsEnHilo = ComMensaje::query()
             ->where('id_hilo', $hilo->id)
-            ->where('tipo', $tipoDestino)
-            ->get();
+            ->where('tipo_remitente', $tipoDestino)
+            ->when($tipoDestino === 'profesor', fn ($q) => $q->whereNotNull('id_profesor'))
+            ->when($tipoDestino === 'familia', fn ($q) => $q->whereNotNull('id_legajo'))
+            ->distinct()
+            ->get($tipoDestino === 'profesor' ? ['id_profesor'] : ['id_legajo']);
 
-        if ($participantes->isEmpty()) {
-            $idsEnHilo = ComMensaje::query()
-                ->where('id_hilo', $hilo->id)
-                ->where('tipo_remitente', $tipoDestino)
-                ->when($tipoDestino === 'profesor', fn ($q) => $q->whereNotNull('id_profesor'))
-                ->when($tipoDestino === 'familia', fn ($q) => $q->whereNotNull('id_legajo'))
-                ->distinct()
-                ->get($tipoDestino === 'profesor' ? ['id_profesor'] : ['id_legajo']);
-
-            foreach ($idsEnHilo as $row) {
-                $id = $tipoDestino === 'profesor' ? $row->id_profesor : $row->id_legajo;
-                static::insertarDestinatario($mensaje, (int) $hilo->id, $tipoDestino, (int) $id);
-            }
-        } else {
-            foreach ($participantes as $p) {
-                $id = $tipoDestino === 'profesor' ? (int) $p->id_profesor : (int) $p->id_legajo;
-                static::insertarDestinatario($mensaje, (int) $hilo->id, $tipoDestino, $id);
-            }
+        foreach ($idsEnHilo as $row) {
+            $id = $tipoDestino === 'profesor' ? $row->id_profesor : $row->id_legajo;
+            static::insertarDestinatario($mensaje, (int) $hilo->id, $tipoDestino, (int) $id);
         }
     }
 

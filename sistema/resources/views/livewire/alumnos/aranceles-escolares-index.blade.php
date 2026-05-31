@@ -102,7 +102,7 @@
                                             Reimprimir
                                         </button>
                                     @else
-                                        <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante', ['id' => $c->id]) }}"
+                                        <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante', ['ref' => \App\Support\Security\OpaqueRouteToken::forComprobantePagoCuota((int) $c->id, (int) studentCtx()->idLegajo)]) }}"
                                            target="_blank"
                                            rel="noopener noreferrer"
                                            class="inline-flex items-center justify-center rounded-xl border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 shadow-sm transition hover:border-primary-500 hover:bg-accent-50"

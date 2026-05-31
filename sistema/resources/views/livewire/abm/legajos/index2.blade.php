@@ -22,6 +22,17 @@
             </div>
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                @if (tienePermiso(2))
+                    <a href="{{ route('abm.legajos.carga-por-curso') }}"
+                       title="Permite cargar uno o más datos del legajo, por curso, sin tener que entrar legajo por legajo"
+                       class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 6h16M4 10h16M4 14h10M4 18h6"/>
+                        </svg>
+                        Carga por curso
+                    </a>
+                @endif
                 <span class="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white/85">
                     <span class="block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50">Registros</span>
                     <span class="text-xl font-bold tabular-nums">{{ $legajos->total() }}</span>

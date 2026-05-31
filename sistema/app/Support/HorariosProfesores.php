@@ -1603,7 +1603,7 @@ TXT;
         if (preg_match('/\b(tt|t\.?\s*t\.?)\b/u', $t)) {
             return (int) ($catalogo->firstWhere('codigo', 'tarde')->id ?? $fallback);
         }
-        if (preg_match('/\b(tm|t\.?\s*m\.?|t/m)\b/u', $t)) {
+        if (preg_match('/\b(tm|t\.?\s*m\.?|t\/m)\b/u', $t)) {
             return (int) ($catalogo->firstWhere('codigo', 'manana')->id ?? $fallback);
         }
 

@@ -41,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'school.context' => EnsureSchoolContext::class,
             'student.context' => EnsureStudentContext::class,
+            'login.limpiar-sesion' => \App\Http\Middleware\LimpiarSesionEnPaginaLogin::class,
             'no-store'       => NoStoreResponse::class,
             'permiso'        => \App\Http\Middleware\CheckPermiso::class,
             'permiso-config' => \App\Http\Middleware\CheckPermisoConfiguracion::class,

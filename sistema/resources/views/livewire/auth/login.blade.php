@@ -17,8 +17,7 @@
 
         <form wire:submit.prevent="login"
               class="mt-6 space-y-4"
-              autocomplete="on"
-              x-on:submit.prevent>
+              autocomplete="on">
             {{-- DNI: sin name= para que un envío HTML accidental no lleve datos en la URL --}}
             <div>
                 <label class="se-auth-label" for="dni">DNI (usuario)</label>
@@ -100,7 +99,8 @@
                 <button type="submit"
                         class="se-auth-btn"
                         wire:loading.attr="disabled"
-                        wire:target="login">
+                        wire:target="login"
+                        disabled>
                     <span wire:loading.remove wire:target="login">Ingresar al sistema</span>
                     <span wire:loading wire:target="login" class="flex items-center justify-center gap-2">
                         <svg class="animate-spin h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -112,6 +112,8 @@
                 </button>
             </div>
         </form>
+
+        @include('layouts.partials.login-autofill-sync')
     </div>
 
     @if ($mensajeBloqueoDocenteTerlec)

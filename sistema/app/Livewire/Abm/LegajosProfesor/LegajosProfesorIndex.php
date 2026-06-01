@@ -61,7 +61,7 @@ class LegajosProfesorIndex extends Component
     protected function scopedProfesorOrFail(int $id): Profesor
     {
         return Profesor::query()
-            ->delNivel((int) schoolCtx()->idNivel)
+            ->delNivel(\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico())
             ->whereKey($id)
             ->firstOrFail();
     }
@@ -152,7 +152,7 @@ class LegajosProfesorIndex extends Component
 
     public function render()
     {
-        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
+        $idNivel = (int) (\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico() ?? 0);
 
         $query = Profesor::query()
             ->with('tipo')

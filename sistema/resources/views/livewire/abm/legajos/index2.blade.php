@@ -30,7 +30,7 @@
                     </svg>
                     Buscar familias
                 </a>
-                @if (tienePermiso(2))
+                @if (puedeModificarLegajosEstudiantes())
                     <a href="{{ route('abm.legajos.carga-por-curso') }}"
                        title="Permite cargar uno o más datos del legajo, por curso, sin tener que entrar legajo por legajo"
                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
@@ -45,7 +45,7 @@
                     <span class="block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50">Registros</span>
                     <span class="text-xl font-bold tabular-nums">{{ $legajos->total() }}</span>
                 </span>
-                @if (tienePermiso(2))
+                @if (puedeModificarLegajosEstudiantes())
                     <a href="{{ route('abm.legajos.create') }}"
                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 focus:outline-none focus:ring-2 focus:ring-white/60">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,14 +127,8 @@
                                     <div class="flex max-w-xs flex-col gap-0.5">
                                         @foreach ($l->matriculas as $mat)
                                             @php
-                                                $nivelNombre = mb_strtolower(trim((string) ($mat->nivel?->nivel ?? '')));
                                                 $esCicloActivo = (int) ($mat->idTerlec ?? 0) === (int) schoolCtx()->idTerlec;
-                                                $nivelClase = match (true) {
-                                                    str_contains($nivelNombre, 'inicial') => 'se-mat-nivel-inicial',
-                                                    str_contains($nivelNombre, 'primar') => 'se-mat-nivel-primario',
-                                                    str_contains($nivelNombre, 'secund') => 'se-mat-nivel-secundario',
-                                                    default => 'se-mat-nivel-default',
-                                                };
+                                                $nivelClase = \App\Support\MatriculaNivelEstilo::claseChipPorNombreNivel($mat->nivel?->nivel);
                                             @endphp
                                             <div @class([
                                                 'se-mat-nivel-chip',
@@ -164,7 +158,7 @@
                                 @endif
                             </td>
                             <td class="table-cell align-top">
-                                @if (tienePermiso(2))
+                                @if (puedeModificarLegajosEstudiantes())
                                     <x-nav-contexto-estudiante
                                         destino="abm.legajos.edit"
                                         :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::LEGAJO_ABM"
@@ -177,7 +171,7 @@
                             </td>
                             <td class="table-cell text-right">
                                 <div class="flex flex-col items-stretch justify-end gap-2 sm:flex-row sm:items-center">
-                                    @if (tienePermiso(2))
+                                    @if (puedeModificarLegajosEstudiantes())
                                         <x-nav-contexto-estudiante
                                             destino="abm.legajos.edit"
                                             :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::LEGAJO_ABM"

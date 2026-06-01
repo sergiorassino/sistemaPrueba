@@ -175,7 +175,7 @@
                                     <td class="table-cell">
                                         @if (($i->just ?? '') === 'J')
                                             <span class="se-pill bg-primary-50 text-primary-800">Sí</span>
-                                        @elseif (($i->just ?? '') === 'N')
+                                        @elseif (strtoupper(trim((string) ($i->just ?? ''))) === 'I')
                                             <span class="se-pill bg-neutral-100 text-neutral-700">No</span>
                                         @else
                                             —

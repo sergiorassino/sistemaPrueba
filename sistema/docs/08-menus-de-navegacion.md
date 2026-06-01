@@ -111,9 +111,40 @@ En código y PRs, preferir comentarios del tipo:
 
 ---
 
+## 4. Perfil Administración (`niveles.id = 5`)
+
+Usuario distinto en tabla `profesores` (`profesores.nivel = 5`) respecto de Inicial, Primario o Secundario. Mismo Menú de Secretaría (`layouts/app.blade.php`) con reglas de perfil.
+
+| Bloque visible (según permisos) | Oculto en este perfil |
+|--------------------------------|------------------------|
+| Estudiantes | Calificaciones, asistencia, exámenes, certificados, horarios, aspirantes, matrícula web, viajes/salidas |
+| **Gestión de cuotas** (solo nivel 5) | |
+| Comunicación institucional | |
+| Docentes | |
+| Configuración (incl. Permisos del sistema) | |
+
+**Legajos:** consulta y listados para **todos** los usuarios del menú. En sesión Administración se ven alumnos de **Inicial, Primario y Secundario** del ciclo activo (sin selector de nivel en el sidebar).
+
+| Sesión | Modificar legajos / matrículas |
+|--------|------------------------------|
+| Niveles 1–4 | Permiso orden **2** (solo ese nivel) |
+| Administración (5) | Permiso orden **47** — cualquier alumno de cualquier nivel pedagógico; el nivel de la matrícula se toma del curso elegido |
+
+En cada colegio se activa o no el orden **47** en el usuario de Administración según si ese tenant permite que administración modifique legajos. Sin el 47: solo consulta (todos los niveles).
+
+**Gestión de cuotas:** acceso automático al entrar con nivel **Administración** (no requiere `permiso_ia` adicional).
+
+**Viajes / salidas educativas (Excel):** solo en el **Menú de Secretaría** (`layouts/app`) para usuarios con portal secretaría en nivel pedagógico (Inicial, Primario o Secundario). No en Administración, Menú de Docentes ni Menú de Alumnos (`MenuSecretariaPerfil::muestraViajesSalidasEducativas()` + rutas `menu.portal:secretaria`).
+
+Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogico`, `App\Support\Navegacion\MenuSecretariaPerfil`.
+
+---
+
 ## Historial
 
 - **2026-05-22:** Definición de los tres nombres oficiales; scaffold del menú de Docentes (`layouts/docente.blade.php`, `portalDocente.home`).
 - **2026-05-22:** Redirección post-login y separación de rutas por `IdTipoProf` (6 → Docentes; demás → Secretaría).
 - **2026-05-23:** Menú de Docentes: sección Comunicación institucional (`portalDocente.comunicaciones.*`, mismos componentes que secretaría).
 - **2026-05-26:** "Autogestión Docente" en el Menú de Secretaría (antes del Manual) para usuarios con rol mixto (Preceptor + Profesor): override de sesión `school.menu_portal_override` y cambio de identidad si hay legajo paralelo con PPC. Logout para volver a Secretaría.
+- **2026-06-01:** Perfil Administración (nivel 5): menú acotado, selector de nivel de trabajo, bloque Gestión de cuotas (acceso por nivel, sin permiso_ia); consulta de legajos para todos, edición con orden 2.
+- **2026-06-01:** Viajes / salidas educativas: solo Menú de Secretaría en niveles 1–4; no Administración, Docentes ni Alumnos.

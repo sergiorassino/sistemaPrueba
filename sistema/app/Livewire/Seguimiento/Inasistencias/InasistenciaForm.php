@@ -49,7 +49,7 @@ class InasistenciaForm extends Component
             $this->fecha = $i->fecha ? $i->fecha->format('Y-m-d') : '';
             $this->cantidad = $i->cantidad !== null ? (string) $i->cantidad : '';
             $justRaw = strtoupper(trim((string) ($i->just ?? '')));
-            $this->just = in_array($justRaw, ['J', 'N'], true) ? $justRaw : 'N';
+            $this->just = $justRaw === 'J' ? 'J' : 'I';
             $this->obs = trim((string) ($i->obs ?? ''));
 
             return;
@@ -59,7 +59,7 @@ class InasistenciaForm extends Component
         abort_if($id === null, 404);
         $this->idMatricula = (string) $id;
         $this->fecha = now()->format('Y-m-d');
-        $this->just = 'N';
+        $this->just = 'I';
     }
 
     public function updatedTipo(mixed $value): void
@@ -82,7 +82,7 @@ class InasistenciaForm extends Component
             'tipo' => ['required', 'integer', 'min:1'],
             'fecha' => ['required', 'date'],
             'cantidad' => ['nullable', 'numeric', 'min:0', 'max:99.99'],
-            'just' => ['required', 'string', 'in:J,N'],
+            'just' => ['required', 'string', 'in:J,I'],
             'obs' => ['nullable', 'string', 'max:100'],
         ];
     }
@@ -162,6 +162,7 @@ class InasistenciaForm extends Component
             $i->update($payload);
             session()->flash('success', 'Inasistencia actualizada.');
         } else {
+            $payload['just'] = 'I';
             Inasistencia::create($payload);
             session()->flash('success', 'Inasistencia registrada.');
         }

@@ -11,7 +11,7 @@ class LegajoCargaPorCurso extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(2), 403, 'Sin permiso para modificar legajos de estudiantes.');
+        abort_unless(puedeModificarLegajosEstudiantes(), 403, 'Sin permiso para modificar legajos de estudiantes.');
         $this->refrescarCargaPorCursoCursosOpciones();
     }
 

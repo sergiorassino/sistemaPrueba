@@ -68,6 +68,50 @@ if (! function_exists('profesorEsSecretario')) {
     }
 }
 
+if (! function_exists('schoolEsAdministracion')) {
+    function schoolEsAdministracion(): bool
+    {
+        return schoolCtx()->esAdministracion();
+    }
+}
+
+if (! function_exists('schoolIdNivelPedagogico')) {
+    /**
+     * Nivel único de filtro (login 1–4). En Administración devuelve 0: usar
+     * {@see \App\Support\SchoolAlcancePedagogico::aplicarFiltroColumnaNivel()}.
+     */
+    function schoolIdNivelPedagogico(): int
+    {
+        return (int) (\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico() ?? 0);
+    }
+}
+
+if (! function_exists('puedeModificarLegajosEstudiantes')) {
+    /**
+     * Niveles pedagógicos (1–4): permiso orden 2.
+     * Nivel Administración (5): permiso orden 47 (cualquier nivel pedagógico) u orden 2.
+     */
+    function puedeModificarLegajosEstudiantes(): bool
+    {
+        if (schoolEsAdministracion()) {
+            return tienePermiso(\App\Support\PermisosIaCatalog::LEGAJOS_MODIFICAR_ADMIN);
+        }
+
+        return tienePermiso(\App\Support\PermisosIaCatalog::LEGAJOS_ESTUDIANTES);
+    }
+}
+
+if (! function_exists('puedeConsultarLegajosEstudiantes')) {
+    /**
+     * Consulta de legajos y listados: todos los usuarios del Menú de Secretaría.
+     * La edición/alta/baja queda en {@see puedeModificarLegajosEstudiantes()} (permiso orden 2).
+     */
+    function puedeConsultarLegajosEstudiantes(): bool
+    {
+        return true;
+    }
+}
+
 if (! function_exists('tienePermiso')) {
     /**
      * Permiso concedido en profesores.permisos_ia (cadena 0/1 por orden del catálogo permisos_ia).

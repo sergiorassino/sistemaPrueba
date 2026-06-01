@@ -20,7 +20,7 @@ final class ComprobantePagoCalculo
     /**
      * @return array<string, mixed>|null
      */
-    public static function paraCuotaGenerada(CuotaGenerada $registro): ?array
+    public static function paraCuotaGenerada(CuotaGenerada $registro, ?array $pdfHeader = null): ?array
     {
         $legajo = $registro->legajo;
         $curso = $registro->curso;
@@ -206,7 +206,7 @@ final class ComprobantePagoCalculo
             'barra' => $barra,
             'cadenaQr' => $cadenaQr,
             'fechaImpresion' => Carbon::now()->format('d-m-y h:i'),
-            'pdfHeader' => studentPdfHeaderData(),
+            'pdfHeader' => $pdfHeader ?? studentPdfHeaderData(),
         ];
     }
 

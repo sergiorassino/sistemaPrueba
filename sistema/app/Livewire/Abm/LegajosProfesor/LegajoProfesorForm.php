@@ -104,7 +104,7 @@ class LegajoProfesorForm extends Component
 
     protected function rules(): array
     {
-        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
+        $idNivel = (int) (\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico() ?? 0);
         $dniUnique = Rule::unique('profesores', 'dni')
             ->where(fn ($q) => $q->where('nivel', $idNivel));
         if ($this->id) {
@@ -176,7 +176,7 @@ class LegajoProfesorForm extends Component
             $allData = array_filter($allData, fn ($col) => isset($set[$col]), ARRAY_FILTER_USE_KEY);
         }
 
-        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
+        $idNivel = (int) (\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico() ?? 0);
         if ($idNivel < 1) {
             session()->flash('warning', 'No hay nivel activo en el contexto. Seleccione nivel en el login.');
 
@@ -214,7 +214,7 @@ class LegajoProfesorForm extends Component
     protected function scopedProfesorOrFail(int $id): Profesor
     {
         return Profesor::query()
-            ->delNivel((int) schoolCtx()->idNivel)
+            ->delNivel(\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico())
             ->whereKey($id)
             ->firstOrFail();
     }
@@ -351,7 +351,7 @@ class LegajoProfesorForm extends Component
 
     private function pageForProfesor(int $id, int $perPage): int
     {
-        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
+        $idNivel = (int) (\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico() ?? 0);
         $p = Profesor::query()->delNivel($idNivel)->find($id);
         if (! $p) {
             return 1;

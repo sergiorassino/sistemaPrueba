@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\Listados\EstudiantesDatosConsulta;
 use App\Support\Listados\EstudiantesDatosExporter;
-use App\Support\ProfesorMenuPortal;
+use App\Support\Navegacion\MenuSecretariaPerfil;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\RateLimiter;
@@ -15,7 +15,7 @@ class EstudiantesDatosExcelController extends Controller
 {
     public function __invoke(Request $request, EstudiantesDatosExporter $exporter): StreamedResponse
     {
-        abort_unless(ProfesorMenuPortal::esSecretario(), 403, 'Solo personal con rol Secretario/a puede acceder a viajes y salidas educativas.');
+        MenuSecretariaPerfil::abortSiNoViajesSalidasEducativas();
 
         $key = 'estudiantes-datos-csv:'.(auth()->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 10)) {

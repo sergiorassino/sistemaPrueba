@@ -5,6 +5,7 @@ namespace App\Livewire\Listados;
 use App\Models\CampoLegajo;
 use App\Models\Curso;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
+use App\Support\SchoolAlcancePedagogico;
 use App\Support\Listados\ListadoCursoPdfFieldCatalog;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
@@ -215,11 +216,12 @@ class ListadoPorCurso extends Component
     /** @return Builder<Curso> */
     protected function queryCursos(): Builder
     {
-        return Curso::query()
+        $query = Curso::query()
             ->with('curplan')
-            ->where('idNivel', schoolCtx()->idNivel)
-            ->where('idTerlec', schoolCtx()->idTerlec)
-            ->orderBy('orden')
-            ->orderBy('cursec');
+            ->where('idTerlec', schoolCtx()->idTerlec);
+
+        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'idNivel');
+
+        return $query->orderBy('orden')->orderBy('cursec');
     }
 }

@@ -45,6 +45,7 @@
         horarios: {{ str_starts_with($route ?? '', 'horarios.') ? 'true' : 'false' }},
         aspirantes: {{ str_starts_with($route ?? '', 'aspirantes.') ? 'true' : 'false' }},
         matriculaWeb: {{ str_starts_with($route ?? '', 'matricula-web.') ? 'true' : 'false' }},
+        gestionCuotas: {{ str_starts_with($route ?? '', 'cuotas.') ? 'true' : 'false' }},
         comunicaciones: false,
     },
     isDesktopPeekLayout() {
@@ -230,6 +231,7 @@
          @mousedown.capture="onSidebarNavLinkActivate($event)"
          @click.capture="onSidebarNavLinkActivate($event)">
 
+        @if (\App\Support\Navegacion\MenuSecretariaPerfil::muestraGrupoEstudiantes())
         {{-- Estudiantes --}}
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
@@ -302,9 +304,47 @@
                 </a>
 
             </div>
+        @endif
 
-        {{-- Menú de Secretaría: grupo Viajes / Salidas educativas (solo Secretario/a) --}}
-        @if (profesorEsSecretario())
+        @if (\App\Support\Navegacion\MenuSecretariaPerfil::muestraGestionCuotas())
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
+                    :class="(groups.gestionCuotas && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('gestionCuotas')"
+                    title="Gestión de aranceles">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Gestión de aranceles</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.gestionCuotas ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.gestionCuotas && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                <a href="{{ route('cuotas.index') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'cuotas.'),
+                   ])
+                   title="Buscar estudiante y gestionar cuotas">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="truncate">Aranceles por estudiante</span>
+                </a>
+            </div>
+        @endif
+
+        @if (\App\Support\Navegacion\MenuSecretariaPerfil::muestraViajesSalidasEducativas())
+        {{-- Viajes / Salidas educativas: Menú de Secretaría, niveles 1–4 (no Administración) --}}
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
@@ -465,6 +505,7 @@
             </div>
         @endif
 
+        @unless (\App\Support\Navegacion\MenuSecretariaPerfil::ocultarGruposPedagogicos())
         {{-- Calificaciones Secundario --}}
             <div class="mt-4"></div>
             <button type="button"
@@ -628,7 +669,7 @@
             </div>
 
         @if (tienePermiso(37))
-        {{-- Seguimiento disciplinario --}}
+        {{-- Seguimiento disciplinario (solo niveles pedagógicos) --}}
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
@@ -758,6 +799,7 @@
                     <span class="truncate">Informe de Inasistencias</span>
                 </a>
             </div>
+        @endunless
 
         {{-- Menú de Secretaría: grupo DOCENTES (ABM desde secretaría; no es el Menú de Docentes) --}}
         @if (tienePermiso(11) || tienePermiso(23))
@@ -766,14 +808,14 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.docentes && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('docentes')"
-                    title="Docentes v1.0">
+                    title="Docentes / Usuarios v1.0">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 14l9-5-9-5-9 5 9 5z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 14l9-5v8a2 2 0 01-9 5v0a2 2 0 01-9-5V9l9 5"/>
                 </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">DOCENTES</span>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">DOCENTES / USUARIOS</span>
                 <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
                      :class="groups.docentes ? 'rotate-180' : ''"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -845,6 +887,7 @@
             </div>
         @endif
 
+        @unless (\App\Support\Navegacion\MenuSecretariaPerfil::ocultarGruposPedagogicos())
         @if (tienePermiso(12))
         {{-- Exámenes --}}
             <div class="mt-4"></div>
@@ -1265,6 +1308,7 @@
                 @endif
             </div>
         @endif
+        @endunless
 
         {{-- Configuración --}}
         @if (tieneAlgunPermisoConfiguracion())
@@ -1599,21 +1643,6 @@
                 </form>
             </div>
         @endif
-
-        {{-- Manual del sistema (todos los usuarios de gestión) --}}
-        <div class="mt-4 pt-3 border-t se-sidebar-sep">
-            <a href="{{ route('manual.sistema.pdf') }}"
-               target="_blank"
-               rel="noopener noreferrer"
-               class="se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors"
-               title="Abrir manual del sistema (PDF) en una pestaña nueva">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                </svg>
-                <span class="truncate" x-show="!sidebarCollapsed" x-cloak>Manual del sistema</span>
-            </a>
-        </div>
 
     </nav>
 

@@ -76,6 +76,12 @@ final class PermisosIaCatalog
 
     public const LEGAJOS_FAMILIAS_GESTION = 46;
 
+    /**
+     * Nivel Administración: crear/editar/eliminar legajos y matrículas en cualquier nivel pedagógico (1–4).
+     * Sin este permiso: solo consulta de legajos en Administración (sin alta/edición cross-nivel).
+     */
+    public const LEGAJOS_MODIFICAR_ADMIN = 47;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -125,6 +131,7 @@ final class PermisosIaCatalog
             ['id' => 44, 'orden' => self::MATRICULA_WEB_DOCUMENTOS, 'tema' => 'MATRÍCULA WEB', 'descripcion' => 'Documentos de aceptación (PDF por nivel): compromiso educativo, AEC, normativas y traslado para el portal de estudiantes.'],
             ['id' => 45, 'orden' => self::SOLICITUDES_EVALUACION_GESTION, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Gestión de solicitudes de evaluación: listado por fecha, alta, edición y baja de evaluaciones programadas (tabla evaluac).'],
             ['id' => 46, 'orden' => self::LEGAJOS_FAMILIAS_GESTION, 'tema' => 'LEGAJOS ESTUDIANTES', 'descripcion' => 'Gestionar familias de estudiantes: crear, editar, eliminar y asignar o quitar vínculos con legajos (la consulta permanece disponible para todos).'],
+            ['id' => 47, 'orden' => self::LEGAJOS_MODIFICAR_ADMIN, 'tema' => 'LEGAJOS ESTUDIANTES', 'descripcion' => 'Nivel Administración: crear, editar, eliminar legajos y matrículas en Inicial, Primario y Secundario (cualquier nivel pedagógico del ciclo activo).'],
         ];
     }
 

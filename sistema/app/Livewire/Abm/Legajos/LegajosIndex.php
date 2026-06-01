@@ -3,6 +3,7 @@
 namespace App\Livewire\Abm\Legajos;
 
 use App\Models\Legajo;
+use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
@@ -51,7 +52,7 @@ class LegajosIndex extends Component
 
     public function confirmDelete(int $id): void
     {
-        abort_unless(tienePermiso(2), 403, 'Sin permiso para eliminar legajos de estudiantes.');
+        abort_unless(puedeModificarLegajosEstudiantes(), 403, 'Sin permiso para eliminar legajos de estudiantes.');
 
         $l = $this->scopedLegajoOrFail($id);
 
@@ -84,7 +85,7 @@ class LegajosIndex extends Component
 
     public function delete(): void
     {
-        abort_unless(tienePermiso(2), 403, 'Sin permiso para eliminar legajos de estudiantes.');
+        abort_unless(puedeModificarLegajosEstudiantes(), 403, 'Sin permiso para eliminar legajos de estudiantes.');
 
         $key = 'legajos:delete:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 10)) {
@@ -130,12 +131,10 @@ class LegajosIndex extends Component
         }
 
         if ($this->soloMiNivel) {
-            $idNivel = schoolCtx()->idNivel;
-            if ($idNivel) {
-                $query->whereHas('matriculas', fn ($q) => $q
-                    ->where('idTerlec', $idTerlec)
-                    ->where('idNivel', $idNivel));
-            }
+            $query->whereHas('matriculas', function ($q) use ($idTerlec) {
+                $q->where('idTerlec', $idTerlec);
+                SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($q, 'idNivel');
+            });
         }
 
         $legajos  = $query->orderBy('apellido')->orderBy('nombre')->paginate(25);

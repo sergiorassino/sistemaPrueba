@@ -288,7 +288,7 @@ final class TomaAsistenciaClase
             'fecha' => $fecha,
             'tipo' => (string) $idTipo,
             'cantidad' => $cantidad,
-            'just' => 'N',
+            'just' => 'I',
             'obs' => null,
         ];
     }

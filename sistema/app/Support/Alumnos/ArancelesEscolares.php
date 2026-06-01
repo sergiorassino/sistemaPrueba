@@ -121,6 +121,27 @@ final class ArancelesEscolares
             ->first();
     }
 
+    /**
+     * Cuota con saldo pendiente — Gestión de aranceles (Administración).
+     */
+    public static function cuotaPendienteParaAdministracion(int $idCuotaGenerada, int $idLegajo): ?CuotaGenerada
+    {
+        return CuotaGenerada::query()
+            ->with([
+                'legajo:id,apellido,nombre,dni,legajo',
+                'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
+                'curso.curplan:id,curPlanCurso',
+                'curso.turnoClase:id,nombre',
+                'curso.nivel:id,nivel',
+                'cuota:id,nombre',
+            ])
+            ->where('id', $idCuotaGenerada)
+            ->where('idLegajos', $idLegajo)
+            ->where('idTerlec', (int) schoolCtx()->idTerlec)
+            ->where('faltapa', '>', 0)
+            ->first();
+    }
+
     public static function formatearImporte(float|int|string|null $valor): string
     {
         return number_format((float) ($valor ?? 0), 2, ',', '.');

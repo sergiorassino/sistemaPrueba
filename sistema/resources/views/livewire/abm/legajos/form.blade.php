@@ -553,137 +553,168 @@
         @teleport('body')
         <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4" role="dialog" aria-modal="true"
              aria-labelledby="legajo-modal-matriculas-titulo">
-            <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="closeMatriculas"></div>
+            <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="dismissMatriculasModal"></div>
 
             <div class="relative z-10 my-auto flex w-full max-w-5xl max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),42rem)]" @click.stop>
                 <div class="flex shrink-0 items-center justify-between border-b border-accent-200 bg-white px-6 py-4">
                     <div>
-                        <h3 id="legajo-modal-matriculas-titulo" class="text-base font-bold text-neutral-900">Matrículas del estudiante</h3>
+                        @if ($showMatriculaForm)
+                            <h3 id="legajo-modal-matriculas-titulo" class="text-base font-bold text-neutral-900">
+                                {{ $matriculaEditId ? 'Editar matrícula' : 'Nueva matrícula' }}
+                            </h3>
+                        @else
+                            <h3 id="legajo-modal-matriculas-titulo" class="text-base font-bold text-neutral-900">Matrículas del estudiante</h3>
+                        @endif
                         <p class="mt-0.5 text-xs font-medium text-neutral-500">Nivel: {{ schoolCtx()->nivelNombre() }} · Año activo: {{ schoolCtx()->terlecAno() }}</p>
                     </div>
-                    <button wire:click="closeMatriculas" class="text-gray-400 hover:text-gray-600">
+                    <button wire:click="dismissMatriculasModal" class="text-gray-400 hover:text-gray-600" type="button"
+                            aria-label="{{ $showMatriculaForm ? 'Volver al listado' : 'Cerrar' }}">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
                 </div>
 
-                <div class="flex shrink-0 items-center justify-between gap-3 px-6 py-4">
-                    <div class="se-pill">{{ $matriculasAlumno->count() }} registro(s)</div>
-                    @if ($puedeEditar)
-                        <button wire:click="openNuevaMatricula" class="btn-primary btn-sm">Nueva matrícula</button>
-                    @endif
-                </div>
-
-                <div class="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
-                    <div class="overflow-x-auto rounded-2xl border border-accent-200">
-                        <table class="min-w-full border-collapse">
-                            <thead class="bg-accent-50">
-                                <tr>
-                                    <th class="table-header w-24">Año</th>
-                                    <th class="table-header">Curso y sección</th>
-                                    <th class="table-header w-40">Condición</th>
-                                    <th class="table-header w-32">N°</th>
-                                    <th class="table-header w-36">F. matrícula</th>
-                                    <th class="table-header w-36">F. baja</th>
-                                    <th class="table-header text-right w-36">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white">
-                                @forelse ($matriculasAlumno as $m)
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="table-cell font-mono">{{ $m->terlec?->ano ?? '—' }}</td>
-                                        <td class="table-cell">{{ $m->curso?->cursec ? trim($m->curso->cursec) : '—' }}</td>
-                                        <td class="table-cell">{{ $m->condicion?->condicion ?? '—' }}</td>
-                                        <td class="table-cell font-mono">{{ $m->nroMatricula ?? '—' }}</td>
-                                        <td class="table-cell font-mono">{{ $m->fechaMatricula?->format('d/m/Y') ?? '—' }}</td>
-                                        <td class="table-cell font-mono">{{ $m->fechaBaja?->format('d/m/Y') ?? '—' }}</td>
-                                        <td class="table-cell text-right whitespace-nowrap">
-                                            @if ($puedeEditar)
-                                                <div class="flex items-center justify-end gap-2">
-                                                    <button wire:click="openEditMatricula({{ $m->id }})" class="btn-secondary btn-sm">Editar</button>
-                                                    <button wire:click="confirmDeleteMatricula({{ $m->id }})" class="btn-danger btn-sm">Borrar</button>
-                                                </div>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="table-cell text-center text-gray-400 py-10">Sin matrículas cargadas.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                @unless ($showMatriculaForm)
+                    <div class="flex shrink-0 items-center justify-between gap-3 px-6 py-4">
+                        <div class="se-pill">{{ $matriculasAlumno->count() }} registro(s)</div>
+                        @if ($puedeEditar)
+                            <button wire:click="openNuevaMatricula" type="button" class="btn-primary btn-sm">Nueva matrícula</button>
+                        @endif
                     </div>
-                </div>
+
+                    <div class="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+                        <div class="overflow-x-auto rounded-2xl border border-accent-200">
+                            <table class="min-w-full border-collapse">
+                                <thead class="bg-accent-50">
+                                    <tr>
+                                        <th class="table-header w-24">Año</th>
+                                        <th class="table-header">Curso y sección</th>
+                                        <th class="table-header w-40">Condición</th>
+                                        <th class="table-header w-32">N°</th>
+                                        <th class="table-header w-36">F. matrícula</th>
+                                        <th class="table-header w-36">F. baja</th>
+                                        <th class="table-header text-right w-36">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white">
+                                    @forelse ($matriculasAlumno as $m)
+                                        <tr class="hover:bg-gray-50 transition-colors">
+                                            <td class="table-cell font-mono">{{ $m->terlec?->ano ?? '—' }}</td>
+                                            <td class="table-cell">{{ $m->curso?->cursec ? trim($m->curso->cursec) : '—' }}</td>
+                                            <td class="table-cell">{{ $m->condicion?->condicion ?? '—' }}</td>
+                                            <td class="table-cell font-mono">{{ $m->nroMatricula ?? '—' }}</td>
+                                            <td class="table-cell font-mono">{{ $m->fechaMatricula?->format('d/m/Y') ?? '—' }}</td>
+                                            <td class="table-cell font-mono">{{ $m->fechaBaja?->format('d/m/Y') ?? '—' }}</td>
+                                            <td class="table-cell text-right whitespace-nowrap">
+                                                @if ($puedeEditar)
+                                                    <div class="flex items-center justify-end gap-2">
+                                                        <button wire:click="openEditMatricula({{ $m->id }})" type="button" class="btn-secondary btn-sm">Editar</button>
+                                                        <button wire:click="confirmDeleteMatricula({{ $m->id }})" type="button" class="btn-danger btn-sm">Borrar</button>
+                                                    </div>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="table-cell text-center text-gray-400 py-10">Sin matrículas cargadas.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endunless
 
                 {{-- Matricula form (create/edit) --}}
                 @if ($showMatriculaForm)
-                    <div class="shrink-0 border-t border-accent-200 bg-accent-50/70 px-6 py-5">
-                        <h4 class="mb-3 text-sm font-bold text-neutral-900">{{ $matriculaEditId ? 'Editar matrícula' : 'Nueva matrícula' }}</h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div class="lg:col-span-2">
-                                <label class="form-label">Curso y sección *</label>
-                                <select
-                                    wire:model.live="m_idCursos"
-                                    wire:change="evaluarCambioCursoMatriculaDesdeUi"
-                                    class="form-select @error('m_idCursos') border-red-400 @enderror"
-                                >
-                                    <option value="">— Seleccione —</option>
-                                    @foreach ($cursos as $c)
-                                        <option value="{{ $c->Id }}">{{ trim($c->cursec) }}</option>
-                                    @endforeach
-                                </select>
-                                @error('m_idCursos') <p class="form-error">{{ $message }}</p> @enderror
+                    <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+                        @if ($matriculaEditFueraDeAnioActivo)
+                            <div class="mb-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                                <svg class="mt-0.5 h-4 w-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                </svg>
+                                <p>
+                                    Las matrículas deben editarse con el sistema en el año de la matrícula a editar.
+                                    @if ($m_terlec_ano !== '')
+                                        <span class="mt-1 block font-semibold">Año de esta matrícula: {{ $m_terlec_ano }} · Año activo en el sistema: {{ schoolCtx()->terlecAno() ?? '—' }}</span>
+                                    @endif
+                                </p>
                             </div>
+                        @endif
 
-                            <div>
-                                <label class="form-label">Condición *</label>
-                                <select wire:model="m_idCondiciones" class="form-select @error('m_idCondiciones') border-red-400 @enderror">
-                                    <option value="">— Seleccione —</option>
-                                    @foreach ($condiciones as $cnd)
-                                        <option value="{{ $cnd->id }}">{{ $cnd->condicion }}</option>
-                                    @endforeach
-                                </select>
-                                @error('m_idCondiciones') <p class="form-error">{{ $message }}</p> @enderror
+                        <fieldset @disabled($matriculaEditFueraDeAnioActivo) class="min-w-0 border-0 p-0 m-0 disabled:opacity-60">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div class="lg:col-span-2">
+                                    <label class="form-label">Curso y sección *</label>
+                                    @if ($matriculaEditFueraDeAnioActivo)
+                                        <input type="text" class="form-input bg-gray-100" readonly value="{{ $matriculaCursoEtiqueta }}">
+                                    @else
+                                        <select
+                                            wire:model.live="m_idCursos"
+                                            wire:change="evaluarCambioCursoMatriculaDesdeUi"
+                                            class="form-select @error('m_idCursos') border-red-400 @enderror"
+                                        >
+                                            <option value="">— Seleccione —</option>
+                                            @foreach ($cursos as $c)
+                                                <option value="{{ $c->Id }}">{{ trim($c->cursec) }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('m_idCursos') <p class="form-error">{{ $message }}</p> @enderror
+                                    @endif
+                                </div>
+
+                                <div>
+                                    <label class="form-label">Condición *</label>
+                                    <select wire:model="m_idCondiciones" class="form-select @error('m_idCondiciones') border-red-400 @enderror">
+                                        <option value="">— Seleccione —</option>
+                                        @foreach ($condiciones as $cnd)
+                                            <option value="{{ $cnd->id }}">{{ $cnd->condicion }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('m_idCondiciones') <p class="form-error">{{ $message }}</p> @enderror
+                                </div>
+
+                                <div>
+                                    <label class="form-label">Año lectivo</label>
+                                    <input wire:model="m_terlec_ano" type="text" class="form-input bg-gray-100" readonly>
+                                    <input wire:model="m_idTerlec" type="hidden">
+                                </div>
+
+                                <div>
+                                    <label class="form-label">Nivel</label>
+                                    <input wire:model="m_nivel_nombre" type="text" class="form-input bg-gray-100" readonly>
+                                    <input wire:model="m_idNivel" type="hidden">
+                                </div>
+
+                                <div>
+                                    <label class="form-label">Número de matrícula</label>
+                                    <input wire:model="m_nroMatricula" type="text" maxlength="20" class="form-input">
+                                </div>
+
+                                <div>
+                                    <label class="form-label">Fecha de matrícula</label>
+                                    <input wire:model="m_fechaMatricula" type="date" class="form-input @error('m_fechaMatricula') border-red-400 @enderror">
+                                    @error('m_fechaMatricula') <p class="form-error">{{ $message }}</p> @enderror
+                                </div>
+
+                                <div>
+                                    <label class="form-label">Fecha de baja</label>
+                                    <input wire:model="m_fechaBaja" type="date" class="form-input @error('m_fechaBaja') border-red-400 @enderror">
+                                    @error('m_fechaBaja') <p class="form-error">{{ $message }}</p> @enderror
+                                </div>
                             </div>
+                        </fieldset>
 
-                            <div>
-                                <label class="form-label">Año lectivo</label>
-                                <input wire:model="m_terlec_ano" type="text" class="form-input bg-gray-100" readonly>
-                                <input wire:model="m_idTerlec" type="hidden">
-                            </div>
-
-                            <div>
-                                <label class="form-label">Nivel</label>
-                                <input wire:model="m_nivel_nombre" type="text" class="form-input bg-gray-100" readonly>
-                                <input wire:model="m_idNivel" type="hidden">
-                            </div>
-
-                            <div>
-                                <label class="form-label">Número de matrícula</label>
-                                <input wire:model="m_nroMatricula" type="text" maxlength="20" class="form-input">
-                            </div>
-
-                            <div>
-                                <label class="form-label">Fecha de matrícula</label>
-                                <input wire:model="m_fechaMatricula" type="date" class="form-input @error('m_fechaMatricula') border-red-400 @enderror">
-                                @error('m_fechaMatricula') <p class="form-error">{{ $message }}</p> @enderror
-                            </div>
-
-                            <div>
-                                <label class="form-label">Fecha de baja</label>
-                                <input wire:model="m_fechaBaja" type="date" class="form-input @error('m_fechaBaja') border-red-400 @enderror">
-                                @error('m_fechaBaja') <p class="form-error">{{ $message }}</p> @enderror
-                            </div>
-                        </div>
-
-                        <div class="mt-4 flex justify-end gap-3">
-                            <button wire:click="$set('showMatriculaForm', false)" class="btn-secondary">Cancelar</button>
-                            <button wire:click="saveMatricula" wire:loading.attr="disabled" class="btn-primary">
-                                <span wire:loading.remove wire:target="saveMatricula">Guardar matrícula</span>
-                                <span wire:loading wire:target="saveMatricula">Guardando…</span>
-                            </button>
+                        <div class="mt-4 flex flex-wrap justify-end gap-3">
+                            <button wire:click="cancelMatriculaForm" type="button" class="btn-secondary">Volver al listado</button>
+                            @unless ($matriculaEditFueraDeAnioActivo)
+                                <button wire:click="saveMatricula" type="button" wire:loading.attr="disabled" class="btn-primary">
+                                    <span wire:loading.remove wire:target="saveMatricula">Guardar matrícula</span>
+                                    <span wire:loading wire:target="saveMatricula">Guardando…</span>
+                                </button>
+                            @endunless
                         </div>
                     </div>
                 @endif

@@ -10,6 +10,7 @@ use App\Models\Sexo;
 use App\Support\Legajos\LegajoCargaPorCursoCatalog;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\PermisosIaCatalog;
+use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
@@ -54,7 +55,7 @@ trait LegajoCargaPorCursoPanel
 
     public function cargarGrillaCargaPorCurso(): void
     {
-        abort_unless(tienePermiso(2), 403);
+        abort_unless(puedeModificarLegajosEstudiantes(), 403);
 
         $this->validate([
             'cargaPorCursoId' => ['required', 'integer', 'min:1'],
@@ -91,7 +92,9 @@ trait LegajoCargaPorCursoPanel
             ->join('matricula', 'matricula.idLegajos', '=', 'legajos.id')
             ->where('matricula.idCursos', (int) $this->cargaPorCursoId)
             ->where('matricula.idTerlec', (int) $ctx->idTerlec)
-            ->where('matricula.idNivel', (int) $ctx->idNivel)
+            ->where(function ($q) {
+                SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($q, 'matricula.idNivel');
+            })
             ->whereIn('matricula.idCondiciones', $idCondiciones)
             ->orderBy('legajos.apellido')
             ->orderBy('legajos.nombre')
@@ -118,7 +121,7 @@ trait LegajoCargaPorCursoPanel
 
     public function saveCargaPorCursoCell(int $idLegajo, string $columna, mixed $value): void
     {
-        abort_unless(tienePermiso(2), 403);
+        abort_unless(puedeModificarLegajosEstudiantes(), 403);
 
         $rateKey = 'legajos:carga-curso:cell:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($rateKey, 180)) {
@@ -185,16 +188,17 @@ trait LegajoCargaPorCursoPanel
     protected function cursosParaCargaPorCurso(): Collection
     {
         $ctx = schoolCtx();
-        $idNivel = (int) ($ctx->idNivel ?? 0);
         $idTerlec = (int) ($ctx->idTerlec ?? 0);
 
         $columnas = ['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's', 'idNivel', 'idTerlec'];
 
         $query = Curso::query()
             ->with(['curplan', 'turnoClase'])
-            ->when($idNivel > 0, fn ($q) => $q->where('idNivel', $idNivel))
-            ->when($idTerlec > 0, fn ($q) => $q->where('idTerlec', $idTerlec))
-            ->orderByRaw('COALESCE(orden, 9999) asc')
+            ->when($idTerlec > 0, fn ($q) => $q->where('idTerlec', $idTerlec));
+
+        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'idNivel');
+
+        $query->orderByRaw('COALESCE(orden, 9999) asc')
             ->orderBy('Id');
 
         $cursos = $query->get($columnas);
@@ -202,13 +206,14 @@ trait LegajoCargaPorCursoPanel
             return $cursos;
         }
 
-        if ($idNivel < 1 || $idTerlec < 1) {
+        if ($idTerlec < 1) {
             return $cursos;
         }
 
-        $idsConMatricula = Matricula::query()
-            ->where('idTerlec', $idTerlec)
-            ->where('idNivel', $idNivel)
+        $matriculaQuery = Matricula::query()->where('idTerlec', $idTerlec);
+        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($matriculaQuery, 'idNivel');
+
+        $idsConMatricula = $matriculaQuery
             ->distinct()
             ->pluck('idCursos')
             ->map(fn ($id) => (int) $id)
@@ -284,13 +289,15 @@ trait LegajoCargaPorCursoPanel
         $ctx = schoolCtx();
         $idCondiciones = ListadoCursoCondicionFiltro::idCondicionesParaQuery($this->cargaPorCursoFiltroCondicion);
 
-        $exists = Matricula::query()
+        $existsQuery = Matricula::query()
             ->where('idLegajos', $idLegajo)
             ->where('idCursos', $idCurso)
             ->where('idTerlec', (int) $ctx->idTerlec)
-            ->where('idNivel', (int) $ctx->idNivel)
-            ->whereIn('idCondiciones', $idCondiciones)
-            ->exists();
+            ->whereIn('idCondiciones', $idCondiciones);
+
+        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($existsQuery, 'idNivel');
+
+        $exists = $existsQuery->exists();
 
         if (! $exists) {
             abort(404);

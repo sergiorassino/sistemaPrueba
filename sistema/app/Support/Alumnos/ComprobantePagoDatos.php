@@ -21,4 +21,14 @@ final class ComprobantePagoDatos
 
         return ComprobantePagoCalculo::paraCuotaGenerada($registro);
     }
+
+    public static function paraAdministracion(int $idCuotaGenerada, int $idLegajo): ?array
+    {
+        $registro = ArancelesEscolares::cuotaPendienteParaAdministracion($idCuotaGenerada, $idLegajo);
+        if ($registro === null) {
+            return null;
+        }
+
+        return ComprobantePagoCalculo::paraCuotaGenerada($registro, schoolPdfHeaderData());
+    }
 }

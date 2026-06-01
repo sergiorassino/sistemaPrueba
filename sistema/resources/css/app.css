@@ -133,6 +133,144 @@
         @apply hover:bg-primary-50 transition-colors;
     }
 
+    /* Gestión de aranceles — búsqueda de estudiantes */
+    .gf.gf-cuotas-busqueda {
+        width: 100%;
+        min-width: 0;
+    }
+    .gf.gf-cuotas-busqueda .gf-head,
+    .gf.gf-cuotas-busqueda .gf-row {
+        width: 100%;
+    }
+    .gf.gf-cuotas-busqueda .gf-th.gf-th-nombre,
+    .gf.gf-cuotas-busqueda .gf-td.gf-td-nombre {
+        flex: 1 1 12rem;
+        width: auto;
+        min-width: 12rem;
+        max-width: none;
+    }
+    .gf.gf-cuotas-busqueda .gf-td.gf-td-nombre {
+        min-width: 0;
+        overflow: hidden;
+    }
+    .gf.gf-cuotas-busqueda .gf-td.gf-td-nombre a {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-busqueda .gf-td.gf-td-nivel {
+        @apply flex items-center py-1;
+    }
+    .gf.gf-cuotas-busqueda .gf-row.gf-row--sin-matricula-actual {
+        background-color: #fce7f3;
+    }
+    .gf.gf-cuotas-busqueda .gf-row-hover.gf-row--sin-matricula-actual:hover {
+        background-color: #fbcfe8;
+    }
+
+    /* Gestión de aranceles — grillas sin esquinas redondeadas */
+    .se-card.se-card-cuotas-busqueda,
+    .se-card.se-card-cuotas-grid,
+    .gf.gf-cuotas-busqueda,
+    .gf.gf-cuotas-estudiante {
+        border-radius: 0;
+    }
+    .gf.gf-cuotas-estudiante {
+        width: 100%;
+        min-width: 0;
+    }
+    .gf.gf-cuotas-estudiante .gf-head,
+    .gf.gf-cuotas-estudiante .gf-row {
+        width: 100%;
+    }
+    .gf.gf-cuotas-estudiante .gf-th.gf-th-cuota,
+    .gf.gf-cuotas-estudiante .gf-td.gf-td-cuota {
+        flex: 1 1 7rem;
+        width: auto;
+        min-width: 7rem;
+        max-width: none;
+    }
+    .gf.gf-cuotas-estudiante .gf-td.gf-td-cuota {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-estudiante .gf-row.gf-row-hover {
+        transition: background-color 0.15s ease;
+    }
+    .gf.gf-cuotas-estudiante .gf-row.gf-row--pagada {
+        background-color: #bbf7d0;
+    }
+    .gf.gf-cuotas-estudiante .gf-row.gf-row--adeudada {
+        background-color: #ffffff;
+    }
+    .gf.gf-cuotas-estudiante .gf-row.gf-row--pagada .gf-td,
+    .gf.gf-cuotas-estudiante .gf-row.gf-row--adeudada .gf-td {
+        background-color: transparent;
+    }
+    .gf.gf-cuotas-estudiante .gf-row-hover.gf-row--pagada:hover {
+        background-color: #b8e8c8;
+    }
+    .gf.gf-cuotas-estudiante .gf-row-hover.gf-row--adeudada:hover {
+        background-color: #d4e8ec;
+    }
+    .gf.gf-cuotas-estudiante.gf-vcenter .gf-td.gf-td-nivel {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding-top: 0.125rem;
+        padding-bottom: 0.125rem;
+        line-height: 1;
+        white-space: normal;
+    }
+    .gf.gf-cuotas-estudiante .gf-td-nivel-linea {
+        display: block;
+        width: 100%;
+        font-size: 8px;
+        line-height: 1.2;
+        letter-spacing: 0.02em;
+        text-align: center;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-estudiante.gf-vcenter .gf-th.gf-th-fecha,
+    .gf.gf-cuotas-estudiante.gf-vcenter .gf-td.gf-td-fecha {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 5.75rem;
+        min-width: 5.75rem;
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-estudiante .gf-th.gf-th-accion,
+    .gf.gf-cuotas-estudiante .gf-td.gf-td-accion {
+        box-sizing: border-box;
+        flex: 0 0 2rem !important;
+        width: 2rem !important;
+        min-width: 2rem !important;
+        max-width: 2rem !important;
+        padding-left: 0;
+        padding-right: 0;
+        border-right-width: 1px;
+        border-right-style: solid;
+        border-right-color: rgb(209 213 219);
+    }
+    .gf.gf-cuotas-estudiante .gf-th.gf-th-accion:last-child,
+    .gf.gf-cuotas-estudiante .gf-td.gf-td-accion:last-child {
+        border-right-width: 0;
+    }
+    .gf.gf-cuotas-estudiante.gf-vcenter .gf-th.gf-th-accion,
+    .gf.gf-cuotas-estudiante.gf-vcenter .gf-td.gf-td-accion {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
     /* Celda de datos (listado) */
     .gf-td {
         @apply px-2 py-1.5 border-r border-gray-300 last:border-r-0 text-gray-900;
@@ -794,7 +932,7 @@
     }
     .se-mat-nivel-secundario {
         background-color: #eff6ff;
-        border-color: #bfdbfe;
+        border-color: #60a5fa;
         color: #1d4ed8;
     }
     .se-mat-nivel-default {
@@ -863,6 +1001,48 @@
     }
     .se-legajo-form input[readonly] {
         @apply bg-accent-100/70 text-neutral-500;
+    }
+
+    /* Edición de cuota (Gestión de aranceles) — campos compactos */
+    .se-cuota-form {
+        @apply text-xs;
+    }
+    .se-cuota-form .se-section-title {
+        @apply mb-3 text-sm;
+    }
+    .se-cuota-form .form-label {
+        @apply mb-0.5 text-[10px] tracking-wide;
+    }
+    .se-cuota-form .form-input,
+    .se-cuota-form .form-select {
+        @apply mt-0.5 rounded-lg border-accent-200 bg-white px-2 py-1.5 text-xs leading-tight shadow-sm sm:text-sm;
+    }
+    .se-cuota-form .se-cuota-form-body {
+        @apply mx-auto w-full max-w-xl;
+    }
+    .se-cuota-form .se-cuota-form-fechas {
+        @apply grid grid-cols-3 justify-items-center gap-x-3 gap-y-2;
+    }
+    .se-cuota-form .se-cuota-form-fechas > div {
+        @apply w-full max-w-[11rem];
+    }
+    .se-cuota-form .se-cuota-form-fechas .form-label {
+        @apply text-center;
+    }
+    .se-cuota-form input[type="date"].form-input {
+        @apply min-w-[10.25rem] w-full py-1 text-center tabular-nums;
+    }
+    .se-cuota-form .se-cuota-form-importes {
+        @apply mx-auto grid max-w-md grid-cols-2 gap-2;
+    }
+    .se-cuota-form textarea.form-input {
+        @apply min-h-[3.25rem] py-1.5 leading-snug;
+    }
+    .se-cuota-form input[readonly] {
+        @apply bg-accent-50/90 text-neutral-700 cursor-default;
+    }
+    .se-cuota-form .form-error {
+        @apply mt-0.5 text-[10px];
     }
 
     /*

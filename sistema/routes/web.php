@@ -89,6 +89,11 @@ use App\Livewire\Alumnos\ActualizacionDatosPersonalesForm;
 use App\Livewire\Alumnos\ArancelesEscolaresIndex;
 use App\Livewire\Alumnos\AceptacionDocumentoFamilia;
 use App\Livewire\Auth\Login;
+use App\Http\Controllers\Cuotas\ComprobantePagoCuotasPdfController;
+use App\Livewire\Cuotas\CuotaGeneradaForm;
+use App\Livewire\Cuotas\CuotasEstudianteShow;
+use App\Livewire\Cuotas\CuotasIndex;
+use App\Livewire\Cuotas\ImputarPagoForm;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\CargaColoquiosSecundario;
 use App\Livewire\CalificacionesSecundario\PlanillaCalificacionesSecundario;
@@ -387,6 +392,20 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
     Route::get('/parametrizacion/com-canales', ComCanalesIndex::class)
         ->middleware('permiso:5')
         ->name('param.com-canales');
+    Route::prefix('cuotas')->group(function () {
+        Route::get('/', CuotasIndex::class)->name('cuotas.index');
+        Route::get('/estudiante/{idLegajo}', CuotasEstudianteShow::class)->whereNumber('idLegajo')->name('cuotas.estudiante');
+        Route::get('/estudiante/{idLegajo}/cuota/{idCuotaGenerada}/editar', CuotaGeneradaForm::class)
+            ->whereNumber(['idLegajo', 'idCuotaGenerada'])
+            ->name('cuotas.cuota.editar');
+        Route::get('/estudiante/{idLegajo}/cuota/{idCuotaGenerada}/imputar', ImputarPagoForm::class)
+            ->whereNumber(['idLegajo', 'idCuotaGenerada'])
+            ->name('cuotas.cuota.imputar');
+        Route::get('/comprobante/{ref}', ComprobantePagoCuotasPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('cuotas.comprobante');
+    });
+
     Route::get('/abm/legajos', LegajosIndex::class)->name('abm.legajos');
     Route::get('/abm/legajos/carga-por-curso', LegajoCargaPorCurso::class)->middleware('permiso:2')->name('abm.legajos.carga-por-curso');
     Route::get('/abm/legajos/nuevo', LegajoForm::class)->middleware('permiso:2')->name('abm.legajos.create');

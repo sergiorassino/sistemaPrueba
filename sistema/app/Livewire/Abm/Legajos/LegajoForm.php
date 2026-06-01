@@ -248,7 +248,7 @@ class LegajoForm extends Component
             \App\Support\Navegacion\ContextoEstudianteSesion::LEGAJO_ABM,
         );
 
-        if (! $id && ! tienePermiso(2)) {
+        if (! $id && ! puedeModificarLegajosEstudiantes()) {
             abort(403, 'Sin permiso para crear legajos de estudiantes.');
         }
 
@@ -265,7 +265,7 @@ class LegajoForm extends Component
 
     private function requireModificarLegajo(): void
     {
-        abort_unless(tienePermiso(2), 403, 'Sin permiso para modificar legajos de estudiantes.');
+        abort_unless(puedeModificarLegajosEstudiantes(), 403, 'Sin permiso para modificar legajos de estudiantes.');
     }
 
     protected function rules(): array
@@ -409,6 +409,25 @@ class LegajoForm extends Component
         return null;
     }
 
+    public function cancelMatriculaForm(): void
+    {
+        $this->showMatriculaForm = false;
+        $this->resetMatriculaForm();
+        $this->resetValidation();
+    }
+
+    /** Cerrar modal de matrículas o volver al listado si el formulario está abierto. */
+    public function dismissMatriculasModal(): mixed
+    {
+        if ($this->showMatriculaForm) {
+            $this->cancelMatriculaForm();
+
+            return null;
+        }
+
+        return $this->closeMatriculas();
+    }
+
     public function openNuevaMatricula(): void
     {
         $this->requireModificarLegajo();
@@ -417,7 +436,7 @@ class LegajoForm extends Component
         $this->resetMatriculaForm();
 
         $this->m_idTerlec = (int) (schoolCtx()->idTerlec ?? 0);
-        $this->m_idNivel = (int) (schoolCtx()->idNivel ?? 0);
+        $this->m_idNivel = '';
         $this->fillMatriculaReadonlyLabels();
         $this->m_fechaMatricula = now()->format('Y-m-d');
 
@@ -450,8 +469,25 @@ class LegajoForm extends Component
     public function updated($property, $value = null): void
     {
         if ($property === 'm_idCursos') {
-            $this->evaluarCambioCursoMatricula((int) ($value ?? $this->m_idCursos));
+            $idCurso = (int) ($value ?? $this->m_idCursos);
+            if (! $this->matriculaEditId) {
+                $this->sincronizarNivelMatriculaDesdeCurso($idCurso);
+            }
+            $this->evaluarCambioCursoMatricula($idCurso);
         }
+    }
+
+    private function sincronizarNivelMatriculaDesdeCurso(int $idCurso): void
+    {
+        if ($idCurso < 1) {
+            $this->m_idNivel = '';
+
+            return;
+        }
+
+        $idNivel = (int) (Curso::query()->whereKey($idCurso)->value('idNivel') ?? 0);
+        $this->m_idNivel = $idNivel > 0 ? $idNivel : '';
+        $this->fillMatriculaReadonlyLabels();
     }
 
     public function evaluarCambioCursoMatriculaDesdeUi(): void
@@ -520,6 +556,15 @@ class LegajoForm extends Component
     {
         $this->requireModificarLegajo();
 
+        if ($this->matriculaEditFueraDeAnioActivo()) {
+            session()->flash(
+                'warning',
+                'Las matrículas deben editarse con el sistema en el año de la matrícula a editar.'
+            );
+
+            return;
+        }
+
         $this->validate([
             'm_idCursos' => ['required', 'integer', 'min:1'],
             'm_idCondiciones' => ['required', 'integer', 'min:1'],
@@ -537,12 +582,20 @@ class LegajoForm extends Component
             return;
         }
 
+        $idCurso = (int) $this->m_idCursos;
+        $idNivelMatricula = (int) (Curso::query()->whereKey($idCurso)->value('idNivel') ?? 0);
+        if ($idNivelMatricula < 1) {
+            $this->addError('m_idCursos', 'No se pudo determinar el nivel del curso seleccionado.');
+
+            return;
+        }
+
         $data = [
             'idLegajos' => (int) $this->id,
-            'idCursos' => (int) $this->m_idCursos,
+            'idCursos' => $idCurso,
             'idCondiciones' => (int) $this->m_idCondiciones,
             'idTerlec' => (int) $this->m_idTerlec,
-            'idNivel' => (int) $this->m_idNivel,
+            'idNivel' => $idNivelMatricula,
             'nroMatricula' => trim($this->m_nroMatricula) !== '' ? trim($this->m_nroMatricula) : null,
             'fechaMatricula' => $this->m_fechaMatricula ?: null,
             'fechaBaja' => $this->m_fechaBaja ?: null,
@@ -827,6 +880,33 @@ class LegajoForm extends Component
             'm_idCursosAlEditar',
         ]);
         $this->resetMatriculaPlanConfirmState();
+    }
+
+    /** La matrícula en edición pertenece a un ciclo lectivo distinto al activo en sesión. */
+    private function matriculaEditFueraDeAnioActivo(): bool
+    {
+        if (! $this->matriculaEditId) {
+            return false;
+        }
+
+        $idTerlecMatricula = (int) $this->m_idTerlec;
+        $idTerlecActivo = (int) (schoolCtx()->idTerlec ?? 0);
+
+        return $idTerlecMatricula > 0
+            && $idTerlecActivo > 0
+            && $idTerlecMatricula !== $idTerlecActivo;
+    }
+
+    private function matriculaCursoEtiquetaLectura(): string
+    {
+        $idCurso = (int) $this->m_idCursos;
+        if ($idCurso < 1) {
+            return '—';
+        }
+
+        $cursec = Curso::query()->whereKey($idCurso)->value('cursec');
+
+        return $cursec ? trim((string) $cursec) : '—';
     }
 
     private function fillMatriculaReadonlyLabels(): void
@@ -1235,15 +1315,15 @@ class LegajoForm extends Component
     public function render()
     {
         $idTerlec = schoolCtx()->idTerlec;
-        $idNivel = schoolCtx()->idNivel;
 
         $familias = Familia::orderBy('id')->orderBy('apellido')->get(['id', 'apellido', 'responsable']);
 
-        $cursos = Curso::query()
-            ->when($idNivel, fn ($q) => $q->where('idNivel', $idNivel))
-            ->when($idTerlec, fn ($q) => $q->where('idTerlec', $idTerlec))
-            ->orderBy('Id')
-            ->get(['Id', 'cursec']);
+        $cursosQuery = Curso::query();
+        if ($idTerlec) {
+            $cursosQuery->where('idTerlec', $idTerlec);
+        }
+        \App\Support\SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($cursosQuery, 'idNivel');
+        $cursos = $cursosQuery->orderBy('Id')->get(['Id', 'cursec', 'idNivel']);
 
         $condiciones = Condicion::query()
             ->orderBy('id')
@@ -1310,16 +1390,22 @@ class LegajoForm extends Component
             $this->activeTab = array_key_first($tabsVisibles) ?? 'alumno';
         }
 
-        $puedeEditar = tienePermiso(2);
+        $puedeEditar = puedeModificarLegajosEstudiantes();
         $puedeGestionarFamilias = tienePermiso(PermisosIaCatalog::LEGAJOS_FAMILIAS_GESTION);
         $pageTitle = $this->id
             ? ($puedeEditar ? 'Editar legajo' : 'Consultar legajo')
             : 'Nuevo legajo';
 
+        $matriculaEditFueraDeAnioActivo = $this->matriculaEditFueraDeAnioActivo();
+        $matriculaCursoEtiqueta = $matriculaEditFueraDeAnioActivo
+            ? $this->matriculaCursoEtiquetaLectura()
+            : null;
+
         return view('livewire.abm.legajos.form', compact(
             'familias', 'cursos', 'condiciones', 'sexosOpciones', 'matriculasAlumno',
             'camposActivos', 'showField', 'showFieldEnTab', 'tabsVisibles', 'tabSlugToPanel',
             'modoParametrizadoLegajo', 'columnasPorSolapaSlug', 'puedeEditar', 'puedeGestionarFamilias',
+            'matriculaEditFueraDeAnioActivo', 'matriculaCursoEtiqueta',
         ))->layout('layouts.app', ['pageTitle' => $pageTitle]);
     }
 }

@@ -16,9 +16,16 @@ final class OpaqueRouteToken
 {
     public const PURPOSE_COMPROBANTE_PAGO = 'alumnos.comprobante-pago';
 
+    public const PURPOSE_ADMIN_COMPROBANTE_PAGO = 'cuotas.comprobante-pago';
+
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
+    }
+
+    public static function forComprobantePagoCuotaAdministracion(int $idCuotaGenerada, int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_ADMIN_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
     }
 
     /**

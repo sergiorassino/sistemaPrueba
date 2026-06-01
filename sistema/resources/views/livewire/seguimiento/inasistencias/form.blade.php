@@ -84,14 +84,21 @@
                 <p class="mt-1.5 text-xs text-neutral-500">Al elegir el tipo se sugiere la cantidad del catálogo.</p>
             </div>
 
-            <div>
-                <label class="form-label">Justificación</label>
-                <select wire:model="just" class="form-select mt-1.5 @error('just') border-red-400 @enderror">
-                    <option value="N">Injustificada</option>
-                    <option value="J">Justificada</option>
-                </select>
-                @error('just') <p class="form-error">{{ $message }}</p> @enderror
-            </div>
+            @if ($id)
+                <div>
+                    <label class="form-label">Justificación</label>
+                    <select wire:model="just" class="form-select mt-1.5 @error('just') border-red-400 @enderror">
+                        <option value="I">Injustificada</option>
+                        <option value="J">Justificada</option>
+                    </select>
+                    @error('just') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+            @else
+                <div>
+                    <label class="form-label">Justificación</label>
+                    <p class="mt-1.5 text-sm text-neutral-600">Injustificada (se puede justificar al editar el registro).</p>
+                </div>
+            @endif
 
             <div class="sm:col-span-2">
                 <label class="form-label">Observaciones</label>

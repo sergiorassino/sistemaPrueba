@@ -16,7 +16,7 @@ final class ComunicacionesRutasGestion
 
     public static function esPortalDocente(): bool
     {
-        if (request()->routeIs(self::PORTAL_PREFIX . '*')) {
+        if (request()->routeIs(self::PORTAL_PREFIX . '*', 'portalDocente.push.suscribir')) {
             return true;
         }
 
@@ -52,5 +52,25 @@ final class ComunicacionesRutasGestion
     public static function layout(): string
     {
         return self::esPortalDocente() ? 'layouts.docente' : 'layouts.app';
+    }
+
+    /** Bandeja e hilos: en portal docente todos los profesores; en secretaría, permiso 3. */
+    public static function accesoBandejaGestion(): bool
+    {
+        if (self::esPortalDocente()) {
+            return true;
+        }
+
+        return tienePermiso(3);
+    }
+
+    /** Nuevo comunicado: en portal docente todos los profesores; en secretaría, permisos 3 y 4. */
+    public static function accesoNuevoComunicado(): bool
+    {
+        if (self::esPortalDocente()) {
+            return true;
+        }
+
+        return tienePermiso(3) && tienePermiso(4);
     }
 }

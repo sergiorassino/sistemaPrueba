@@ -890,11 +890,7 @@ class ComunicacionesRepository
             })
             ->where('h.id_nivel', $idNivel)
             ->when($soloTerlecActual, fn ($q) => $q->where('h.id_terlec', $idTerlec))
-            ->leftJoin('com_mensajes_destinatarios as d', function ($j) use ($idProfesor) {
-                $j->on('d.id_hilo', '=', 'h.id')
-                  ->where('d.tipo_destinatario', 'profesor')
-                  ->where('d.id_profesor', $idProfesor);
-            });
+            ->leftJoin('com_mensajes_destinatarios as d', 'd.id_hilo', '=', 'h.id');
 
         $select = [
             'h.id', 'h.asunto', 'h.scope', 'h.estado', 'h.cuerpo_inicial_id',
@@ -902,7 +898,16 @@ class ComunicacionesRepository
             'h.familia_puede_responder', 'h.docentes_permite_respuestas',
             'h.id_curso', 'h.cursos_envio',
             'h.ultimo_mensaje_at', 'h.created_at',
-            DB::raw('SUM(CASE WHEN d.leido_at IS NULL AND d.id IS NOT NULL THEN 1 ELSE 0 END) as no_leidos'),
+            DB::raw("SUM(CASE
+                WHEN h.creado_por_tipo = 'profesor' AND h.creado_por_id = {$idProfesor} THEN
+                    CASE WHEN d.id IS NOT NULL AND d.leido_at IS NULL
+                        AND NOT (d.tipo_destinatario = 'profesor' AND d.id_profesor = {$idProfesor})
+                    THEN 1 ELSE 0 END
+                ELSE
+                    CASE WHEN d.tipo_destinatario = 'profesor' AND d.id_profesor = {$idProfesor}
+                        AND d.leido_at IS NULL AND d.id IS NOT NULL
+                    THEN 1 ELSE 0 END
+            END) as no_leidos"),
             DB::raw('SUM(CASE WHEN d.respondido_at IS NOT NULL THEN 1 ELSE 0 END) as respondidos'),
             DB::raw('COUNT(d.id) as total_dest'),
             DB::raw("CASE WHEN h.creado_por_tipo = 'profesor' AND h.creado_por_id = {$idProfesor} THEN 'enviado' ELSE 'recibido' END as direccion"),
@@ -911,6 +916,8 @@ class ComunicacionesRepository
 
         $select[] = DB::raw('(SELECT m.contenido FROM com_mensajes m WHERE m.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_contenido');
         $select[] = DB::raw("(SELECT COUNT(DISTINCT d0.id_legajo) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia' AND d0.id_legajo IS NOT NULL) as destinatarios_familia_count");
+        $select[] = DB::raw("(SELECT COUNT(*) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id) as destinatarios_mensaje_inicial_count");
+        $select[] = DB::raw("(SELECT COUNT(*) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.leido_at IS NOT NULL) as destinatarios_mensaje_inicial_leidos");
         $select[] = DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_legajo SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia') as destinatarios_nombres_concat");
         $select[] = DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_profesor SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor') as destinatarios_doc_nombres_concat");
         $select[] = DB::raw("(SELECT CASE WHEN TRIM(COALESCE(c.cursec, '')) <> '' THEN TRIM(c.cursec) ELSE TRIM(COALESCE(cp.curPlanCurso, 'Curso')) END FROM cursos c LEFT JOIN curplan cp ON cp.id = c.idCurPlan WHERE c.Id = h.id_curso LIMIT 1) as curso_envio_label");
@@ -918,6 +925,17 @@ class ComunicacionesRepository
         $select[] = DB::raw('(SELECT m0.tipo_remitente FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_tipo');
         $select[] = DB::raw('(SELECT m0.nombre_remitente_snapshot FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_nombre');
         $select[] = DB::raw('(SELECT m0.vinculo_familiar FROM com_mensajes m0 WHERE m0.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_vinculo');
+
+        $havingNoLeidos = "SUM(CASE
+            WHEN h.creado_por_tipo = 'profesor' AND h.creado_por_id = {$idProfesor} THEN
+                CASE WHEN d.id IS NOT NULL AND d.leido_at IS NULL
+                    AND NOT (d.tipo_destinatario = 'profesor' AND d.id_profesor = {$idProfesor})
+                THEN 1 ELSE 0 END
+            ELSE
+                CASE WHEN d.tipo_destinatario = 'profesor' AND d.id_profesor = {$idProfesor}
+                    AND d.leido_at IS NULL AND d.id IS NOT NULL
+                THEN 1 ELSE 0 END
+        END) > 0";
 
         $query->select($select)
             ->groupBy('h.id', 'h.asunto', 'h.scope', 'h.estado', 'h.creado_por_tipo',
@@ -927,7 +945,7 @@ class ComunicacionesRepository
             ->orderByDesc('h.ultimo_mensaje_at');
 
         if ($filtro === 'no_leidos') {
-            $query->havingRaw('SUM(CASE WHEN d.leido_at IS NULL AND d.id IS NOT NULL THEN 1 ELSE 0 END) > 0');
+            $query->havingRaw($havingNoLeidos);
         } elseif ($filtro === 'respondidos') {
             $query->havingRaw('SUM(CASE WHEN d.respondido_at IS NOT NULL THEN 1 ELSE 0 END) > 0');
         }
@@ -1012,6 +1030,8 @@ class ComunicacionesRepository
 
         $select[] = DB::raw('(SELECT m.contenido FROM com_mensajes m WHERE m.id = h.cuerpo_inicial_id LIMIT 1) as cuerpo_inicial_contenido');
         $select[] = DB::raw("(SELECT COUNT(DISTINCT d0.id_legajo) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia' AND d0.id_legajo IS NOT NULL) as destinatarios_familia_count");
+        $select[] = DB::raw("(SELECT COUNT(*) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id) as destinatarios_mensaje_inicial_count");
+        $select[] = DB::raw("(SELECT COUNT(*) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.leido_at IS NOT NULL) as destinatarios_mensaje_inicial_leidos");
         $select[] = DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_legajo SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia') as destinatarios_nombres_concat");
         $select[] = DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_profesor SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor') as destinatarios_doc_nombres_concat");
         $select[] = DB::raw("(SELECT CASE WHEN TRIM(COALESCE(c.cursec, '')) <> '' THEN TRIM(c.cursec) ELSE TRIM(COALESCE(cp.curPlanCurso, 'Curso')) END FROM cursos c LEFT JOIN curplan cp ON cp.id = c.idCurPlan WHERE c.Id = h.id_curso LIMIT 1) as curso_envio_label");
@@ -1078,18 +1098,22 @@ class ComunicacionesRepository
             })
             ->where('h.id_nivel', $idNivel)
             ->when($soloTerlecActual, fn ($q) => $q->where('h.id_terlec', $idTerlec))
-            ->leftJoin('com_mensajes_destinatarios as d', function ($j) use ($idLegajo) {
-                $j->on('d.id_hilo', '=', 'h.id')
-                  ->where('d.tipo_destinatario', 'familia')
-                  ->where('d.id_legajo', $idLegajo);
-            })
+            ->leftJoin('com_mensajes_destinatarios as d', 'd.id_hilo', '=', 'h.id')
             ->select([
                 'h.id', 'h.asunto', 'h.scope', 'h.estado', 'h.cuerpo_inicial_id',
                 'h.creado_por_tipo', 'h.creado_por_id', 'h.creado_por_rol',
                 'h.familia_puede_responder', 'h.docentes_permite_respuestas',
                 'h.id_curso', 'h.cursos_envio',
                 'h.ultimo_mensaje_at', 'h.created_at',
-                DB::raw('SUM(CASE WHEN d.leido_at IS NULL AND d.id IS NOT NULL THEN 1 ELSE 0 END) as no_leidos'),
+                DB::raw("SUM(CASE
+                    WHEN h.creado_por_tipo = 'familia' AND h.creado_por_id = {$idLegajo} THEN
+                        CASE WHEN d.tipo_destinatario = 'profesor' AND d.leido_at IS NULL AND d.id IS NOT NULL
+                        THEN 1 ELSE 0 END
+                    ELSE
+                        CASE WHEN d.tipo_destinatario = 'familia' AND d.id_legajo = {$idLegajo}
+                            AND d.leido_at IS NULL AND d.id IS NOT NULL
+                        THEN 1 ELSE 0 END
+                END) as no_leidos"),
                 DB::raw('SUM(CASE WHEN d.respondido_at IS NOT NULL THEN 1 ELSE 0 END) as respondidos'),
                 DB::raw("CASE WHEN h.creado_por_tipo = 'familia' AND h.creado_por_id = {$idLegajo} THEN 'enviado' ELSE 'recibido' END as direccion"),
                 DB::raw('(SELECT COUNT(*) FROM com_mensajes mx WHERE mx.id_hilo = h.id) as mensajes_count'),
@@ -1097,6 +1121,8 @@ class ComunicacionesRepository
                 DB::raw("(SELECT COUNT(DISTINCT d0.id_legajo) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia' AND d0.id_legajo IS NOT NULL) as destinatarios_familia_count"),
                 DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_legajo SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'familia') as destinatarios_nombres_concat"),
                 DB::raw("(SELECT COUNT(DISTINCT d0.id_profesor) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor' AND d0.id_profesor IS NOT NULL) as destinatarios_prof_count"),
+                DB::raw("(SELECT COUNT(*) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor') as destinatarios_mensaje_inicial_count"),
+                DB::raw("(SELECT COUNT(*) FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor' AND d0.leido_at IS NOT NULL) as destinatarios_mensaje_inicial_leidos"),
                 DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_profesor SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor') as destinatarios_doc_nombres_concat"),
                 DB::raw("(SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(d0.nombre_snapshot), '') ORDER BY d0.id_profesor SEPARATOR '||') FROM com_mensajes_destinatarios d0 WHERE d0.id_mensaje = h.cuerpo_inicial_id AND d0.tipo_destinatario = 'profesor') as destinatarios_prof_nombres_concat"),
                 DB::raw("(SELECT CASE WHEN TRIM(COALESCE(c.cursec, '')) <> '' THEN TRIM(c.cursec) ELSE TRIM(COALESCE(cp.curPlanCurso, 'Curso')) END FROM cursos c LEFT JOIN curplan cp ON cp.id = c.idCurPlan WHERE c.Id = h.id_curso LIMIT 1) as curso_envio_label"),
@@ -1110,8 +1136,18 @@ class ComunicacionesRepository
                       'h.ultimo_mensaje_at', 'h.created_at', 'h.cuerpo_inicial_id', 'h.id_curso', 'h.cursos_envio')
             ->orderByDesc('h.ultimo_mensaje_at');
 
+        $havingNoLeidosFam = "SUM(CASE
+            WHEN h.creado_por_tipo = 'familia' AND h.creado_por_id = {$idLegajo} THEN
+                CASE WHEN d.tipo_destinatario = 'profesor' AND d.leido_at IS NULL AND d.id IS NOT NULL
+                THEN 1 ELSE 0 END
+            ELSE
+                CASE WHEN d.tipo_destinatario = 'familia' AND d.id_legajo = {$idLegajo}
+                    AND d.leido_at IS NULL AND d.id IS NOT NULL
+                THEN 1 ELSE 0 END
+        END) > 0";
+
         if ($filtro === 'no_leidos') {
-            $query->havingRaw('SUM(CASE WHEN d.leido_at IS NULL AND d.id IS NOT NULL THEN 1 ELSE 0 END) > 0');
+            $query->havingRaw($havingNoLeidosFam);
         } elseif ($filtro === 'respondidos') {
             $query->havingRaw('SUM(CASE WHEN d.respondido_at IS NOT NULL THEN 1 ELSE 0 END) > 0');
         }
@@ -1255,6 +1291,96 @@ class ComunicacionesRepository
             ->update(['leido_at' => null]);
 
         return $affected > 0;
+    }
+
+    /**
+     * Detalle de lectura por destinatario (mensaje enviado por la escuela).
+     *
+     * @return array{
+     *   titulo:string,
+     *   resumen:array{etiqueta:string,estado:string,total:int,leidos:int},
+     *   filas:list<array{nombre:string,tipo_etiqueta:string,leido:bool,fecha_lectura:string}>
+     * }|null
+     */
+    public static function payloadDetalleLecturaMensajeGestion(
+        int $idMensaje,
+        int $idHilo,
+        int $idNivel,
+        int $idTerlec
+    ): ?array {
+        if (! ComHilo::query()
+            ->where('id', $idHilo)
+            ->where('id_nivel', $idNivel)
+            ->where('id_terlec', $idTerlec)
+            ->exists()) {
+            return null;
+        }
+
+        $msg = ComMensaje::query()
+            ->where('id', $idMensaje)
+            ->where('id_hilo', $idHilo)
+            ->where('tipo_remitente', 'profesor')
+            ->with('destinatarios')
+            ->first();
+
+        if ($msg === null) {
+            return null;
+        }
+
+        $resumen = $msg->resumenLecturaDestinatarios();
+        if (($resumen['total'] ?? 0) === 0) {
+            return null;
+        }
+
+        return [
+            'titulo'  => 'Confirmación de lectura',
+            'resumen' => $resumen,
+            'filas'   => $msg->filasDetalleLecturaDestinatarios(),
+        ];
+    }
+
+    /**
+     * Detalle de lectura por destinatario (mensaje enviado por la familia).
+     *
+     * @return array{
+     *   titulo:string,
+     *   resumen:array{etiqueta:string,estado:string,total:int,leidos:int},
+     *   filas:list<array{nombre:string,tipo_etiqueta:string,leido:bool,fecha_lectura:string}>
+     * }|null
+     */
+    public static function payloadDetalleLecturaMensajeFamilia(
+        int $idMensaje,
+        int $idHilo,
+        int $idLegajo,
+        int $idNivel,
+        int $idTerlec
+    ): ?array {
+        if (! static::familiaPuedeVerHilo($idHilo, $idLegajo, $idNivel, $idTerlec)) {
+            return null;
+        }
+
+        $msg = ComMensaje::query()
+            ->where('id', $idMensaje)
+            ->where('id_hilo', $idHilo)
+            ->where('tipo_remitente', 'familia')
+            ->where('id_legajo', $idLegajo)
+            ->with('destinatarios')
+            ->first();
+
+        if ($msg === null) {
+            return null;
+        }
+
+        $resumen = $msg->resumenLecturaDestinatarios();
+        if (($resumen['total'] ?? 0) === 0) {
+            return null;
+        }
+
+        return [
+            'titulo'  => 'Confirmación de lectura',
+            'resumen' => $resumen,
+            'filas'   => $msg->filasDetalleLecturaDestinatarios(),
+        ];
     }
 
     /**

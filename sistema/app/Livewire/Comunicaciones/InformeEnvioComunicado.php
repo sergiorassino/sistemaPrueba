@@ -25,7 +25,7 @@ class InformeEnvioComunicado extends Component
 
     public function mount(int $id): void
     {
-        abort_unless(tienePermiso(3) && tienePermiso(4), 403);
+        abort_unless(ComunicacionesRutasGestion::accesoNuevoComunicado(), 403);
 
         $this->idHilo = $id;
 

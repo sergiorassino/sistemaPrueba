@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Profesor;
+use App\Models\ProfesorTipo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -47,6 +48,29 @@ final class ProfesorMenuPortal
     public static function usaMenuSecretaria(?Profesor $profesor): bool
     {
         return ! self::usaMenuDocentes($profesor);
+    }
+
+    /**
+     * Rol «Secretario/a» en `profesortipo` (por nombre; el id varía por colegio).
+     */
+    public static function esSecretario(?Profesor $profesor = null): bool
+    {
+        $profesor ??= Auth::user();
+        if (! $profesor instanceof Profesor) {
+            return false;
+        }
+
+        $idTipo = (int) ($profesor->IdTipoProf ?? 0);
+        if ($idTipo <= 0) {
+            return false;
+        }
+
+        $tipo = ProfesorTipo::query()->whereKey($idTipo)->value('tipo');
+        if ($tipo === null || trim((string) $tipo) === '') {
+            return false;
+        }
+
+        return str_contains(mb_strtolower(trim((string) $tipo)), 'secret');
     }
 
     public static function rutaInicio(?Profesor $profesor = null): string

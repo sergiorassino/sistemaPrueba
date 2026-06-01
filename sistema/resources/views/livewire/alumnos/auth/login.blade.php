@@ -64,8 +64,7 @@
                         class="btn-primary w-full py-2 text-sm"
                         wire:loading.attr="disabled"
                         wire:loading.class="opacity-75"
-                        wire:target="login"
-                        disabled>
+                        wire:target="login">
                     <span wire:loading.remove wire:target="login">Ingresar</span>
                     <span wire:loading wire:target="login" class="flex items-center justify-center gap-2">
                         <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">

@@ -121,6 +121,9 @@
                                 : (! $miDestMarcar->leido_at
                                     ? 'Este mensaje ya figura como no leído.'
                                     : '');
+                            $esMensajeInstitucional = $msg->tipo_remitente === 'profesor';
+                            $lecturaEnviado = $esMensajeInstitucional ? $msg->resumenLecturaDestinatarios() : null;
+                            $lecturaVariante = $esEnviadoPorMi ? 'clara' : 'oscura';
                         @endphp
                         <div @class(['flex', 'justify-start' => $esEnviadoPorMi, 'justify-end' => $esRecibido])>
                             <div @class([
@@ -131,19 +134,28 @@
                                 'rounded-tr-md bg-gradient-to-br from-primary-600 to-primary-700 text-white' => $esRecibido,
                             ])>
                                 <div @class([
-                                    'mb-1 text-xs font-semibold',
+                                    'mb-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs font-semibold',
                                     'text-neutral-600' => $esEnviadoPorMi,
                                     'text-white/85' => $esRecibido,
                                 ])>
-                                    {{ $msg->nombre_remitente_snapshot ?? ($msg->tipo_remitente === 'profesor' ? 'Personal escolar' : 'Familia') }}
-                                    @if ($msg->vinculo_familiar)
-                                        <span @class([
-                                            'ml-1 font-normal',
-                                            'text-neutral-500' => $esEnviadoPorMi,
-                                            'text-white/65' => $esRecibido,
-                                        ])>
-                                            ({{ $msg->vinculoLabel() }})
-                                        </span>
+                                    <span class="min-w-0">
+                                        {{ $msg->nombre_remitente_snapshot ?? ($msg->tipo_remitente === 'profesor' ? 'Personal escolar' : 'Familia') }}
+                                        @if ($msg->vinculo_familiar)
+                                            <span @class([
+                                                'ml-1 font-normal',
+                                                'text-neutral-500' => $esEnviadoPorMi,
+                                                'text-white/65' => $esRecibido,
+                                            ])>
+                                                ({{ $msg->vinculoLabel() }})
+                                            </span>
+                                        @endif
+                                    </span>
+                                    @if ($lecturaEnviado)
+                                        @include('comunicaciones::partials.marca-lectura-destinatarios', [
+                                            'lectura' => $lecturaEnviado,
+                                            'variante' => $lecturaVariante,
+                                            'idMensaje' => (int) $msg->id,
+                                        ])
                                     @endif
                                 </div>
 
@@ -296,6 +308,8 @@
             </div>
         </div>
     @endif
+
+    @include('comunicaciones::partials.modal-detalle-lectura')
 
     @if ($modalBorrarAbierto)
         <div class="fixed inset-0 z-[90] flex items-center justify-center px-4 py-8 sm:px-6" role="dialog" aria-modal="true"

@@ -99,8 +99,7 @@
                 <button type="submit"
                         class="se-auth-btn"
                         wire:loading.attr="disabled"
-                        wire:target="login"
-                        disabled>
+                        wire:target="login">
                     <span wire:loading.remove wire:target="login">Ingresar al sistema</span>
                     <span wire:loading wire:target="login" class="flex items-center justify-center gap-2">
                         <svg class="animate-spin h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" aria-hidden="true">

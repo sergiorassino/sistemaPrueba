@@ -170,6 +170,22 @@
                     $deLabel .= ' ('.$deVinculo.')';
                 }
 
+                $lecturaInicialTotal = $esEnviados ? (int) ($hilo->destinatarios_mensaje_inicial_count ?? 0) : 0;
+                $lecturaInicialLeidos = $esEnviados ? (int) ($hilo->destinatarios_mensaje_inicial_leidos ?? 0) : 0;
+                $lecturaInicialPendientes = max(0, $lecturaInicialTotal - $lecturaInicialLeidos);
+                $lecturaInicialEstado = match (true) {
+                    $lecturaInicialTotal <= 0 => '',
+                    $lecturaInicialPendientes === 0 => 'leido',
+                    $lecturaInicialLeidos === 0 => 'no_leido',
+                    default => 'parcial',
+                };
+                $lecturaInicialEtiqueta = match ($lecturaInicialEstado) {
+                    'leido' => $lecturaInicialTotal === 1 ? 'Leído' : "Leído ({$lecturaInicialLeidos}/{$lecturaInicialTotal})",
+                    'no_leido' => $lecturaInicialTotal === 1 ? 'Sin leer' : "Sin leer ({$lecturaInicialPendientes}/{$lecturaInicialTotal})",
+                    'parcial' => "{$lecturaInicialLeidos}/{$lecturaInicialTotal} leídos",
+                    default => '',
+                };
+
                 $paraLabel = '';
                 if ($esEnviados) {
                     if (in_array($hilo->scope, ['curso', 'varios_cursos'], true)) {
@@ -225,6 +241,16 @@
                         @if ($tieneNoLeidos)
                             <span class="inline-flex shrink-0 items-center rounded-full border border-pink-400 bg-pink-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-pink-950">
                                 {{ $noLeidos }} no leído{{ $noLeidos > 1 ? 's' : '' }}
+                            </span>
+                        @endif
+                        @if ($esEnviados && $lecturaInicialEtiqueta !== '')
+                            <span @class([
+                                'inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
+                                'border-primary-200 bg-primary-50 text-primary-800' => $lecturaInicialEstado === 'leido',
+                                'border-amber-200 bg-amber-50 text-amber-900' => $lecturaInicialEstado === 'parcial',
+                                'border-neutral-300 bg-neutral-100 text-neutral-600' => $lecturaInicialEstado === 'no_leido',
+                            ])>
+                                {{ $lecturaInicialEtiqueta }}
                             </span>
                         @endif
                         @php

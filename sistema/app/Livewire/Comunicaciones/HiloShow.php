@@ -6,6 +6,7 @@ use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComAuditoriaLogger;
 use App\Comunicaciones\ComunicacionesGestionSession;
 use App\Comunicaciones\ComunicacionesRepository;
+use App\Livewire\Concerns\DetalleLecturaDestinatariosModal;
 use App\Support\ComunicacionesRutasGestion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -18,6 +19,8 @@ use App\Models\ComMensajeEnvio;
 
 class HiloShow extends Component
 {
+    use DetalleLecturaDestinatariosModal;
+
     public int $idHilo;
     public string $respuesta = '';
     public bool $mostrarFormRespuesta = false;
@@ -31,7 +34,7 @@ class HiloShow extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(3), 403, 'Sin permiso para ver comunicaciones.');
+        abort_unless(ComunicacionesRutasGestion::accesoBandejaGestion(), 403, 'Sin permiso para ver comunicaciones.');
 
         $id = ComunicacionesGestionSession::idHiloActivo();
         abort_if($id <= 0, 404);
@@ -58,9 +61,24 @@ class HiloShow extends Component
         );
     }
 
+    public function abrirDetalleLectura(int $idMensaje): void
+    {
+        abort_unless(ComunicacionesRutasGestion::accesoBandejaGestion(), 403);
+
+        $ctx = schoolCtx();
+        $this->mostrarDetalleLectura(
+            ComunicacionesRepository::payloadDetalleLecturaMensajeGestion(
+                $idMensaje,
+                $this->idHilo,
+                (int) $ctx->idNivel,
+                (int) $ctx->idTerlec
+            )
+        );
+    }
+
     public function marcarMensajeNoLeido(int $idMensaje): void
     {
-        abort_unless(tienePermiso(3), 403, 'Sin permiso para ver comunicaciones.');
+        abort_unless(ComunicacionesRutasGestion::accesoBandejaGestion(), 403, 'Sin permiso para ver comunicaciones.');
 
         $key = 'com:unread:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 40)) {
@@ -159,7 +177,7 @@ class HiloShow extends Component
 
     public function abrirModalBorrar(int $idMensaje): void
     {
-        abort_unless(tienePermiso(3), 403);
+        abort_unless(ComunicacionesRutasGestion::accesoBandejaGestion(), 403);
 
         $ctx = schoolCtx();
 
@@ -218,7 +236,7 @@ class HiloShow extends Component
 
     public function borrarMensaje(int $idMensaje): void
     {
-        abort_unless(tienePermiso(3), 403);
+        abort_unless(ComunicacionesRutasGestion::accesoBandejaGestion(), 403);
 
         $key = 'com:del:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 10)) {
@@ -314,7 +332,7 @@ class HiloShow extends Component
 
     public function responder(): void
     {
-        abort_unless(tienePermiso(3), 403);
+        abort_unless(ComunicacionesRutasGestion::accesoBandejaGestion(), 403);
 
         $key = 'com:resp:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, config('comunicaciones.rate_limit_max', 20))) {

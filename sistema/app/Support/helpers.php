@@ -61,6 +61,13 @@ if (! function_exists('studentEsNivelSecundario')) {
     }
 }
 
+if (! function_exists('profesorEsSecretario')) {
+    function profesorEsSecretario(?\App\Models\Profesor $profesor = null): bool
+    {
+        return \App\Support\ProfesorMenuPortal::esSecretario($profesor);
+    }
+}
+
 if (! function_exists('tienePermiso')) {
     /**
      * Permiso concedido en profesores.permisos_ia (cadena 0/1 por orden del catálogo permisos_ia).

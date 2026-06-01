@@ -3,6 +3,7 @@
 namespace App\Livewire\Listados;
 
 use App\Support\Listados\EstudiantesDatosConsulta;
+use App\Support\ProfesorMenuPortal;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -10,6 +11,11 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class EstudiantesDatosExport extends Component
 {
+    public function mount(): void
+    {
+        abort_unless(ProfesorMenuPortal::esSecretario(), 403, 'Solo personal con rol Secretario/a puede acceder a viajes y salidas educativas.');
+    }
+
     /** 1 = cursos, 2 = alumnos */
     public int $paso = 1;
 

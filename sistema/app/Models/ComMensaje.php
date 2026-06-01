@@ -78,4 +78,120 @@ class ComMensaje extends Model
     {
         return static::etiquetasVinculo()[$this->vinculo_familiar ?? ''] ?? '';
     }
+
+    /**
+     * Estado de confirmación de lectura para mensajes enviados (destinatarios del mensaje).
+     *
+     * @return array{
+     *   total:int,
+     *   leidos:int,
+     *   pendientes:int,
+     *   estado:'sin_destinatarios'|'leido'|'parcial'|'no_leido',
+     *   etiqueta:string,
+     *   titulo:string
+     * }
+     */
+    public function resumenLecturaDestinatarios(): array
+    {
+        $destinatarios = $this->relationLoaded('destinatarios')
+            ? $this->destinatarios
+            : $this->destinatarios()->get(['leido_at']);
+
+        $total = $destinatarios->count();
+        if ($total === 0) {
+            return [
+                'total'      => 0,
+                'leidos'     => 0,
+                'pendientes' => 0,
+                'estado'     => 'sin_destinatarios',
+                'etiqueta'   => '',
+                'titulo'     => '',
+            ];
+        }
+
+        $leidos     = $destinatarios->filter(fn ($d) => $d->leido_at !== null)->count();
+        $pendientes = $total - $leidos;
+
+        if ($pendientes === 0) {
+            $estado = 'leido';
+        } elseif ($leidos === 0) {
+            $estado = 'no_leido';
+        } else {
+            $estado = 'parcial';
+        }
+
+        $sufijoClic = ' Clic para ver el detalle.';
+
+        if ($total === 1) {
+            $etiqueta = $estado === 'leido' ? 'Leído' : 'Sin leer';
+            $titulo   = ($estado === 'leido'
+                ? 'El destinatario abrió este mensaje.'
+                : 'El destinatario aún no confirmó lectura.').$sufijoClic;
+        } else {
+            $etiqueta = match ($estado) {
+                'leido'    => "Leído ({$leidos}/{$total})",
+                'no_leido' => "Sin leer ({$pendientes}/{$total})",
+                default    => "{$leidos}/{$total} leídos",
+            };
+            $titulo = (match ($estado) {
+                'leido'    => "Los {$total} destinatarios confirmaron lectura.",
+                'no_leido' => "Ninguno de los {$total} destinatarios confirmó lectura aún.",
+                default    => "{$leidos} de {$total} destinatarios confirmaron lectura.",
+            }).$sufijoClic;
+        }
+
+        return [
+            'total'      => $total,
+            'leidos'     => $leidos,
+            'pendientes' => $pendientes,
+            'estado'     => $estado,
+            'etiqueta'   => $etiqueta,
+            'titulo'     => $titulo,
+        ];
+    }
+
+    /**
+     * Filas para el modal de detalle (nombre + fecha de lectura).
+     *
+     * @return list<array{nombre:string,tipo_etiqueta:string,leido:bool,fecha_lectura:string}>
+     */
+    public function filasDetalleLecturaDestinatarios(): array
+    {
+        $destinatarios = $this->relationLoaded('destinatarios')
+            ? $this->destinatarios
+            : $this->destinatarios()->get([
+                'nombre_snapshot', 'tipo_destinatario', 'leido_at',
+            ]);
+
+        $filas = [];
+        foreach ($destinatarios as $d) {
+            $nombre = trim((string) ($d->nombre_snapshot ?? ''));
+            if ($nombre === '') {
+                $nombre = $d->tipo_destinatario === 'familia' ? 'Familia' : 'Personal escolar';
+            }
+
+            $leido = $d->leido_at !== null;
+            $filas[] = [
+                'nombre'         => $nombre,
+                'tipo_etiqueta'  => $d->tipo_destinatario === 'familia' ? 'Familia' : 'Personal',
+                'leido'          => $leido,
+                'fecha_lectura'  => $leido
+                    ? $d->leido_at->format('d/m/Y H:i')
+                    : 'Sin leer',
+            ];
+        }
+
+        usort($filas, function (array $a, array $b): int {
+            if ($a['leido'] !== $b['leido']) {
+                return $b['leido'] <=> $a['leido'];
+            }
+            if ($a['leido']) {
+                return strcmp($b['fecha_lectura'], $a['fecha_lectura']);
+            }
+
+            return strcasecmp($a['nombre'], $b['nombre']);
+        });
+
+        return $filas;
+    }
 }

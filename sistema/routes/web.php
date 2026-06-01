@@ -273,18 +273,19 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
     Route::get('/solicitud-evaluacion/nueva', SolicitudEvaluacionForm::class)
         ->name('portalDocente.solicitudEvaluacion.create');
 
-    Route::get('/comunicaciones', BandejaGestion::class)->middleware('permiso:3')->name('portalDocente.comunicaciones.index');
+    Route::get('/comunicaciones', BandejaGestion::class)->name('portalDocente.comunicaciones.index');
     Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:3', 'permiso:8'])->name('portalDocente.comunicaciones.revision');
-    Route::get('/comunicaciones/nuevo', NuevoComunicado::class)->middleware('permiso:4')->name('portalDocente.comunicaciones.nuevo');
+    Route::get('/comunicaciones/nuevo', NuevoComunicado::class)->name('portalDocente.comunicaciones.nuevo');
     Route::get('/comunicaciones/informe-envio/{id}', InformeEnvioComunicado::class)
-        ->middleware(['permiso:3', 'permiso:4'])
         ->whereNumber('id')
         ->name('portalDocente.comunicaciones.informe-envio');
-    Route::get('/comunicaciones/hilo', HiloShow::class)->middleware('permiso:3')->name('portalDocente.comunicaciones.hilo');
+    Route::get('/comunicaciones/hilo', HiloShow::class)->name('portalDocente.comunicaciones.hilo');
     Route::get('/comunicaciones/abrir/{id}', AbrirHiloComunicacionGestionController::class)
-        ->middleware('permiso:3')
         ->whereNumber('id')
         ->name('portalDocente.comunicaciones.abrir');
+
+    Route::get('/notificaciones/push', SuscribirController::class)
+        ->name('portalDocente.push.suscribir');
 });
 
 // Menú de Secretaría — directivos, secretarios, preceptores, administración, gabinete, etc.

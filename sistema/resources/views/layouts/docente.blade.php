@@ -22,6 +22,7 @@
     $isSidebarPeekMode = (($route ?? '') !== 'portalDocente.home');
     $docenteComBandejaActiva = str_starts_with($route ?? '', 'portalDocente.comunicaciones')
         && ! in_array($route ?? '', ['portalDocente.comunicaciones.nuevo', 'portalDocente.comunicaciones.revision'], true);
+    $docentePushActivo = ($route ?? '') === 'portalDocente.push.suscribir';
 @endphp
 <body class="h-full">
 
@@ -193,53 +194,47 @@
             @endif
         @endif
 
-        @if (tienePermiso(3))
-            <p x-show="!sidebarCollapsed" x-cloak class="se-sidebar-nav-label mt-3 mb-0.5 px-2.5">
-                Comunicación institucional
-            </p>
+        <p x-show="!sidebarCollapsed" x-cloak class="se-sidebar-nav-label mt-3 mb-0.5 px-2.5">
+            Comunicación institucional
+        </p>
 
-            <a href="{{ route('portalDocente.comunicaciones.index') }}"
-               @class([
-                   'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
-                   'is-active shadow-sm' => $docenteComBandejaActiva,
-               ])
-               title="Bandeja de comunicados con familias y personal">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="truncate">Bandeja de comunicados</span>
-            </a>
+        <a href="{{ route('portalDocente.comunicaciones.index') }}"
+           @class([
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
+               'is-active shadow-sm' => $docenteComBandejaActiva,
+           ])
+           title="Bandeja de comunicados con familias y personal">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            <span x-show="!sidebarCollapsed" x-cloak class="truncate">Bandeja de comunicados</span>
+        </a>
 
-            @if (tienePermiso(4))
-                <a href="{{ route('portalDocente.comunicaciones.nuevo') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'portalDocente.comunicaciones.nuevo',
-                   ])
-                   title="Nuevo comunicado a familias o personal">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    <span x-show="!sidebarCollapsed" x-cloak class="truncate">Nuevo comunicado</span>
-                </a>
-            @endif
+        <a href="{{ route('portalDocente.comunicaciones.nuevo') }}"
+           @class([
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
+               'is-active shadow-sm' => ($route ?? '') === 'portalDocente.comunicaciones.nuevo',
+           ])
+           title="Nuevo comunicado a familias o personal">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            <span x-show="!sidebarCollapsed" x-cloak class="truncate">Nuevo comunicado</span>
+        </a>
 
-            @if (tienePermiso(8))
-                <a href="{{ route('portalDocente.comunicaciones.revision') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'portalDocente.comunicaciones.revision',
-                   ])
-                   title="Control Cuaderno de Comunicados">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                    <span x-show="!sidebarCollapsed" x-cloak class="truncate">Control Cuaderno de Comunicados</span>
-                </a>
-            @endif
-        @endif
+        <a href="{{ route('portalDocente.push.suscribir') }}"
+           @class([
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
+               'is-active shadow-sm' => $docentePushActivo,
+           ])
+           title="Notificaciones push en este dispositivo">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span x-show="!sidebarCollapsed" x-cloak class="truncate">Notificaciones Push</span>
+        </a>
 
     </nav>
 

@@ -10,6 +10,7 @@ use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComAuditoriaLogger;
 use App\Comunicaciones\ComunicacionesFamiliaSession;
 use App\Comunicaciones\ComunicacionesRepository;
+use App\Livewire\Concerns\DetalleLecturaDestinatariosModal;
 use App\Models\ComHilo;
 use App\Models\ComMensaje;
 use App\Models\ComMensajeDestinatario;
@@ -17,6 +18,8 @@ use App\Models\ComMensajeEnvio;
 
 class HiloShowFamilia extends Component
 {
+    use DetalleLecturaDestinatariosModal;
+
     public int $idHilo;
 
     public string $vinculo   = '';
@@ -49,6 +52,22 @@ class HiloShowFamilia extends Component
                 idLegajo: (int) $ctx->idLegajo
             );
         }
+    }
+
+    public function abrirDetalleLectura(int $idMensaje): void
+    {
+        $this->assertHiloAccesible();
+
+        $ctx = studentCtx();
+        $this->mostrarDetalleLectura(
+            ComunicacionesRepository::payloadDetalleLecturaMensajeFamilia(
+                $idMensaje,
+                $this->idHilo,
+                (int) $ctx->idLegajo,
+                (int) $ctx->idNivel,
+                (int) $ctx->idTerlec
+            )
+        );
     }
 
     public function marcarMensajeNoLeido(int $idMensaje): void

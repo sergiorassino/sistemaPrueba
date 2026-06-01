@@ -16,7 +16,7 @@ class DashboardController extends Controller
         $modoPortalDocente = ProfesorMenuPortal::usaMenuDocentes(Auth::user());
 
         $bandeja = null;
-        if (tienePermiso(3)) {
+        if (tienePermiso(3) || $modoPortalDocente) {
             $bandeja = ComunicacionesRepository::resumenBandejaProfesor(
                 (int) $ctx->idProfesor,
                 (int) $ctx->idNivel,

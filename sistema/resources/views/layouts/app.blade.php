@@ -303,7 +303,8 @@
 
             </div>
 
-        {{-- Menú de Secretaría: grupo Viajes / Salidas educativas --}}
+        {{-- Menú de Secretaría: grupo Viajes / Salidas educativas (solo Secretario/a) --}}
+        @if (profesorEsSecretario())
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
@@ -346,6 +347,7 @@
                     <span class="truncate">Generar Excel Viaje</span>
                 </a>
             </div>
+        @endif
 
         {{-- Comunicación institucional --}}
         @if(tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5))

@@ -14,6 +14,7 @@ class SuscribirController extends Controller
 
         return view('push.suscribir', [
             'hasSubscription' => PushSubscriptionRepository::hasAnyForUserKey($userKey),
+            'layout'          => request()->routeIs('portalDocente.push.suscribir') ? 'layouts.docente' : 'layouts.app',
         ]);
     }
 }

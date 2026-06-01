@@ -74,6 +74,8 @@
                     @foreach ($mensajes as $msg)
                         @php
                             $esPlataforma = $msg->tipo_remitente === 'profesor';
+                            $esEnviadoPorFamilia = $msg->tipo_remitente === 'familia'
+                                && (int) ($msg->id_legajo ?? 0) === (int) $idLegajoSesion;
                             $miDestMarcar = null;
                             if ($esPlataforma) {
                                 $miDestMarcar = $msg->destinatarios->first(function ($d) use ($idLegajoSesion) {
@@ -81,6 +83,7 @@
                                         && (int) $d->id_legajo === (int) $idLegajoSesion;
                                 });
                             }
+                            $lecturaEnviado = $esEnviadoPorFamilia ? $msg->resumenLecturaDestinatarios() : null;
                         @endphp
                         <div @class(['flex', 'justify-start' => $esPlataforma, 'justify-end' => ! $esPlataforma])>
                             <div @class([
@@ -89,19 +92,28 @@
                                 'rounded-tr-md bg-gradient-to-br from-primary-600 to-primary-700 text-white' => ! $esPlataforma,
                             ])>
                                 <div @class([
-                                    'mb-1 text-xs font-semibold',
+                                    'mb-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs font-semibold',
                                     'text-neutral-600' => $esPlataforma,
                                     'text-white/85' => ! $esPlataforma,
                                 ])>
-                                    @if ($esPlataforma)
-                                        {{ $msg->nombre_remitente_snapshot ?? 'Personal escolar' }}
-                                    @else
-                                        {{ $msg->nombre_remitente_snapshot ?? 'Familia' }}
-                                        @if ($msg->vinculo_familiar)
-                                            <span class="ml-1 font-normal text-white/65">
-                                                ({{ $msg->vinculoLabel() }})
-                                            </span>
+                                    <span class="min-w-0">
+                                        @if ($esPlataforma)
+                                            {{ $msg->nombre_remitente_snapshot ?? 'Personal escolar' }}
+                                        @else
+                                            {{ $msg->nombre_remitente_snapshot ?? 'Familia' }}
+                                            @if ($msg->vinculo_familiar)
+                                                <span class="ml-1 font-normal text-white/65">
+                                                    ({{ $msg->vinculoLabel() }})
+                                                </span>
+                                            @endif
                                         @endif
+                                    </span>
+                                    @if ($lecturaEnviado)
+                                        @include('comunicaciones::partials.marca-lectura-destinatarios', [
+                                            'lectura' => $lecturaEnviado,
+                                            'variante' => 'oscura',
+                                            'idMensaje' => (int) $msg->id,
+                                        ])
                                     @endif
                                 </div>
 
@@ -245,6 +257,8 @@
             </div>
         </div>
     @endif
+
+    @include('comunicaciones::partials.modal-detalle-lectura')
 
     @if ($modalBorrarAbierto)
         <div class="fixed inset-0 z-[90] flex items-center justify-center px-4 py-8 sm:px-6" role="dialog" aria-modal="true"

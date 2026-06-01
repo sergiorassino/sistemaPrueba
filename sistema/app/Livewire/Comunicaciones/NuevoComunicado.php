@@ -76,7 +76,7 @@ class NuevoComunicado extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(3) && tienePermiso(4), 403, 'Sin permiso para iniciar comunicados.');
+        abort_unless(ComunicacionesRutasGestion::accesoNuevoComunicado(), 403, 'Sin permiso para iniciar comunicados.');
 
         $ctx = schoolCtx();
         $profesor = $ctx->profesor();
@@ -321,7 +321,7 @@ class NuevoComunicado extends Component
 
     public function enviar(): void
     {
-        abort_unless(tienePermiso(3) && tienePermiso(4), 403);
+        abort_unless(ComunicacionesRutasGestion::accesoNuevoComunicado(), 403);
 
         $key = 'com:nuevo:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, config('comunicaciones.rate_limit_max', 20))) {

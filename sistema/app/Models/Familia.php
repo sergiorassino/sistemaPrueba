@@ -9,7 +9,7 @@ class Familia extends Model
     protected $table = 'familias';
     public $timestamps = false;
     protected $fillable = [
-        'apellido', 'responsable',
+        'apellido', 'responsable', 'email',
     ];
 
     public function legajos()

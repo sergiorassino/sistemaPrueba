@@ -36,7 +36,21 @@
             </div>
         </div>
 
-        <div class="flex flex-wrap justify-start gap-2 sm:justify-end">
+        <div class="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
+            @if ($id)
+                <div class="mr-2 w-full sm:mr-6 sm:w-auto sm:border-r sm:border-white/20 sm:pr-6">
+                    <x-nav-contexto-estudiante
+                        destino="abm.legajos.familia"
+                        :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::LEGAJO_ABM"
+                        :id-legajos="$id"
+                        tag="a">
+                        <span class="inline-flex w-full items-center justify-center rounded-xl border border-white/25 bg-white/5 px-4 py-2.5 text-sm font-bold tracking-wide text-white shadow-sm transition hover:bg-white/15 sm:w-auto">
+                            FAMILIA
+                        </span>
+                    </x-nav-contexto-estudiante>
+                </div>
+            @endif
+
             <a href="{{ route('abm.legajos', ['focus' => $id]) }}" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15">{{ $puedeEditar ? 'Cancelar' : 'Volver al listado' }}</a>
 
             @if ($puedeEditar)

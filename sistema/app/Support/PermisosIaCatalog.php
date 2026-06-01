@@ -74,6 +74,8 @@ final class PermisosIaCatalog
 
     public const SOLICITUDES_EVALUACION_GESTION = 45;
 
+    public const LEGAJOS_FAMILIAS_GESTION = 46;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -122,6 +124,7 @@ final class PermisosIaCatalog
             ['id' => 43, 'orden' => self::COM_AUDITORIA, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Auditoría de comunicación institucional: consultar borrados y marcas de lectura en bandejas.'],
             ['id' => 44, 'orden' => self::MATRICULA_WEB_DOCUMENTOS, 'tema' => 'MATRÍCULA WEB', 'descripcion' => 'Documentos de aceptación (PDF por nivel): compromiso educativo, AEC, normativas y traslado para el portal de estudiantes.'],
             ['id' => 45, 'orden' => self::SOLICITUDES_EVALUACION_GESTION, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Gestión de solicitudes de evaluación: listado por fecha, alta, edición y baja de evaluaciones programadas (tabla evaluac).'],
+            ['id' => 46, 'orden' => self::LEGAJOS_FAMILIAS_GESTION, 'tema' => 'LEGAJOS ESTUDIANTES', 'descripcion' => 'Gestionar familias de estudiantes: crear, editar, eliminar y asignar o quitar vínculos con legajos (la consulta permanece disponible para todos).'],
         ];
     }
 

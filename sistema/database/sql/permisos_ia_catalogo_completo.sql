@@ -56,7 +56,8 @@ INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (42, 40,
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (43, 43, 'COMUNICACIONES', 'Auditoría de comunicación institucional: consultar borrados y marcas de lectura en bandejas.');
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (44, 44, 'MATRÍCULA WEB', 'Documentos de aceptación (PDF por nivel): compromiso educativo, AEC, normativas y traslado para el portal de estudiantes.');
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (45, 45, 'CALIFICACIONES SECUNDARIO', 'Gestión de solicitudes de evaluación: listado por fecha, alta, edición y baja de evaluaciones programadas (tabla evaluac).');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (46, 46, 'LEGAJOS ESTUDIANTES', 'Gestionar familias de estudiantes: crear, editar, eliminar y asignar o quitar vínculos con legajos (la consulta permanece disponible para todos).');
 
-ALTER TABLE `permisos_ia` AUTO_INCREMENT = 46;
+ALTER TABLE `permisos_ia` AUTO_INCREMENT = 47;
 
 SET FOREIGN_KEY_CHECKS = 1;

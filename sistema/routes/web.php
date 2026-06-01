@@ -54,6 +54,8 @@ use App\Livewire\Abm\Curplan\CurplanIndex;
 use App\Livewire\Abm\Cursos\CursosIndex;
 use App\Livewire\Abm\CursosPorProfesor\CursosPorProfesorIndex;
 use App\Livewire\Abm\Legajos\LegajoCargaPorCurso;
+use App\Livewire\Abm\Legajos\LegajoBuscarFamilias;
+use App\Livewire\Abm\Legajos\LegajoFamilia;
 use App\Livewire\Abm\Legajos\LegajoForm;
 use App\Livewire\Abm\Legajos\LegajosIndex;
 use App\Livewire\Abm\LegajosProfesor\LegajoProfesorForm;
@@ -389,6 +391,8 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
     Route::get('/abm/legajos/carga-por-curso', LegajoCargaPorCurso::class)->middleware('permiso:2')->name('abm.legajos.carga-por-curso');
     Route::get('/abm/legajos/nuevo', LegajoForm::class)->middleware('permiso:2')->name('abm.legajos.create');
     Route::get('/abm/legajos/editar', LegajoForm::class)->name('abm.legajos.edit');
+    Route::get('/abm/legajos/familia', LegajoFamilia::class)->name('abm.legajos.familia');
+    Route::get('/abm/legajos/buscar-familias', LegajoBuscarFamilias::class)->name('abm.legajos.buscar-familias');
 
     Route::get('/abm/legajos-profesor', LegajosProfesorIndex::class)->middleware('permiso:11')->name('abm.legajos-profesor');
     Route::get('/abm/legajos-profesor/nuevo', LegajoProfesorForm::class)->middleware('permiso:11')->name('abm.legajos-profesor.create');

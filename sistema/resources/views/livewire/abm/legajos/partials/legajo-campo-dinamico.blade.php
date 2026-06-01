@@ -26,12 +26,18 @@
         @break
     @case('idFamilias')
         <div><label class="form-label">{{ $label }}</label>
-            <select wire:model="idFamilias" class="form-select @error('idFamilias') border-red-400 @enderror">
+            <select wire:model="idFamilias"
+                    @disabled(! ($puedeGestionarFamilias ?? false))
+                    class="form-select @error('idFamilias') border-red-400 @enderror @if(! ($puedeGestionarFamilias ?? false)) bg-accent-50 text-neutral-600 @endif">
                 @foreach ($familias as $f)
                     <option value="{{ $f->id }}">{{ $f->apellido }}{{ $f->responsable ? ' – ' . $f->responsable : '' }}</option>
                 @endforeach
             </select>
-            @error('idFamilias') <p class="form-error">{{ $message }}</p> @enderror</div>
+            @error('idFamilias') <p class="form-error">{{ $message }}</p> @enderror
+            @if (! ($puedeGestionarFamilias ?? false))
+                <p class="mt-1 text-xs text-neutral-500">Solo consulta. Para crear, editar o asignar familias use la solapa Familia (con permiso de gestión).</p>
+            @endif
+        </div>
         @break
     @case('legajo')
         <div><label class="form-label">{{ $label }}</label>

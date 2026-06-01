@@ -172,14 +172,23 @@
                                                     </select>
                                                     @break
                                                 @case('familia')
-                                                    <select wire:change="saveCargaPorCursoCell({{ $row['id'] }}, '{{ $col }}', $event.target.value)"
-                                                            class="form-select !py-1.5 text-sm max-w-[12rem]">
-                                                        @foreach ($familiasCargaPorCurso as $f)
-                                                            <option value="{{ $f->id }}" @selected((string) $val === (string) $f->id)>
-                                                                {{ $f->apellido }}{{ $f->responsable ? ' – '.$f->responsable : '' }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
+                                                    @if ($puedeGestionarFamilias ?? false)
+                                                        <select wire:change="saveCargaPorCursoCell({{ $row['id'] }}, '{{ $col }}', $event.target.value)"
+                                                                class="form-select !py-1.5 text-sm max-w-[12rem]">
+                                                            @foreach ($familiasCargaPorCurso as $f)
+                                                                <option value="{{ $f->id }}" @selected((string) $val === (string) $f->id)>
+                                                                    {{ $f->apellido }}{{ $f->responsable ? ' – '.$f->responsable : '' }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    @else
+                                                        @php
+                                                            $familiaLabel = collect($familiasCargaPorCurso)->firstWhere('id', (int) $val);
+                                                        @endphp
+                                                        <span class="text-sm text-neutral-700">
+                                                            {{ $familiaLabel ? $familiaLabel->apellido.($familiaLabel->responsable ? ' – '.$familiaLabel->responsable : '') : '—' }}
+                                                        </span>
+                                                    @endif
                                                     @break
                                                 @case('si_no')
                                                     <select wire:change="saveCargaPorCursoCell({{ $row['id'] }}, '{{ $col }}', $event.target.value)"

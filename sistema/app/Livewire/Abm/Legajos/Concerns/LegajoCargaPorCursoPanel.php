@@ -9,6 +9,7 @@ use App\Models\Matricula;
 use App\Models\Sexo;
 use App\Support\Legajos\LegajoCargaPorCursoCatalog;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
+use App\Support\PermisosIaCatalog;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
@@ -134,6 +135,10 @@ trait LegajoCargaPorCursoPanel
             abort(400);
         }
 
+        if ($columna === 'idFamilias') {
+            abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_FAMILIAS_GESTION), 403, 'Sin permiso para modificar familias.');
+        }
+
         $columnasActivas = collect($this->cargaPorCursoColumnasMeta)->pluck('column')->all();
         if (! in_array($columna, $columnasActivas, true)) {
             abort(400);
@@ -249,6 +254,7 @@ trait LegajoCargaPorCursoPanel
             'sexosCargaPorCurso' => Sexo::opcionesParaSelect(),
             'familiasCargaPorCurso' => Familia::orderBy('id')->orderBy('apellido')->get(['id', 'apellido', 'responsable']),
             'cursoCargaPorCursoLabel' => $cursoLabel,
+            'puedeGestionarFamilias' => tienePermiso(PermisosIaCatalog::LEGAJOS_FAMILIAS_GESTION),
         ];
     }
 

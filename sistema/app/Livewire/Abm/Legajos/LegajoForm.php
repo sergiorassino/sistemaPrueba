@@ -12,6 +12,7 @@ use App\Models\Nivel;
 use App\Models\Sexo;
 use App\Models\SolapaLegajo;
 use App\Models\Terlec;
+use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
@@ -341,6 +342,10 @@ class LegajoForm extends Component
         }
 
         $data = $allData;
+
+        if (! tienePermiso(PermisosIaCatalog::LEGAJOS_FAMILIAS_GESTION)) {
+            unset($data['idFamilias']);
+        }
 
         if ($this->id) {
             // update() only touches the given keys, preserving hidden-column values in the DB.
@@ -1306,6 +1311,7 @@ class LegajoForm extends Component
         }
 
         $puedeEditar = tienePermiso(2);
+        $puedeGestionarFamilias = tienePermiso(PermisosIaCatalog::LEGAJOS_FAMILIAS_GESTION);
         $pageTitle = $this->id
             ? ($puedeEditar ? 'Editar legajo' : 'Consultar legajo')
             : 'Nuevo legajo';
@@ -1313,7 +1319,7 @@ class LegajoForm extends Component
         return view('livewire.abm.legajos.form', compact(
             'familias', 'cursos', 'condiciones', 'sexosOpciones', 'matriculasAlumno',
             'camposActivos', 'showField', 'showFieldEnTab', 'tabsVisibles', 'tabSlugToPanel',
-            'modoParametrizadoLegajo', 'columnasPorSolapaSlug', 'puedeEditar',
+            'modoParametrizadoLegajo', 'columnasPorSolapaSlug', 'puedeEditar', 'puedeGestionarFamilias',
         ))->layout('layouts.app', ['pageTitle' => $pageTitle]);
     }
 }

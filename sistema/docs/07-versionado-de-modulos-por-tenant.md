@@ -65,6 +65,22 @@ return [
 
 Default en `config/tenant.php`: `false`. Consumir con `tenantBoletinMuestraTercerMateria()` o `config('tenant.boletin.mostrar_tercer_materia')`.
 
+Fórmulas al crear plantilla de cuota (bonificación/interés por vencimiento; default +0 % en los cuatro tramos):
+
+```php
+// config/tenants/{slug}.php — solo lo que difiere
+return [
+    'cuotas' => [
+        'formulas_iniciales_plantilla' => [
+            'signo1v' => '-',
+            'valor1v' => 15.0,
+        ],
+    ],
+];
+```
+
+Consumir con `tenantCuotasFormulasInicialesPlantilla()` o `CuotasImportesCatalog::valoresInicialesRegistro()`.
+
 El `slug` también se usa en rutas de almacenamiento (ej. logos en `ento/logos/{slug}/…`).
 
 ### 3.2 Parametrización en base de datos (principal)

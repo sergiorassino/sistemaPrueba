@@ -35,6 +35,18 @@
                 @endif
             </div>
             <div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                @if (! $mostrarHistorial)
+                    <x-nav-contexto-estudiante
+                        destino="cuotas.estudiante.generar"
+                        :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
+                        :id-legajos="$idLegajo"
+                        tag="a"
+                        class="inline">
+                        <span class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 cursor-pointer">
+                            Generar cuota
+                        </span>
+                    </x-nav-contexto-estudiante>
+                @endif
                 <a href="{{ se_route_url('cuotas.resumen-pagos', ['ref' => OpaqueRouteToken::forResumenPagosEstudiante($idLegajo)]) }}"
                    target="_blank" rel="noopener noreferrer"
                    class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20">

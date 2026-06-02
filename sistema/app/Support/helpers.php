@@ -520,6 +520,19 @@ if (! function_exists('schoolNombre')) {
     }
 }
 
+if (! function_exists('tenantCuotasFormulasInicialesPlantilla')) {
+    /**
+     * Fórmulas por defecto al crear plantilla de cuota (bonif./interés por vencimiento).
+     * Defaults en `config/tenant.php`; override en `config/tenants/{slug}.php`.
+     *
+     * @return array<string, float|string>
+     */
+    function tenantCuotasFormulasInicialesPlantilla(): array
+    {
+        return \App\Support\Cuotas\CuotasImportesCatalog::valoresInicialesRegistro();
+    }
+}
+
 if (! function_exists('tenantBoletinMuestraTercerMateria')) {
     /**
      * Si el colegio muestra el bloque de tercer materia en boletín y consulta de calificaciones.

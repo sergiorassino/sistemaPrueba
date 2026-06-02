@@ -3,7 +3,9 @@
 namespace App\Livewire\Cuotas;
 
 use App\Models\Cuota;
+use App\Support\Cuotas\CuotasImportesCatalog;
 use App\Support\Cuotas\CuotasPlantillaCatalog;
+use App\Support\Navegacion\ContextoCuotasImportesSesion;
 use App\Support\PermisosCuotas;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -25,6 +27,16 @@ class CuotasPlantillaIndex extends Component
     /** @var array<string, string> Hash del último payload guardado por fila (estado Livewire). */
     public array $ultimoGuardadoHashes = [];
 
+    public bool $modalAltaAbierto = false;
+
+    /** @var array<string, mixed> */
+    public array $alta = [];
+
+    /** `defaults` | `modelo` */
+    public string $origenFormulas = 'defaults';
+
+    public ?int $idCuotaModeloFormulas = null;
+
     public function mount(): void
     {
         abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
@@ -38,7 +50,8 @@ class CuotasPlantillaIndex extends Component
 
     public function updated($property): void
     {
-        if ($this->persistiendo || $property === 'search') {
+        if ($this->persistiendo || $property === 'search' || str_starts_with((string) $property, 'alta.')
+            || $property === 'modalAltaAbierto' || $property === 'origenFormulas' || $property === 'idCuotaModeloFormulas') {
             return;
         }
 
@@ -53,17 +66,104 @@ class CuotasPlantillaIndex extends Component
         $this->saveRowField($coincidencias[1]);
     }
 
-    public function addNew(): void
+    public function abrirModalAlta(): void
     {
-        // Sin puntos: Livewire usa dot-notation en wire:model (draft.{key}.campo).
-        $key = 'new_'.bin2hex(random_bytes(8));
-        $maxOrden = (int) collect($this->draft)
-            ->pluck('orden')
-            ->map(fn ($v) => (int) $v)
-            ->max();
+        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
 
-        $this->draft[$key] = $this->filaVacia($maxOrden + 1);
+        $this->alta = $this->altaVacia();
         $this->resetValidation();
+
+        $cuotasModelo = CuotasPlantillaCatalog::cuotasDelCicloParaSelector();
+        if ($cuotasModelo->isEmpty()) {
+            $this->origenFormulas = 'defaults';
+            $this->idCuotaModeloFormulas = null;
+        } else {
+            $ultima = $cuotasModelo->last();
+            $this->idCuotaModeloFormulas = $ultima !== null ? (int) $ultima->id : null;
+            $this->origenFormulas = 'modelo';
+        }
+
+        $this->modalAltaAbierto = true;
+    }
+
+    public function cerrarModalAlta(): void
+    {
+        $this->modalAltaAbierto = false;
+        $this->resetValidation();
+    }
+
+    public function guardarNuevaCuota(): void
+    {
+        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+
+        $permiteModelo = CuotasPlantillaCatalog::cuentaCuotasEnCicloActivo() > 0;
+        if (! $permiteModelo) {
+            $this->origenFormulas = 'defaults';
+            $this->idCuotaModeloFormulas = null;
+        }
+
+        $this->validate(
+            CuotasPlantillaCatalog::reglasAltaModal([
+                'origenFormulas' => $this->origenFormulas,
+            ], $permiteModelo),
+            [
+                'alta.idCuotasmeses.required' => 'Seleccione el mes.',
+                'alta.idCuotasmeses.in' => 'Seleccione el mes.',
+                'alta.idCuotastipo.required' => 'Seleccione la cuota.',
+                'alta.idCuotastipo.in' => 'Seleccione la cuota.',
+            ],
+        );
+
+        $rateKey = 'cuotas-plantilla:alta:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($rateKey, 30)) {
+            $this->addError('alta.nombre', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+
+            return;
+        }
+        RateLimiter::hit($rateKey, 60);
+
+        $payload = CuotasPlantillaCatalog::payloadAltaDesdeFormulario($this->alta);
+        $idCuotaModelo = ($permiteModelo && $this->origenFormulas === 'modelo')
+            ? (int) $this->idCuotaModeloFormulas
+            : null;
+
+        $esPrimeraDelCiclo = ! $permiteModelo;
+
+        try {
+            $cuota = DB::transaction(function () use ($payload, $idCuotaModelo): Cuota {
+                $cuota = Cuota::query()->create($payload);
+                CuotasImportesCatalog::crearRegistrosParaCuota(
+                    (int) $cuota->id,
+                    (int) $cuota->idTerlec,
+                    $idCuotaModelo,
+                );
+
+                return $cuota;
+            });
+        } catch (\Throwable) {
+            $this->dispatch('se-swal-error', mensaje: 'No se pudo crear la plantilla de cuota. Verifique los datos e intente nuevamente.');
+
+            return;
+        }
+
+        $this->modalAltaAbierto = false;
+        $clave = (string) $cuota->id;
+        $this->draft[$clave] = $this->filaDesdeModelo($cuota);
+        $this->ultimoGuardadoHashes[$clave] = $this->hashFila($clave);
+        $this->resetValidation();
+
+        $nombre = trim((string) $cuota->nombre);
+        if ($esPrimeraDelCiclo) {
+            $this->dispatch(
+                'se-swal-exito',
+                mensaje: "Cuota «{$nombre}» creada. Es la primera del año: configure importes y fórmulas por curso en Importes; las siguientes plantillas podrán tomarla como modelo.",
+            );
+        } else {
+            $this->dispatch(
+                'se-swal-exito',
+                mensaje: "Cuota «{$nombre}» creada. Los importes por curso quedan en \$0; complételos en Importes por curso.",
+            );
+        }
     }
 
     public function saveRowField(string $key): void
@@ -102,20 +202,11 @@ class CuotasPlantillaIndex extends Component
         $payload = $this->payloadDesdeDraft($key);
 
         try {
-            if (CuotasPlantillaCatalog::esFilaNueva($key)) {
-                $cuota = Cuota::query()->create($payload);
-                unset($this->draft[$key], $this->ultimoGuardadoHashes[$key]);
-                $nuevaClave = (string) $cuota->id;
-                $this->draft[$nuevaClave] = $this->filaDesdeModelo($cuota);
-                $this->ultimoGuardadoHashes[$nuevaClave] = $this->hashFila($nuevaClave);
-            } else {
-                $id = (int) $key;
-                $cuota = $this->cuotaDelCicloOrFail($id);
-                $cuota->update($payload);
-                $this->draft[(string) $cuota->id] = $this->filaDesdeModelo($cuota->fresh());
-                $this->ultimoGuardadoHashes[(string) $cuota->id] = $this->hashFila((string) $cuota->id);
-            }
-
+            $id = (int) $key;
+            $cuota = $this->cuotaDelCicloOrFail($id);
+            $cuota->update($payload);
+            $this->draft[(string) $cuota->id] = $this->filaDesdeModelo($cuota->fresh());
+            $this->ultimoGuardadoHashes[(string) $cuota->id] = $this->hashFila((string) $cuota->id);
             $this->resetValidation();
         } finally {
             $this->persistiendo = false;
@@ -125,12 +216,6 @@ class CuotasPlantillaIndex extends Component
     public function deleteRow(string $key): void
     {
         abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
-
-        if (CuotasPlantillaCatalog::esFilaNueva($key)) {
-            unset($this->draft[$key]);
-
-            return;
-        }
 
         $rateKey = 'cuotas-plantilla:delete:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($rateKey, 20)) {
@@ -154,7 +239,10 @@ class CuotasPlantillaIndex extends Component
         }
 
         $nombre = (string) $cuota->nombre;
-        $cuota->delete();
+        DB::transaction(function () use ($cuota): void {
+            CuotasImportesCatalog::eliminarPorCuota((int) $cuota->id);
+            $cuota->delete();
+        });
         unset($this->draft[$key]);
         $this->dispatch('se-swal-exito', mensaje: "Cuota «{$nombre}» eliminada.");
     }
@@ -182,6 +270,7 @@ class CuotasPlantillaIndex extends Component
     public function render()
     {
         $ano = (int) schoolCtx()->terlecAno();
+        $cuotasModelo = CuotasPlantillaCatalog::cuotasDelCicloParaSelector();
 
         return view('livewire.cuotas.plantilla-index', [
             'filas' => $this->filasVisibles(),
@@ -190,6 +279,8 @@ class CuotasPlantillaIndex extends Component
             'tipos' => CuotasPlantillaCatalog::tiposOrdenados(),
             'opcionesBeca' => CuotasPlantillaCatalog::opcionesSinConBeca(),
             'ano' => $ano,
+            'hayCuotasModelo' => $cuotasModelo->isNotEmpty(),
+            'cuotasModelo' => $cuotasModelo,
         ])->layout('layouts.app', ['pageTitle' => "Crear / Editar Cuotas — {$ano}"]);
     }
 
@@ -250,19 +341,22 @@ class CuotasPlantillaIndex extends Component
     /**
      * @return array<string, mixed>
      */
-    private function filaVacia(int $orden): array
+    private function altaVacia(): array
     {
+        $maxOrden = (int) collect($this->draft)
+            ->pluck('orden')
+            ->map(fn ($v) => (int) $v)
+            ->max();
+
         return [
-            'id' => null,
-            'idTerlec' => CuotasPlantillaCatalog::idTerlecActivo(),
             'nombre' => '',
-            'idCuotasmeses' => (int) (CuotasPlantillaCatalog::mesesOrdenados()->value('id') ?? 1),
-            'idCuotastipo' => (int) (CuotasPlantillaCatalog::tiposOrdenados()->value('id') ?? 1),
+            'idCuotasmeses' => '',
+            'idCuotastipo' => '',
             'venc1' => '',
             'venc2' => '',
             'venc3' => '',
             'sinConBeca' => 0,
-            'orden' => $orden,
+            'orden' => $maxOrden + 1,
         ];
     }
 

@@ -98,4 +98,27 @@ return [
         'solicitud_evaluacion' => false,
     ],
 
+    /**
+     * Plantillas de cuotas — fórmulas al crear una cuota («Valores por defecto del sistema»).
+     * Corresponden a: hasta 1.er venc., 1.º→2.º, 2.º→3.º y después del 3.er vencimiento.
+     * Override parcial en `config/tenants/{slug}.php` (solo claves que difieran).
+     */
+    'cuotas' => [
+        'formulas_iniciales_plantilla' => [
+            'importe' => 0.0,
+            'signo1v' => '+',
+            'valor1v' => 0.0,
+            'porcan1v' => '%',
+            'signo2v' => '+',
+            'valor2v' => 0.0,
+            'porcan2v' => '%',
+            'signo3v' => '+',
+            'valor3v' => 0.0,
+            'porcan3v' => '%',
+            'signo4v' => '+',
+            'valor4v' => 0.0,
+            'porcan4v' => '%',
+        ],
+    ],
+
 ];

@@ -93,6 +93,7 @@ use App\Http\Controllers\Cuotas\ComprobantePagoCuotasPdfController;
 use App\Http\Controllers\Cuotas\ComprobantePagoImputacionPdfController;
 use App\Http\Controllers\Cuotas\ResumenPagosEstudiantePdfController;
 use App\Livewire\Cuotas\CuotaGeneradaForm;
+use App\Livewire\Cuotas\GenerarCuotaEstudiante;
 use App\Livewire\Cuotas\CuotasEstudianteShow;
 use App\Livewire\Cuotas\CuotasIndex;
 use App\Livewire\Cuotas\CuotasImportesForm;
@@ -404,6 +405,7 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
         Route::get('/importes', CuotasImportesIndex::class)->name('cuotas.importes.index');
         Route::get('/importes/editar', CuotasImportesForm::class)->name('cuotas.importes.editar');
         Route::get('/estudiante', CuotasEstudianteShow::class)->name('cuotas.estudiante');
+        Route::get('/estudiante/generar', GenerarCuotaEstudiante::class)->name('cuotas.estudiante.generar');
         Route::get('/estudiante/cuota/editar', CuotaGeneradaForm::class)->name('cuotas.cuota.editar');
         Route::get('/estudiante/cuota/imputar', ImputarPagoForm::class)->name('cuotas.cuota.imputar');
         Route::get('/estudiante/cuota/historial-pagos', HistorialPagosCuota::class)->name('cuotas.cuota.historial-pagos');

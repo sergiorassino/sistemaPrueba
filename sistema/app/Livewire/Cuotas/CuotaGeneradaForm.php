@@ -4,6 +4,7 @@ namespace App\Livewire\Cuotas;
 
 use App\Models\CuotaGenerada;
 use App\Support\Cuotas\CuotasFormato;
+use App\Support\Cuotas\EliminacionCuotaGeneradaService;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\PermisosCuotas;
@@ -161,6 +162,36 @@ class CuotaGeneradaForm extends Component
         $this->redirectRoute('cuotas.estudiante', navigate: true);
     }
 
+    public function eliminarCuota(): void
+    {
+        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+
+        $key = 'cuotas:eliminar:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $registro = $this->registro();
+        $motivo = EliminacionCuotaGeneradaService::motivoRechazo($registro);
+        if ($motivo !== null) {
+            $this->dispatch('se-swal-error', mensaje: $motivo);
+
+            return;
+        }
+
+        if (! EliminacionCuotaGeneradaService::eliminar($this->idCuotaGenerada, $this->idLegajo)) {
+            $this->dispatch('se-swal-error', mensaje: 'No se pudo eliminar la cuota.');
+
+            return;
+        }
+
+        session()->flash('success', 'Cuota eliminada correctamente.');
+        $this->redirectRoute('cuotas.estudiante', navigate: true);
+    }
+
     private function recalcularFaltapa(): void
     {
         $importe = CuotasFormato::parseImporte($this->importe);
@@ -185,6 +216,8 @@ class CuotaGeneradaForm extends Component
             'registro' => $registro,
             'encabezado' => GestionAranceles::encabezadoEstudiante($this->idLegajo),
             'becaEtiqueta' => $registro !== null ? GestionAranceles::etiquetaBeca($registro) : '',
+            'puedeEliminar' => $registro !== null && EliminacionCuotaGeneradaService::puedeEliminar($registro),
+            'motivoNoEliminable' => EliminacionCuotaGeneradaService::motivoRechazo($registro),
         ])->layout('layouts.app', ['pageTitle' => 'Editar cuota']);
     }
 }

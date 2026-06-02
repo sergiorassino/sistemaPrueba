@@ -2,6 +2,7 @@
 
 namespace App\Support\Cuotas;
 
+use App\Models\Cuota;
 use App\Models\CuotasMes;
 use App\Models\CuotasTipo;
 use App\Models\Terlec;
@@ -78,8 +79,85 @@ final class CuotasPlantillaCatalog
         ];
     }
 
-    public static function esFilaNueva(string|int $key): bool
+    public static function cuentaCuotasEnCicloActivo(): int
     {
-        return is_string($key) && str_starts_with($key, 'new_');
+        return Cuota::query()
+            ->where('idTerlec', self::idTerlecActivo())
+            ->count();
+    }
+
+    /**
+     * Plantillas del ciclo activo para elegir como modelo de fórmulas.
+     *
+     * @return Collection<int, Cuota>
+     */
+    public static function cuotasDelCicloParaSelector(): Collection
+    {
+        return Cuota::query()
+            ->where('idTerlec', self::idTerlecActivo())
+            ->with(['cuotasMes:id,mes', 'cuotasTipo:id,nombre'])
+            ->orderBy('orden')
+            ->orderBy('id')
+            ->get();
+    }
+
+    public static function etiquetaCuota(Cuota $cuota): string
+    {
+        $partes = array_filter([
+            trim((string) ($cuota->nombre ?? '')),
+            trim((string) ($cuota->cuotasMes?->mes ?? '')),
+            trim((string) ($cuota->cuotasTipo?->nombre ?? '')),
+        ]);
+
+        return $partes !== [] ? implode(' · ', $partes) : 'Cuota #'.$cuota->id;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public static function reglasAltaModal(array $data, bool $permiteCopiarDesdeModelo): array
+    {
+        $mesIds = self::mesesOrdenados()->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $tipoIds = self::tiposOrdenados()->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $sinIds = array_map('intval', array_keys(self::opcionesSinConBeca()));
+
+        $reglas = [
+            'alta.nombre' => ['required', 'string', 'max:120'],
+            'alta.idCuotasmeses' => ['required', 'integer', Rule::in($mesIds)],
+            'alta.idCuotastipo' => ['required', 'integer', Rule::in($tipoIds)],
+            'alta.venc1' => ['required', 'date'],
+            'alta.venc2' => ['nullable', 'date'],
+            'alta.venc3' => ['nullable', 'date'],
+            'alta.sinConBeca' => ['required', 'integer', Rule::in($sinIds)],
+            'alta.orden' => ['required', 'integer', 'min:0', 'max:9999'],
+            'origenFormulas' => ['required', 'string', Rule::in(['defaults', 'modelo'])],
+        ];
+
+        if ($permiteCopiarDesdeModelo && ($data['origenFormulas'] ?? '') === 'modelo') {
+            $cuotaIds = self::cuotasDelCicloParaSelector()->pluck('id')->map(fn ($id) => (int) $id)->all();
+            $reglas['idCuotaModeloFormulas'] = ['required', 'integer', Rule::in($cuotaIds)];
+        }
+
+        return $reglas;
+    }
+
+    /**
+     * @param  array<string, mixed>  $alta
+     * @return array<string, mixed>
+     */
+    public static function payloadAltaDesdeFormulario(array $alta): array
+    {
+        return [
+            'idTerlec' => self::idTerlecActivo(),
+            'nombre' => trim((string) ($alta['nombre'] ?? '')),
+            'idCuotasmeses' => (int) ($alta['idCuotasmeses'] ?? 0),
+            'idCuotastipo' => (int) ($alta['idCuotastipo'] ?? 0),
+            'venc1' => $alta['venc1'] ?: null,
+            'venc2' => ($alta['venc2'] ?? '') !== '' ? $alta['venc2'] : null,
+            'venc3' => ($alta['venc3'] ?? '') !== '' ? $alta['venc3'] : null,
+            'sinConBeca' => (int) ($alta['sinConBeca'] ?? 0),
+            'orden' => (int) ($alta['orden'] ?? 0),
+        ];
     }
 }

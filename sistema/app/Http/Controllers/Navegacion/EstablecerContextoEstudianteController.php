@@ -41,7 +41,7 @@ class EstablecerContextoEstudianteController extends Controller
 
         if (isset($validated['idCuotaGenerada'])) {
             $datosContexto['idCuotaGenerada'] = (int) $validated['idCuotaGenerada'];
-        } elseif ($destino === 'cuotas.estudiante') {
+        } elseif (in_array($destino, ['cuotas.estudiante', 'cuotas.estudiante.generar'], true)) {
             $datosContexto['idCuotaGenerada'] = 0;
         }
 

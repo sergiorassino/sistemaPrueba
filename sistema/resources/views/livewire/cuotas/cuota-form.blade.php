@@ -20,7 +20,7 @@
                     </p>
                 @endif
             </div>
-            <a href="{{ route('cuotas.estudiante', ['idLegajo' => $idLegajo]) }}"
+            <a href="{{ route('cuotas.estudiante') }}"
                wire:navigate
                class="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20">
                 Volver
@@ -66,13 +66,13 @@
                 </div>
                 <div>
                     <label class="form-label" for="bonificacion">Bonificación</label>
-                    <input id="bonificacion" type="text" wire:model="bonificacion"
+                    <input id="bonificacion" type="text" wire:model.live="bonificacion"
                            class="form-input w-full tabular-nums text-right">
                     @error('bonificacion') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="form-label" for="interes">Interés</label>
-                    <input id="interes" type="text" wire:model="interes"
+                    <input id="interes" type="text" wire:model.live="interes"
                            class="form-input w-full tabular-nums text-right">
                     @error('interes') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
@@ -98,7 +98,7 @@
         </div>
 
         <div class="mx-auto mt-5 flex w-full max-w-md flex-col-reverse gap-2 sm:flex-row sm:justify-center">
-            <a href="{{ route('cuotas.estudiante', ['idLegajo' => $idLegajo]) }}"
+            <a href="{{ route('cuotas.estudiante') }}"
                wire:navigate
                class="inline-flex items-center justify-center rounded-lg border border-accent-200 bg-white px-4 py-1.5 text-xs font-semibold text-primary-700 hover:bg-accent-50">
                 Cancelar

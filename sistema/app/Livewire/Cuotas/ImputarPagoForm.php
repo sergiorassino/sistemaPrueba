@@ -7,9 +7,12 @@ use App\Support\Cuotas\CuotasFormato;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\Cuotas\ImputacionPagoCalculo;
 use App\Support\Cuotas\ImputacionPagoService;
+use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\PermisosCuotas;
+use App\Support\Security\OpaqueRouteToken;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 /**
@@ -37,9 +40,26 @@ class ImputarPagoForm extends Component
 
     public string $fechaPago = '';
 
-    public function mount(int $idLegajo, int $idCuotaGenerada): void
+    /** Etiqueta dinámica del campo porcent según tramo (interés o bonificación). */
+    public string $etiquetaPorcent = '% INTERÉS';
+
+    /** Etiqueta dinámica del importe calculado (interés o bonificación). */
+    public string $etiquetaImporteAjuste = 'IMPORTE INTERÉS';
+
+    public function mount(): void
     {
         abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+
+        $idLegajo = ContextoEstudianteSesion::legajo(ContextoEstudianteSesion::CUOTAS_GESTION);
+        $idCuotaGenerada = ContextoEstudianteSesion::cuotaGenerada(ContextoEstudianteSesion::CUOTAS_GESTION);
+        abort_if($idLegajo === null || $idCuotaGenerada === null, 404);
+
+        abort_if(
+            GestionAranceles::legajoParaGestion($idLegajo) === null
+            || GestionAranceles::cuotaParaGestion($idCuotaGenerada, $idLegajo) === null,
+            404,
+        );
+
         $this->idLegajo = $idLegajo;
         $this->idCuotaGenerada = $idCuotaGenerada;
 
@@ -50,6 +70,11 @@ class ImputarPagoForm extends Component
         $this->saldoAPagar = CuotasFormato::importeParaInput($registro->faltapa);
         $this->avisoPago = (int) ($registro->avisoPago ?? 0) === 1;
 
+        if (! in_array($this->idCuotastipopago, GestionAranceles::idsMediosPagoImputacion(), true)) {
+            $this->idCuotastipopago = GestionAranceles::IDS_MEDIOS_PAGO_IMPUTACION[0];
+        }
+
+        $this->sugerirPorcentDesdeCuota();
         $this->recalcular();
     }
 
@@ -84,16 +109,18 @@ class ImputarPagoForm extends Component
 
         $fecha = $this->fechaPagoValida() ?? Carbon::today();
         $porcentRaw = trim($this->porcent);
-        $porcentManual = $porcentRaw !== '' ? (float) str_replace(',', '.', $porcentRaw) : null;
+        $porcentManual = $porcentRaw !== '' ? (float) str_replace(',', '.', $porcentRaw) : 0.0;
 
         $calc = ImputacionPagoCalculo::calcular($registro, $saldo, $fecha, $porcentManual);
 
-        if ($porcentManual === null) {
-            $this->porcent = self::formatearPorcent($calc['porcent']);
-        }
-
-        $this->interesImporte = CuotasFormato::importeParaInput($calc['interes']);
+        $this->interesImporte = CuotasFormato::importeParaInput(
+            $calc['esRecargo'] ? $calc['interes'] : $calc['bonificacion'],
+        );
         $this->aPagar = CuotasFormato::importeParaInput($calc['aPagar']);
+        $this->etiquetaPorcent = self::etiquetaPorcentDesdeCalculo($calc);
+        $this->etiquetaImporteAjuste = $calc['esRecargo']
+            ? 'IMPORTE INTERÉS'
+            : 'IMPORTE BONIFICACIÓN';
     }
 
     public function guardar(): void
@@ -112,7 +139,7 @@ class ImputarPagoForm extends Component
         abort_unless($registro !== null, 404);
 
         $validated = $this->validate([
-            'idCuotastipopago' => ['required', 'integer', 'min:1'],
+            'idCuotastipopago' => ['required', 'integer', Rule::in(GestionAranceles::idsMediosPagoImputacion())],
             'saldoAPagar' => ['required', 'string'],
             'porcent' => ['nullable', 'numeric', 'min:0'],
             'fechaPago' => ['required', 'date'],
@@ -130,7 +157,8 @@ class ImputarPagoForm extends Component
         }
 
         $fecha = Carbon::parse($validated['fechaPago'])->startOfDay();
-        $porcentManual = isset($validated['porcent']) ? (float) $validated['porcent'] : null;
+        $porcentRaw = trim((string) ($validated['porcent'] ?? ''));
+        $porcentManual = $porcentRaw !== '' ? (float) $validated['porcent'] : null;
         $calc = ImputacionPagoCalculo::calcular($registro, $saldo, $fecha, $porcentManual);
 
         if ($saldo <= 0 && ! $validated['avisoPago']) {
@@ -145,7 +173,7 @@ class ImputarPagoForm extends Component
             return;
         }
 
-        ImputacionPagoService::registrar($registro, [
+        $pago = ImputacionPagoService::registrar($registro, [
             'idCuotastipopago' => (int) $validated['idCuotastipopago'],
             'saldoAPagar' => $saldo,
             'interes' => $calc['interes'],
@@ -158,7 +186,34 @@ class ImputarPagoForm extends Component
 
         session()->flash('success', 'Pago imputado correctamente.');
 
-        $this->redirectRoute('cuotas.estudiante', ['idLegajo' => $this->idLegajo], navigate: true);
+        if ($pago !== null && $saldo > 0) {
+            $url = route('cuotas.comprobante-imputacion', [
+                'ref' => OpaqueRouteToken::forComprobantePagoImputacionAdministracion((int) $pago->id, $this->idLegajo),
+            ]);
+            $this->dispatch('cuotas-imputar-pago-abrir-comprobante', url: $url);
+        }
+
+        $this->redirectRoute('cuotas.estudiante', navigate: true);
+    }
+
+    /**
+     * Sugiere el porcentaje según la fórmula de la cuota solo al abrir el formulario.
+     */
+    private function sugerirPorcentDesdeCuota(): void
+    {
+        $registro = $this->registro();
+        if ($registro === null) {
+            return;
+        }
+
+        $calc = ImputacionPagoCalculo::calcular(
+            $registro,
+            CuotasFormato::parseImporte($this->saldoAPagar),
+            $this->fechaPagoValida() ?? Carbon::today(),
+            null,
+        );
+
+        $this->porcent = self::formatearPorcent($calc['porcent']);
     }
 
     private function registro(): ?CuotaGenerada
@@ -171,6 +226,25 @@ class ImputarPagoForm extends Component
         $s = rtrim(rtrim(number_format($valor, 4, '.', ''), '0'), '.');
 
         return $s === '' ? '0' : $s;
+    }
+
+    /**
+     * @param  array{esRecargo: bool, usaDias: bool, diasMora: int}  $calc
+     */
+    private static function etiquetaPorcentDesdeCalculo(array $calc): string
+    {
+        if (! $calc['esRecargo']) {
+            return 'PORCENTAJE BONIFICACIÓN';
+        }
+
+        if ($calc['usaDias']) {
+            $dias = (int) $calc['diasMora'];
+            $sufijoDias = $dias === 1 ? 'día' : 'días';
+
+            return '% INTERÉS - '.$dias.' '.$sufijoDias.' de mora';
+        }
+
+        return '% INTERÉS';
     }
 
     private function fechaPagoValida(): ?Carbon
@@ -194,7 +268,7 @@ class ImputarPagoForm extends Component
         return view('livewire.cuotas.imputar-pago', [
             'registro' => $registro,
             'encabezado' => GestionAranceles::encabezadoEstudiante($this->idLegajo),
-            'mediosPago' => GestionAranceles::mediosDePago(),
+            'mediosPago' => GestionAranceles::mediosDePagoImputacion(),
         ])->layout('layouts.app', ['pageTitle' => 'Imputar pago']);
     }
 }

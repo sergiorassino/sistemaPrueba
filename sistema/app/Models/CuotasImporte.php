@@ -13,6 +13,7 @@ class CuotasImporte extends Model
     protected $fillable = [
         'idCuotas',
         'idCursos',
+        'importe',
         'signo1v',
         'valor1v',
         'porcan1v',
@@ -26,4 +27,22 @@ class CuotasImporte extends Model
         'valor4v',
         'porcan4v',
     ];
+
+    protected $casts = [
+        'importe' => 'float',
+        'valor1v' => 'float',
+        'valor2v' => 'float',
+        'valor3v' => 'float',
+        'valor4v' => 'float',
+    ];
+
+    public function cuota()
+    {
+        return $this->belongsTo(Cuota::class, 'idCuotas');
+    }
+
+    public function curso()
+    {
+        return $this->belongsTo(Curso::class, 'idCursos', 'Id');
+    }
 }

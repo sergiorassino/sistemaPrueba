@@ -271,6 +271,271 @@
         align-items: center;
         justify-content: center;
     }
+
+    /* Listado de cuotas — importes por curso (compacto, centrado) */
+    .se-cuotas-importes-lista-scroll {
+        @apply w-full overflow-x-auto flex justify-center;
+    }
+    .se-cuotas-importes-lista-tabla {
+        @apply border border-gray-400 text-[11px] border-collapse;
+        width: max-content;
+        table-layout: auto;
+    }
+    .se-cuotas-importes-lista-tabla th,
+    .se-cuotas-importes-lista-tabla td {
+        @apply border border-gray-300 px-2 py-1 align-middle;
+    }
+    .se-cuotas-importes-lista-tabla thead th {
+        @apply bg-gray-200 font-semibold text-gray-700 uppercase tracking-wide text-[10px];
+    }
+    .se-cuotas-importes-lista-tabla .se-cil-th-nombre,
+    .se-cuotas-importes-lista-tabla .se-cil-td-nombre {
+        @apply text-left font-medium text-neutral-800;
+        min-width: 10rem;
+        max-width: 18rem;
+    }
+    .se-cuotas-importes-lista-tabla .se-cil-th-venc,
+    .se-cuotas-importes-lista-tabla .se-cil-td-venc {
+        width: 5rem;
+        @apply text-center bg-neutral-50/90 text-neutral-700;
+    }
+    .se-cuotas-importes-lista-tabla .se-cil-th-accion,
+    .se-cuotas-importes-lista-tabla .se-cil-td-accion {
+        @apply text-center;
+        width: 7.5rem;
+    }
+    .se-cuotas-importes-lista-tabla tbody tr:hover {
+        @apply bg-primary-50/60;
+    }
+
+    /* Importes por curso — edición (tabla compacta, scroll contenido) */
+    .se-main:has(.se-cuotas-importes-fill) {
+        height: 100dvh;
+        max-height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+    }
+    main:has(.se-cuotas-importes-fill) {
+        @apply flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden !px-0 py-4 md:!py-6;
+    }
+    .se-cuotas-importes-fill {
+        @apply flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden;
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        max-height: 100%;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        box-sizing: border-box;
+    }
+    @media (min-width: 768px) {
+        .se-cuotas-importes-fill {
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+    }
+    .se-cuotas-importes-grid {
+        display: grid;
+        min-height: 0;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        flex: 1 1 auto;
+        overflow: hidden;
+        grid-template-rows: auto auto minmax(0, 1fr);
+        gap: 0.5rem;
+    }
+    .se-cuotas-importes-hero .se-hero-inner {
+        @apply gap-2 p-3 sm:p-4;
+    }
+    .se-cuotas-importes-toolbar {
+        @apply shrink-0 mb-0 py-2;
+    }
+    .se-cuotas-importes-card {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        flex: 1 1 auto;
+        overflow: hidden;
+        padding: 0;
+    }
+    .se-cuotas-importes-scroll {
+        flex: 1 1 0;
+        min-height: 0;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        overflow: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+    .se-cuotas-importes-tabla {
+        width: max-content;
+        min-width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        @apply border border-gray-400 text-[11px] text-gray-900;
+        font-variant-numeric: tabular-nums;
+    }
+    .se-cuotas-importes-tabla .se-cii-col-cuota {
+        width: 7.5rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-col-curso {
+        width: 8.25rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-col-importe {
+        width: 6.25rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-col-bon {
+        width: 2.5rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-col-valor {
+        width: 3.75rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-col-porcan {
+        width: 2.5rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-th {
+        @apply border border-gray-400 bg-gray-200 p-0 text-center align-middle font-semibold uppercase tracking-wide text-[9px] leading-tight text-gray-700;
+    }
+    .se-cuotas-importes-tabla .se-cii-th-principal {
+        @apply px-1 py-1.5;
+    }
+    .se-cuotas-importes-tabla .se-cii-th-venc {
+        border-left-width: 2px;
+        vertical-align: bottom;
+    }
+    .se-cuotas-importes-tabla .se-cii-venc-head {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        min-width: 0;
+    }
+    .se-cuotas-importes-tabla .se-cii-venc-title {
+        @apply border-b border-gray-400 px-0.5 py-1 text-center text-[9px] font-semibold leading-tight;
+    }
+    .se-cuotas-importes-tabla .se-cii-venc-subs {
+        display: grid;
+        grid-template-columns: 2fr 3fr 2fr;
+        width: 100%;
+    }
+    .se-cuotas-importes-tabla .se-cii-venc-sub {
+        @apply border-r border-gray-400 px-0.5 py-0.5 text-center text-[8px] font-semibold leading-tight last:border-r-0;
+    }
+    .se-cuotas-importes-tabla thead .se-cii-th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+    }
+    .se-cuotas-importes-tabla .se-cii-td {
+        @apply border border-gray-300 bg-white p-0 align-middle;
+    }
+    .se-cuotas-importes-tabla .se-cii-td-text {
+        @apply px-1.5 py-1 text-xs font-medium text-primary-700;
+        max-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .se-cuotas-importes-tabla .se-cii-td-bon {
+        border-left-width: 2px;
+    }
+    .se-cuotas-importes-tabla .se-cii-tr:hover .se-cii-td {
+        @apply bg-primary-50/50;
+    }
+    .se-cuotas-importes-tabla .se-cii-input,
+    .se-cuotas-importes-tabla .se-cii-select {
+        @apply m-0 block w-full min-w-0 border-0 bg-transparent px-1 py-1 text-[11px] leading-tight text-gray-900 outline-none;
+        box-sizing: border-box;
+        font: inherit;
+        border-radius: 0;
+    }
+    .se-cuotas-importes-tabla .se-cii-input--center {
+        @apply text-center font-mono;
+    }
+    .se-cuotas-importes-tabla .se-cii-select {
+        @apply appearance-none text-center;
+        padding-right: 0.25rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-select--signo {
+        @apply text-center font-bold;
+    }
+    .se-cuotas-importes-tabla .se-cii-input:focus,
+    .se-cuotas-importes-tabla .se-cii-select:focus {
+        @apply bg-white ring-2 ring-inset ring-primary-500;
+    }
+    .se-cuotas-importes-tabla .se-cii-input--err,
+    .se-cuotas-importes-tabla .se-cii-select.se-cii-input--err {
+        @apply bg-red-50 ring-2 ring-inset ring-red-400;
+    }
+    .se-cuotas-importes-tabla .se-cii-field-err {
+        @apply truncate px-0.5 text-[9px] leading-tight text-red-700;
+    }
+    .se-cuotas-importes-tabla .se-cii-empty {
+        @apply px-4 py-10 text-center text-sm text-neutral-500;
+    }
+
+    /* Historial de pagos de una cuota */
+    .gf.gf-cuotas-historial-pagos {
+        width: max-content;
+        min-width: 42rem;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-head,
+    .gf.gf-cuotas-historial-pagos .gf-row {
+        width: 100%;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-cuota-nombre,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-cuota-nombre {
+        flex: 0 0 8rem;
+        width: 8rem;
+        min-width: 8rem;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-fecha-hora,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-fecha-hora {
+        flex: 0 0 11.5rem;
+        width: 11.5rem;
+        min-width: 11.5rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-mp,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-mp {
+        flex: 0 0 3rem;
+        width: 3rem;
+        min-width: 3rem;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-importe,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-importe {
+        flex: 0 0 5.5rem;
+        width: 5.5rem;
+        min-width: 5.5rem;
+        text-align: right;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-accion,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-accion {
+        box-sizing: border-box;
+        flex: 0 0 2.75rem !important;
+        width: 2.75rem !important;
+        min-width: 2.75rem !important;
+        max-width: 2.75rem !important;
+        padding-left: 0;
+        padding-right: 0;
+        font-size: 9px;
+        line-height: 1.1;
+        text-align: center;
+        white-space: normal;
+    }
+    .gf.gf-cuotas-historial-pagos.gf-vcenter .gf-th.gf-th-accion,
+    .gf.gf-cuotas-historial-pagos.gf-vcenter .gf-td.gf-td-accion {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     /* Celda de datos (listado) */
     .gf-td {
         @apply px-2 py-1.5 border-r border-gray-300 last:border-r-0 text-gray-900;
@@ -1185,6 +1450,23 @@
     box-shadow:
         inset 3px 0 0 var(--color-accent-200),
         0 1px 0 rgba(0, 0, 0, 0.12);
+}
+/* Menú de Secretaría: ítem activo por tipografía (prueba), sin bloque primary-500. */
+.se-sidebar--bosque.se-sidebar--active-typography .se-sidebar-link.is-active {
+    background: transparent;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9375rem; /* 15px — +1 respecto al link base 14px */
+    box-shadow: none;
+}
+.se-sidebar--bosque.se-sidebar--active-typography .se-sidebar-link.is-active span.truncate {
+    text-decoration: underline;
+    text-decoration-color: var(--se-light-blue, #c1d7da);
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 2px;
+}
+.se-sidebar--bosque.se-sidebar--active-typography .se-sidebar-link.is-active:hover {
+    background: var(--se-hover-bg);
 }
 .se-sidebar--bosque .se-sidebar-nav-label {
     font-size: 0.6875rem; /* 11px */

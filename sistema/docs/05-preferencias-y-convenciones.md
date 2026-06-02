@@ -316,3 +316,70 @@ Detalle para el agente: `.cursor/rules/modales-livewire.mdc`.
 - Panel sin `my-auto` (queda anclado al scroll del documento).
 - Hacer scroll de toda la página para alcanzar el modal en lugar de centrarlo en el viewport.
 - Poner `@teleport` dentro de un `@include` anidado en el root (Livewire no refresca el modal; los botones parecen no responder).
+
+---
+
+## 12. Diálogos y avisos — SweetAlert2 (obligatorio)
+
+Para **confirmaciones**, **éxitos**, **advertencias** y **errores** orientados al usuario, usar **SweetAlert2** con los helpers globales de `resources/js/app.js`. **No** usar `window.confirm`, `window.alert`, ni `wire:confirm` / `wire:confirm.prompt` de Livewire (diálogo nativo del navegador).
+
+### Helpers disponibles (`window.*`)
+
+| Helper | Uso | Retorno |
+|--------|-----|---------|
+| `seSwalExito(mensaje, titulo?)` | Operación guardada / eliminada con éxito | void |
+| `seSwalAviso(mensaje, titulo?)` | Advertencia informativa (sin bloquear flujo crítico) | void |
+| `seSwalError(mensaje, titulo?)` | Error de negocio o rechazo de operación | void |
+| `seSwalConfirmar(mensaje, titulo?, opciones?)` | Pregunta Sí / Cancelar antes de borrar o acción irreversible | `Promise<boolean>` |
+
+Color de botón principal: `#40848D` (paleta SE). La librería ya está en el bundle Vite (`sweetalert2`).
+
+### Livewire — eventos desde PHP
+
+Tras guardar, eliminar o rechazar una acción en el servidor, **no** depender solo de `session()->flash()` + banners verdes/rojos. Preferir:
+
+```php
+$this->dispatch('se-swal-exito', mensaje: 'Registro actualizado.');
+$this->dispatch('se-swal-error', mensaje: 'No se puede eliminar: tiene dependencias.');
+```
+
+En la vista del componente, bloque `@script` que escuche esos eventos:
+
+```blade
+@script
+<script>
+    $wire.on('se-swal-exito', (event) => {
+        window.seSwalExito?.(event?.mensaje ?? event?.detail?.mensaje ?? 'Guardado.');
+    });
+    $wire.on('se-swal-error', (event) => {
+        window.seSwalError?.(event?.mensaje ?? event?.detail?.mensaje ?? 'Error.');
+    });
+</script>
+@endscript
+```
+
+Referencia: `resources/views/livewire/cuotas/plantilla-index.blade.php`, `resources/views/livewire/cuotas/historial-pagos-cuota.blade.php`, `resources/views/livewire/alumnos/actualizacion-datos-personales-form.blade.php`.
+
+### Confirmación antes de `wire:click` destructivo
+
+En el botón, usar Alpine + `seSwalConfirmar` y llamar a Livewire solo si el usuario confirma:
+
+```blade
+<button type="button"
+        x-on:click="window.seSwalConfirmar('¿Eliminar este registro?', 'Confirmar eliminación', { confirmButtonText: 'Sí, eliminar' })
+            .then((ok) => { if (ok) $wire.eliminar({{ $id }}); })"
+        class="btn-danger btn-sm">
+    Eliminar
+</button>
+```
+
+Filas nuevas sin persistir pueden llamar `$wire.eliminar(...)` directo, sin confirmación.
+
+### Cuándo no usar SweetAlert
+
+- Validación de campos: mensajes bajo el input (`@error`) o toast liviano de calificaciones (`seCalif*` en `app.js`).
+- Confirmaciones complejas con muchos campos: modal Livewire con `@teleport('body')` (sección 11), no SweetAlert.
+
+### Regla Cursor
+
+`.cursor/rules/sweetalert-dialogos-se.mdc`

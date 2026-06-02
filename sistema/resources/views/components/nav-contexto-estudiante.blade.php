@@ -4,6 +4,7 @@
     'matricula' => null,
     'curso' => null,
     'idLegajos' => null,
+    'idCuotaGenerada' => null,
     'materia' => null,
     'tipo' => null,
     'desde' => null,
@@ -30,6 +31,9 @@
     @endif
     @if ($idLegajos)
         <input type="hidden" name="idLegajos" value="{{ (int) $idLegajos }}">
+    @endif
+    @if ($idCuotaGenerada)
+        <input type="hidden" name="idCuotaGenerada" value="{{ (int) $idCuotaGenerada }}">
     @endif
     @if ($materia)
         <input type="hidden" name="materia" value="{{ (int) $materia }}">

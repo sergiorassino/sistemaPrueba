@@ -19,6 +19,24 @@ final class CuotasFormato
         return ArancelesEscolares::formatearFecha($fecha);
     }
 
+    public static function formatearFechaHora(mixed $fecha): string
+    {
+        if ($fecha instanceof \Carbon\CarbonInterface) {
+            return $fecha->format('d/m/Y H:i:s');
+        }
+
+        $raw = trim((string) ($fecha ?? ''));
+        if ($raw === '' || $raw === '0000-00-00') {
+            return '';
+        }
+
+        try {
+            return \Carbon\Carbon::parse($raw)->format('d/m/Y H:i:s');
+        } catch (\Throwable) {
+            return $raw;
+        }
+    }
+
     public static function formatearDni(mixed $dni): string
     {
         return ArancelesEscolares::formatearDni($dni);
@@ -86,11 +104,16 @@ final class CuotasFormato
     }
 
     /**
-     * Saldo pendiente (faltapa) en edición manual: importe − pagado.
+     * Saldo pendiente (faltapa) en edición manual: importe + interés − pagado − bonificación.
      */
-    public static function calcularFaltapa(float $importe, float $pagado): float
+    public static function calcularFaltapa(
+        float $importe,
+        float $pagado,
+        float $bonificacion = 0.0,
+        float $interes = 0.0,
+    ): float
     {
-        return round(max(0, $importe - $pagado), 2);
+        return round(max(0, ($importe + $interes) - $pagado - $bonificacion), 2);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Livewire\Cuotas;
 use App\Models\CuotaGenerada;
 use App\Support\Cuotas\CuotasFormato;
 use App\Support\Cuotas\GestionAranceles;
+use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\PermisosCuotas;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
@@ -36,9 +37,20 @@ class CuotaGeneradaForm extends Component
 
     public string $obs = '';
 
-    public function mount(int $idLegajo, int $idCuotaGenerada): void
+    public function mount(): void
     {
         abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+
+        $idLegajo = ContextoEstudianteSesion::legajo(ContextoEstudianteSesion::CUOTAS_GESTION);
+        $idCuotaGenerada = ContextoEstudianteSesion::cuotaGenerada(ContextoEstudianteSesion::CUOTAS_GESTION);
+        abort_if($idLegajo === null || $idCuotaGenerada === null, 404);
+
+        abort_if(
+            GestionAranceles::legajoParaGestion($idLegajo) === null
+            || GestionAranceles::cuotaParaGestion($idCuotaGenerada, $idLegajo) === null,
+            404,
+        );
+
         $this->idLegajo = $idLegajo;
         $this->idCuotaGenerada = $idCuotaGenerada;
 
@@ -57,6 +69,16 @@ class CuotaGeneradaForm extends Component
     }
 
     public function updatedImporte(): void
+    {
+        $this->recalcularFaltapa();
+    }
+
+    public function updatedBonificacion(): void
+    {
+        $this->recalcularFaltapa();
+    }
+
+    public function updatedInteres(): void
     {
         $this->recalcularFaltapa();
     }
@@ -118,7 +140,7 @@ class CuotaGeneradaForm extends Component
         $registro = $this->registro();
         abort_unless($registro !== null, 404);
 
-        $faltapa = CuotasFormato::calcularFaltapa($importe, $pagado);
+        $faltapa = CuotasFormato::calcularFaltapa($importe, $pagado, $bonificacion, $interes);
 
         $registro->fill([
             'venc1' => $this->venc1,
@@ -136,15 +158,17 @@ class CuotaGeneradaForm extends Component
 
         session()->flash('success', 'Cuota actualizada correctamente.');
 
-        $this->redirectRoute('cuotas.estudiante', ['idLegajo' => $this->idLegajo], navigate: true);
+        $this->redirectRoute('cuotas.estudiante', navigate: true);
     }
 
     private function recalcularFaltapa(): void
     {
         $importe = CuotasFormato::parseImporte($this->importe);
+        $bonificacion = CuotasFormato::parseImporte($this->bonificacion);
+        $interes = CuotasFormato::parseImporte($this->interes);
         $pagado = CuotasFormato::parseImporte($this->pagado);
         $this->faltapa = CuotasFormato::importeParaInput(
-            CuotasFormato::calcularFaltapa($importe, $pagado),
+            CuotasFormato::calcularFaltapa($importe, $pagado, $bonificacion, $interes),
         );
     }
 

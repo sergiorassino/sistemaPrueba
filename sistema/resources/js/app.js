@@ -32,6 +32,45 @@ window.seSwalAviso = function (mensaje, titulo = 'Atención') {
     });
 };
 
+/** SweetAlert2 — error / operación rechazada. */
+window.seSwalError = function (mensaje, titulo = 'No se pudo completar') {
+    if (typeof Swal === 'undefined') {
+        window.alert(mensaje);
+        return;
+    }
+    Swal.fire({
+        icon: 'error',
+        title: titulo,
+        text: mensaje,
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#40848D',
+    });
+};
+
+/**
+ * SweetAlert2 — confirmación con Sí / Cancelar.
+ * Devuelve Promise<boolean> (true si el usuario confirma).
+ * No usar window.confirm ni wire:confirm del navegador.
+ */
+window.seSwalConfirmar = function (mensaje, titulo = '¿Confirma?', opciones = {}) {
+    if (typeof Swal === 'undefined') {
+        return Promise.resolve(window.confirm(mensaje));
+    }
+    return Swal.fire({
+        icon: 'question',
+        title: titulo,
+        text: mensaje,
+        showCancelButton: true,
+        confirmButtonText: opciones.confirmButtonText ?? 'Sí, confirmar',
+        cancelButtonText: opciones.cancelButtonText ?? 'Cancelar',
+        confirmButtonColor: '#40848D',
+        cancelButtonColor: '#6b7280',
+        reverseButtons: true,
+        focusCancel: true,
+        ...opciones,
+    }).then((result) => result.isConfirmed === true);
+};
+
 /**
  * Carga de calificaciones (secundario / calificacionesSecundario): validación de notas permitidas en el cliente (sin request si es inválida).
  * Delegación `focusout` en `tbody[data-se-calif-tbody]` + toast liviano (sin SweetAlert).
@@ -360,6 +399,156 @@ function bindCalifCargaTablas() {
 }
 
 /**
+ * Importes por curso (cuotas): teclado numérico / punto → coma en campos decimales;
+ * flechas y Enter para moverse entre inputs y selects de la grilla.
+ * Los decimales usan wire:model.blur (no live) para no reformatear mientras se escribe.
+ */
+function seCiiBuildNavMatrix(tbody) {
+    const matrix = [];
+    tbody.querySelectorAll(':scope > tr.se-cii-tr').forEach((tr) => {
+        const row = [];
+        tr.querySelectorAll('[data-se-cii-nav]').forEach((el) => {
+            row.push(el);
+        });
+        if (row.length) {
+            matrix.push(row);
+        }
+    });
+    return matrix;
+}
+
+function seCiiFindNavPos(matrix, el) {
+    for (let r = 0; r < matrix.length; r++) {
+        const c = matrix[r].indexOf(el);
+        if (c >= 0) {
+            return { row: r, col: c };
+        }
+    }
+    return null;
+}
+
+function seCiiFocusNavCell(el) {
+    if (!el) {
+        return;
+    }
+    el.focus();
+    if (el.tagName === 'INPUT' && typeof el.select === 'function') {
+        el.select();
+    }
+    el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+
+function seCiiInsertCommaDecimal(el) {
+    const val = el.value ?? '';
+    const start = el.selectionStart ?? val.length;
+    const end = el.selectionEnd ?? start;
+    if (val.includes(',')) {
+        return;
+    }
+    el.value = val.slice(0, start) + ',' + val.slice(end);
+    const pos = start + 1;
+    el.setSelectionRange(pos, pos);
+}
+
+function seCiiIsNumpadDecimalKey(e) {
+    return e.key === 'Decimal' || (e.key === '.' && e.code === 'NumpadDecimal');
+}
+
+/** VALOR: también el punto del teclado alfanumérico. IMPORTE: solo teclado numérico (el punto puede ser miles). */
+function seCiiShouldConvertDecimalKeyToComma(el, e) {
+    if (!el.hasAttribute('data-se-cii-decimal')) {
+        return false;
+    }
+    if (seCiiIsNumpadDecimalKey(e)) {
+        return true;
+    }
+
+    return el.hasAttribute('data-se-cii-valor') && e.key === '.' && e.code === 'Period';
+}
+
+function bindCuotasImportesForm() {
+    document.querySelectorAll('[data-se-cii-tbody]').forEach((tbody) => {
+        if (tbody._seCiiBound) {
+            return;
+        }
+        tbody._seCiiBound = true;
+
+        tbody.addEventListener(
+            'keydown',
+            (e) => {
+                if (e.ctrlKey || e.metaKey || e.altKey) {
+                    return;
+                }
+                const el = e.target;
+                if (!el || !el.hasAttribute('data-se-cii-nav')) {
+                    return;
+                }
+
+                if (el.tagName === 'INPUT' && seCiiShouldConvertDecimalKeyToComma(el, e)) {
+                    e.preventDefault();
+                    seCiiInsertCommaDecimal(el);
+                    return;
+                }
+
+                const navKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'];
+                if (!navKeys.includes(e.key)) {
+                    return;
+                }
+
+                const matrix = seCiiBuildNavMatrix(tbody);
+                const pos = seCiiFindNavPos(matrix, el);
+                if (!pos) {
+                    return;
+                }
+
+                const nrows = matrix.length;
+                const ncols = matrix[0] ? matrix[0].length : 0;
+                if (!nrows || !ncols) {
+                    return;
+                }
+
+                const { row, col } = pos;
+                let nr = row;
+                let nc = col;
+
+                if (e.key === 'ArrowLeft') {
+                    nc = col - 1;
+                } else if (e.key === 'ArrowRight') {
+                    nc = col + 1;
+                } else if (e.key === 'ArrowUp') {
+                    nr = row - 1;
+                } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                    if (e.key === 'Enter' && row + 1 < nrows) {
+                        nr = row + 1;
+                        nc = col;
+                    } else if (e.key === 'Enter' && col + 1 < ncols) {
+                        nr = 0;
+                        nc = col + 1;
+                    } else if (e.key === 'ArrowDown') {
+                        nr = row + 1;
+                    } else {
+                        return;
+                    }
+                }
+
+                if (nr < 0 || nr >= nrows || nc < 0 || nc >= ncols) {
+                    return;
+                }
+
+                const next = matrix[nr][nc];
+                if (!next || next === el) {
+                    return;
+                }
+
+                e.preventDefault();
+                seCiiFocusNavCell(next);
+            },
+            true,
+        );
+    });
+}
+
+/**
  * Alinea cabecera y cuerpo cuando el tbody tiene barra vertical (scrollbar-gutter / overflow).
  */
 function syncCierreHeadScrollbarGutter(head, body) {
@@ -425,6 +614,7 @@ function bindCierreAnualGrillas() {
 
 document.addEventListener('DOMContentLoaded', () => {
     queueMicrotask(bindCalifCargaTablas);
+    queueMicrotask(bindCuotasImportesForm);
     queueMicrotask(bindCierreAnualGrillas);
 });
 
@@ -498,6 +688,7 @@ function triggerSeSidebarOverflowSync() {
 
 document.addEventListener('livewire:navigated', () => {
     queueMicrotask(bindCalifCargaTablas);
+    queueMicrotask(bindCuotasImportesForm);
     queueMicrotask(bindCierreAnualGrillas);
     queueMicrotask(triggerSeSidebarOverflowSync);
     window.setTimeout(triggerSeSidebarOverflowSync, 200);
@@ -511,6 +702,7 @@ document.addEventListener('livewire:init', () => {
     if (L && typeof L.hook === 'function') {
         L.hook('morph.updated', () => {
             queueMicrotask(bindCalifCargaTablas);
+            queueMicrotask(bindCuotasImportesForm);
             queueMicrotask(bindCierreAnualGrillas);
             queueMicrotask(triggerSeSidebarOverflowSync);
         });

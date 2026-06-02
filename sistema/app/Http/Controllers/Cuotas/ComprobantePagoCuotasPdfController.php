@@ -7,6 +7,7 @@ use App\Support\Alumnos\ArancelesEscolares;
 use App\Support\Alumnos\ComprobantePagoDatos;
 use App\Support\Alumnos\ComprobantePagoTcpdf;
 use App\Support\Cuotas\GestionAranceles;
+use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\PermisosCuotas;
 use App\Support\Security\OpaqueRouteToken;
 use Illuminate\Http\Request;
@@ -46,8 +47,13 @@ class ComprobantePagoCuotasPdfController extends Controller
         }
 
         if (ArancelesEscolares::cuotaVencidaParaReimpresion($registro)) {
+            ContextoEstudianteSesion::fijar(ContextoEstudianteSesion::CUOTAS_GESTION, [
+                'idLegajos' => $idLegajo,
+                'idCuotaGenerada' => 0,
+            ]);
+
             return redirect()
-                ->route('cuotas.estudiante', ['idLegajo' => $idLegajo])
+                ->route('cuotas.estudiante')
                 ->with('cuotas_cuota_vencida', ArancelesEscolares::mensajeCuotaVencidaReimpresion());
         }
 

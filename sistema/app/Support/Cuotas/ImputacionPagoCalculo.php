@@ -15,11 +15,13 @@ final class ImputacionPagoCalculo
     /**
      * @return array{
      *     porcent: float,
+     *     porcentDiario: float,
      *     porcentEditable: bool,
      *     esRecargo: bool,
      *     esBonificacion: bool,
      *     usaDias: bool,
      *     dias: int,
+     *     diasMora: int,
      *     interes: float,
      *     bonificacion: float,
      *     aPagar: float,
@@ -44,7 +46,6 @@ final class ImputacionPagoCalculo
         $venc1 = self::carbon($registro->venc1);
         $venc2 = self::carbon($registro->venc2);
         $venc3 = self::carbon($registro->venc3);
-        $nueVenc = self::carbon($registro->nueVenc);
         $fecha = $fechaPago->copy()->startOfDay();
 
         $tramo = '1';
@@ -53,8 +54,6 @@ final class ImputacionPagoCalculo
         $porcan = $formula['porcan1'];
         $usaDias = false;
         $dias = 0;
-        $fechaMayor = $venc1;
-        $fechaMenor = $venc1;
 
         if ($venc1 !== null && $fecha->lte($venc1)) {
             $tramo = '1';
@@ -67,52 +66,57 @@ final class ImputacionPagoCalculo
             $valor = $formula['valor2'];
             $porcan = $formula['porcan2'];
             $usaDias = $signo === '+';
-            $fechaMayor = $venc2;
-            $fechaMenor = $venc1;
         } elseif ($venc3 !== null && $fecha->lte($venc3)) {
             $tramo = '3';
             $signo = $formula['signo3'];
             $valor = $formula['valor3'];
             $porcan = $formula['porcan3'];
             $usaDias = $signo === '+';
-            $fechaMayor = $venc3;
-            $fechaMenor = $venc1;
         } else {
             $tramo = '4';
             $signo = $formula['signo4'];
             $valor = $formula['valor4'];
             $porcan = $formula['porcan4'];
             $usaDias = $signo === '+' && $porcan === '%';
-            $fechaMayor = $nueVenc ?? $venc3;
-            $fechaMenor = $venc1;
         }
 
+        $diasMora = $usaDias ? self::diasMoraDesdeVenc1($fecha, $venc1) : 0;
         if ($usaDias) {
-            $dias = self::diasEntre($fechaMayor, $fechaMenor);
+            $dias = $diasMora;
         }
 
-        $porcent = $porcentManual ?? (float) $valor;
+        $porcentDiario = (float) $valor;
         $esRecargo = $signo === '+';
         $esBonificacion = ! $esRecargo;
+
+        if ($porcentManual !== null) {
+            $porcent = $porcentManual;
+        } elseif ($usaDias && $esRecargo && $porcan === '%') {
+            $porcent = $porcentDiario * $diasMora;
+        } else {
+            $porcent = $porcentDiario;
+        }
 
         [$interes, $bonificacion] = self::importesAjuste(
             $saldoAPagar,
             $porcent,
-            '%',
+            $porcan,
             $esRecargo,
             $usaDias,
-            $dias,
+            $diasMora,
         );
 
         $aPagar = round($saldoAPagar + $interes - $bonificacion, 2);
 
         return [
             'porcent' => round($porcent, 4),
+            'porcentDiario' => round($porcentDiario, 4),
             'porcentEditable' => true,
             'esRecargo' => $esRecargo,
             'esBonificacion' => $esBonificacion,
             'usaDias' => $usaDias,
             'dias' => $dias,
+            'diasMora' => $diasMora,
             'interes' => $interes,
             'bonificacion' => $bonificacion,
             'aPagar' => max(0, $aPagar),
@@ -136,11 +140,14 @@ final class ImputacionPagoCalculo
         }
 
         if ($esRecargo) {
-            $monto = $porcan === '%'
-                ? ($saldo * $valor) / 100
-                : $valor;
-            if ($usaDias) {
-                $monto *= max(0, $dias);
+            if ($porcan === '%') {
+                // Con mora diaria, $valor ya es el % total (diario × días desde venc. 1).
+                $monto = ($saldo * $valor) / 100;
+            } else {
+                $monto = $valor;
+                if ($usaDias) {
+                    $monto *= max(0, $dias);
+                }
             }
 
             return [round($monto, 2), 0.0];
@@ -174,13 +181,16 @@ final class ImputacionPagoCalculo
         ];
     }
 
-    private static function diasEntre(?CarbonInterface $fechaMayor, ?CarbonInterface $fechaMenor): int
+    /**
+     * Días de mora desde el primer vencimiento hasta la fecha de pago.
+     */
+    private static function diasMoraDesdeVenc1(CarbonInterface $fechaPago, ?CarbonInterface $venc1): int
     {
-        if ($fechaMayor === null || $fechaMenor === null) {
+        if ($venc1 === null || $fechaPago->lte($venc1)) {
             return 0;
         }
 
-        return max(0, $fechaMenor->diffInDays($fechaMayor, false));
+        return max(0, (int) $venc1->diffInDays($fechaPago));
     }
 
     private static function carbon(mixed $fecha): ?CarbonInterface

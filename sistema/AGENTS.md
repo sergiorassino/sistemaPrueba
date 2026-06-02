@@ -51,6 +51,10 @@ Todo desplegable de ciclo lectivo: **orden decreciente** (año más reciente pri
 
 Usar siempre: **Menú de Secretaría** (`layouts/app`), **Menú de Alumnos** (`layouts/alumno`), **Menú de Docentes** (`layouts/docente`). No llamar “staff” ni mezclar con el grupo sidebar “DOCENTES” de secretaría. Detalle: `docs/08-menus-de-navegacion.md`.
 
+## Diálogos al usuario (SweetAlert2)
+
+Confirmaciones, éxitos, avisos y errores: helpers `seSwal*` en `resources/js/app.js`; eventos Livewire `se-swal-exito` / `se-swal-error`. No usar `wire:confirm` ni `alert`/`confirm` del navegador. Detalle: `docs/05-preferencias-y-convenciones.md` §12 y `.cursor/rules/sweetalert-dialogos-se.mdc`.
+
 ## URLs sin IDs reveladores
 
 En autogestión, PDFs y descargas por GET: **no** poner IDs de BD, DNI ni legajo en la URL. Usar `App\Support\Security\OpaqueRouteToken` o token en BD (aspirantes). Detalle: `docs/06-reglas-de-seguridad.md` §10 y `.cursor/rules/urls-sin-identificadores.mdc`.

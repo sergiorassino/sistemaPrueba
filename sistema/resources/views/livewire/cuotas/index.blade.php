@@ -57,19 +57,22 @@
                         @php
                             $datos = GestionAranceles::datosListadoBusqueda($l);
                             $nombreCompleto = trim($l->apellido.', '.$l->nombre);
-                            $urlGestionar = route('cuotas.estudiante', ['idLegajo' => $l->id]);
                         @endphp
                         <div @class([
                             'gf-row gf-row-hover',
                             'gf-row--sin-matricula-actual' => ! $datos['tieneMatriculaActual'],
                         ]) wire:key="legajo-{{ $l->id }}">
                             <div class="gf-td gf-td-nombre font-medium">
-                                <a href="{{ $urlGestionar }}"
-                                   wire:navigate
-                                   class="block truncate text-primary-800 hover:text-primary-600 hover:underline"
-                                   title="{{ $nombreCompleto }}">
-                                    {!! CuotasFormato::resaltarTerminoBusqueda($nombreCompleto, $search) !!}
-                                </a>
+                                <x-nav-contexto-estudiante
+                                    destino="cuotas.estudiante"
+                                    :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
+                                    :id-legajos="$l->id"
+                                    class="inline-block max-w-full">
+                                    <span class="block truncate text-left text-primary-800 hover:text-primary-600 hover:underline cursor-pointer"
+                                          title="{{ $nombreCompleto }}">
+                                        {!! CuotasFormato::resaltarTerminoBusqueda($nombreCompleto, $search) !!}
+                                    </span>
+                                </x-nav-contexto-estudiante>
                             </div>
                             <div class="gf-td w-28 tabular-nums whitespace-nowrap">
                                 {{ CuotasFormato::formatearDni($l->dni) }}
@@ -92,11 +95,15 @@
                             </div>
                             <div class="gf-td w-20 justify-center whitespace-nowrap">{{ $datos['beca'] }}</div>
                             <div class="gf-td w-32 justify-center">
-                                <a href="{{ $urlGestionar }}"
-                                   wire:navigate
-                                   class="inline-flex items-center justify-center rounded border border-gray-400 bg-white px-2 py-0.5 text-[10px] font-semibold text-primary-700 hover:bg-primary-50">
-                                    Gestionar
-                                </a>
+                                <x-nav-contexto-estudiante
+                                    destino="cuotas.estudiante"
+                                    :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
+                                    :id-legajos="$l->id"
+                                    class="inline">
+                                    <span class="inline-flex cursor-pointer items-center justify-center rounded border border-gray-400 bg-white px-2 py-0.5 text-[10px] font-semibold text-primary-700 hover:bg-primary-50">
+                                        Gestionar
+                                    </span>
+                                </x-nav-contexto-estudiante>
                             </div>
                         </div>
                     @endforeach

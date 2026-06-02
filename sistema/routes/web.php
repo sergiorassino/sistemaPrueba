@@ -90,9 +90,15 @@ use App\Livewire\Alumnos\ArancelesEscolaresIndex;
 use App\Livewire\Alumnos\AceptacionDocumentoFamilia;
 use App\Livewire\Auth\Login;
 use App\Http\Controllers\Cuotas\ComprobantePagoCuotasPdfController;
+use App\Http\Controllers\Cuotas\ComprobantePagoImputacionPdfController;
+use App\Http\Controllers\Cuotas\ResumenPagosEstudiantePdfController;
 use App\Livewire\Cuotas\CuotaGeneradaForm;
 use App\Livewire\Cuotas\CuotasEstudianteShow;
 use App\Livewire\Cuotas\CuotasIndex;
+use App\Livewire\Cuotas\CuotasImportesForm;
+use App\Livewire\Cuotas\CuotasImportesIndex;
+use App\Livewire\Cuotas\CuotasPlantillaIndex;
+use App\Livewire\Cuotas\HistorialPagosCuota;
 use App\Livewire\Cuotas\ImputarPagoForm;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\CargaColoquiosSecundario;
@@ -394,16 +400,22 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
         ->name('param.com-canales');
     Route::prefix('cuotas')->group(function () {
         Route::get('/', CuotasIndex::class)->name('cuotas.index');
-        Route::get('/estudiante/{idLegajo}', CuotasEstudianteShow::class)->whereNumber('idLegajo')->name('cuotas.estudiante');
-        Route::get('/estudiante/{idLegajo}/cuota/{idCuotaGenerada}/editar', CuotaGeneradaForm::class)
-            ->whereNumber(['idLegajo', 'idCuotaGenerada'])
-            ->name('cuotas.cuota.editar');
-        Route::get('/estudiante/{idLegajo}/cuota/{idCuotaGenerada}/imputar', ImputarPagoForm::class)
-            ->whereNumber(['idLegajo', 'idCuotaGenerada'])
-            ->name('cuotas.cuota.imputar');
+        Route::get('/plantillas', CuotasPlantillaIndex::class)->name('cuotas.plantillas');
+        Route::get('/importes', CuotasImportesIndex::class)->name('cuotas.importes.index');
+        Route::get('/importes/editar', CuotasImportesForm::class)->name('cuotas.importes.editar');
+        Route::get('/estudiante', CuotasEstudianteShow::class)->name('cuotas.estudiante');
+        Route::get('/estudiante/cuota/editar', CuotaGeneradaForm::class)->name('cuotas.cuota.editar');
+        Route::get('/estudiante/cuota/imputar', ImputarPagoForm::class)->name('cuotas.cuota.imputar');
+        Route::get('/estudiante/cuota/historial-pagos', HistorialPagosCuota::class)->name('cuotas.cuota.historial-pagos');
         Route::get('/comprobante/{ref}', ComprobantePagoCuotasPdfController::class)
             ->where('ref', '[A-Za-z0-9_-]+')
             ->name('cuotas.comprobante');
+        Route::get('/comprobante-imputacion/{ref}', ComprobantePagoImputacionPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('cuotas.comprobante-imputacion');
+        Route::get('/resumen-pagos/{ref}', ResumenPagosEstudiantePdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('cuotas.resumen-pagos');
     });
 
     Route::get('/abm/legajos', LegajosIndex::class)->name('abm.legajos');

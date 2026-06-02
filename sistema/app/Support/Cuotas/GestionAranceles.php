@@ -200,6 +200,37 @@ final class GestionAranceles
     }
 
     /**
+     * IDs de cuotastipopago habilitados en imputación manual de pago.
+     *
+     * @var list<int>
+     */
+    public const IDS_MEDIOS_PAGO_IMPUTACION = [1, 2, 8, 9, 10];
+
+    /**
+     * @return list<int>
+     */
+    public static function idsMediosPagoImputacion(): array
+    {
+        return self::IDS_MEDIOS_PAGO_IMPUTACION;
+    }
+
+    /**
+     * Medios de pago para el formulario de imputación (solo IDs habilitados).
+     *
+     * @return Collection<int, CuotaTipoPago>
+     */
+    public static function mediosDePagoImputacion(): Collection
+    {
+        $orden = self::IDS_MEDIOS_PAGO_IMPUTACION;
+
+        return CuotaTipoPago::query()
+            ->whereIn('id', $orden)
+            ->get(['id', 'tipoPago', 'abrev'])
+            ->sortBy(fn (CuotaTipoPago $medio) => array_search((int) $medio->id, $orden, true))
+            ->values();
+    }
+
+    /**
      * @return Collection<int, CuotaTipoPago>
      */
     public static function mediosDePago(): Collection

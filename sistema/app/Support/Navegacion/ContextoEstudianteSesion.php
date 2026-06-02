@@ -25,12 +25,14 @@ final class ContextoEstudianteSesion
 
     public const LEGAJO_ABM = 'legajo_abm';
 
+    public const CUOTAS_GESTION = 'cuotas_gestion';
+
     private const SESSION_KEY = 'contexto_estudiante_navegacion';
 
     private const TTL_MINUTES = 120;
 
     /**
-     * @param  array{matricula?: int, curso?: int, idLegajos?: int, materia?: int, tipo?: int|string, desde?: string, hasta?: string}  $datos
+     * @param  array{matricula?: int, curso?: int, idLegajos?: int, idCuotaGenerada?: int|null, materia?: int, tipo?: int|string, desde?: string, hasta?: string}  $datos
      */
     public static function fijar(string $alcance, array $datos): void
     {
@@ -46,6 +48,9 @@ final class ContextoEstudianteSesion
         }
 
         $fusion = array_merge($previo, self::filtrarDatos($datos));
+        if (array_key_exists('idCuotaGenerada', $datos) && (int) ($datos['idCuotaGenerada'] ?? 0) <= 0) {
+            unset($fusion['idCuotaGenerada']);
+        }
         $fusion['expira'] = now()->addMinutes(self::TTL_MINUTES)->timestamp;
 
         $actual[$alcance] = $fusion;
@@ -53,7 +58,7 @@ final class ContextoEstudianteSesion
     }
 
     /**
-     * @return array{matricula?: int, curso?: int, idLegajos?: int, materia?: int, tipo?: int|string, desde?: string, hasta?: string}
+     * @return array{matricula?: int, curso?: int, idLegajos?: int, idCuotaGenerada?: int, materia?: int, tipo?: int|string, desde?: string, hasta?: string}
      */
     public static function leer(string $alcance): array
     {
@@ -100,6 +105,13 @@ final class ContextoEstudianteSesion
         return $id > 0 ? $id : null;
     }
 
+    public static function cuotaGenerada(string $alcance): ?int
+    {
+        $id = (int) (self::leer($alcance)['idCuotaGenerada'] ?? 0);
+
+        return $id > 0 ? $id : null;
+    }
+
     public static function materia(string $alcance): ?int
     {
         $id = (int) (self::leer($alcance)['materia'] ?? 0);
@@ -135,7 +147,7 @@ final class ContextoEstudianteSesion
             $out['portal_docente'] = (int) $datos['portal_docente'] === 1 ? 1 : 0;
         }
 
-        foreach (['matricula', 'curso', 'idLegajos', 'materia', 'tipo', 'desde', 'hasta', 'fecha'] as $clave) {
+        foreach (['matricula', 'curso', 'idLegajos', 'idCuotaGenerada', 'materia', 'tipo', 'desde', 'hasta', 'fecha'] as $clave) {
             if (! array_key_exists($clave, $datos)) {
                 continue;
             }

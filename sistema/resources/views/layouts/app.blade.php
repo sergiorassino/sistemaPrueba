@@ -45,7 +45,8 @@
         horarios: {{ str_starts_with($route ?? '', 'horarios.') ? 'true' : 'false' }},
         aspirantes: {{ str_starts_with($route ?? '', 'aspirantes.') ? 'true' : 'false' }},
         matriculaWeb: {{ str_starts_with($route ?? '', 'matricula-web.') ? 'true' : 'false' }},
-        gestionCuotas: {{ str_starts_with($route ?? '', 'cuotas.') ? 'true' : 'false' }},
+        gestionCuotas: {{ str_starts_with($route ?? '', 'cuotas.') && ($route ?? '') !== 'cuotas.plantillas' ? 'true' : 'false' }},
+        gestionMasiva: {{ (($route ?? '') === 'cuotas.plantillas') ? 'true' : 'false' }},
         comunicaciones: false,
     },
     isDesktopPeekLayout() {
@@ -177,7 +178,7 @@
        @mouseleave="saveSidebarNavScroll(); peekSidebarMaybeCollapseLater()"
        @focusin="peekSidebarExpandNow()"
        @focusout="peekSidebarFocusOut($event)"
-       class="se-sidebar se-sidebar--bosque fixed inset-y-0 left-0 z-[1000] flex flex-col overflow-hidden transform transition-transform duration-200 ease-in-out
+       class="se-sidebar se-sidebar--bosque se-sidebar--active-typography fixed inset-y-0 left-0 z-[1000] flex flex-col overflow-hidden transform transition-transform duration-200 ease-in-out
               md:translate-x-0 md:transition-[width] md:duration-200 md:ease-in-out md:shadow-lg"
        :class="[
            sidebarOpen ? 'translate-x-0' : '-translate-x-full',
@@ -331,7 +332,9 @@
                 <a href="{{ route('cuotas.index') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'cuotas.'),
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'cuotas.')
+                           && ! str_starts_with($route ?? '', 'cuotas.importes.')
+                           && ($route ?? '') !== 'cuotas.plantillas',
                    ])
                    title="Buscar estudiante y gestionar cuotas">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -339,6 +342,53 @@
                               d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                     </svg>
                     <span class="truncate">Aranceles por estudiante</span>
+                </a>
+            </div>
+
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
+                    :class="(groups.gestionMasiva && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('gestionMasiva')"
+                    title="Gestión masiva">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Gestión masiva</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.gestionMasiva ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.gestionMasiva && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                <a href="{{ route('cuotas.plantillas') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.plantillas',
+                   ])
+                   title="Plantillas de cuotas del año lectivo activo">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    <span class="truncate">Crear / Editar Cuotas</span>
+                </a>
+                <a href="{{ route('cuotas.importes.index') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'cuotas.importes.'),
+                   ])
+                   title="Importes y bonificaciones o intereses por curso">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                    </svg>
+                    <span class="truncate">Importes por curso</span>
                 </a>
             </div>
         @endif

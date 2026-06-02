@@ -24,7 +24,7 @@ final class ImputacionPagoService
      *     avisoPago: bool
      * }  $datos
      */
-    public static function registrar(CuotaGenerada $registro, array $datos): void
+    public static function registrar(CuotaGenerada $registro, array $datos): ?CuotaPago
     {
         $saldo = round(max(0, (float) $datos['saldoAPagar']), 2);
         $interes = round(max(0, (float) $datos['interes']), 2);
@@ -34,11 +34,13 @@ final class ImputacionPagoService
         $avisoPago = (bool) ($datos['avisoPago'] ?? false);
         $obs = trim((string) ($datos['obs'] ?? ''));
 
-        DB::transaction(function () use ($registro, $saldo, $interes, $bonificacion, $aPagar, $fechaPago, $avisoPago, $obs, $datos) {
+        $pagoCreado = null;
+
+        DB::transaction(function () use ($registro, $saldo, $interes, $bonificacion, $aPagar, $fechaPago, $avisoPago, $obs, $datos, &$pagoCreado) {
             $locked = CuotaGenerada::query()->whereKey($registro->id)->lockForUpdate()->firstOrFail();
 
             if ($saldo > 0 || $aPagar > 0) {
-                CuotaPago::query()->create([
+                $pagoCreado = CuotaPago::query()->create([
                     'idCuotasGeneradas' => (int) $locked->id,
                     'idCuotastipopago' => (int) $datos['idCuotastipopago'],
                     'fechhora' => $fechaPago->format('Y-m-d H:i:s'),
@@ -68,5 +70,7 @@ final class ImputacionPagoService
             $locked->avisoPago = $avisoPago ? 1 : 0;
             $locked->save();
         });
+
+        return $pagoCreado;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Livewire\Cuotas;
 
 use App\Support\Cuotas\GestionAranceles;
+use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\PermisosCuotas;
 use Livewire\Component;
 
@@ -15,10 +16,13 @@ class CuotasEstudianteShow extends Component
 
     public bool $mostrarHistorial = false;
 
-    public function mount(int $idLegajo): void
+    public function mount(): void
     {
         abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
-        abort_unless($idLegajo > 0 && GestionAranceles::legajoParaGestion($idLegajo) !== null, 404);
+
+        $idLegajo = ContextoEstudianteSesion::legajo(ContextoEstudianteSesion::CUOTAS_GESTION);
+        abort_if($idLegajo === null || GestionAranceles::legajoParaGestion($idLegajo) === null, 404);
+
         $this->idLegajo = $idLegajo;
     }
 

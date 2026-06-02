@@ -35,6 +35,11 @@
                 @endif
             </div>
             <div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                <a href="{{ se_route_url('cuotas.resumen-pagos', ['ref' => OpaqueRouteToken::forResumenPagosEstudiante($idLegajo)]) }}"
+                   target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20">
+                    Resumen de Pagos
+                </a>
                 <button type="button"
                         wire:click="alternarVistaCuotas"
                         class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20">
@@ -63,6 +68,7 @@
                         <div class="gf-head">
                             @if (! $mostrarHistorial)
                                 <div class="gf-th gf-th-accion" title="Editar"></div>
+                                <div class="gf-th gf-th-accion" title="Historial de pagos"></div>
                             @endif
                             <div class="gf-th w-12">Año</div>
                             <div class="gf-th w-14 text-center">Nivel</div>
@@ -96,12 +102,32 @@
                             <div class="gf-row gf-row-hover {{ $rowEstadoClass }}" wire:key="cg-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
                                 @if (! $mostrarHistorial)
                                     <div class="gf-td gf-td-accion !py-1">
-                                        <a href="{{ route('cuotas.cuota.editar', ['idLegajo' => $idLegajo, 'idCuotaGenerada' => $c->id]) }}"
-                                           wire:navigate
-                                           class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
-                                           title="Editar cuota">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        </a>
+                                        <x-nav-contexto-estudiante
+                                            destino="cuotas.cuota.editar"
+                                            :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
+                                            :id-legajos="$idLegajo"
+                                            :id-cuota-generada="$c->id"
+                                            class="inline">
+                                            <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                                  title="Editar cuota">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            </span>
+                                        </x-nav-contexto-estudiante>
+                                    </div>
+                                    <div class="gf-td gf-td-accion !py-1">
+                                        <x-nav-contexto-estudiante
+                                            destino="cuotas.cuota.historial-pagos"
+                                            :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
+                                            :id-legajos="$idLegajo"
+                                            :id-cuota-generada="$c->id"
+                                            class="inline">
+                                            <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                                  title="Historial de pagos">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                </svg>
+                                            </span>
+                                        </x-nav-contexto-estudiante>
                                     </div>
                                 @endif
                                 <div class="gf-td w-12 tabular-nums">{{ $c->terlec?->ano ?? '' }}</div>
@@ -127,12 +153,17 @@
                                 @if (! $mostrarHistorial)
                                     <div class="gf-td gf-td-accion !py-1">
                                         @if ((float) $c->faltapa > 0)
-                                            <a href="{{ route('cuotas.cuota.imputar', ['idLegajo' => $idLegajo, 'idCuotaGenerada' => $c->id]) }}"
-                                               wire:navigate
-                                               class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
-                                               title="Imputar pago">
-                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                            </a>
+                                            <x-nav-contexto-estudiante
+                                                destino="cuotas.cuota.imputar"
+                                                :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
+                                                :id-legajos="$idLegajo"
+                                                :id-cuota-generada="$c->id"
+                                                class="inline">
+                                                <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                                      title="Imputar pago">
+                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                </span>
+                                            </x-nav-contexto-estudiante>
                                         @endif
                                     </div>
                                     <div class="gf-td gf-td-accion !py-1">

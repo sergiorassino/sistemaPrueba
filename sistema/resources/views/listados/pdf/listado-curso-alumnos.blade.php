@@ -106,9 +106,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($alumnosPagina as $i => $a)
+                        @forelse ($alumnosPagina->values() as $a)
                             <tr>
-                                <td class="num" style="width:20pt;max-width:20pt;min-width:20pt;">{{ $inicioNum + $i + 1 }}</td>
+                                <td class="num" style="width:20pt;max-width:20pt;min-width:20pt;">{{ $inicioNum + $loop->iteration }}</td>
                                 @foreach ($columnasMeta as $col)
                                     @php
                                         $esColCond = ($col['key'] === 'condiciones.condicion');

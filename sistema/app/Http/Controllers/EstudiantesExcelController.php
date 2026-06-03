@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Curso;
 use App\Support\Listados\EstudiantesExcelExporter;
+use App\Support\Listados\ListadoCursoConsulta;
 use App\Support\Listados\EstudiantesExcelExportSpec;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\Listados\ListadoCursoExportParams;
@@ -31,9 +31,9 @@ class EstudiantesExcelController extends Controller
             abort(403);
         }
 
-        $spec = $this->resolverSpec($request, $idNivel, $idTerlec);
+        $spec = $this->resolverSpec($request);
 
-        $resultado = $exporter->build($idNivel, $idTerlec, $ctx->terlecAno(), $spec);
+        $resultado = $exporter->build($idTerlec, $ctx->terlecAno(), $spec);
         $tempPath = $exporter->guardarEnTemporal($resultado['spreadsheet']);
 
         return response()->download($tempPath, $resultado['filename'], [
@@ -41,7 +41,7 @@ class EstudiantesExcelController extends Controller
         ])->deleteFileAfterSend(true);
     }
 
-    private function resolverSpec(Request $request, int $idNivel, int $idTerlec): EstudiantesExcelExportSpec
+    private function resolverSpec(Request $request): EstudiantesExcelExportSpec
     {
         $cursosInput = $request->query('cursos');
         if ($cursosInput === null || $cursosInput === '') {
@@ -68,16 +68,13 @@ class EstudiantesExcelController extends Controller
         $data = $validated->validated();
         $filtroCondicion = ListadoCursoCondicionFiltro::normalize($data['condicion'] ?? null);
 
-        $cursosPermitidos = Curso::query()
-            ->where('idNivel', $idNivel)
-            ->where('idTerlec', $idTerlec)
-            ->get();
+        $cursosPermitidos = ListadoCursoConsulta::cursosPermitidosEnContexto();
 
         if ($cursosPermitidos->isEmpty()) {
             abort(404);
         }
 
-        $allowedById = $cursosPermitidos->keyBy(fn (Curso $c) => (int) $c->Id);
+        $allowedById = $cursosPermitidos->keyBy(fn ($c) => (int) $c->Id);
         $cursoIds = ListadoCursoExportParams::resolverIdsCursos(trim((string) $data['cursos']), $allowedById);
 
         if ($cursoIds === []) {

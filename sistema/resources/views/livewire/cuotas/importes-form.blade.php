@@ -80,9 +80,12 @@
                                 <td class="se-cii-td">
                                     <input type="text"
                                            inputmode="decimal"
-                                           wire:model.blur="draft.{{ $key }}.importe"
+                                           value="{{ $row['importe'] }}"
+                                           wire:key="cii-{{ $key }}-importe"
                                            data-se-cii-nav
                                            data-se-cii-decimal
+                                           data-se-cii-row-key="{{ $key }}"
+                                           data-se-cii-field="importe"
                                            class="se-cii-input @error('draft.'.$key.'.importe') se-cii-input--err @enderror"
                                            title="Importe base">
                                     @error('draft.'.$key.'.importe')
@@ -108,10 +111,13 @@
                                     <td class="se-cii-td">
                                         <input type="text"
                                                inputmode="decimal"
-                                               wire:model.blur="draft.{{ $key }}.{{ $valor }}"
+                                               value="{{ $row[$valor] }}"
+                                               wire:key="cii-{{ $key }}-{{ $valor }}"
                                                data-se-cii-nav
                                                data-se-cii-decimal
                                                data-se-cii-valor
+                                               data-se-cii-row-key="{{ $key }}"
+                                               data-se-cii-field="{{ $valor }}"
                                                class="se-cii-input se-cii-input--center @error('draft.'.$key.'.'.$valor) se-cii-input--err @enderror">
                                         @error('draft.'.$key.'.'.$valor)
                                             <div class="se-cii-field-err">{{ $message }}</div>

@@ -18,6 +18,16 @@ final class SchoolAlcancePedagogico
         return schoolEsAdministracion();
     }
 
+    /** Etiqueta de nivel en PDF/listados cuando el alcance es transversal. */
+    public static function etiquetaNivelParaInformes(): string
+    {
+        if (self::abarcaTodosLosNivelesPedagogicos()) {
+            return 'Todos los niveles';
+        }
+
+        return schoolCtx()->nivelNombre();
+    }
+
     /** Nivel único para filtrar, o null si aplica a Inicial + Primario + Secundario. */
     public static function idNivelFiltroUnico(): ?int
     {

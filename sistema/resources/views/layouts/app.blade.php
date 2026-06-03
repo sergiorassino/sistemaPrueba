@@ -45,8 +45,13 @@
         horarios: {{ str_starts_with($route ?? '', 'horarios.') ? 'true' : 'false' }},
         aspirantes: {{ str_starts_with($route ?? '', 'aspirantes.') ? 'true' : 'false' }},
         matriculaWeb: {{ str_starts_with($route ?? '', 'matricula-web.') ? 'true' : 'false' }},
-        gestionCuotas: {{ str_starts_with($route ?? '', 'cuotas.') && ($route ?? '') !== 'cuotas.plantillas' ? 'true' : 'false' }},
-        gestionMasiva: {{ (($route ?? '') === 'cuotas.plantillas') ? 'true' : 'false' }},
+        gestionCuotas: {{ str_starts_with($route ?? '', 'cuotas.')
+            && ($route ?? '') !== 'cuotas.plantillas'
+            && ! str_starts_with($route ?? '', 'cuotas.importes.')
+            && ($route ?? '') !== 'cuotas.generacion-masiva'
+            && ($route ?? '') !== 'cuotas.eliminacion-masiva' ? 'true' : 'false' }},
+        gestionMasiva: {{ in_array($route ?? '', ['cuotas.plantillas', 'cuotas.generacion-masiva', 'cuotas.eliminacion-masiva'], true)
+            || str_starts_with($route ?? '', 'cuotas.importes.') ? 'true' : 'false' }},
         comunicaciones: false,
     },
     isDesktopPeekLayout() {
@@ -334,7 +339,9 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'cuotas.')
                            && ! str_starts_with($route ?? '', 'cuotas.importes.')
-                           && ($route ?? '') !== 'cuotas.plantillas',
+                           && ($route ?? '') !== 'cuotas.plantillas'
+                           && ($route ?? '') !== 'cuotas.generacion-masiva'
+                           && ($route ?? '') !== 'cuotas.eliminacion-masiva',
                    ])
                    title="Buscar estudiante y gestionar cuotas">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -389,6 +396,30 @@
                               d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
                     </svg>
                     <span class="truncate">Importes por curso</span>
+                </a>
+                <a href="{{ route('cuotas.generacion-masiva') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.generacion-masiva',
+                   ])
+                   title="Generar cuotas para estudiantes regulares por curso">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    <span class="truncate">Generación masiva de cuotas</span>
+                </a>
+                <a href="{{ route('cuotas.eliminacion-masiva') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.eliminacion-masiva',
+                   ])
+                   title="Eliminar cuotas generadas sin pagos por curso">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    <span class="truncate">Eliminar Masivamente Cuotas Generadas</span>
                 </a>
             </div>
         @endif

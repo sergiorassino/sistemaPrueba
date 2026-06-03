@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Curso;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
+use App\Support\Listados\ListadoCursoConsulta;
 use App\Support\Listados\ListadoCursoExportParams;
 use App\Support\Listados\ListadoCursoPdfFieldCatalog;
+use App\Support\SchoolAlcancePedagogico;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -17,8 +18,11 @@ use Illuminate\Validation\Rule;
 
 class ListadoCursoPdfController extends Controller
 {
-    /** Filas de alumnos por hoja en el PDF (encabezado + tabla). */
-    private const ALUMNOS_POR_HOJA_PDF = 35;
+    /**
+     * Filas de alumnos por hoja en el PDF (membrete + contexto + encabezado de tabla).
+     * A4 vertical, filas compactas (~4 mm); 35 dejaba mucho margen inferior y cortaba de más.
+     */
+    private const ALUMNOS_POR_HOJA_PDF = 52;
 
     public function __invoke(Request $request)
     {
@@ -57,19 +61,13 @@ class ListadoCursoPdfController extends Controller
 
         $ctx = schoolCtx();
 
-        $cursosPermitidos = Curso::query()
-            ->with('curplan')
-            ->where('idNivel', $ctx->idNivel)
-            ->where('idTerlec', $ctx->idTerlec)
-            ->orderBy('orden')
-            ->orderBy('cursec')
-            ->get();
+        $cursosPermitidos = ListadoCursoConsulta::cursosPermitidosEnContexto();
 
         if ($cursosPermitidos->isEmpty()) {
             abort(404);
         }
 
-        $allowedById = $cursosPermitidos->keyBy(fn (Curso $c) => (int) $c->Id);
+        $allowedById = $cursosPermitidos->keyBy(fn ($c) => (int) $c->Id);
 
         $cursoIds = ListadoCursoExportParams::resolverIdsCursos($cursosParam, $allowedById);
         if ($cursoIds === []) {
@@ -91,8 +89,11 @@ class ListadoCursoPdfController extends Controller
             ->whereIn('matricula.idCursos', $cursoIds)
             ->whereIn('matricula.idCondiciones', $idsCondiciones)
             ->where('matricula.idTerlec', $ctx->idTerlec)
-            ->where('matricula.idNivel', $ctx->idNivel)
-            ->whereNull('matricula.fechaBaja')
+            ->whereNull('matricula.fechaBaja');
+
+        ListadoCursoConsulta::aplicarFiltroMatriculaNivel($query);
+
+        $query
             ->orderBy('matricula.idCursos')
             ->orderBy('legajos.apellido')
             ->orderBy('legajos.nombre');
@@ -117,7 +118,7 @@ class ListadoCursoPdfController extends Controller
             ];
         }
 
-        $nivelNombre = $ctx->nivelNombre();
+        $nivelNombre = SchoolAlcancePedagogico::etiquetaNivelParaInformes();
         $ano = $ctx->terlecAno();
 
         $modoEstudiantesPdf = ListadoCursoCondicionFiltro::etiquetaModoEstudiantesPdf($filtroCondicion);

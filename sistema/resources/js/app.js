@@ -398,10 +398,28 @@ function bindCalifCargaTablas() {
     });
 }
 
+function seCiiCallCommitCell(root, key, field, value) {
+    const c = root && root.__livewire;
+    if (!c || !c.$wire) {
+        return false;
+    }
+    const w = c.$wire;
+    if (typeof w.call === 'function') {
+        w.call('commitDraftCell', key, field, value);
+        return true;
+    }
+    if (typeof w.commitDraftCell === 'function') {
+        w.commitDraftCell(key, field, value);
+        return true;
+    }
+    return false;
+}
+
 /**
  * Importes por curso (cuotas): teclado numérico / punto → coma en campos decimales;
  * flechas y Enter para moverse entre inputs y selects de la grilla.
- * Los decimales usan wire:model.blur (no live) para no reformatear mientras se escribe.
+ * Importe/valor: value en DOM + commitDraftCell en focusout (como calificaciones).
+ * Signo/%/$: wire:model.live en el select.
  */
 function seCiiBuildNavMatrix(tbody) {
     const matrix = [];
@@ -427,15 +445,27 @@ function seCiiFindNavPos(matrix, el) {
     return null;
 }
 
-function seCiiFocusNavCell(el) {
-    if (!el) {
+function seCiiFocusNavCell(from, to) {
+    if (!to) {
         return;
     }
-    el.focus();
-    if (el.tagName === 'INPUT' && typeof el.select === 'function') {
-        el.select();
+
+    const focusTarget = () => {
+        to.focus();
+        if (to.tagName === 'INPUT' && typeof to.select === 'function') {
+            to.select();
+        }
+        to.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    };
+
+    if (from && from !== to && document.activeElement === from) {
+        from.blur();
+        queueMicrotask(focusTarget);
+
+        return;
     }
-    el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+
+    focusTarget();
 }
 
 function seCiiInsertCommaDecimal(el) {
@@ -472,6 +502,38 @@ function bindCuotasImportesForm() {
             return;
         }
         tbody._seCiiBound = true;
+
+        tbody.addEventListener(
+            'focusin',
+            (e) => {
+                const el = e.target;
+                if (!el || el.tagName !== 'INPUT' || !el.dataset.seCiiRowKey || !el.dataset.seCiiField) {
+                    return;
+                }
+                el.dataset.seCiiLast = el.value ?? '';
+            },
+            true,
+        );
+
+        tbody.addEventListener(
+            'focusout',
+            (e) => {
+                const el = e.target;
+                if (!el || el.tagName !== 'INPUT' || !el.dataset.seCiiRowKey || !el.dataset.seCiiField) {
+                    return;
+                }
+                const val = el.value ?? '';
+                if (val === (el.dataset.seCiiLast ?? '')) {
+                    return;
+                }
+                const root = el.closest('[wire\\:id]');
+                if (!root) {
+                    return;
+                }
+                seCiiCallCommitCell(root, el.dataset.seCiiRowKey, el.dataset.seCiiField, val);
+            },
+            true,
+        );
 
         tbody.addEventListener(
             'keydown',
@@ -541,7 +603,7 @@ function bindCuotasImportesForm() {
                 }
 
                 e.preventDefault();
-                seCiiFocusNavCell(next);
+                seCiiFocusNavCell(el, next);
             },
             true,
         );

@@ -3,23 +3,18 @@
 namespace App\Livewire\Listados;
 
 use App\Models\CampoLegajo;
-use App\Models\Curso;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
-use App\Support\SchoolAlcancePedagogico;
+use App\Support\Listados\ListadoCursoConsulta;
 use App\Support\Listados\ListadoCursoPdfFieldCatalog;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Livewire\Component;
 
 class ListadoPorCurso extends Component
 {
-    /** IDs de curso en el panel derecho (orden = orden del listado). */
+    /** @var list<string> */
     public array $cursosElegidos = [];
 
-    /** Selección actual en el listado izquierdo (multiselect). */
-    public array $seleccionListaIzq = [];
-
-    /** Selección actual en el listado derecho (multiselect). */
-    public array $seleccionListaDer = [];
+    public string $filtroCursos = '';
 
     /** @see ListadoCursoCondicionFiltro */
     public string $filtroCondicion = ListadoCursoCondicionFiltro::REGULARES;
@@ -37,92 +32,105 @@ class ListadoPorCurso extends Component
         $this->filtroCondicion = ListadoCursoCondicionFiltro::normalize(is_string($value) ? $value : null);
     }
 
-    public function render()
+    public function quitarCurso(int $idCurso): void
     {
-        $cursos = $this->queryCursos()->with('turnoClase')->get(['Id', 'cursec', 'orden', 'idCurPlan', 'c', 's', 'idTurnoClase']);
-
-        $idsElegidosSet = collect($this->cursosElegidos)
-            ->map(fn ($v) => (string) $v)
-            ->filter()
-            ->flip();
-
-        $cursosIzquierda = $cursos->filter(fn (Curso $c) => ! $idsElegidosSet->has((string) $c->Id))->values();
-
-        $cursosDerecha = collect($this->cursosElegidos)
-            ->map(fn ($id) => (string) $id)
-            ->filter()
-            ->map(fn (string $sid) => $cursos->firstWhere('Id', (int) $sid))
-            ->filter();
-
-        $camposPorGrupo = ListadoCursoPdfFieldCatalog::groupedForUiPorSolapas();
-
-        return view('listados::livewire.listados.por-curso', compact('cursos', 'cursosIzquierda', 'cursosDerecha', 'camposPorGrupo'))
-            ->layout('layouts.app', ['pageTitle' => 'Alumnos por curso']);
+        $key = (string) $idCurso;
+        $this->cursosElegidos = array_values(array_filter(
+            $this->cursosElegidos,
+            fn (string $id) => $id !== $key,
+        ));
     }
 
-    /** Pasa a la derecha los cursos seleccionados a la izquierda (orden según listado). */
-    public function pasarSeleccionADerecha(): void
+    public function seleccionarTodosCursos(): void
     {
-        $marcados = collect($this->seleccionListaIzq)->map(fn ($v) => (string) $v)->filter()->unique();
-        if ($marcados->isEmpty()) {
-            return;
-        }
+        $this->cursosElegidos = $this->idsCursosPermitidosComoString()->keys()->all();
+    }
 
-        $cursos = $this->queryCursos()->with('turnoClase')->get(['Id', 'cursec', 'orden', 'idCurPlan', 'c', 's', 'idTurnoClase']);
-        $ya = collect($this->cursosElegidos)->map(fn ($v) => (string) $v)->flip();
+    public function quitarTodosCursos(): void
+    {
+        $this->cursosElegidos = [];
+    }
 
-        foreach ($cursos as $c) {
-            $sid = (string) $c->Id;
-            if ($marcados->contains($sid) && ! $ya->has($sid)) {
-                $this->cursosElegidos[] = $sid;
-                $ya->put($sid, true);
+    public function marcarNivel(int $idNivel): void
+    {
+        $ids = $this->idsCursosDelNivel($idNivel);
+        $this->cursosElegidos = array_values(array_unique(array_merge(
+            $this->cursosElegidos,
+            $ids,
+        )));
+    }
+
+    public function quitarNivel(int $idNivel): void
+    {
+        $quitar = array_flip($this->idsCursosDelNivel($idNivel));
+        $this->cursosElegidos = array_values(array_filter(
+            $this->cursosElegidos,
+            fn (string $id) => ! isset($quitar[$id]),
+        ));
+    }
+
+    public function render()
+    {
+        $cursos = ListadoCursoConsulta::cursosPermitidosEnContexto();
+
+        $filtro = mb_strtolower(trim($this->filtroCursos));
+        $seleccionadosFlip = array_flip($this->cursosElegidos);
+        $cantidadSeleccionados = count($this->cursosElegidos);
+
+        $cursosPorNivel = [];
+        foreach ($cursos as $curso) {
+            $etiqueta = ListadoCursoConsulta::etiquetaCursoConNivel($curso);
+            if ($filtro !== '' && ! str_contains(mb_strtolower($etiqueta), $filtro)) {
+                continue;
+            }
+
+            $idNivel = (int) ($curso->idNivel ?? 0);
+            $key = (string) $idNivel;
+            if (! isset($cursosPorNivel[$key])) {
+                $cursosPorNivel[$key] = [
+                    'idNivel' => $idNivel,
+                    'nivelNombre' => trim((string) ($curso->nivel?->nivel ?? 'Sin nivel')),
+                    'cursos' => [],
+                    'total' => 0,
+                    'seleccionados' => 0,
+                ];
+            }
+
+            $idCursoStr = (string) (int) $curso->Id;
+            $marcado = isset($seleccionadosFlip[$idCursoStr]);
+            $cursosPorNivel[$key]['cursos'][] = [
+                'id' => (int) $curso->Id,
+                'etiqueta' => $etiqueta,
+                'etiquetaCorta' => $curso->nombreParaListado(),
+            ];
+            $cursosPorNivel[$key]['total']++;
+            if ($marcado) {
+                $cursosPorNivel[$key]['seleccionados']++;
             }
         }
 
-        $this->seleccionListaIzq = [];
-    }
+        $etiquetasPorId = $cursos->mapWithKeys(fn ($c) => [
+            (string) (int) $c->Id => ListadoCursoConsulta::etiquetaCursoConNivel($c),
+        ]);
 
-    /** Quita de la derecha los cursos seleccionados allí. */
-    public function pasarSeleccionAIzquierda(): void
-    {
-        $quitar = collect($this->seleccionListaDer)->map(fn ($v) => (string) $v)->filter()->unique()->all();
-        if ($quitar === []) {
-            return;
-        }
-
-        $this->cursosElegidos = collect($this->cursosElegidos)
-            ->map(fn ($v) => (string) $v)
-            ->reject(fn (string $id) => in_array($id, $quitar, true))
+        $cursosSeleccionadosResumen = collect($this->cursosElegidos)
+            ->map(fn (string $id) => [
+                'id' => (int) $id,
+                'label' => (string) ($etiquetasPorId[$id] ?? ''),
+            ])
+            ->filter(fn (array $r) => $r['label'] !== '')
             ->values()
             ->all();
 
-        $this->seleccionListaDer = [];
-    }
+        $camposPorGrupo = ListadoCursoPdfFieldCatalog::groupedForUiPorSolapas();
 
-    /** Pasa todos los cursos disponibles a la derecha. */
-    public function pasarTodosADerecha(): void
-    {
-        $cursos = $this->queryCursos()->with('turnoClase')->get(['Id', 'cursec', 'orden', 'idCurPlan', 'c', 's', 'idTurnoClase']);
-        $ya = collect($this->cursosElegidos)->map(fn ($v) => (string) $v)->flip();
-
-        foreach ($cursos as $c) {
-            $sid = (string) $c->Id;
-            if (! $ya->has($sid)) {
-                $this->cursosElegidos[] = $sid;
-                $ya->put($sid, true);
-            }
-        }
-
-        $this->seleccionListaIzq = [];
-        $this->seleccionListaDer = [];
-    }
-
-    /** Vacía el panel derecho. */
-    public function pasarTodosAIzquierda(): void
-    {
-        $this->cursosElegidos = [];
-        $this->seleccionListaIzq = [];
-        $this->seleccionListaDer = [];
+        return view('listados::livewire.listados.por-curso', [
+            'cursos' => $cursos,
+            'cursosPorNivel' => array_values($cursosPorNivel),
+            'cantidadSeleccionados' => $cantidadSeleccionados,
+            'cursosSeleccionadosResumen' => $cursosSeleccionadosResumen,
+            'camposPorGrupo' => $camposPorGrupo,
+        ])->layout('layouts.app', ['pageTitle' => 'Alumnos por curso']);
     }
 
     public function getPdfUrlProperty(): string
@@ -162,7 +170,7 @@ class ListadoPorCurso extends Component
         return route('listados.exportar-excel');
     }
 
-    /** Misma selección que el PDF: cursos a la derecha, columnas marcadas y condición. */
+    /** Misma selección que el PDF: cursos elegidos, columnas marcadas y condición. */
     public function getExcelUrlSeleccionProperty(): string
     {
         if (! $this->puedeGenerarPdf()) {
@@ -187,7 +195,7 @@ class ListadoPorCurso extends Component
 
     public function puedeExportarExcelCompleto(): bool
     {
-        return $this->queryCursos()->exists();
+        return ListadoCursoConsulta::cursosPermitidosEnContexto()->isNotEmpty();
     }
 
     public function seleccionarSoloDefecto(): void
@@ -213,15 +221,25 @@ class ListadoPorCurso extends Component
             ->all();
     }
 
-    /** @return Builder<Curso> */
-    protected function queryCursos(): Builder
+    /** @return Collection<string, int> */
+    private function idsCursosPermitidosComoString(): Collection
     {
-        $query = Curso::query()
-            ->with('curplan')
-            ->where('idTerlec', schoolCtx()->idTerlec);
+        return ListadoCursoConsulta::cursosPermitidosEnContexto()
+            ->pluck('Id')
+            ->mapWithKeys(fn ($id) => [(string) (int) $id => (int) $id]);
+    }
 
-        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'idNivel');
+    /** @return list<string> */
+    private function idsCursosDelNivel(int $idNivel): array
+    {
+        if ($idNivel < 1) {
+            return [];
+        }
 
-        return $query->orderBy('orden')->orderBy('cursec');
+        return ListadoCursoConsulta::cursosPermitidosEnContexto()
+            ->filter(fn ($c) => (int) ($c->idNivel ?? 0) === $idNivel)
+            ->map(fn ($c) => (string) (int) $c->Id)
+            ->values()
+            ->all();
     }
 }

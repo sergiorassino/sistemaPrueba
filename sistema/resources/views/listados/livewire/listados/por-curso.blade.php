@@ -88,56 +88,124 @@
         </div>
 
         <div class="se-card overflow-hidden">
-            <div class="border-b border-accent-200 bg-white px-5 py-4">
-                <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <p class="se-section-title">Cursos en el PDF</p>
-                        <p class="mt-1 text-sm text-neutral-600">
-                            Disponibles a la izquierda; incluidos a la derecha. Doble clic en la lista izquierda pasa la selección.
-                            <span class="text-neutral-500">Ctrl o Mayús + clic para varios; luego › o «».</span>
-                        </p>
-                    </div>
-                    <span class="se-pill tabular-nums">{{ $cursosIzquierda->count() }} libres · {{ $cursosDerecha->count() }} en PDF</span>
+            <div class="border-b border-accent-200 bg-accent-50/80 px-4 py-3 sm:px-5">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p class="text-sm text-neutral-700">
+                        Elija los cursos que incluirá en el PDF y el Excel de esta selección.
+                    </p>
+                    <span class="se-pill shrink-0 tabular-nums">
+                        {{ $cantidadSeleccionados }} de {{ $cursos->count() }} seleccionados
+                    </span>
                 </div>
             </div>
 
-            <div class="space-y-4 bg-accent-50/40 p-5 sm:p-6">
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-stretch">
-                    <div class="min-w-0 flex-1 flex flex-col">
-                        <label for="lista-cursos-izq" class="form-label">Disponibles</label>
-                        <select id="lista-cursos-izq" multiple size="10"
-                                wire:model.live="seleccionListaIzq"
-                                wire:dblclick="pasarSeleccionADerecha"
-                                class="form-select min-h-[220px] font-mono text-sm">
-                            @foreach ($cursosIzquierda as $c)
-                                <option value="{{ $c->Id }}">{{ $c->nombreParaListado() }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="flex flex-row flex-wrap items-center justify-center gap-2 lg:flex-col lg:justify-center lg:pt-7 shrink-0">
-                        <button type="button" wire:click="pasarTodosADerecha" title="Pasar todos a la derecha"
-                                class="btn-secondary btn-sm min-w-[2.75rem] px-3 font-mono">»</button>
-                        <button type="button" wire:click="pasarSeleccionADerecha" title="Pasar selección a la derecha"
-                                class="btn-secondary btn-sm min-w-[2.75rem] px-3 font-mono">›</button>
-                        <button type="button" wire:click="pasarSeleccionAIzquierda" title="Pasar selección a la izquierda"
-                                class="btn-secondary btn-sm min-w-[2.75rem] px-3 font-mono">‹</button>
-                        <button type="button" wire:click="pasarTodosAIzquierda" title="Quitar todos de la derecha"
-                                class="btn-secondary btn-sm min-w-[2.75rem] px-3 font-mono">«</button>
-                    </div>
-
-                    <div class="min-w-0 flex-1 flex flex-col">
-                        <label for="lista-cursos-der" class="form-label">Incluidos en el PDF</label>
-                        <select id="lista-cursos-der" multiple size="10"
-                                wire:model.live="seleccionListaDer"
-                                class="form-select min-h-[220px] font-mono text-sm">
-                            @foreach ($cursosDerecha as $c)
-                                <option value="{{ $c->Id }}">{{ $c->nombreParaListado() }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+            <div class="border-b border-accent-200 bg-white px-4 py-3 sm:px-5">
+                <label for="filtro-cursos-listado" class="form-label">Buscar curso</label>
+                <input id="filtro-cursos-listado"
+                       type="search"
+                       wire:model.live.debounce.300ms="filtroCursos"
+                       placeholder="Nivel o nombre del curso…"
+                       class="form-input max-w-xl" />
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <button type="button"
+                            wire:click="seleccionarTodosCursos"
+                            class="inline-flex rounded-lg border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-800 transition hover:bg-accent-50">
+                        Todos
+                    </button>
+                    <button type="button"
+                            wire:click="quitarTodosCursos"
+                            class="inline-flex rounded-lg border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 transition hover:bg-accent-50">
+                        Ninguno
+                    </button>
                 </div>
             </div>
+
+            @if ($cursosPorNivel === [])
+                <div class="px-4 py-6 text-sm text-neutral-600 sm:px-5">
+                    @if (trim($filtroCursos) !== '')
+                        Ningún curso coincide con la búsqueda.
+                    @else
+                        No hay cursos para mostrar.
+                    @endif
+                </div>
+            @else
+                @php
+                    $cantidadNiveles = count($cursosPorNivel);
+                @endphp
+                <div class="max-h-[min(65dvh,36rem)] overflow-y-auto px-3 py-2 sm:px-4">
+                    <div @class([
+                        'mx-auto w-full max-w-md' => $cantidadNiveles === 1,
+                        'overflow-x-auto' => $cantidadNiveles > 1,
+                    ])>
+                        <div @class([
+                            'grid w-full gap-3' => $cantidadNiveles === 1,
+                            'grid min-w-full gap-3' => $cantidadNiveles > 1,
+                        ])
+                             @if ($cantidadNiveles > 1)
+                                 style="grid-template-columns: repeat({{ $cantidadNiveles }}, minmax(12.5rem, 1fr));"
+                             @endif>
+                            @foreach ($cursosPorNivel as $bloqueNivel)
+                                <section wire:key="listado-nivel-{{ $bloqueNivel['idNivel'] }}"
+                                         class="flex min-w-0 flex-col rounded-lg border border-accent-200/90 bg-accent-50/20">
+                                    <div class="border-b border-accent-200/80 px-2.5 py-2">
+                                        <p class="text-xs font-semibold uppercase tracking-wide leading-snug text-primary-800">
+                                            {{ $bloqueNivel['nivelNombre'] }}
+                                            <span class="font-normal text-neutral-500 tabular-nums">
+                                                ({{ $bloqueNivel['seleccionados'] }}/{{ $bloqueNivel['total'] }})
+                                            </span>
+                                        </p>
+                                        <div class="mt-1.5 flex flex-col gap-1">
+                                            <button type="button"
+                                                    wire:click="marcarNivel({{ $bloqueNivel['idNivel'] }})"
+                                                    class="inline-flex w-full justify-center rounded-md border border-accent-200 bg-white px-2 py-1 text-xs font-semibold leading-snug text-primary-800 hover:bg-accent-50">
+                                                Marcar nivel
+                                            </button>
+                                            <button type="button"
+                                                    wire:click="quitarNivel({{ $bloqueNivel['idNivel'] }})"
+                                                    class="inline-flex w-full justify-center rounded-md border border-accent-200 bg-white px-2 py-1 text-xs font-semibold leading-snug text-neutral-600 hover:bg-accent-50">
+                                                Quitar nivel
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <ul class="min-h-0 flex-1 list-none divide-y divide-accent-100/80 px-2 py-1">
+                                        @foreach ($bloqueNivel['cursos'] as $cursoItem)
+                                            <li wire:key="listado-curso-{{ $cursoItem['id'] }}">
+                                                <label class="flex cursor-pointer items-center gap-2 py-1.5 transition-colors hover:bg-accent-50/70">
+                                                    <input type="checkbox"
+                                                           wire:model.live="cursosElegidos"
+                                                           value="{{ $cursoItem['id'] }}"
+                                                           class="h-4 w-4 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
+                                                    <span class="min-w-0 flex-1 text-sm leading-normal text-neutral-800">
+                                                        {{ $cursoItem['etiqueta'] }}
+                                                    </span>
+                                                </label>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </section>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            @if ($cantidadSeleccionados > 0)
+                <div class="border-t border-accent-200 bg-accent-50/40 px-4 py-3 sm:px-5">
+                    <p class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Seleccionados para PDF</p>
+                    <div class="mt-2 flex max-h-24 flex-wrap gap-1.5 overflow-y-auto">
+                        @foreach ($cursosSeleccionadosResumen as $chip)
+                            <span class="inline-flex max-w-full items-center gap-1 rounded-lg border border-primary-200 bg-white px-2 py-1 text-xs font-medium leading-snug text-neutral-800">
+                                <span class="truncate">{{ $chip['label'] }}</span>
+                                <button type="button"
+                                        wire:click="quitarCurso({{ $chip['id'] }})"
+                                        class="shrink-0 text-neutral-400 hover:text-red-600"
+                                        title="Quitar"
+                                        aria-label="Quitar {{ $chip['label'] }}">×</button>
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         </div>
 
         <div class="se-card overflow-hidden">
@@ -196,7 +264,7 @@
                         Descargar Excel (selección)
                     </a>
                     @if (!$this->puedeGenerarPdf())
-                        <span class="text-sm text-neutral-500">Para PDF o Excel con selección, incluya al menos un curso a la derecha.</span>
+                        <span class="text-sm text-neutral-500">Para PDF o Excel con selección, marque al menos un curso.</span>
                     @endif
                 </div>
             </div>

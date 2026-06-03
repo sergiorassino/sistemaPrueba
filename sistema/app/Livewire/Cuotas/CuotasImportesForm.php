@@ -58,6 +58,23 @@ class CuotasImportesForm extends Component
         $this->saveRowField($coincidencias[1]);
     }
 
+    /**
+     * Persiste un campo de texto (importe / valor) desde el DOM (focusout o navegación con teclado).
+     * Los selects usan wire:model.live; los inputs no usan wire:model para evitar perder el valor al mover el foco.
+     */
+    public function commitDraftCell(string $key, string $field, string $value): void
+    {
+        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+
+        $campos = ['importe', 'valor1v', 'valor2v', 'valor3v', 'valor4v'];
+        if (! in_array($field, $campos, true) || ! isset($this->draft[$key])) {
+            return;
+        }
+
+        $this->draft[$key][$field] = trim($value);
+        $this->saveRowField($key);
+    }
+
     public function saveRowField(string $key): void
     {
         abort_unless(PermisosCuotas::puedeAccederModulo(), 403);

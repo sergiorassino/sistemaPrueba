@@ -111,7 +111,10 @@ final class GeneracionCuotaEstudianteService
         })->values();
     }
 
-    public static function generar(int $idLegajo, int $idCuota): GeneracionCuotaResultado
+    /**
+     * Validaciones previas a insertar en cuotasgeneradas (sin escribir en BD).
+     */
+    public static function evaluarGeneracion(int $idLegajo, int $idCuota): GeneracionCuotaResultado
     {
         if (! self::esEstudianteRegular($idLegajo)) {
             return GeneracionCuotaResultado::fallo('El/La estudiante no es regular en el ciclo lectivo activo.');
@@ -136,6 +139,37 @@ final class GeneracionCuotaEstudianteService
             return GeneracionCuotaResultado::fallo(
                 'La cuota «'.$plantilla['nombre'].'» ya está generada para este estudiante.',
             );
+        }
+
+        $cuota = Cuota::query()
+            ->whereKey($idCuota)
+            ->where('idTerlec', (int) schoolCtx()->idTerlec)
+            ->first();
+        if ($cuota === null) {
+            return GeneracionCuotaResultado::fallo('La plantilla de cuota no pertenece al ciclo lectivo activo.');
+        }
+
+        $importeRow = CuotasImporte::query()
+            ->where('idCuotas', $idCuota)
+            ->where('idCursos', (int) $matricula->idCursos)
+            ->first(['importe']);
+        if ($importeRow === null) {
+            return GeneracionCuotaResultado::fallo('No hay importe definido para esta cuota y el curso del estudiante.');
+        }
+
+        return GeneracionCuotaResultado::exito('OK', 0);
+    }
+
+    public static function generar(int $idLegajo, int $idCuota): GeneracionCuotaResultado
+    {
+        $evaluacion = self::evaluarGeneracion($idLegajo, $idCuota);
+        if (! $evaluacion->exito) {
+            return $evaluacion;
+        }
+
+        $matricula = GestionAranceles::matriculaCicloActivo($idLegajo);
+        if ($matricula === null) {
+            return GeneracionCuotaResultado::fallo('El estudiante no tiene matrícula con curso en el ciclo lectivo activo.');
         }
 
         $cuota = Cuota::query()

@@ -25,7 +25,7 @@ final class EstudiantesExcelExporter
     /**
      * @return array{spreadsheet: Spreadsheet, filename: string}
      */
-    public function build(int $idNivel, int $idTerlec, ?int $anoLectivo, EstudiantesExcelExportSpec $spec): array
+    public function build(int $idTerlec, ?int $anoLectivo, EstudiantesExcelExportSpec $spec): array
     {
         $this->nombresHojaUsados = [];
 
@@ -39,13 +39,7 @@ final class EstudiantesExcelExporter
 
         $columnasMeta = ListadoCursoPdfFieldCatalog::columnsForPdf($campos);
 
-        $todosLosCursos = Curso::query()
-            ->with('curplan')
-            ->where('idNivel', $idNivel)
-            ->where('idTerlec', $idTerlec)
-            ->orderBy('orden')
-            ->orderBy('cursec')
-            ->get();
+        $todosLosCursos = ListadoCursoConsulta::cursosPermitidosEnContexto();
 
         if ($spec->cursoIds !== null) {
             $idsPermitidos = array_flip($spec->cursoIds);
@@ -83,8 +77,11 @@ final class EstudiantesExcelExporter
             ->whereIn('matricula.idCursos', $cursoIds)
             ->whereIn('matricula.idCondiciones', $idsCondiciones)
             ->where('matricula.idTerlec', $idTerlec)
-            ->where('matricula.idNivel', $idNivel)
-            ->whereNull('matricula.fechaBaja')
+            ->whereNull('matricula.fechaBaja');
+
+        ListadoCursoConsulta::aplicarFiltroMatriculaNivel($query);
+
+        $query
             ->orderBy('matricula.idCursos')
             ->orderBy('legajos.apellido')
             ->orderBy('legajos.nombre');

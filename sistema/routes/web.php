@@ -93,6 +93,8 @@ use App\Http\Controllers\Cuotas\ComprobantePagoCuotasPdfController;
 use App\Http\Controllers\Cuotas\ComprobantePagoImputacionPdfController;
 use App\Http\Controllers\Cuotas\ResumenPagosEstudiantePdfController;
 use App\Livewire\Cuotas\CuotaGeneradaForm;
+use App\Livewire\Cuotas\EliminacionMasivaCuotas;
+use App\Livewire\Cuotas\GeneracionMasivaCuotas;
 use App\Livewire\Cuotas\GenerarCuotaEstudiante;
 use App\Livewire\Cuotas\CuotasEstudianteShow;
 use App\Livewire\Cuotas\CuotasIndex;
@@ -404,6 +406,8 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
         Route::get('/plantillas', CuotasPlantillaIndex::class)->name('cuotas.plantillas');
         Route::get('/importes', CuotasImportesIndex::class)->name('cuotas.importes.index');
         Route::get('/importes/editar', CuotasImportesForm::class)->name('cuotas.importes.editar');
+        Route::get('/generacion-masiva', GeneracionMasivaCuotas::class)->name('cuotas.generacion-masiva');
+        Route::get('/eliminacion-masiva', EliminacionMasivaCuotas::class)->name('cuotas.eliminacion-masiva');
         Route::get('/estudiante', CuotasEstudianteShow::class)->name('cuotas.estudiante');
         Route::get('/estudiante/generar', GenerarCuotaEstudiante::class)->name('cuotas.estudiante.generar');
         Route::get('/estudiante/cuota/editar', CuotaGeneradaForm::class)->name('cuotas.cuota.editar');

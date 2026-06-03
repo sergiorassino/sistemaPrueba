@@ -168,6 +168,102 @@
         background-color: #fbcfe8;
     }
 
+    /* Gestión de mora — estado de deuda familiar */
+    .se-card.se-card-mora-familias,
+    .gf.gf-mora-familias {
+        border-radius: 0;
+    }
+    .gf.gf-mora-familias {
+        width: 100%;
+        min-width: 58rem;
+    }
+    .gf.gf-mora-familias .gf-head,
+    .gf.gf-mora-familias .gf-row-mora-familia {
+        width: 100%;
+        align-items: stretch;
+    }
+    .gf.gf-mora-familias .gf-row-mora-familia {
+        border-bottom-width: 1px;
+        border-bottom-color: #6b7280;
+    }
+    .gf.gf-mora-familias .gf-row-mora-familia:last-child {
+        border-bottom-width: 0;
+    }
+    .gf.gf-mora-familias .gf-th.gf-th-mora-accion,
+    .gf.gf-mora-familias .gf-td.gf-td-mora-accion {
+        flex: 0 0 4.75rem;
+        width: 4.75rem;
+        min-width: 4.75rem;
+        max-width: 4.75rem;
+        @apply flex items-center justify-center px-0.5 py-1;
+    }
+    .gf.gf-mora-familias .gf-th.gf-th-mora-accion-label {
+        white-space: normal;
+        line-height: 1.15;
+        letter-spacing: 0;
+        text-transform: none;
+        font-size: 9px;
+    }
+    .gf.gf-mora-familias .gf-th.gf-th-mora-familia,
+    .gf.gf-mora-familias .gf-td.gf-td-mora-familia {
+        flex: 1 1 12rem;
+        min-width: 10rem;
+        max-width: 18rem;
+    }
+    .gf.gf-mora-familias .gf-th.gf-th-mora-responsable,
+    .gf.gf-mora-familias .gf-td.gf-td-mora-responsable {
+        flex: 0 0 10rem;
+        width: 10rem;
+        min-width: 8rem;
+        max-width: 12rem;
+    }
+    .gf.gf-mora-familias .gf-th.gf-th-mora-estudiantes,
+    .gf.gf-mora-familias .gf-td.gf-td-mora-estudiantes {
+        flex: 1 1 22rem;
+        min-width: 22rem;
+    }
+    .gf.gf-mora-familias .gf-th.gf-th-mora-estudiantes-label {
+        text-transform: none;
+        letter-spacing: normal;
+    }
+    .se-mora-accion-btn {
+        @apply inline-flex h-8 w-8 items-center justify-center rounded-md border border-accent-200 bg-white text-primary-700 transition-colors;
+    }
+    a.se-mora-accion-btn:hover {
+        @apply border-primary-500 bg-primary-50;
+    }
+    .se-mora-accion-btn:disabled {
+        @apply cursor-not-allowed opacity-80;
+    }
+    .se-mora-accion-btn--diferimiento {
+        @apply border-red-300 text-red-600;
+    }
+    .se-mora-estudiantes-list {
+        @apply flex w-full flex-col;
+    }
+    .se-mora-estudiante-row {
+        @apply flex min-h-[2rem] items-center gap-2 px-2 py-1;
+    }
+    .se-mora-estudiante-nombre {
+        flex: 1 1 10rem;
+        min-width: 0;
+    }
+    .se-mora-estudiante-dni {
+        flex: 0 0 6.5rem;
+        width: 6.5rem;
+    }
+    .se-mora-estudiante-curso {
+        flex: 0 0 8.5rem;
+        width: 8.5rem;
+        min-width: 0;
+    }
+    .se-mora-deuda {
+        @apply text-[11px] font-semibold normal-case tracking-normal text-neutral-500;
+    }
+    .se-mora-deuda--positivo {
+        @apply text-red-700;
+    }
+
     /* Gestión de aranceles — grillas sin esquinas redondeadas */
     .se-card.se-card-cuotas-busqueda,
     .se-card.se-card-cuotas-grid,

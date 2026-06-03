@@ -48,6 +48,12 @@ final class MenuSecretariaPerfil
         return self::esAdministracion();
     }
 
+    /** Bloque «Gestión de mora» (Administración). */
+    public static function muestraGestionMora(): bool
+    {
+        return self::esAdministracion();
+    }
+
     /**
      * Excel de viajes / salidas educativas: solo Menú de Secretaría en niveles pedagógicos (1–4).
      * No Administración, no Menú de Docentes ni de Alumnos (rutas bajo menu.portal:secretaria).

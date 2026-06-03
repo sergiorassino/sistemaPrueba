@@ -53,6 +53,11 @@ class Legajo extends Authenticatable
         return $this->hasMany(Calificacion::class, 'idLegajos');
     }
 
+    public function cuotasGeneradas()
+    {
+        return $this->hasMany(CuotaGenerada::class, 'idLegajos');
+    }
+
     public function getAuthIdentifierName(): string
     {
         return 'id';

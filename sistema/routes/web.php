@@ -113,6 +113,12 @@ use App\Livewire\Cuotas\AsignacionBecasIndex;
 use App\Livewire\Cuotas\ResumenBecasPorNivelIndex;
 use App\Livewire\Cuotas\HistorialPagosCuota;
 use App\Livewire\Cuotas\ImputarPagoForm;
+use App\Http\Controllers\Mora\EstadoDeudaFamiliarPdfController;
+use App\Http\Controllers\Mora\ListadoMorososPdfController;
+use App\Http\Controllers\Mora\NotificacionDeudaPdfController;
+use App\Livewire\Mora\EstadoDeudaFamiliarIndex;
+use App\Livewire\Mora\GestionMorososIndex;
+use App\Livewire\Mora\TextosNotificacionDeudaForm;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\CargaColoquiosSecundario;
 use App\Livewire\CalificacionesSecundario\PlanillaCalificacionesSecundario;
@@ -442,6 +448,22 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
         Route::get('/resumen-pagos/{ref}', ResumenPagosEstudiantePdfController::class)
             ->where('ref', '[A-Za-z0-9_-]+')
             ->name('cuotas.resumen-pagos');
+    });
+
+    Route::prefix('mora')->group(function () {
+        Route::get('/estado-deuda-familiar', EstadoDeudaFamiliarIndex::class)->name('mora.estado-deuda-familiar');
+        Route::get('/estado-deuda-familiar/pdf/{ref}', EstadoDeudaFamiliarPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('mora.estado-deuda-familiar.pdf');
+        Route::get('/gestion-morosos', GestionMorososIndex::class)->name('mora.gestion-morosos');
+        Route::get('/gestion-morosos/textos-notificacion', TextosNotificacionDeudaForm::class)
+            ->name('mora.gestion-morosos.textos-notificacion');
+        Route::get('/gestion-morosos/pdf/{ref}', ListadoMorososPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('mora.gestion-morosos.pdf');
+        Route::get('/gestion-morosos/notificacion/{ref}', NotificacionDeudaPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('mora.gestion-morosos.notificacion');
     });
 
     Route::get('/abm/legajos', LegajosIndex::class)->name('abm.legajos');

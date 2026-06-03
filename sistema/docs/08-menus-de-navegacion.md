@@ -119,6 +119,7 @@ Usuario distinto en tabla `profesores` (`profesores.nivel = 5`) respecto de Inic
 |--------------------------------|------------------------|
 | Estudiantes | Calificaciones, asistencia, exámenes, certificados, horarios, aspirantes, matrícula web, viajes/salidas |
 | **Gestión de cuotas** (solo nivel 5) | |
+| **Becas** (solo nivel 5; p. ej. Tipos de Beca) | |
 | Comunicación institucional | |
 | Docentes | |
 | Configuración (incl. Permisos del sistema) | |

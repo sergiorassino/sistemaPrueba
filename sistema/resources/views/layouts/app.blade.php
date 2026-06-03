@@ -46,12 +46,29 @@
         aspirantes: {{ str_starts_with($route ?? '', 'aspirantes.') ? 'true' : 'false' }},
         matriculaWeb: {{ str_starts_with($route ?? '', 'matricula-web.') ? 'true' : 'false' }},
         gestionCuotas: {{ str_starts_with($route ?? '', 'cuotas.')
+            && ($route ?? '') !== 'cuotas.tipos-beca'
+            && ($route ?? '') !== 'cuotas.asignacion-becas'
             && ($route ?? '') !== 'cuotas.plantillas'
             && ! str_starts_with($route ?? '', 'cuotas.importes.')
             && ($route ?? '') !== 'cuotas.generacion-masiva'
-            && ($route ?? '') !== 'cuotas.eliminacion-masiva' ? 'true' : 'false' }},
+            && ($route ?? '') !== 'cuotas.eliminacion-masiva'
+            && ($route ?? '') !== 'cuotas.libro-aranceles'
+            && ($route ?? '') !== 'cuotas.libro-aranceles.pdf'
+            && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha'
+            && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha.pdf'
+            && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota'
+            && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota.pdf' ? 'true' : 'false' }},
+        becas: {{ in_array($route ?? '', ['cuotas.tipos-beca', 'cuotas.asignacion-becas', 'cuotas.resumen-becas-por-nivel', 'cuotas.resumen-becas-por-nivel.csv'], true) ? 'true' : 'false' }},
         gestionMasiva: {{ in_array($route ?? '', ['cuotas.plantillas', 'cuotas.generacion-masiva', 'cuotas.eliminacion-masiva'], true)
             || str_starts_with($route ?? '', 'cuotas.importes.') ? 'true' : 'false' }},
+        resumenes: {{ in_array($route ?? '', [
+            'cuotas.libro-aranceles',
+            'cuotas.libro-aranceles.pdf',
+            'cuotas.listado-pagos-por-fecha',
+            'cuotas.listado-pagos-por-fecha.pdf',
+            'cuotas.listado-estudiantes-por-cuota',
+            'cuotas.listado-estudiantes-por-cuota.pdf',
+        ], true) ? 'true' : 'false' }},
         comunicaciones: false,
     },
     isDesktopPeekLayout() {
@@ -338,10 +355,18 @@
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'cuotas.')
+                           && ($route ?? '') !== 'cuotas.tipos-beca'
+                           && ($route ?? '') !== 'cuotas.asignacion-becas'
                            && ! str_starts_with($route ?? '', 'cuotas.importes.')
                            && ($route ?? '') !== 'cuotas.plantillas'
                            && ($route ?? '') !== 'cuotas.generacion-masiva'
-                           && ($route ?? '') !== 'cuotas.eliminacion-masiva',
+                           && ($route ?? '') !== 'cuotas.eliminacion-masiva'
+                           && ($route ?? '') !== 'cuotas.libro-aranceles'
+                           && ($route ?? '') !== 'cuotas.libro-aranceles.pdf'
+                           && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha'
+                           && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha.pdf'
+                           && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota'
+                           && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota.pdf',
                    ])
                    title="Buscar estudiante y gestionar cuotas">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -422,6 +447,126 @@
                     <span class="truncate">Eliminar Masivamente Cuotas Generadas</span>
                 </a>
             </div>
+
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
+                    :class="(groups.resumenes && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('resumenes')"
+                    title="Resúmenes de aranceles">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Resúmenes</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.resumenes ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.resumenes && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                <a href="{{ route('cuotas.libro-aranceles') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.libro-aranceles', 'cuotas.libro-aranceles.pdf'], true),
+                   ])
+                   title="Libro de aranceles por curso (PDF apaisado)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    <span class="truncate">Libro de aranceles</span>
+                </a>
+                <a href="{{ route('cuotas.listado-pagos-por-fecha') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.listado-pagos-por-fecha', 'cuotas.listado-pagos-por-fecha.pdf'], true),
+                   ])
+                   title="Pagos recibidos entre dos fechas (PDF)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                    <span class="truncate">Listado de pagos por fecha</span>
+                </a>
+                <a href="{{ route('cuotas.listado-estudiantes-por-cuota') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.listado-estudiantes-por-cuota', 'cuotas.listado-estudiantes-por-cuota.pdf'], true),
+                   ])
+                   title="Estudiantes con cuotas generadas (PDF apaisado)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="truncate">Listado de estudiantes por cuota</span>
+                </a>
+            </div>
+
+            @if (\App\Support\Navegacion\MenuSecretariaPerfil::muestraBecas())
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
+                    :class="(groups.becas && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('becas')"
+                    title="Becas">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Becas</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.becas ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.becas && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                <a href="{{ route('cuotas.tipos-beca') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.tipos-beca',
+                   ])
+                   title="Tipos de beca y porcentaje de descuento">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    <span class="truncate">Tipos de Beca</span>
+                </a>
+                <a href="{{ route('cuotas.asignacion-becas') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.asignacion-becas',
+                   ])
+                   title="Asignar beca a alumnos por curso o búsqueda individual">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="truncate">Asignación de Becas</span>
+                </a>
+                <a href="{{ route('cuotas.resumen-becas-por-nivel') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.resumen-becas-por-nivel', 'cuotas.resumen-becas-por-nivel.csv'], true),
+                   ])
+                   title="Cantidad de becas otorgadas por tipo y nivel pedagógico">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="truncate">Resumen de Becas por Nivel</span>
+                </a>
+            </div>
+            @endif
         @endif
 
         @if (\App\Support\Navegacion\MenuSecretariaPerfil::muestraViajesSalidasEducativas())

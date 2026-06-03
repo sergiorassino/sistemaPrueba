@@ -19,6 +19,7 @@ class Matricula extends Model
         'nroMatricula',
         'fechaMatricula',
         'fechaBaja',
+        'idCuotasbecas',
         'acept1',
         'acept2',
         'acept3',
@@ -58,6 +59,11 @@ class Matricula extends Model
     public function condicion()
     {
         return $this->belongsTo(Condicion::class, 'idCondiciones');
+    }
+
+    public function cuotasBeca()
+    {
+        return $this->belongsTo(CuotasBeca::class, 'idCuotasbecas');
     }
 
     public function sanciones()

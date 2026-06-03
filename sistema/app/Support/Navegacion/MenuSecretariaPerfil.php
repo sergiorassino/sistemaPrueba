@@ -36,6 +36,18 @@ final class MenuSecretariaPerfil
         return self::esAdministracion();
     }
 
+    /** Bloque «Resúmenes» (Administración). */
+    public static function muestraResumenes(): bool
+    {
+        return self::esAdministracion();
+    }
+
+    /** Bloque «Becas» (Administración). */
+    public static function muestraBecas(): bool
+    {
+        return self::esAdministracion();
+    }
+
     /**
      * Excel de viajes / salidas educativas: solo Menú de Secretaría en niveles pedagógicos (1–4).
      * No Administración, no Menú de Docentes ni de Alumnos (rutas bajo menu.portal:secretaria).

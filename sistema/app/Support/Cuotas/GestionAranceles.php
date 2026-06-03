@@ -246,7 +246,10 @@ final class GestionAranceles
      */
     public static function becasParaSelector(): Collection
     {
-        return CuotasBeca::query()->orderBy('nombreBeca')->get(['id', 'nombreBeca', 'porcentaje']);
+        return CuotasBeca::query()
+            ->orderBy('porcentaje')
+            ->orderBy('nombreBeca')
+            ->get(['id', 'nombreBeca', 'porcentaje']);
     }
 
     /**

@@ -11,6 +11,11 @@ class CuotasBeca extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'nombreBeca',
         'porcentaje',
+    ];
+
+    protected $casts = [
+        'porcentaje' => 'float',
     ];
 }

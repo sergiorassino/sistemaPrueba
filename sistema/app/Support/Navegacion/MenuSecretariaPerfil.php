@@ -27,6 +27,30 @@ final class MenuSecretariaPerfil
         return self::esAdministracion();
     }
 
+    /** Grupo sidebar «CALIFICACIONES (Inicial)» — solo sesión en `niveles.id` = 1. */
+    public static function muestraCalificacionesInicial(): bool
+    {
+        return ! self::ocultarGruposPedagogicos()
+            && NivelSistema::esInicial((int) (schoolCtx()->idNivel ?? 0));
+    }
+
+    /** Grupo sidebar «CALIFICACIONES (Primario)» — solo sesión en `niveles.id` = 2. */
+    public static function muestraCalificacionesPrimario(): bool
+    {
+        return ! self::ocultarGruposPedagogicos()
+            && NivelSistema::esPrimario((int) (schoolCtx()->idNivel ?? 0));
+    }
+
+    /**
+     * Grupo sidebar «CALIFICACIONES (Secundario)» — módulos actuales (`calificacionesSecundario.*`).
+     * Solo sesión en `niveles.id` = 3.
+     */
+    public static function muestraCalificacionesSecundario(): bool
+    {
+        return ! self::ocultarGruposPedagogicos()
+            && NivelSistema::esSecundario((int) (schoolCtx()->idNivel ?? 0));
+    }
+
     /** Gestión de planes y cursos modelo: solo Menú de Secretaría. */
     public static function muestraPlanesCursosModelo(): bool
     {

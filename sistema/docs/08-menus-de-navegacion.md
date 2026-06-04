@@ -29,6 +29,18 @@ y el **Menú de Docentes** para profesores en el aula.
 
 **Importante:** el grupo del sidebar llamado **“DOCENTES”** (legajos del docente, asignación por materia, inasistencias docentes desde secretaría) **pertenece al menú de Secretaría**, no al menú de Docentes.
 
+### Grupos CALIFICACIONES por nivel (`schoolCtx()->idNivel`)
+
+Cada nivel pedagógico tiene **su propio** grupo desplegable en el sidebar (solo uno visible según el nivel elegido en login / context-switcher):
+
+| Grupo en sidebar | `niveles.id` | Ítems actuales |
+|------------------|--------------|----------------|
+| **CALIFICACIONES (Inicial)** | 1 | Vacío (módulos futuros; rutas previstas `calificacionesInicial.*`) |
+| **CALIFICACIONES (Primario)** | 2 | Descargar Calificaciones desde GE (`calificacionesPrimario.sincroGe`, permiso 9) · Descargar Desempeños desde GE (`calificacionesPrimario.sincroDesempenos`, permiso 9) · Carga de calificaciones (`calificacionesPrimario.carga`, permiso 9) · Boletines IPE (`calificacionesPrimario.boletinIpe`, permiso 9) · Planilla de calificaciones (`calificacionesPrimario.planilla`, permiso 9) |
+| **CALIFICACIONES (Secundario)** | 3 | Módulos existentes (`calificacionesSecundario.*`, `boletinesSecundario.*`) |
+
+Implementación: `MenuSecretariaPerfil::muestraCalificaciones*()`, partials en `resources/views/layouts/partials/sidebar-grupo-calificaciones-*.blade.php`, constantes `NivelSistema::INICIAL|PRIMARIO|SECUNDARIO`.
+
 ---
 
 ## 2. Menú de Alumnos
@@ -92,7 +104,7 @@ Con el override activo, `ProfesorMenuPortal::usaMenuDocentes()` devuelve `true` 
 En código y PRs, preferir comentarios del tipo:
 
 ```blade
-{{-- Menú de Secretaría: grupo Calificaciones --}}
+{{-- Menú de Secretaría: grupo CALIFICACIONES (Secundario) --}}
 ```
 
 ```blade
@@ -155,3 +167,4 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-06-01:** Perfil Administración (nivel 5): menú acotado, selector de nivel de trabajo, bloque Gestión de cuotas (acceso por nivel, sin permiso_ia); consulta de legajos para todos, edición con orden 2.
 - **2026-06-01:** Viajes / salidas educativas: solo Menú de Secretaría en niveles 1–4; no Administración, Docentes ni Alumnos.
 - **2026-06-04:** Menú de Administración como layout y portal propios; rutas `/cuotas` y `/mora` aisladas con `menu.portal:administracion`.
+- **2026-06-04:** Tres grupos CALIFICACIONES por nivel (Inicial / Primario / Secundario) en el Menú de Secretaría; el bloque secundario renombrado y acotado a `niveles.id = 3`.

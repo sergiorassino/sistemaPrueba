@@ -10,8 +10,32 @@ use Illuminate\Support\Collection;
  */
 final class NivelSistema
 {
+    /** Inicial (`niveles.id`). */
+    public const INICIAL = 1;
+
+    /** Primario (`niveles.id`). */
+    public const PRIMARIO = 2;
+
+    /** Secundario / medio (`niveles.id`). */
+    public const SECUNDARIO = 3;
+
     /** Nivel «Administración» (cuotas, gestión transversal). */
     public const ADMINISTRACION = 5;
+
+    public static function esInicial(int $idNivel): bool
+    {
+        return $idNivel === self::INICIAL;
+    }
+
+    public static function esPrimario(int $idNivel): bool
+    {
+        return $idNivel === self::PRIMARIO;
+    }
+
+    public static function esSecundario(int $idNivel): bool
+    {
+        return $idNivel === self::SECUNDARIO;
+    }
 
     public static function esAdministracion(int $idNivel): bool
     {

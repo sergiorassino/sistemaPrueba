@@ -151,6 +151,15 @@ use App\Livewire\MatrizAnaliticos\LibroMatrizDatosAdicionales;
 use App\Livewire\MatrizAnaliticos\LibroMatrizEditar;
 use App\Livewire\MatrizAnaliticos\LibroMatrizIndex;
 use App\Livewire\BoletinesSecundario\BoletinesSecundarioIndex;
+use App\Http\Controllers\CalificacionesPrimario\BoletinIpeLotePdfController;
+use App\Http\Controllers\CalificacionesPrimario\BoletinIpePdfController;
+use App\Http\Controllers\CalificacionesPrimario\PlanillaCalificacionesPrimarioPdfController;
+use App\Livewire\CalificacionesPrimario\BoletinIpeIndex;
+use App\Livewire\CalificacionesPrimario\PlanillaCalificacionesPrimario;
+use App\Livewire\CalificacionesPrimario\CargaCalificacionesPrimarioForm;
+use App\Livewire\CalificacionesPrimario\CargaCalificacionesPrimarioIndex;
+use App\Livewire\CalificacionesPrimario\SincroDesempenos;
+use App\Livewire\CalificacionesPrimario\SincroGe as SincroGePrimario;
 use App\Livewire\CalificacionesSecundario\SincroGe;
 use App\Livewire\Comunicaciones\BandejaGestion;
 use App\Livewire\Comunicaciones\BandejaRevision;
@@ -588,6 +597,36 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->name('horarios.pdf.curso');
     Route::get('/horarios/pdf/profesor', HorarioProfesorPdfController::class)
         ->name('horarios.pdf.profesor');
+
+    // Calificaciones (nivel primario): GE/CIDI y desempeños por etapa (CSV)
+    Route::get('/calificaciones-primario/sincro-ge', SincroGePrimario::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesPrimario.sincroGe');
+    Route::get('/calificaciones-primario/sincro-desempenos', SincroDesempenos::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesPrimario.sincroDesempenos');
+    Route::get('/calificaciones-primario/carga', CargaCalificacionesPrimarioIndex::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesPrimario.carga');
+    Route::get('/calificaciones-primario/carga/{matricula}', CargaCalificacionesPrimarioForm::class)
+        ->middleware('permiso:9')
+        ->whereNumber('matricula')
+        ->name('calificacionesPrimario.carga.alumno');
+    Route::get('/calificaciones-primario/boletin-ipe', BoletinIpeIndex::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesPrimario.boletinIpe');
+    Route::post('/calificaciones-primario/boletin-ipe/pdf', BoletinIpePdfController::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesPrimario.boletinIpe.pdf');
+    Route::post('/calificaciones-primario/boletin-ipe/pdf-lote', BoletinIpeLotePdfController::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesPrimario.boletinIpe.pdfLote');
+    Route::get('/calificaciones-primario/planilla', PlanillaCalificacionesPrimario::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesPrimario.planilla');
+    Route::get('/calificaciones-primario/planilla/pdf', PlanillaCalificacionesPrimarioPdfController::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesPrimario.planilla.pdf');
 
     // Calificaciones (nivel secundario): sincro GE/CIDI, carga y consulta institucional
     Route::get('/calificaciones-secundario/sincro-ge', SincroGe::class)

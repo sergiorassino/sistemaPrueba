@@ -1,12 +1,12 @@
-{{-- sincroGe: importación de calificaciones desde CSV GE/CIDI --}}
+{{-- Descargar Calificaciones desde GE (primario) --}}
 <div class="mx-auto w-full max-w-5xl space-y-6">
     <section class="se-hero">
         <div class="se-hero-inner">
             <div class="min-w-0 space-y-2">
-                <p class="se-eyebrow">Calificaciones · Secundario</p>
-                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Descarga de calificaciones desde CIDI (nivel secundario)</h2>
+                <p class="se-eyebrow">Calificaciones · Primario</p>
+                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Descargar Calificaciones desde GE</h2>
                 <p class="max-w-2xl text-sm text-white/80">
-                    Módulo de descarga e importación GE/CIDI para <strong>nivel secundario</strong> ·
+                    Importación de calificaciones exportadas desde <strong>GE</strong> (nivel primario) ·
                     {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
                 </p>
             </div>
@@ -33,11 +33,12 @@
 
     <div class="se-card space-y-5 p-5 sm:p-6">
         <div class="space-y-2 text-sm text-neutral-600">
-            <p>Suba el archivo <strong>CSV</strong> exportado desde GE/CIDI (separador punto y coma, como el modelo <code class="text-xs">EE1242430.csv</code>).</p>
+            <p>Suba el archivo <strong>CSV</strong> exportado desde <strong>GE</strong> para primario (separador punto y coma).</p>
             <ul class="list-disc space-y-1 pl-5">
-                <li>Se sobrescriben siempre <code class="text-xs">ic01</code>–<code class="text-xs">ic28</code> y <code class="text-xs">calif</code> con lo que traiga el CSV; las celdas vacías borran el valor en el sistema (útil si en GE se borró una nota).</li>
-                <li>El proceso usa el <strong>ciclo lectivo y nivel</strong> de su sesión actual.</li>
-                <li>El sistema debe encontrar <strong>exactamente un</strong> registro de notas del alumno para esa materia y ese año lectivo: mismo alumno (DNI), mismo ciclo lectivo que tiene seleccionado y misma materia del curso que coincide con el código del CSV. Es el mismo criterio que si cargara las notas en <strong>Carga de calificaciones</strong> eligiendo curso y materia. Si no existe ese registro o hay más de uno duplicado, la fila del archivo se marca en el informe y no se graba.</li>
+                <li>Se actualizan <code class="text-xs">ic01</code>–<code class="text-xs">ic03</code> (evaluaciones y aprobación final) y <code class="text-xs">ic05</code>–<code class="text-xs">ic16</code> (notas por módulo de cada evaluación). Las celdas vacías borran el valor en el sistema.</li>
+                <li>La materia se identifica por el <strong>nombre</strong> que trae el archivo (columna de espacio curricular), en el grado y división indicados (PRIMER GRADO … SEXTO GRADO).</li>
+                <li>El proceso usa el <strong>ciclo lectivo y nivel primario</strong> de su sesión actual.</li>
+                <li>Debe existir <strong>exactamente un</strong> registro en calificaciones por alumno (DNI), ciclo lectivo activo y materia del curso. Si no existe o hay duplicados, la fila se informa y no se graba.</li>
             </ul>
         </div>
 
@@ -45,8 +46,7 @@
             <div>
                 <span class="form-label">Archivo CSV</span>
 
-                {{-- Zona de selección / arrastre visual --}}
-                <label for="sincro-ge-csv"
+                <label for="sincro-ge-primario-csv"
                        class="mt-1.5 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-8 transition-colors
                               @error('archivoCsv') border-red-300 bg-red-50/50 @else border-accent-200 bg-accent-50/40 hover:border-primary-400 hover:bg-primary-50/30 @enderror">
                     <svg class="mb-3 h-10 w-10 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -55,7 +55,7 @@
                     </svg>
                     <span class="text-sm font-semibold text-primary-800">Haga clic para elegir el CSV</span>
                     <span class="mt-1 text-xs text-neutral-500">o arrástrelo aquí · máx. 15 MB · extensión .csv</span>
-                    <input id="sincro-ge-csv"
+                    <input id="sincro-ge-primario-csv"
                            type="file"
                            class="sr-only"
                            wire:model.live="archivoCsv"
@@ -101,7 +101,7 @@
                         wire:target="importar,archivoCsv"
                         @disabled(! $encabezadoValido)
                         class="btn-primary disabled:cursor-not-allowed disabled:opacity-50">
-                    <span wire:loading.remove wire:target="importar,archivoCsv">Importar calificaciones</span>
+                    <span wire:loading.remove wire:target="importar,archivoCsv">Descargar calificaciones</span>
                     <span wire:loading wire:target="archivoCsv">Espere, subiendo archivo…</span>
                     <span wire:loading wire:target="importar">Procesando importación…</span>
                 </button>
@@ -120,7 +120,7 @@
             $issues = $r['issues'] ?? [];
         @endphp
         <div class="se-card space-y-4 p-5 sm:p-6">
-            <h3 class="text-lg font-semibold text-neutral-900">Resultado de la importación</h3>
+            <h3 class="text-lg font-semibold text-neutral-900">Resultado de la descarga</h3>
             <p class="text-sm text-neutral-700">{{ $r['message'] ?? '' }}</p>
 
             <dl class="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">

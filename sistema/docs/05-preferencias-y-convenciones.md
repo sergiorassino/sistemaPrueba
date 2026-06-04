@@ -133,7 +133,7 @@ Cuando un módulo aplica solo a **secundario**, **primario** o **inicial** (o ex
 
 ### Referencia
 
-- Calificaciones secundario: tooltips `… (secundario) v1.0` en el grupo CALIFICACIONES.
+- Calificaciones secundario: tooltips `… (secundario) v1.0` en el grupo **CALIFICACIONES (Secundario)** (solo con `schoolCtx()->idNivel` = 3).
 - Boletines secundario: `boletinesSecundario.index`, tooltip y etiqueta `Boletines (secundario)`.
 
 ---

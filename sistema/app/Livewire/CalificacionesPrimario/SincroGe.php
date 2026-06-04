@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Livewire\CalificacionesSecundario;
+namespace App\Livewire\CalificacionesPrimario;
 
-use App\Services\SincroGe\GeCsvImporter;
+use App\Services\SincroGe\GeCsvImporterPrimario;
 use App\Services\SincroGe\GeCsvImportResult;
+use App\Support\NivelSistema;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -13,7 +14,7 @@ use RuntimeException;
 use Throwable;
 
 /**
- * sincroGe — descarga de calificaciones desde exportación GE/CIDI (CSV).
+ * Descargar Calificaciones desde GE (CSV) — nivel primario.
  */
 class SincroGe extends Component
 {
@@ -31,12 +32,16 @@ class SincroGe extends Component
     /** @var array<string, mixed>|null */
     public ?array $ultimoResultado = null;
 
-    /** Ruta temporal en disco local si hubo que copiar el archivo desde Livewire. */
     private ?string $storedCsvRelativePath = null;
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(9), 403, 'Sin permiso para importar calificaciones desde CIDI/GE.');
+        abort_unless(tienePermiso(9), 403, 'Sin permiso para descargar calificaciones desde GE.');
+        abort_unless(
+            NivelSistema::esPrimario((int) schoolCtx()->idNivel),
+            403,
+            'Este módulo corresponde al nivel primario. Cambie el contexto de nivel en el menú lateral.'
+        );
     }
 
     public function updatedArchivoCsv(): void
@@ -67,10 +72,10 @@ class SincroGe extends Component
         $bytes = (int) ($this->archivoCsv->getSize() ?? 0);
         $this->archivoTamanioKb = $bytes > 0 ? (int) ceil($bytes / 1024) : null;
 
-        if (! $this->validarEncabezadoGe($this->archivoCsv)) {
+        if (! $this->validarEncabezadoGePrimario($this->archivoCsv)) {
             $this->addError(
                 'archivoCsv',
-                'El archivo no coincide con el formato GE/CIDI (separador «;» y columnas de calificaciones). Verifique que exportó el listado correcto.'
+                'El archivo no coincide con el formato GE de primario (grado, materia y columnas de evaluaciones). Verifique que exportó el listado desde GE.'
             );
             $this->archivoCsv = null;
             $this->archivoNombre = null;
@@ -91,7 +96,7 @@ class SincroGe extends Component
         $this->resetValidation('archivoCsv');
     }
 
-    public function importar(GeCsvImporter $importer): void
+    public function importar(GeCsvImporterPrimario $importer): void
     {
         abort_unless(tienePermiso(9), 403);
 
@@ -109,12 +114,12 @@ class SincroGe extends Component
         }
 
         if (! $this->encabezadoValido) {
-            $this->addError('archivoCsv', 'El archivo no tiene un encabezado GE/CIDI válido. Vuelva a seleccionarlo.');
+            $this->addError('archivoCsv', 'El archivo no tiene un encabezado GE válido. Vuelva a seleccionarlo.');
 
             return;
         }
 
-        $key = 'sincroGe:import:'.(auth()->id() ?? 'guest');
+        $key = 'sincroGePrimario:import:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 6)) {
             $this->addError('archivoCsv', 'Demasiados intentos seguidos. Espere un minuto e intente de nuevo.');
 
@@ -128,13 +133,12 @@ class SincroGe extends Component
         $idTerlec = (int) $ctx->idTerlec;
         $idNivel = (int) $ctx->idNivel;
 
-        if ($idTerlec < 1 || $idNivel < 1) {
-            $this->addError('archivoCsv', 'No hay contexto de nivel o ciclo lectivo activo en la sesión.');
+        if ($idTerlec < 1 || ! NivelSistema::esPrimario($idNivel)) {
+            $this->addError('archivoCsv', 'No hay contexto de nivel primario o ciclo lectivo activo en la sesión.');
 
             return;
         }
 
-        $path = null;
         try {
             $path = $this->resolveCsvAbsolutePath($this->archivoCsv);
             $result = $importer->import($path, $idTerlec, $idNivel);
@@ -182,7 +186,7 @@ class SincroGe extends Component
         return null;
     }
 
-    private function validarEncabezadoGe(TemporaryUploadedFile $file): bool
+    private function validarEncabezadoGePrimario(TemporaryUploadedFile $file): bool
     {
         $path = $file->getRealPath();
         if (! is_string($path) || $path === '' || ! is_readable($path)) {
@@ -200,15 +204,14 @@ class SincroGe extends Component
         $header = fgetcsv($handle, 0, ';');
         fclose($handle);
 
-        if (! is_array($header) || count($header) < 60) {
+        if (! is_array($header) || count($header) < 58) {
             return false;
         }
 
         $joined = mb_strtoupper(implode(';', array_map('trim', $header)), 'UTF-8');
 
-        return str_contains($joined, 'NOTA FINAL')
-            && str_contains($joined, 'ESPACIO CURRICULAR')
-            && str_contains($joined, 'NOTA EVAL 1');
+        return str_contains($joined, 'GRADO')
+            && ! str_contains($joined, 'NOTA EVAL 1');
     }
 
     private function resolveCsvAbsolutePath(TemporaryUploadedFile $file): string
@@ -229,8 +232,8 @@ class SincroGe extends Component
 
         $userId = (int) (auth()->id() ?? 0);
         $relative = $file->storeAs(
-            'imports/sincro-ge',
-            'ge_'.$userId.'_'.uniqid('', true).'.'.$ext,
+            'imports/sincro-ge-primario',
+            'ge_prim_'.$userId.'_'.uniqid('', true).'.'.$ext,
             'local'
         );
 
@@ -276,7 +279,7 @@ class SincroGe extends Component
 
     public function render()
     {
-        return view('livewire.calificaciones-secundario.sincro-ge')
-            ->layout(layoutMenuStaff(), ['pageTitle' => 'Descargar calificaciones desde CIDI (secundario)']);
+        return view('livewire.calificaciones-primario.sincro-ge')
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Descargar Calificaciones desde GE']);
     }
 }

@@ -191,7 +191,7 @@ final class AnaliticoFrenteTcpdf extends TCPDF
 
             'MINISTERIO DE EDUCACIÓN DE LA PROVINCIA DE CÓRDOBA',
 
-            'DIRECCIÓN GENERAL DE INSTITUTOS PRIVADOS DE ENSEÑANZA',
+            'DIRECCIÓN GENERAL DE EDUCACIÓN PÚBLICA DE GESTIÓN PRIVADA',
 
         ] as $lineaLegal) {
 

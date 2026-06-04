@@ -154,6 +154,14 @@ use App\Livewire\BoletinesSecundario\BoletinesSecundarioIndex;
 use App\Http\Controllers\CalificacionesPrimario\BoletinIpeLotePdfController;
 use App\Http\Controllers\CalificacionesPrimario\BoletinIpePdfController;
 use App\Http\Controllers\CalificacionesPrimario\PlanillaCalificacionesPrimarioPdfController;
+use App\Livewire\CalificacionesInicial\CargaObservacionesInicialAlumnos;
+use App\Livewire\CalificacionesInicial\CargaObservacionesInicialForm;
+use App\Livewire\CalificacionesInicial\CargaObservacionesInicialIndex;
+use App\Http\Controllers\CalificacionesInicial\InformeProgresoInicialLotePdfController;
+use App\Http\Controllers\CalificacionesInicial\InformeProgresoInicialPdfController;
+use App\Livewire\CalificacionesInicial\EditarIndicadoresForm;
+use App\Livewire\CalificacionesInicial\EditarIndicadoresIndex;
+use App\Livewire\CalificacionesInicial\InformeProgresoInicialIndex;
 use App\Livewire\CalificacionesPrimario\BoletinIpeIndex;
 use App\Livewire\CalificacionesPrimario\PlanillaCalificacionesPrimario;
 use App\Livewire\CalificacionesPrimario\CargaCalificacionesPrimarioForm;
@@ -597,6 +605,37 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->name('horarios.pdf.curso');
     Route::get('/horarios/pdf/profesor', HorarioProfesorPdfController::class)
         ->name('horarios.pdf.profesor');
+
+    // Calificaciones (nivel inicial): indicadores por materia y etapa
+    Route::get('/calificaciones-inicial/indicadores', EditarIndicadoresIndex::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesInicial.indicadores');
+    Route::get('/calificaciones-inicial/indicadores/{materia}', EditarIndicadoresForm::class)
+        ->middleware('permiso:9')
+        ->whereNumber('materia')
+        ->name('calificacionesInicial.indicadores.materia');
+
+    Route::get('/calificaciones-inicial/observaciones', CargaObservacionesInicialIndex::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesInicial.observaciones');
+    Route::get('/calificaciones-inicial/observaciones/{materia}', CargaObservacionesInicialAlumnos::class)
+        ->middleware('permiso:9')
+        ->whereNumber('materia')
+        ->name('calificacionesInicial.observaciones.alumnos');
+    Route::get('/calificaciones-inicial/observaciones/{materia}/{matricula}', CargaObservacionesInicialForm::class)
+        ->middleware('permiso:9')
+        ->whereNumber(['materia', 'matricula'])
+        ->name('calificacionesInicial.observaciones.carga');
+
+    Route::get('/calificaciones-inicial/informe-progreso', InformeProgresoInicialIndex::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesInicial.informeProgreso');
+    Route::post('/calificaciones-inicial/informe-progreso/pdf', InformeProgresoInicialPdfController::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesInicial.informeProgreso.pdf');
+    Route::post('/calificaciones-inicial/informe-progreso/pdf-lote', InformeProgresoInicialLotePdfController::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesInicial.informeProgreso.pdfLote');
 
     // Calificaciones (nivel primario): GE/CIDI y desempeños por etapa (CSV)
     Route::get('/calificaciones-primario/sincro-ge', SincroGePrimario::class)

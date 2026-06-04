@@ -26,7 +26,7 @@ class CuotasIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403, 'El módulo de aranceles está disponible solo en el nivel Administración.');
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403, 'Sin permiso para aranceles por estudiante.');
         $this->persistirBusquedaEnSesion();
     }
 

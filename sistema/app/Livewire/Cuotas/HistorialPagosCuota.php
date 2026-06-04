@@ -20,7 +20,7 @@ class HistorialPagosCuota extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
 
         $idLegajo = ContextoEstudianteSesion::legajo(ContextoEstudianteSesion::CUOTAS_GESTION);
         $idCuotaGenerada = ContextoEstudianteSesion::cuotaGenerada(ContextoEstudianteSesion::CUOTAS_GESTION);
@@ -38,7 +38,7 @@ class HistorialPagosCuota extends Component
 
     public function borrarPago(int $idCuotaPago): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
 
         $key = 'cuotas:historial-pagos:borrar:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 20)) {

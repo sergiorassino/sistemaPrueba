@@ -33,7 +33,7 @@ class GeneracionMasivaCuotas extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeGeneracionMasiva(), 403);
     }
 
     public function continuarACuota(): void
@@ -66,7 +66,7 @@ class GeneracionMasivaCuotas extends Component
 
     public function armarVistaPrevia(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeGeneracionMasiva(), 403);
 
         $this->validarCursosSeleccionados();
         $this->validate([
@@ -87,7 +87,7 @@ class GeneracionMasivaCuotas extends Component
 
     public function generar(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeGeneracionMasiva(), 403);
 
         $rateKey = 'cuotas:generar-masiva:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($rateKey, 5)) {

@@ -20,7 +20,7 @@ class GenerarCuotaEstudiante extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
 
         $idLegajo = ContextoEstudianteSesion::legajo(ContextoEstudianteSesion::CUOTAS_GESTION);
         abort_if($idLegajo === null || GestionAranceles::legajoParaGestion($idLegajo) === null, 404);
@@ -30,7 +30,7 @@ class GenerarCuotaEstudiante extends Component
 
     public function generar(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
 
         $rateKey = 'cuotas:generar:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($rateKey, 15)) {

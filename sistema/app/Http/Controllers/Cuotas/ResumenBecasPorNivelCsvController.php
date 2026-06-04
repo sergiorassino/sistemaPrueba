@@ -11,7 +11,7 @@ class ResumenBecasPorNivelCsvController extends Controller
 {
     public function __invoke(): StreamedResponse
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeResumenBecasPorNivel(), 403);
 
         $ano = (int) schoolCtx()->terlecAno();
         $resumen = ResumenBecasPorNivelConsulta::resumen();

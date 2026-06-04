@@ -14,12 +14,12 @@ class CancelarTodasReservas extends Component
 {
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeCancelarTodasReservas(), 403);
     }
 
     public function cancelar(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeCancelarTodasReservas(), 403);
 
         $rateKey = 'cuotas:cancelar-todas-reservas:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($rateKey, 3)) {

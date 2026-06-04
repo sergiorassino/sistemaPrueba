@@ -19,7 +19,7 @@ class ListadoMorososPdfController extends Controller
 {
     public function __invoke(Request $request, string $ref)
     {
-        abort_unless(PermisosMora::puedeAccederModulo(), 403);
+        abort_unless(PermisosMora::puedeGestionMorosos(), 403);
 
         $payload = OpaqueRouteToken::decodePayload($ref, OpaqueRouteToken::PURPOSE_MORA_LISTADO_DEUDA);
         if ($payload === null) {

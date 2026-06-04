@@ -2,15 +2,36 @@
 
 namespace App\Support\Mora;
 
+use App\Support\PermisosIaCatalog;
+
 /**
- * Módulo «Gestión de mora» (solo sesión nivel Administración, `niveles.id = 5`).
- *
- * El acceso al menú y a la ruta índice no usa permiso_ia: basta con entrar como Administración.
+ * Permisos por ítem del Menú de Administración — gestión de mora.
  */
 final class PermisosMora
 {
-    public static function puedeAccederModulo(): bool
+    private static function enAdministracion(): bool
     {
         return schoolEsAdministracion();
+    }
+
+    private static function tiene(int $orden): bool
+    {
+        return self::enAdministracion() && tienePermiso($orden);
+    }
+
+    public static function puedeEstadoDeudaFamiliar(): bool
+    {
+        return self::tiene(PermisosIaCatalog::ADMIN_MORA_ESTADO_DEUDA);
+    }
+
+    public static function puedeGestionMorosos(): bool
+    {
+        return self::tiene(PermisosIaCatalog::ADMIN_MORA_GESTION_MOROSOS);
+    }
+
+    /** Grupo sidebar «Gestión de mora». */
+    public static function muestraGrupoGestionMora(): bool
+    {
+        return self::puedeEstadoDeudaFamiliar() || self::puedeGestionMorosos();
     }
 }

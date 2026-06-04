@@ -26,7 +26,7 @@ class AsignacionBecasIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403, 'El módulo de becas está disponible solo en el nivel Administración.');
+        abort_unless(PermisosCuotas::puedeAsignacionBecas(), 403, 'Sin permiso para asignación de becas.');
     }
 
     public function updatedSearchAlumno(mixed $value): void
@@ -45,7 +45,7 @@ class AsignacionBecasIndex extends Component
 
     public function actualizarBeca(int $idMatricula, mixed $idBecaRaw): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeAsignacionBecas(), 403);
 
         $idx = $this->indiceFilaPorMatricula($idMatricula);
         if ($idx === null) {

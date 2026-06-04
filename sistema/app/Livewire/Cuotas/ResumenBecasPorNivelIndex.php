@@ -27,12 +27,12 @@ class ResumenBecasPorNivelIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403, 'El módulo de becas está disponible solo en el nivel Administración.');
+        abort_unless(PermisosCuotas::puedeResumenBecasPorNivel(), 403, 'Sin permiso para resumen de becas por nivel.');
     }
 
     public function abrirDetalle(int $idBeca, int $idNivel = 0): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeResumenBecasPorNivel(), 403);
 
         $idNivelFiltro = $idNivel > 0 ? $idNivel : null;
         $grupos = ResumenBecasPorNivelConsulta::detallePorCurso($idBeca, $idNivelFiltro);

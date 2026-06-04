@@ -73,330 +73,6 @@
 
             </div>
 
-            <div class="mt-4"></div>
-            <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
-                    :class="(groups.gestionCuotas && !sidebarCollapsed) ? 'is-open' : ''"
-                    @click="toggleGroup('gestionCuotas')"
-                    title="Gestión de aranceles">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Gestión de aranceles</span>
-                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
-                     :class="groups.gestionCuotas ? 'rotate-180' : ''"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
-                 x-show="groups.gestionCuotas && !sidebarCollapsed"
-                 x-collapse
-                 x-cloak>
-                <a href="{{ route('cuotas.index') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'cuotas.')
-                           && ($route ?? '') !== 'cuotas.tipos-beca'
-                           && ($route ?? '') !== 'cuotas.asignacion-becas'
-                           && ! in_array($route ?? '', ['cuotas.resumen-becas-por-nivel', 'cuotas.resumen-becas-por-nivel.csv', 'cuotas.solicitud-ayuda-familiar', 'cuotas.solicitud-ayuda-familiar.pdf'], true)
-                           && ! str_starts_with($route ?? '', 'cuotas.importes.')
-                           && ($route ?? '') !== 'cuotas.plantillas'
-                           && ($route ?? '') !== 'cuotas.generacion-masiva'
-                           && ($route ?? '') !== 'cuotas.eliminacion-masiva'
-                           && ($route ?? '') !== 'cuotas.edicion-generadas'
-                           && ($route ?? '') !== 'cuotas.cancelar-todas-reservas'
-                           && ($route ?? '') !== 'cuotas.libro-aranceles'
-                           && ($route ?? '') !== 'cuotas.libro-aranceles.pdf'
-                           && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha'
-                           && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha.pdf'
-                           && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota'
-                           && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota.pdf',
-                   ])
-                   title="Buscar estudiante y gestionar cuotas">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                    </svg>
-                    <span class="truncate">Aranceles por estudiante</span>
-                </a>
-            </div>
-
-            <div class="mt-4"></div>
-            <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
-                    :class="(groups.gestionMasiva && !sidebarCollapsed) ? 'is-open' : ''"
-                    @click="toggleGroup('gestionMasiva')"
-                    title="Gestión masiva">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
-                </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Gestión masiva</span>
-                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
-                     :class="groups.gestionMasiva ? 'rotate-180' : ''"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
-                 x-show="groups.gestionMasiva && !sidebarCollapsed"
-                 x-collapse
-                 x-cloak>
-                <a href="{{ route('cuotas.plantillas') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.plantillas',
-                   ])
-                   title="Plantillas de cuotas del año lectivo activo">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                    </svg>
-                    <span class="truncate">Crear / Editar Cuotas</span>
-                </a>
-                <a href="{{ route('cuotas.importes.index') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'cuotas.importes.'),
-                   ])
-                   title="Importes y bonificaciones o intereses por curso">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
-                    </svg>
-                    <span class="truncate">Importes por curso</span>
-                </a>
-                <a href="{{ route('cuotas.generacion-masiva') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.generacion-masiva',
-                   ])
-                   title="Generar cuotas para estudiantes regulares por curso">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
-                    <span class="truncate">Generación masiva de cuotas</span>
-                </a>
-                <a href="{{ route('cuotas.eliminacion-masiva') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.eliminacion-masiva',
-                   ])
-                   title="Eliminar cuotas generadas sin pagos por curso">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                    <span class="truncate">Eliminar Masivamente Cuotas Generadas</span>
-                </a>
-                <a href="{{ route('cuotas.edicion-generadas') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.edicion-generadas',
-                   ])
-                   title="Edición masiva de importes y vencimientos de cuotas generadas con filtros">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                    </svg>
-                    <span class="truncate">Edición Masiva de Cuotas Generadas</span>
-                </a>
-                <a href="{{ route('cuotas.cancelar-todas-reservas') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.cancelar-todas-reservas',
-                   ])
-                   title="Poner en cero importe y saldo de todas las reservas sin pago del ciclo activo">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                    </svg>
-                    <span class="truncate">Cancelar todas las Reservas</span>
-                </a>
-            </div>
-
-            <div class="mt-4"></div>
-            <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
-                    :class="(groups.resumenes && !sidebarCollapsed) ? 'is-open' : ''"
-                    @click="toggleGroup('resumenes')"
-                    title="Resúmenes de aranceles">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Resúmenes</span>
-                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
-                     :class="groups.resumenes ? 'rotate-180' : ''"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
-                 x-show="groups.resumenes && !sidebarCollapsed"
-                 x-collapse
-                 x-cloak>
-                <a href="{{ route('cuotas.libro-aranceles') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.libro-aranceles', 'cuotas.libro-aranceles.pdf'], true),
-                   ])
-                   title="Libro de aranceles por curso (PDF apaisado)">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                    </svg>
-                    <span class="truncate">Libro de aranceles</span>
-                </a>
-                <a href="{{ route('cuotas.listado-pagos-por-fecha') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.listado-pagos-por-fecha', 'cuotas.listado-pagos-por-fecha.pdf'], true),
-                   ])
-                   title="Pagos recibidos entre dos fechas (PDF)">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                    </svg>
-                    <span class="truncate">Listado de pagos por fecha</span>
-                </a>
-                <a href="{{ route('cuotas.listado-estudiantes-por-cuota') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.listado-estudiantes-por-cuota', 'cuotas.listado-estudiantes-por-cuota.pdf'], true),
-                   ])
-                   title="Estudiantes con cuotas generadas (PDF apaisado)">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <span class="truncate">Listado de estudiantes por cuota</span>
-                </a>
-            </div>
-
-            
-            <div class="mt-4"></div>
-            <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
-                    :class="(groups.becas && !sidebarCollapsed) ? 'is-open' : ''"
-                    @click="toggleGroup('becas')"
-                    title="Becas">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/>
-                </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Becas</span>
-                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
-                     :class="groups.becas ? 'rotate-180' : ''"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
-                 x-show="groups.becas && !sidebarCollapsed"
-                 x-collapse
-                 x-cloak>
-                <a href="{{ route('cuotas.tipos-beca') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.tipos-beca',
-                   ])
-                   title="Tipos de beca y porcentaje de descuento">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                    </svg>
-                    <span class="truncate">Tipos de Beca</span>
-                </a>
-                <a href="{{ route('cuotas.asignacion-becas') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.asignacion-becas',
-                   ])
-                   title="Asignar beca a alumnos por curso o búsqueda individual">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <span class="truncate">Asignación de Becas</span>
-                </a>
-                <a href="{{ route('cuotas.resumen-becas-por-nivel') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.resumen-becas-por-nivel', 'cuotas.resumen-becas-por-nivel.csv'], true),
-                   ])
-                   title="Cantidad de becas otorgadas por tipo y nivel pedagógico">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <span class="truncate">Resumen de Becas por Nivel</span>
-                </a>
-                <a href="{{ route('cuotas.solicitud-ayuda-familiar') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.solicitud-ayuda-familiar', 'cuotas.solicitud-ayuda-familiar.pdf'], true),
-                   ])
-                   title="Buscar estudiante e imprimir solicitud de ayuda familiar">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <span class="truncate">Solicitud de Ayuda Familiar</span>
-                </a>
-            </div>
-
-            {{-- Gestión de mora --}}
-            <div class="mt-4"></div>
-            <button type="button"
-                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
-                    :class="(groups.gestionMora && !sidebarCollapsed) ? 'is-open' : ''"
-                    @click="toggleGroup('gestionMora')"
-                    title="Gestión de mora">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Gestión de mora</span>
-                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
-                     :class="groups.gestionMora ? 'rotate-180' : ''"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
-                 x-show="groups.gestionMora && !sidebarCollapsed"
-                 x-collapse
-                 x-cloak>
-                <a href="{{ route('mora.estado-deuda-familiar') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'mora.estado-deuda-familiar',
-                   ])
-                   title="Listado de familias y estado de deuda">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <span class="truncate">Estado de Deuda Familiar</span>
-                </a>
-                <a href="{{ route('mora.gestion-morosos') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => in_array($route ?? '', ['mora.gestion-morosos', 'mora.gestion-morosos.pdf'], true),
-                   ])
-                   title="Filtros y listado de deuda (PDF)">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                    </svg>
-                    <span class="truncate">Gestión de Morosos</span>
-                </a>
-            </div>
-
         {{-- Comunicación institucional --}}
         @if(tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5))
             <div class="mt-4"></div>
@@ -512,6 +188,372 @@
                 @endif
             </div>
         @endif
+
+            @if (\App\Support\PermisosCuotas::muestraGrupoGestionAranceles())
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
+                    :class="(groups.gestionCuotas && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('gestionCuotas')"
+                    title="Gestión de aranceles">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Gestión de aranceles</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.gestionCuotas ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.gestionCuotas && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                @if (\App\Support\PermisosCuotas::puedeArancelesPorEstudiante())
+                <a href="{{ route('cuotas.index') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'cuotas.')
+                           && ($route ?? '') !== 'cuotas.tipos-beca'
+                           && ($route ?? '') !== 'cuotas.asignacion-becas'
+                           && ! in_array($route ?? '', ['cuotas.resumen-becas-por-nivel', 'cuotas.resumen-becas-por-nivel.csv', 'cuotas.solicitud-ayuda-familiar', 'cuotas.solicitud-ayuda-familiar.pdf'], true)
+                           && ! str_starts_with($route ?? '', 'cuotas.importes.')
+                           && ($route ?? '') !== 'cuotas.plantillas'
+                           && ($route ?? '') !== 'cuotas.generacion-masiva'
+                           && ($route ?? '') !== 'cuotas.eliminacion-masiva'
+                           && ($route ?? '') !== 'cuotas.edicion-generadas'
+                           && ($route ?? '') !== 'cuotas.cancelar-todas-reservas'
+                           && ($route ?? '') !== 'cuotas.libro-aranceles'
+                           && ($route ?? '') !== 'cuotas.libro-aranceles.pdf'
+                           && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha'
+                           && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha.pdf'
+                           && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota'
+                           && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota.pdf',
+                   ])
+                   title="Buscar estudiante y gestionar cuotas">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="truncate">Aranceles por estudiante</span>
+                </a>
+                @endif
+            </div>
+            @endif
+
+            @if (\App\Support\PermisosCuotas::muestraGrupoGestionMasiva())
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
+                    :class="(groups.gestionMasiva && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('gestionMasiva')"
+                    title="Gestión masiva">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Gestión masiva</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.gestionMasiva ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.gestionMasiva && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                @if (\App\Support\PermisosCuotas::puedePlantillas())
+                <a href="{{ route('cuotas.plantillas') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.plantillas',
+                   ])
+                   title="Plantillas de cuotas del año lectivo activo">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    <span class="truncate">Crear / Editar Cuotas</span>
+                </a>
+                @endif
+                @if (\App\Support\PermisosCuotas::puedeImportesPorCurso())
+                <a href="{{ route('cuotas.importes.index') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'cuotas.importes.'),
+                   ])
+                   title="Importes y bonificaciones o intereses por curso">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                    </svg>
+                    <span class="truncate">Importes por curso</span>
+                </a>
+                @endif
+                @if (\App\Support\PermisosCuotas::puedeGeneracionMasiva())
+                <a href="{{ route('cuotas.generacion-masiva') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.generacion-masiva',
+                   ])
+                   title="Generar cuotas para estudiantes regulares por curso">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    <span class="truncate">Generación masiva de cuotas</span>
+                </a>
+                @endif
+                @if (\App\Support\PermisosCuotas::puedeEliminacionMasiva())
+                <a href="{{ route('cuotas.eliminacion-masiva') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.eliminacion-masiva',
+                   ])
+                   title="Eliminar cuotas generadas sin pagos por curso">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    <span class="truncate">Eliminar Masivamente Cuotas Generadas</span>
+                </a>
+                @endif
+                @if (\App\Support\PermisosCuotas::puedeEdicionCuotasGeneradas())
+                <a href="{{ route('cuotas.edicion-generadas') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.edicion-generadas',
+                   ])
+                   title="Edición masiva de importes y vencimientos de cuotas generadas con filtros">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    <span class="truncate">Edición Masiva de Cuotas Generadas</span>
+                </a>
+                @endif
+                @if (\App\Support\PermisosCuotas::puedeCancelarTodasReservas())
+                <a href="{{ route('cuotas.cancelar-todas-reservas') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.cancelar-todas-reservas',
+                   ])
+                   title="Poner en cero importe y saldo de todas las reservas sin pago del ciclo activo">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                    </svg>
+                    <span class="truncate">Cancelar todas las Reservas</span>
+                </a>
+                @endif
+            </div>
+            @endif
+
+            @if (\App\Support\PermisosCuotas::muestraGrupoResumenes())
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
+                    :class="(groups.resumenes && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('resumenes')"
+                    title="Resúmenes de aranceles">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Resúmenes</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.resumenes ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.resumenes && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                @if (\App\Support\PermisosCuotas::puedeLibroAranceles())
+                <a href="{{ route('cuotas.libro-aranceles') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.libro-aranceles', 'cuotas.libro-aranceles.pdf'], true),
+                   ])
+                   title="Libro de aranceles por curso (PDF apaisado)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    <span class="truncate">Libro de aranceles</span>
+                </a>
+                @endif
+                @if (\App\Support\PermisosCuotas::puedeListadoPagosPorFecha())
+                <a href="{{ route('cuotas.listado-pagos-por-fecha') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.listado-pagos-por-fecha', 'cuotas.listado-pagos-por-fecha.pdf'], true),
+                   ])
+                   title="Pagos recibidos entre dos fechas (PDF)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                    <span class="truncate">Listado de pagos por fecha</span>
+                </a>
+                @endif
+                @if (\App\Support\PermisosCuotas::puedeListadoEstudiantesPorCuota())
+                <a href="{{ route('cuotas.listado-estudiantes-por-cuota') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.listado-estudiantes-por-cuota', 'cuotas.listado-estudiantes-por-cuota.pdf'], true),
+                   ])
+                   title="Estudiantes con cuotas generadas (PDF apaisado)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="truncate">Listado de estudiantes por cuota</span>
+                </a>
+                @endif
+            </div>
+            @endif
+
+            @if (\App\Support\PermisosCuotas::muestraGrupoBecas())
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
+                    :class="(groups.becas && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('becas')"
+                    title="Becas">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Becas</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.becas ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.becas && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                @if (\App\Support\PermisosCuotas::puedeTiposBeca())
+                <a href="{{ route('cuotas.tipos-beca') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.tipos-beca',
+                   ])
+                   title="Tipos de beca y porcentaje de descuento">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    <span class="truncate">Tipos de Beca</span>
+                </a>
+                @endif
+                @if (\App\Support\PermisosCuotas::puedeAsignacionBecas())
+                <a href="{{ route('cuotas.asignacion-becas') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.asignacion-becas',
+                   ])
+                   title="Asignar beca a alumnos por curso o búsqueda individual">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="truncate">Asignación de Becas</span>
+                </a>
+                @endif
+                @if (\App\Support\PermisosCuotas::puedeResumenBecasPorNivel())
+                <a href="{{ route('cuotas.resumen-becas-por-nivel') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.resumen-becas-por-nivel', 'cuotas.resumen-becas-por-nivel.csv'], true),
+                   ])
+                   title="Cantidad de becas otorgadas por tipo y nivel pedagógico">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="truncate">Resumen de Becas por Nivel</span>
+                </a>
+                @endif
+                @if (\App\Support\PermisosCuotas::puedeSolicitudAyudaFamiliar())
+                <a href="{{ route('cuotas.solicitud-ayuda-familiar') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.solicitud-ayuda-familiar', 'cuotas.solicitud-ayuda-familiar.pdf'], true),
+                   ])
+                   title="Buscar estudiante e imprimir solicitud de ayuda familiar">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="truncate">Solicitud de Ayuda Familiar</span>
+                </a>
+                @endif
+            </div>
+            @endif
+
+            {{-- Gestión de mora --}}
+            @if (\App\Support\Mora\PermisosMora::muestraGrupoGestionMora())
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
+                    :class="(groups.gestionMora && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('gestionMora')"
+                    title="Gestión de mora">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Gestión de mora</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.gestionMora ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.gestionMora && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                @if (\App\Support\Mora\PermisosMora::puedeEstadoDeudaFamiliar())
+                <a href="{{ route('mora.estado-deuda-familiar') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'mora.estado-deuda-familiar',
+                   ])
+                   title="Listado de familias y estado de deuda">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="truncate">Estado de Deuda Familiar</span>
+                </a>
+                @endif
+                @if (\App\Support\Mora\PermisosMora::puedeGestionMorosos())
+                <a href="{{ route('mora.gestion-morosos') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', ['mora.gestion-morosos', 'mora.gestion-morosos.pdf'], true),
+                   ])
+                   title="Filtros y listado de deuda (PDF)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                    <span class="truncate">Gestión de Morosos</span>
+                </a>
+                @endif
+            </div>
+            @endif
+
         @include('layouts.partials.sidebar-grupo-docentes-usuarios')
         {{-- Configuración --}}
         @if (tieneAlgunPermisoConfiguracion())
@@ -706,116 +748,6 @@
                                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                         </svg>
                         <span class="truncate">Permisos por Usuario</span>
-                    </a>
-                    @endif
-                </div>
-                @endif
-
-                {{-- Planes + Cursos modelo --}}
-                @if (\App\Support\PermisosConfiguracion::tieneAlgunPlanCursoModelo())
-                <button type="button"
-                        class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors mt-2"
-                        :class="(groups.planesCursos && !sidebarCollapsed) ? 'is-open' : ''"
-                        @click="toggleGroup('planesCursos')"
-                        title="Gestión de planes y cursos modelo v1.0">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
-                    </svg>
-                    <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">GESTIÓN DE PLANES Y CURSOS MODELO</span>
-                    <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
-                         :class="groups.planesCursos ? 'rotate-180' : ''"
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
-
-                <div class="space-y-0.5 se-sidebar-group-items"
-                     x-show="groups.planesCursos && !sidebarCollapsed"
-                     x-collapse
-                     x-cloak>
-                    @if (tienePermisoConfig(33))
-                    <a href="{{ route('abm.planes') }}"
-                       @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                           'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.planes'),
-                       ])
-                       title="Gestión de Planes de Estudio v1.0">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                        </svg>
-                        <span class="truncate">Gestión de Planes de Estudio</span>
-                    </a>
-                    @endif
-
-                    @if (tienePermisoConfig(34))
-                    <a href="{{ route('abm.curplan') }}"
-                       @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                           'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.curplan'),
-                       ])
-                       title="Gestión de Cursos y Materias del Plan v1.0">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span class="truncate">Gestión de Cursos y Materias del Plan</span>
-                    </a>
-                    @endif
-                </div>
-                @endif
-
-                {{-- Cursos + Materias del año --}}
-                @if (\App\Support\PermisosConfiguracion::tieneAlgunCursoMateriaAnio())
-                <button type="button"
-                        class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors mt-2"
-                        :class="(groups.cursosMateriasAno && !sidebarCollapsed) ? 'is-open' : ''"
-                        @click="toggleGroup('cursosMateriasAno')"
-                        title="Gestión de cursos y materias del año v1.0">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
-                    </svg>
-                    <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">GESTION DE CURSOS Y MATERIAS DEL AÑO</span>
-                    <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
-                         :class="groups.cursosMateriasAno ? 'rotate-180' : ''"
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
-
-                <div class="space-y-0.5 se-sidebar-group-items"
-                     x-show="groups.cursosMateriasAno && !sidebarCollapsed"
-                     x-collapse
-                     x-cloak>
-                    @if (tienePermisoConfig(35))
-                    <a href="{{ route('abm.cursos') }}"
-                       @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                           'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.cursos'),
-                       ])
-                       title="Gestión de Cursos / Grados / Salas v1.0">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span class="truncate">Gestión de Cursos / Grados / Salas</span>
-                    </a>
-                    @endif
-
-                    @if (tienePermisoConfig(36))
-                    <a href="{{ route('abm.materias-anio') }}"
-                       @class([
-                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                           'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.materias-anio'),
-                       ])
-                       title="Gestión de asignaturas del año v1.0">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                        </svg>
-                        <span class="truncate">Gestión de asignaturas del año</span>
                     </a>
                     @endif
                 </div>

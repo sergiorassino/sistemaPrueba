@@ -18,7 +18,7 @@ class CuotasEstudianteShow extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
 
         $idLegajo = ContextoEstudianteSesion::legajo(ContextoEstudianteSesion::CUOTAS_GESTION);
         abort_if($idLegajo === null || GestionAranceles::legajoParaGestion($idLegajo) === null, 404);

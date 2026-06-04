@@ -17,12 +17,12 @@ class CuotasImportesIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeImportesPorCurso(), 403);
     }
 
     public function abrirEditor(int $idCuotas): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeImportesPorCurso(), 403);
 
         CuotasImportesCatalog::cuotaDelCicloOrFail($idCuotas);
         ContextoCuotasImportesSesion::fijar($idCuotas);

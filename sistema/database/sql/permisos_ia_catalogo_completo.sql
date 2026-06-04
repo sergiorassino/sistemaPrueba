@@ -59,7 +59,23 @@ INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (44, 44,
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (45, 45, 'CALIFICACIONES SECUNDARIO', 'Gestión de solicitudes de evaluación: listado por fecha, alta, edición y baja de evaluaciones programadas (tabla evaluac).');
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (46, 46, 'LEGAJOS ESTUDIANTES', 'Gestionar familias de estudiantes: crear, editar, eliminar y asignar o quitar vínculos con legajos (la consulta permanece disponible para todos).');
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (47, 47, 'LEGAJOS ESTUDIANTES', 'Nivel Administración: crear, editar, eliminar legajos y matrículas en Inicial, Primario y Secundario (cualquier nivel pedagógico del ciclo activo).');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (49, 49, 'GESTIÓN DE ARANCELES', 'Aranceles por estudiante: búsqueda, cuotas generadas, pagos, comprobantes y resumen de pagos.');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (50, 50, 'GESTIÓN MASIVA DE CUOTAS', 'Crear y editar plantillas de cuotas del año lectivo activo.');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (51, 51, 'GESTIÓN MASIVA DE CUOTAS', 'Importes y bonificaciones o intereses por curso.');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (52, 52, 'GESTIÓN MASIVA DE CUOTAS', 'Generación masiva de cuotas para estudiantes regulares por curso.');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (53, 53, 'GESTIÓN MASIVA DE CUOTAS', 'Eliminar masivamente cuotas generadas sin pagos por curso.');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (54, 54, 'GESTIÓN MASIVA DE CUOTAS', 'Edición masiva de importes y vencimientos de cuotas generadas.');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (55, 55, 'GESTIÓN MASIVA DE CUOTAS', 'Cancelar todas las reservas del ciclo (importe y saldo en cero).');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (56, 56, 'RESÚMENES DE ARANCELES', 'Libro de aranceles por curso (PDF apaisado).');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (57, 57, 'RESÚMENES DE ARANCELES', 'Listado de pagos recibidos entre dos fechas (PDF).');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (58, 58, 'RESÚMENES DE ARANCELES', 'Listado de estudiantes con cuotas generadas (PDF apaisado).');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (59, 59, 'BECAS', 'Tipos de beca y porcentaje de descuento.');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (60, 60, 'BECAS', 'Asignar beca a alumnos por curso o búsqueda individual.');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (61, 61, 'BECAS', 'Resumen de becas otorgadas por tipo y nivel pedagógico.');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (62, 62, 'BECAS', 'Buscar estudiante e imprimir solicitud de ayuda familiar.');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (63, 63, 'GESTIÓN DE MORA', 'Estado de deuda familiar: listado de familias y deuda.');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (64, 64, 'GESTIÓN DE MORA', 'Gestión de morosos: filtros, listado de deuda (PDF) y notificaciones.');
 
-ALTER TABLE `permisos_ia` AUTO_INCREMENT = 49;
+ALTER TABLE `permisos_ia` AUTO_INCREMENT = 65;
 
 SET FOREIGN_KEY_CHECKS = 1;

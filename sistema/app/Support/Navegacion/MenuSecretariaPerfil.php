@@ -3,7 +3,9 @@
 namespace App\Support\Navegacion;
 
 use App\Models\Profesor;
+use App\Support\Mora\PermisosMora;
 use App\Support\NivelSistema;
+use App\Support\PermisosCuotas;
 use App\Support\ProfesorMenuPortal;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,33 +27,51 @@ final class MenuSecretariaPerfil
         return self::esAdministracion();
     }
 
+    /** Gestión de planes y cursos modelo: solo Menú de Secretaría. */
+    public static function muestraPlanesCursosModelo(): bool
+    {
+        return ! self::esAdministracion();
+    }
+
+    /** Gestión de cursos y materias del año: solo Menú de Secretaría. */
+    public static function muestraCursosMateriasAnio(): bool
+    {
+        return ! self::esAdministracion();
+    }
+
     public static function muestraGrupoEstudiantes(): bool
     {
         return true;
     }
 
-    /** Bloque exclusivo del nivel Administración (sin permiso_ia adicional). */
+    /** Bloque «Gestión de aranceles» (Administración): al menos un ítem del grupo. */
     public static function muestraGestionCuotas(): bool
     {
-        return self::esAdministracion();
+        return self::esAdministracion() && PermisosCuotas::muestraGrupoGestionAranceles();
+    }
+
+    /** Bloque «Gestión masiva» (Administración). */
+    public static function muestraGestionMasivaCuotas(): bool
+    {
+        return self::esAdministracion() && PermisosCuotas::muestraGrupoGestionMasiva();
     }
 
     /** Bloque «Resúmenes» (Administración). */
     public static function muestraResumenes(): bool
     {
-        return self::esAdministracion();
+        return self::esAdministracion() && PermisosCuotas::muestraGrupoResumenes();
     }
 
     /** Bloque «Becas» (Administración). */
     public static function muestraBecas(): bool
     {
-        return self::esAdministracion();
+        return self::esAdministracion() && PermisosCuotas::muestraGrupoBecas();
     }
 
     /** Bloque «Gestión de mora» (Administración). */
     public static function muestraGestionMora(): bool
     {
-        return self::esAdministracion();
+        return self::esAdministracion() && PermisosMora::muestraGrupoGestionMora();
     }
 
     /**

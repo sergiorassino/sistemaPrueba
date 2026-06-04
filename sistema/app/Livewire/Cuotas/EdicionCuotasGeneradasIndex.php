@@ -59,7 +59,7 @@ class EdicionCuotasGeneradasIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeEdicionCuotasGeneradas(), 403);
     }
 
     public function updatedIdNivel(): void
@@ -116,7 +116,7 @@ class EdicionCuotasGeneradasIndex extends Component
 
     public function buscar(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeEdicionCuotasGeneradas(), 403);
 
         try {
             $this->filtrosActivos = EdicionCuotasGeneradasConsulta::normalizarFiltros($this->parametrosFiltro());
@@ -188,7 +188,7 @@ class EdicionCuotasGeneradasIndex extends Component
 
     public function aplicarMasivo(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeEdicionCuotasGeneradas(), 403);
 
         if (! $this->puedeAplicarMasivo) {
             if ($this->idsRegistrosSeleccionados === []) {

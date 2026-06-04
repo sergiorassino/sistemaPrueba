@@ -443,7 +443,7 @@ CREATE TABLE IF NOT EXISTS `permisos_ia` (
   UNIQUE KEY `permisos_ia_orden_unique` (`orden`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CALL sp_add_column_if_missing('profesores', 'permisos_ia', 'varchar(50) NULL DEFAULT NULL AFTER `permisos`');
+CALL sp_add_column_if_missing('profesores', 'permisos_ia', 'varchar(128) NULL DEFAULT NULL AFTER `permisos`');
 
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES
 (1, 0, 'ADMINISTRACIÓN', 'Administrar permisos del portal de gestión (sistema nuevo).'),

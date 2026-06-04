@@ -39,7 +39,7 @@ class CuotasPlantillaIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedePlantillas(), 403);
         $this->cargarFilas();
     }
 
@@ -68,7 +68,7 @@ class CuotasPlantillaIndex extends Component
 
     public function abrirModalAlta(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedePlantillas(), 403);
 
         $this->alta = $this->altaVacia();
         $this->resetValidation();
@@ -94,7 +94,7 @@ class CuotasPlantillaIndex extends Component
 
     public function guardarNuevaCuota(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedePlantillas(), 403);
 
         $permiteModelo = CuotasPlantillaCatalog::cuentaCuotasEnCicloActivo() > 0;
         if (! $permiteModelo) {
@@ -168,7 +168,7 @@ class CuotasPlantillaIndex extends Component
 
     public function saveRowField(string $key): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedePlantillas(), 403);
 
         if ($this->persistiendo || ! isset($this->draft[$key])) {
             return;
@@ -215,7 +215,7 @@ class CuotasPlantillaIndex extends Component
 
     public function deleteRow(string $key): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedePlantillas(), 403);
 
         $rateKey = 'cuotas-plantilla:delete:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($rateKey, 20)) {

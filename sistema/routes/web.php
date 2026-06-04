@@ -326,58 +326,110 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
 
 // Menú de Administración — cuotas, mora y módulos financieros (solo `niveles.id = 5`).
 Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'administracion.nivel'])->group(function () {
-    Route::prefix('cuotas')->group(function () {
-        Route::get('/tipos-beca', TiposBecaIndex::class)->name('cuotas.tipos-beca');
-        Route::get('/asignacion-becas', AsignacionBecasIndex::class)->name('cuotas.asignacion-becas');
-        Route::get('/resumen-becas-por-nivel', ResumenBecasPorNivelIndex::class)->name('cuotas.resumen-becas-por-nivel');
-        Route::get('/resumen-becas-por-nivel/csv', ResumenBecasPorNivelCsvController::class)->name('cuotas.resumen-becas-por-nivel.csv');
-        Route::get('/solicitud-ayuda-familiar', SolicitudAyudaFamiliarIndex::class)->name('cuotas.solicitud-ayuda-familiar');
+    $pi = \App\Support\PermisosIaCatalog::class;
+
+    Route::prefix('cuotas')->group(function () use ($pi) {
+        Route::get('/tipos-beca', TiposBecaIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_BECAS_TIPOS)
+            ->name('cuotas.tipos-beca');
+        Route::get('/asignacion-becas', AsignacionBecasIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_BECAS_ASIGNACION)
+            ->name('cuotas.asignacion-becas');
+        Route::get('/resumen-becas-por-nivel', ResumenBecasPorNivelIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_BECAS_RESUMEN_NIVEL)
+            ->name('cuotas.resumen-becas-por-nivel');
+        Route::get('/resumen-becas-por-nivel/csv', ResumenBecasPorNivelCsvController::class)
+            ->middleware('permiso:'.$pi::ADMIN_BECAS_RESUMEN_NIVEL)
+            ->name('cuotas.resumen-becas-por-nivel.csv');
+        Route::get('/solicitud-ayuda-familiar', SolicitudAyudaFamiliarIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_BECAS_SOLICITUD_AYUDA)
+            ->name('cuotas.solicitud-ayuda-familiar');
         Route::get('/solicitud-ayuda-familiar/pdf/{ref}', SolicitudAyudaFamiliarPdfController::class)
             ->where('ref', '[A-Za-z0-9_-]+')
+            ->middleware('permiso:'.$pi::ADMIN_BECAS_SOLICITUD_AYUDA)
             ->name('cuotas.solicitud-ayuda-familiar.pdf');
-        Route::get('/', CuotasIndex::class)->name('cuotas.index');
-        Route::get('/plantillas', CuotasPlantillaIndex::class)->name('cuotas.plantillas');
-        Route::get('/importes', CuotasImportesIndex::class)->name('cuotas.importes.index');
-        Route::get('/importes/editar', CuotasImportesForm::class)->name('cuotas.importes.editar');
-        Route::get('/generacion-masiva', GeneracionMasivaCuotas::class)->name('cuotas.generacion-masiva');
-        Route::get('/eliminacion-masiva', EliminacionMasivaCuotas::class)->name('cuotas.eliminacion-masiva');
-        Route::get('/edicion-cuotas-generadas', EdicionCuotasGeneradasIndex::class)->name('cuotas.edicion-generadas');
-        Route::get('/cancelar-todas-reservas', CancelarTodasReservas::class)->name('cuotas.cancelar-todas-reservas');
-        Route::get('/libro-aranceles', LibroArancelesIndex::class)->name('cuotas.libro-aranceles');
-        Route::get('/libro-aranceles/pdf', LibroArancelesPdfController::class)->name('cuotas.libro-aranceles.pdf');
-        Route::get('/listado-pagos-por-fecha', ListadoPagosPorFechaIndex::class)->name('cuotas.listado-pagos-por-fecha');
-        Route::get('/listado-pagos-por-fecha/pdf', ListadoPagosPorFechaPdfController::class)->name('cuotas.listado-pagos-por-fecha.pdf');
-        Route::get('/listado-estudiantes-por-cuota', ListadoEstudiantesPorCuotaIndex::class)->name('cuotas.listado-estudiantes-por-cuota');
-        Route::get('/listado-estudiantes-por-cuota/pdf', ListadoEstudiantesPorCuotaPdfController::class)->name('cuotas.listado-estudiantes-por-cuota.pdf');
-        Route::get('/estudiante', CuotasEstudianteShow::class)->name('cuotas.estudiante');
-        Route::get('/estudiante/generar', GenerarCuotaEstudiante::class)->name('cuotas.estudiante.generar');
-        Route::get('/estudiante/cuota/editar', CuotaGeneradaForm::class)->name('cuotas.cuota.editar');
-        Route::get('/estudiante/cuota/imputar', ImputarPagoForm::class)->name('cuotas.cuota.imputar');
-        Route::get('/estudiante/cuota/historial-pagos', HistorialPagosCuota::class)->name('cuotas.cuota.historial-pagos');
-        Route::get('/comprobante/{ref}', ComprobantePagoCuotasPdfController::class)
-            ->where('ref', '[A-Za-z0-9_-]+')
-            ->name('cuotas.comprobante');
-        Route::get('/comprobante-imputacion/{ref}', ComprobantePagoImputacionPdfController::class)
-            ->where('ref', '[A-Za-z0-9_-]+')
-            ->name('cuotas.comprobante-imputacion');
-        Route::get('/resumen-pagos/{ref}', ResumenPagosEstudiantePdfController::class)
-            ->where('ref', '[A-Za-z0-9_-]+')
-            ->name('cuotas.resumen-pagos');
+        Route::get('/', CuotasIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
+            ->name('cuotas.index');
+        Route::get('/plantillas', CuotasPlantillaIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_CUOTAS_PLANTILLAS)
+            ->name('cuotas.plantillas');
+        Route::get('/importes', CuotasImportesIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_CUOTAS_IMPORTES_CURSO)
+            ->name('cuotas.importes.index');
+        Route::get('/importes/editar', CuotasImportesForm::class)
+            ->middleware('permiso:'.$pi::ADMIN_CUOTAS_IMPORTES_CURSO)
+            ->name('cuotas.importes.editar');
+        Route::get('/generacion-masiva', GeneracionMasivaCuotas::class)
+            ->middleware('permiso:'.$pi::ADMIN_CUOTAS_GENERACION_MASIVA)
+            ->name('cuotas.generacion-masiva');
+        Route::get('/eliminacion-masiva', EliminacionMasivaCuotas::class)
+            ->middleware('permiso:'.$pi::ADMIN_CUOTAS_ELIMINACION_MASIVA)
+            ->name('cuotas.eliminacion-masiva');
+        Route::get('/edicion-cuotas-generadas', EdicionCuotasGeneradasIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_CUOTAS_EDICION_GENERADAS)
+            ->name('cuotas.edicion-generadas');
+        Route::get('/cancelar-todas-reservas', CancelarTodasReservas::class)
+            ->middleware('permiso:'.$pi::ADMIN_CUOTAS_CANCELAR_RESERVAS)
+            ->name('cuotas.cancelar-todas-reservas');
+        Route::get('/libro-aranceles', LibroArancelesIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_LIBRO_ARANCELES)
+            ->name('cuotas.libro-aranceles');
+        Route::get('/libro-aranceles/pdf', LibroArancelesPdfController::class)
+            ->middleware('permiso:'.$pi::ADMIN_LIBRO_ARANCELES)
+            ->name('cuotas.libro-aranceles.pdf');
+        Route::get('/listado-pagos-por-fecha', ListadoPagosPorFechaIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_LISTADO_PAGOS_FECHA)
+            ->name('cuotas.listado-pagos-por-fecha');
+        Route::get('/listado-pagos-por-fecha/pdf', ListadoPagosPorFechaPdfController::class)
+            ->middleware('permiso:'.$pi::ADMIN_LISTADO_PAGOS_FECHA)
+            ->name('cuotas.listado-pagos-por-fecha.pdf');
+        Route::get('/listado-estudiantes-por-cuota', ListadoEstudiantesPorCuotaIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_LISTADO_ESTUDIANTES_CUOTA)
+            ->name('cuotas.listado-estudiantes-por-cuota');
+        Route::get('/listado-estudiantes-por-cuota/pdf', ListadoEstudiantesPorCuotaPdfController::class)
+            ->middleware('permiso:'.$pi::ADMIN_LISTADO_ESTUDIANTES_CUOTA)
+            ->name('cuotas.listado-estudiantes-por-cuota.pdf');
+
+        Route::middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)->group(function () {
+            Route::get('/estudiante', CuotasEstudianteShow::class)->name('cuotas.estudiante');
+            Route::get('/estudiante/generar', GenerarCuotaEstudiante::class)->name('cuotas.estudiante.generar');
+            Route::get('/estudiante/cuota/editar', CuotaGeneradaForm::class)->name('cuotas.cuota.editar');
+            Route::get('/estudiante/cuota/imputar', ImputarPagoForm::class)->name('cuotas.cuota.imputar');
+            Route::get('/estudiante/cuota/historial-pagos', HistorialPagosCuota::class)->name('cuotas.cuota.historial-pagos');
+            Route::get('/comprobante/{ref}', ComprobantePagoCuotasPdfController::class)
+                ->where('ref', '[A-Za-z0-9_-]+')
+                ->name('cuotas.comprobante');
+            Route::get('/comprobante-imputacion/{ref}', ComprobantePagoImputacionPdfController::class)
+                ->where('ref', '[A-Za-z0-9_-]+')
+                ->name('cuotas.comprobante-imputacion');
+            Route::get('/resumen-pagos/{ref}', ResumenPagosEstudiantePdfController::class)
+                ->where('ref', '[A-Za-z0-9_-]+')
+                ->name('cuotas.resumen-pagos');
+        });
     });
 
-    Route::prefix('mora')->group(function () {
-        Route::get('/estado-deuda-familiar', EstadoDeudaFamiliarIndex::class)->name('mora.estado-deuda-familiar');
+    Route::prefix('mora')->group(function () use ($pi) {
+        Route::get('/estado-deuda-familiar', EstadoDeudaFamiliarIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_MORA_ESTADO_DEUDA)
+            ->name('mora.estado-deuda-familiar');
         Route::get('/estado-deuda-familiar/pdf/{ref}', EstadoDeudaFamiliarPdfController::class)
             ->where('ref', '[A-Za-z0-9_-]+')
+            ->middleware('permiso:'.$pi::ADMIN_MORA_ESTADO_DEUDA)
             ->name('mora.estado-deuda-familiar.pdf');
-        Route::get('/gestion-morosos', GestionMorososIndex::class)->name('mora.gestion-morosos');
+        Route::get('/gestion-morosos', GestionMorososIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_MORA_GESTION_MOROSOS)
+            ->name('mora.gestion-morosos');
         Route::get('/gestion-morosos/textos-notificacion', TextosNotificacionDeudaForm::class)
+            ->middleware('permiso:'.$pi::ADMIN_MORA_GESTION_MOROSOS)
             ->name('mora.gestion-morosos.textos-notificacion');
         Route::get('/gestion-morosos/pdf/{ref}', ListadoMorososPdfController::class)
             ->where('ref', '[A-Za-z0-9_-]+')
+            ->middleware('permiso:'.$pi::ADMIN_MORA_GESTION_MOROSOS)
             ->name('mora.gestion-morosos.pdf');
         Route::get('/gestion-morosos/notificacion/{ref}', NotificacionDeudaPdfController::class)
             ->where('ref', '[A-Za-z0-9_-]+')
+            ->middleware('permiso:'.$pi::ADMIN_MORA_GESTION_MOROSOS)
             ->name('mora.gestion-morosos.notificacion');
     });
 });

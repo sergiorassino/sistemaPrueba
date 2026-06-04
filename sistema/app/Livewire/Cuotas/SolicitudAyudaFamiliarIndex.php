@@ -26,7 +26,7 @@ class SolicitudAyudaFamiliarIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403, 'El módulo de becas está disponible solo en el nivel Administración.');
+        abort_unless(PermisosCuotas::puedeSolicitudAyudaFamiliar(), 403, 'Sin permiso para solicitud de ayuda familiar.');
     }
 
     public function updatedSearch(): void
@@ -36,7 +36,7 @@ class SolicitudAyudaFamiliarIndex extends Component
 
     public function imprimirSolicitud(int $idLegajo): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeSolicitudAyudaFamiliar(), 403);
 
         if (GestionAranceles::legajoParaGestion($idLegajo) === null) {
             $this->dispatch('se-swal-error', mensaje: 'No se encontró el estudiante solicitado.');

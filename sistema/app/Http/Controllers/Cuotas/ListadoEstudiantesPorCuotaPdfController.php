@@ -17,7 +17,7 @@ class ListadoEstudiantesPorCuotaPdfController extends Controller
 {
     public function __invoke(Request $request)
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeListadoEstudiantesPorCuota(), 403);
 
         @ini_set('memory_limit', '512M');
 

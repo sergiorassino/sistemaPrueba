@@ -30,7 +30,7 @@ class CuotasImportesForm extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeImportesPorCurso(), 403);
 
         $idCuotas = ContextoCuotasImportesSesion::idCuotas();
         abort_if($idCuotas === null, 404);
@@ -64,7 +64,7 @@ class CuotasImportesForm extends Component
      */
     public function commitDraftCell(string $key, string $field, string $value): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeImportesPorCurso(), 403);
 
         $campos = ['importe', 'valor1v', 'valor2v', 'valor3v', 'valor4v'];
         if (! in_array($field, $campos, true) || ! isset($this->draft[$key])) {
@@ -77,7 +77,7 @@ class CuotasImportesForm extends Component
 
     public function saveRowField(string $key): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeImportesPorCurso(), 403);
 
         if ($this->persistiendo || ! isset($this->draft[$key])) {
             return;

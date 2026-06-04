@@ -24,7 +24,7 @@ class ListadoPagosPorFechaIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeListadoPagosPorFecha(), 403);
 
         $hoy = Carbon::today();
         $this->fechaDesde = $hoy->copy()->startOfMonth()->format('Y-m-d');

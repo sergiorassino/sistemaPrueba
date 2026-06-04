@@ -64,7 +64,7 @@ class GestionMorososIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosMora::puedeAccederModulo(), 403);
+        abort_unless(PermisosMora::puedeGestionMorosos(), 403);
 
         $this->fechaCalculo = Carbon::today()->format('Y-m-d');
         $this->idTerlec = (int) schoolCtx()->idTerlec;

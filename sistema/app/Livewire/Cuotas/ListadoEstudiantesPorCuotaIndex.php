@@ -34,7 +34,7 @@ class ListadoEstudiantesPorCuotaIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeListadoEstudiantesPorCuota(), 403);
     }
 
     public function getPdfUrlProperty(): string

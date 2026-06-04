@@ -2,11 +2,11 @@
 
 namespace App\Livewire\Administracion\Permisos;
 
-use App\Models\PermisoIa;
 use App\Models\Profesor;
 use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class PermisosUsuariosIndex extends Component
@@ -15,133 +15,159 @@ class PermisosUsuariosIndex extends Component
     private const ID_TIPO_SIN_ROL = 1;
 
     public string $q = '';
+
     public ?int $profesorId = null;
 
-    /** @var array<int,bool> */
-    public array $permisos = [];
+    public bool $showModalCopiar = false;
+
+    public ?int $copiarOrigenId = null;
+
+    public ?int $copiarDestinoId = null;
 
     public function mount(): void
     {
         abort_unless(tienePermiso(0), 403, 'Sin permiso para administrar permisos.');
     }
 
-    public function updatedProfesorId($value): void
-    {
-        $id = is_numeric($value) ? (int) $value : null;
-        $this->cargarProfesor($id);
-    }
-
     public function seleccionarProfesor(int $id): void
     {
-        $this->cargarProfesor($id);
+        $this->profesorId = $id > 0 ? $id : null;
     }
 
-    private function cargarProfesor(?int $id): void
-    {
-        $this->resetValidation();
-        $this->reset('permisos');
-        $this->profesorId = null;
-
-        if (! $id) {
-            return;
-        }
-
-        $profesor = Profesor::query()
-            ->where('nivel', (int) (schoolCtx()->idNivel ?? 0))
-            ->whereKey($id)
-            ->firstOrFail(['id', 'dni', 'nombre', 'apellido', 'permisos_ia', 'nivel']);
-
-        $this->profesorId = (int) $profesor->id;
-
-        $maxOrden = max(
-            (int) (PermisoIa::query()->max('orden') ?? 0),
-            PermisosIaCatalog::maxOrden(),
-        );
-        $cadena = trim((string) ($profesor->permisos_ia ?? ''));
-        if ($cadena === '') {
-            $cadena = str_repeat('0', $maxOrden + 1);
-        } elseif (strlen($cadena) <= $maxOrden) {
-            $cadena = str_pad($cadena, $maxOrden + 1, '0', STR_PAD_RIGHT);
-        }
-
-        foreach (range(0, $maxOrden) as $orden) {
-            $this->permisos[$orden] = isset($cadena[$orden]) && $cadena[$orden] === '1';
-        }
-    }
-
-    public function togglePermiso(int $orden): void
+    public function abrirModalCopiar(): void
     {
         abort_unless(tienePermiso(0), 403);
 
-        if (! $this->profesorId) {
-            $this->addError('profesorId', 'Seleccione un usuario.');
-
-            return;
+        $this->resetValidation();
+        $this->reset('copiarOrigenId', 'copiarDestinoId');
+        if ($this->profesorId) {
+            $this->copiarOrigenId = $this->profesorId;
         }
+        $this->showModalCopiar = true;
+    }
 
-        $key = 'permisos:toggle:' . (auth()->id() ?? 'guest');
-        if (RateLimiter::tooManyAttempts($key, 60)) {
-            session()->flash('success', 'Demasiados cambios seguidos. Espere un momento e intente nuevamente.');
+    public function cerrarModalCopiar(): void
+    {
+        $this->showModalCopiar = false;
+        $this->reset('copiarOrigenId', 'copiarDestinoId');
+        $this->resetValidation();
+    }
+
+    public function copiarPermisos(): void
+    {
+        abort_unless(tienePermiso(0), 403);
+
+        $nivel = (int) (schoolCtx()->idNivel ?? 0);
+        $idsValidos = $this->usuariosDelNivel()->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        $this->validate([
+            'copiarOrigenId' => ['required', 'integer', Rule::in($idsValidos)],
+            'copiarDestinoId' => [
+                'required',
+                'integer',
+                'different:copiarOrigenId',
+                Rule::in($idsValidos),
+            ],
+        ], [
+            'copiarOrigenId.required' => 'Seleccione el usuario origen.',
+            'copiarOrigenId.in' => 'El usuario origen no pertenece al nivel actual.',
+            'copiarDestinoId.required' => 'Seleccione el usuario destino.',
+            'copiarDestinoId.different' => 'El usuario destino debe ser distinto del origen.',
+            'copiarDestinoId.in' => 'El usuario destino no pertenece al nivel actual.',
+        ]);
+
+        $key = 'permisos:copiar:' . (auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->js('window.seSwalError(' . json_encode('Demasiados intentos seguidos. Espere un momento e intente nuevamente.', JSON_UNESCAPED_UNICODE) . ')');
 
             return;
         }
         RateLimiter::hit($key, 60);
 
-        $this->permisos[$orden] = ! ($this->permisos[$orden] ?? false);
-        $this->persistirPermisosCadena();
+        $origen = Profesor::query()
+            ->where('nivel', $nivel)
+            ->whereKey($this->copiarOrigenId)
+            ->firstOrFail(['id', 'apellido', 'nombre', 'permisos_ia']);
 
-        session()->flash('success', 'Permiso guardado.');
-    }
-
-    private function persistirPermisosCadena(): void
-    {
-        $profesor = Profesor::query()
-            ->where('nivel', (int) (schoolCtx()->idNivel ?? 0))
-            ->whereKey($this->profesorId)
+        $destino = Profesor::query()
+            ->where('nivel', $nivel)
+            ->whereKey($this->copiarDestinoId)
             ->firstOrFail(['id', 'permisos_ia']);
 
-        $maxOrden = max(
-            (int) (PermisoIa::query()->max('orden') ?? 0),
-            PermisosIaCatalog::maxOrden(),
-        );
-        $chars = [];
-        foreach (range(0, $maxOrden) as $orden) {
-            $chars[] = ($this->permisos[$orden] ?? false) ? '1' : '0';
-        }
+        $cadena = $this->normalizarCadenaPermisos((string) ($origen->permisos_ia ?? ''));
 
-        $profesor->forceFill(['permisos_ia' => implode('', $chars)])->save();
+        Profesor::query()
+            ->where('nivel', $nivel)
+            ->whereKey($destino->id)
+            ->update(['permisos_ia' => $cadena]);
 
-        if ((int) $profesor->id === (int) (schoolCtx()->idProfesor ?? 0)) {
+        if ((int) $destino->id === (int) (schoolCtx()->idProfesor ?? 0)) {
             schoolCtx()->refreshProfesor();
         }
+
+        if ((int) $destino->id === (int) $this->profesorId) {
+            $idActual = $this->profesorId;
+            $this->profesorId = null;
+            $this->profesorId = $idActual;
+        }
+
+        $nombreOrigen = trim($origen->apellido . ', ' . $origen->nombre);
+        $this->cerrarModalCopiar();
+        $this->js('window.seSwalExito(' . json_encode("Permisos copiados desde {$nombreOrigen} al usuario seleccionado.", JSON_UNESCAPED_UNICODE) . ')');
+    }
+
+    private function maxOrdenPermisos(): int
+    {
+        return PermisosIaCatalog::maxOrden();
+    }
+
+    private function normalizarCadenaPermisos(string $cadena): string
+    {
+        $maxOrden = $this->maxOrdenPermisos();
+        $cadena = trim($cadena);
+        if ($cadena === '') {
+            return str_repeat('0', $maxOrden + 1);
+        }
+        if (strlen($cadena) <= $maxOrden) {
+            return str_pad($cadena, $maxOrden + 1, '0', STR_PAD_RIGHT);
+        }
+
+        return $cadena;
     }
 
     /**
-     * @return array{0:Collection<int,Profesor>,1:?Profesor,2:Collection<int,PermisoIa>,3:array<string,Collection<int,PermisoIa>>}
+     * @return Collection<int, Profesor>
      */
-    private function data(): array
+    private function usuariosDelNivel(?string $busqueda = null): Collection
     {
         $nivel = (int) (schoolCtx()->idNivel ?? 0);
+        $term = trim((string) ($busqueda ?? ''));
 
-        $usuarios = Profesor::query()
+        return Profesor::query()
             ->where('nivel', $nivel)
             ->where(function ($w) {
                 $w->whereNull('IdTipoProf')
                     ->orWhere('IdTipoProf', '<>', self::ID_TIPO_SIN_ROL);
             })
-            ->when(trim($this->q) !== '', function ($q) {
-                $term = '%' . trim($this->q) . '%';
-                $q->where(function ($w) use ($term) {
-                    $w->where('apellido', 'like', $term)
-                        ->orWhere('nombre', 'like', $term)
-                        ->orWhere('dni', 'like', $term);
+            ->when($term !== '', function ($q) use ($term) {
+                $like = '%' . $term . '%';
+                $q->where(function ($w) use ($like) {
+                    $w->where('apellido', 'like', $like)
+                        ->orWhere('nombre', 'like', $like)
+                        ->orWhere('dni', 'like', $like);
                 });
             })
             ->with(['tipo:id,tipo'])
             ->orderBy('apellido')
             ->orderBy('nombre')
-            ->limit(200)
+            ->limit(500)
             ->get(['id', 'dni', 'nombre', 'apellido', 'IdTipoProf']);
+    }
+
+    public function render()
+    {
+        $nivel = (int) (schoolCtx()->idNivel ?? 0);
+        $usuarios = $this->usuariosDelNivel($this->q)->take(200)->values();
 
         $profesorSeleccionado = null;
         if ($this->profesorId) {
@@ -152,32 +178,10 @@ class PermisosUsuariosIndex extends Component
                 ->first(['id', 'dni', 'nombre', 'apellido', 'IdTipoProf']);
         }
 
-        $catalogo = PermisoIa::query()
-            ->orderBy('orden')
-            ->get(['id', 'orden', 'tema', 'descripcion']);
-
-        $porTema = $catalogo
-            ->groupBy(function (PermisoIa $p) {
-                $tema = trim((string) ($p->tema ?? ''));
-
-                return $tema !== '' ? $tema : 'OTROS';
-            })
-            ->map(fn (Collection $items) => $items->sortBy('orden')->values())
-            ->sortKeysUsing(fn (string $a, string $b) => strcasecmp($a, $b));
-
-        return [$usuarios, $profesorSeleccionado, $catalogo, $porTema];
-    }
-
-    public function render()
-    {
-        [$usuarios, $profesorSeleccionado, $catalogo, $porTema] = $this->data();
-
         return view('livewire.administracion.permisos.usuarios-index', [
             'usuarios' => $usuarios,
+            'usuariosModal' => $this->showModalCopiar ? $this->usuariosDelNivel() : collect(),
             'profesorSeleccionado' => $profesorSeleccionado,
-            'catalogo' => $catalogo,
-            'porTema' => $porTema,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Permisos de Usuarios']);
     }
 }
-

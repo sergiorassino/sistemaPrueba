@@ -123,11 +123,11 @@ Usuario distinto en tabla `profesores` (`profesores.nivel = 5`) respecto de Inic
 | Bloque visible (según permisos) | Oculto en este perfil |
 |--------------------------------|------------------------|
 | Estudiantes | Calificaciones, asistencia, exámenes, certificados, horarios, aspirantes, matrícula web, viajes/salidas |
+| Comunicación institucional | |
 | **Gestión de cuotas** (solo nivel 5) | |
 | **Becas** (solo nivel 5; p. ej. Tipos de Beca) | |
-| Comunicación institucional | |
 | **DOCENTES / USUARIOS** (mismo bloque que Secretaría: legajos docente, ppc, inasistencias docentes; según permisos 11, 48 y 23) | |
-| Configuración (incl. Permisos del sistema) | |
+| Configuración (incl. Permisos del sistema; sin planes/curplan ni cursos/materias del año) | **Gestión de planes y cursos modelo**; **Gestión de cursos y materias del año** |
 
 **Legajos:** consulta y listados para **todos** los usuarios del menú. En sesión Administración se ven alumnos de **Inicial, Primario y Secundario** del ciclo activo (sin selector de nivel en el sidebar).
 
@@ -138,7 +138,7 @@ Usuario distinto en tabla `profesores` (`profesores.nivel = 5`) respecto de Inic
 
 En cada colegio se activa o no el orden **47** en el usuario de Administración según si ese tenant permite que administración modifique legajos. Sin el 47: solo consulta (todos los niveles).
 
-**Gestión de cuotas:** acceso automático al entrar con nivel **Administración** (no requiere `permiso_ia` adicional).
+**Gestión de aranceles / masiva / resúmenes / becas / mora:** cada ítem del sidebar tiene su propio orden en `permisos_ia` (49–64). El grupo del menú solo se muestra si el usuario tiene al menos un ítem habilitado de ese bloque; no hay un permiso único por grupo.
 
 **Viajes / salidas educativas (Excel):** solo en el **Menú de Secretaría** (`layouts/app`) para usuarios con portal secretaría en nivel pedagógico (Inicial, Primario o Secundario). No en Administración, Menú de Docentes ni Menú de Alumnos (`MenuSecretariaPerfil::muestraViajesSalidasEducativas()` + rutas `menu.portal:secretaria`).
 

@@ -19,7 +19,7 @@ class ResumenPagosEstudiantePdfController extends Controller
 {
     public function __invoke(Request $request, string $ref)
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
 
         $decoded = OpaqueRouteToken::decode($ref, OpaqueRouteToken::PURPOSE_ADMIN_RESUMEN_PAGOS);
         if ($decoded === null) {

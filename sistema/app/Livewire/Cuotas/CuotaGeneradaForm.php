@@ -40,7 +40,7 @@ class CuotaGeneradaForm extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
 
         $idLegajo = ContextoEstudianteSesion::legajo(ContextoEstudianteSesion::CUOTAS_GESTION);
         $idCuotaGenerada = ContextoEstudianteSesion::cuotaGenerada(ContextoEstudianteSesion::CUOTAS_GESTION);
@@ -91,7 +91,7 @@ class CuotaGeneradaForm extends Component
 
     public function guardar(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
 
         $key = 'cuotas:editar:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 20)) {
@@ -164,7 +164,7 @@ class CuotaGeneradaForm extends Component
 
     public function eliminarCuota(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
 
         $key = 'cuotas:eliminar:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 10)) {

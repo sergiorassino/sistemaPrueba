@@ -48,7 +48,7 @@ class ImputarPagoForm extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
 
         $idLegajo = ContextoEstudianteSesion::legajo(ContextoEstudianteSesion::CUOTAS_GESTION);
         $idCuotaGenerada = ContextoEstudianteSesion::cuotaGenerada(ContextoEstudianteSesion::CUOTAS_GESTION);
@@ -125,7 +125,7 @@ class ImputarPagoForm extends Component
 
     public function guardar(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
 
         $key = 'cuotas:imputar:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 15)) {

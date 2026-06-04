@@ -1388,7 +1388,7 @@
                 @endif
 
                 {{-- Planes + Cursos modelo --}}
-                @if (\App\Support\PermisosConfiguracion::tieneAlgunPlanCursoModelo())
+                @if (\App\Support\Navegacion\MenuSecretariaPerfil::muestraPlanesCursosModelo() && \App\Support\PermisosConfiguracion::tieneAlgunPlanCursoModelo())
                 <button type="button"
                         class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors mt-2"
                         :class="(groups.planesCursos && !sidebarCollapsed) ? 'is-open' : ''"
@@ -1443,7 +1443,7 @@
                 @endif
 
                 {{-- Cursos + Materias del año --}}
-                @if (\App\Support\PermisosConfiguracion::tieneAlgunCursoMateriaAnio())
+                @if (\App\Support\Navegacion\MenuSecretariaPerfil::muestraCursosMateriasAnio() && \App\Support\PermisosConfiguracion::tieneAlgunCursoMateriaAnio())
                 <button type="button"
                         class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors mt-2"
                         :class="(groups.cursosMateriasAno && !sidebarCollapsed) ? 'is-open' : ''"

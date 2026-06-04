@@ -30,7 +30,7 @@ class TiposBecaIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403, 'El módulo de becas está disponible solo en el nivel Administración.');
+        abort_unless(PermisosCuotas::puedeTiposBeca(), 403, 'Sin permiso para tipos de beca.');
     }
 
     protected function rules(): array

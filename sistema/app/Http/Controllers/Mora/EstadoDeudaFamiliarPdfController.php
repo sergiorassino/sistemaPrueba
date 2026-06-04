@@ -18,7 +18,7 @@ class EstadoDeudaFamiliarPdfController extends Controller
 {
     public function __invoke(Request $request, string $ref)
     {
-        abort_unless(PermisosMora::puedeAccederModulo(), 403);
+        abort_unless(PermisosMora::puedeEstadoDeudaFamiliar(), 403);
 
         $decoded = OpaqueRouteToken::decode($ref, OpaqueRouteToken::PURPOSE_MORA_ESTADO_DEUDA);
         if ($decoded === null) {

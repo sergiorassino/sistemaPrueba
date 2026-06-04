@@ -20,7 +20,7 @@ class TextosNotificacionDeudaForm extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosMora::puedeAccederModulo(), 403);
+        abort_unless(PermisosMora::puedeGestionMorosos(), 403);
 
         $registro = DatoVario::singleton();
 
@@ -40,7 +40,7 @@ class TextosNotificacionDeudaForm extends Component
 
     public function guardar(): void
     {
-        abort_unless(PermisosMora::puedeAccederModulo(), 403);
+        abort_unless(PermisosMora::puedeGestionMorosos(), 403);
 
         $key = 'mora:textos-notificacion:save:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 20)) {

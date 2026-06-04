@@ -20,7 +20,7 @@ class LibroArancelesIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeLibroAranceles(), 403);
     }
 
     public function quitarCurso(int $idCurso): void

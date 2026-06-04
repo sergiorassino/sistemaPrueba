@@ -19,7 +19,7 @@ class SolicitudAyudaFamiliarPdfController extends Controller
 {
     public function __invoke(Request $request, string $ref)
     {
-        abort_unless(PermisosCuotas::puedeAccederModulo(), 403);
+        abort_unless(PermisosCuotas::puedeSolicitudAyudaFamiliar(), 403);
 
         $decoded = OpaqueRouteToken::decode($ref, OpaqueRouteToken::PURPOSE_ADMIN_SOLICITUD_AYUDA_FAMILIAR);
         if ($decoded === null) {

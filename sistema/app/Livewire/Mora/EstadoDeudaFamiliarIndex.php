@@ -25,9 +25,9 @@ class EstadoDeudaFamiliarIndex extends Component
     public function mount(): void
     {
         abort_unless(
-            PermisosMora::puedeAccederModulo(),
+            PermisosMora::puedeEstadoDeudaFamiliar(),
             403,
-            'El módulo de gestión de mora está disponible solo en el nivel Administración.',
+            'Sin permiso para estado de deuda familiar.',
         );
     }
 

@@ -161,6 +161,6 @@ class AsignacionBecasIndex extends Component
             'opcionesCurso' => $this->opcionesCurso(),
             'becas' => GestionAranceles::becasParaSelector(),
             'ano' => $ano,
-        ])->layout('layouts.app', ['pageTitle' => "Asignación de Becas — {$ano}"]);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => "Asignación de Becas — {$ano}"]);
     }
 }

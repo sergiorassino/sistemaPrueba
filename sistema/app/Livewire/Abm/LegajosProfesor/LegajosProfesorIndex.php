@@ -4,6 +4,8 @@ namespace App\Livewire\Abm\LegajosProfesor;
 
 use App\Models\Profesor;
 use App\Models\ProfesorTipo;
+use App\Support\PermisosIaCatalog;
+use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
@@ -42,7 +44,7 @@ class LegajosProfesorIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(11), 403, 'Sin permiso para legajos de docentes.');
+        abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES), 403, 'Sin permiso para legajos de docentes.');
 
         $focus = request()->integer('focus');
         $this->focusId = $focus > 0 ? $focus : null;
@@ -61,14 +63,14 @@ class LegajosProfesorIndex extends Component
     protected function scopedProfesorOrFail(int $id): Profesor
     {
         return Profesor::query()
-            ->delNivel(\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico())
+            ->delNivel(SchoolAlcancePedagogico::idNivelLegajosDocente())
             ->whereKey($id)
             ->firstOrFail();
     }
 
     public function confirmDelete(int $id): void
     {
-        abort_unless(tienePermiso(11), 403, 'Sin permiso para eliminar legajos de docentes.');
+        abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES), 403, 'Sin permiso para eliminar legajos de docentes.');
 
         $p = $this->scopedProfesorOrFail($id);
         $deps = $this->dependenciasParaBorrar($id);
@@ -91,7 +93,7 @@ class LegajosProfesorIndex extends Component
 
     public function delete(): void
     {
-        abort_unless(tienePermiso(11), 403, 'Sin permiso para eliminar legajos de docentes.');
+        abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES), 403, 'Sin permiso para eliminar legajos de docentes.');
 
         $key = 'legajos-profesor:delete:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 10)) {
@@ -152,11 +154,9 @@ class LegajosProfesorIndex extends Component
 
     public function render()
     {
-        $idNivel = (int) (\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico() ?? 0);
-
         $query = Profesor::query()
             ->with('tipo')
-            ->delNivel($idNivel > 0 ? $idNivel : null);
+            ->delNivel(SchoolAlcancePedagogico::idNivelLegajosDocente());
 
         if ($this->search !== '') {
             $query->buscar($this->search);
@@ -171,7 +171,7 @@ class LegajosProfesorIndex extends Component
             ->get(['id', 'tipo']);
 
         return view('livewire.abm.legajos-profesor.index', compact('profesores', 'roles'))
-            ->layout('layouts.app', ['pageTitle' => 'Legajos del docente']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Legajos del docente']);
     }
 
     /**

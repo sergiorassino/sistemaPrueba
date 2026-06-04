@@ -47,6 +47,6 @@ class EstadoDeudaFamiliarIndex extends Component
         return view('livewire.mora.estado-deuda-familiar-index', [
             'familias' => $familias,
             'totalesDeuda' => EstadoDeudaFamiliarDatos::totalesAPagarPorFamilias($idsFamilias),
-        ])->layout('layouts.app', ['pageTitle' => 'Estado de Deuda Familiar']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Estado de Deuda Familiar']);
     }
 }

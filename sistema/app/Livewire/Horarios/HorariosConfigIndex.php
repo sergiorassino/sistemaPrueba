@@ -153,6 +153,6 @@ class HorariosConfigIndex extends Component
             'dias' => HorariosProfesores::DIAS,
             'turnosActivos' => HorariosProfesores::turnosActivos(),
             'consultaSqlDepuracion' => $consultaSqlDepuracion,
-        ])->layout('layouts.app', ['pageTitle' => 'Configuración de horarios']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Configuración de horarios']);
     }
 }

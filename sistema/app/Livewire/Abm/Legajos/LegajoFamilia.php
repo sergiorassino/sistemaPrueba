@@ -348,6 +348,6 @@ class LegajoFamilia extends Component
             'familiaSeleccionada' => $this->familiaSeleccionadaParaAsignar(),
             'minCharsBusquedaFamilia' => self::MIN_CHARS_BUSQUEDA_FAMILIA,
             'tieneAsignacion' => self::tieneFamiliaAsignada($this->legajo),
-        ])->layout('layouts.app', ['pageTitle' => 'Familia del estudiante']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Familia del estudiante']);
     }
 }

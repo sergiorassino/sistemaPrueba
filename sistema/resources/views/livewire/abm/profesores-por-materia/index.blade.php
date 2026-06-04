@@ -142,7 +142,7 @@
                 @if (! $selectedMateriaId || ! $selectedMateria)
                     <p class="px-4 py-8 text-center text-sm text-neutral-500">Seleccione una materia a la izquierda.</p>
                 @else
-                    @if (tienePermiso(11))
+                    @if (tienePermiso(\App\Support\PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO))
                         <div class="border-b border-accent-100 bg-white px-4 py-4">
                             <p class="form-label">Agregar docente</p>
                             <div class="mt-1.5 flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -195,7 +195,7 @@
                                 <tr class="border-b border-accent-100 bg-white text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
                                     <th class="px-4 py-2.5">Apellido y nombre</th>
                                     <th class="px-4 py-2.5 w-60">Situación de revista</th>
-                                    @if (tienePermiso(11))
+                                    @if (tienePermiso(\App\Support\PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO))
                                         <th class="px-4 py-2.5 w-36 text-right">Acción</th>
                                     @endif
                                 </tr>
@@ -208,7 +208,7 @@
                                             <span class="ml-2 font-mono text-xs text-neutral-400">#{{ (int) $row->idProfesor }}</span>
                                         </td>
                                         <td class="px-4 py-2.5">
-                                            @if (tienePermiso(11))
+                                            @if (tienePermiso(\App\Support\PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO))
                                                 <select
                                                     class="form-select w-full text-xs"
                                                     x-on:change="$wire.actualizarSituacionRevista({{ (int) $row->ppcId }}, $event.target.value)">
@@ -225,7 +225,7 @@
                                                 </span>
                                             @endif
                                         </td>
-                                        @if (tienePermiso(11))
+                                        @if (tienePermiso(\App\Support\PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO))
                                             <td class="px-4 py-2.5 text-right">
                                                 <button type="button" wire:click="confirmarQuitarProfesor({{ (int) $row->ppcId }})"
                                                         class="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50">

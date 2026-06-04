@@ -337,6 +337,6 @@ class HorariosImpresionIndex extends Component
             'consultaSqlImpresionCurso' => $consultaSqlImpresionCurso,
             'cantidadCursosSeleccionados' => count($this->cursosSeleccionados),
             'cantidadProfesoresSeleccionados' => count($this->profesoresSeleccionados),
-        ])->layout('layouts.app', ['pageTitle' => 'Impresión de horarios']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Impresión de horarios']);
     }
 }

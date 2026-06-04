@@ -45,9 +45,40 @@ final class ProfesorMenuPortal
         return (int) ($profesor->IdTipoProf ?? 0) === self::ID_TIPO_PROFESOR_AULA;
     }
 
+    public static function usaMenuAdministracion(): bool
+    {
+        return schoolEsAdministracion();
+    }
+
+    /** Secretaría pedagógica (Inicial / Primario / Secundario), no Administración ni Docentes. */
+    public static function usaMenuSecretariaPedagogica(?Profesor $profesor): bool
+    {
+        if (self::usaMenuDocentes($profesor)) {
+            return false;
+        }
+
+        return ! self::usaMenuAdministracion();
+    }
+
+    /** Staff institucional: Menú de Secretaría pedagógica o Menú de Administración. */
+    public static function usaMenuStaff(?Profesor $profesor): bool
+    {
+        return self::usaMenuAdministracion() || self::usaMenuSecretariaPedagogica($profesor);
+    }
+
+    /**
+     * @deprecated Usar {@see usaMenuStaff()} o {@see usaMenuSecretariaPedagogica()} según el caso.
+     */
     public static function usaMenuSecretaria(?Profesor $profesor): bool
     {
-        return ! self::usaMenuDocentes($profesor);
+        return self::usaMenuStaff($profesor);
+    }
+
+    public static function layoutStaff(): string
+    {
+        return self::usaMenuAdministracion()
+            ? 'layouts.administracion'
+            : 'layouts.app';
     }
 
     /**
@@ -77,9 +108,11 @@ final class ProfesorMenuPortal
     {
         $profesor ??= Auth::user();
 
-        return self::usaMenuDocentes($profesor instanceof Profesor ? $profesor : null)
-            ? 'portalDocente.home'
-            : 'dashboard';
+        if (self::usaMenuDocentes($profesor instanceof Profesor ? $profesor : null)) {
+            return 'portalDocente.home';
+        }
+
+        return 'dashboard';
     }
 
     /**

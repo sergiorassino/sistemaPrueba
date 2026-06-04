@@ -135,7 +135,7 @@ class CertificadoAlumnoRegularIndex extends Component
             'alumnos' => $alumnos,
             'anoLectivo' => (int) ($ctx->terlecAno() ?? 0),
         ])
-            ->layout('layouts.app', ['pageTitle' => 'Constancia de Alumno Regular']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Constancia de Alumno Regular']);
     }
 
     /**

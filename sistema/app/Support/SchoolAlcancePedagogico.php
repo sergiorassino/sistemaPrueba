@@ -41,6 +41,17 @@ final class SchoolAlcancePedagogico
     }
 
     /**
+     * Nivel de sesión para legajos de docentes (`profesores.nivel`).
+     * Siempre el nivel del login (1–5); en Administración devuelve 5, no null.
+     */
+    public static function idNivelLegajosDocente(): ?int
+    {
+        $id = (int) (schoolCtx()->idNivel ?? 0);
+
+        return $id > 0 ? $id : null;
+    }
+
+    /**
      * @param  EloquentBuilder|QueryBuilder  $query
      */
     public static function aplicarFiltroColumnaNivel($query, string $column = 'idNivel'): void

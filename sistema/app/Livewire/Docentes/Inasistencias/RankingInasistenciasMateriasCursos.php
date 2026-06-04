@@ -57,6 +57,6 @@ class RankingInasistenciasMateriasCursos extends Component
             'periodoLabel' => $this->periodo >= 1 && $this->periodo <= 6
                 ? (InasistenciasDocentes::BIMESTRES[$this->periodo]['titulo'] ?? '')
                 : null,
-        ])->layout('layouts.app', ['pageTitle' => 'Ranking inasistencias — Materia y curso']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Ranking inasistencias — Materia y curso']);
     }
 }

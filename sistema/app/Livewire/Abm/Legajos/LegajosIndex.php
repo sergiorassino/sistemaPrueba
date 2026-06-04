@@ -140,6 +140,6 @@ class LegajosIndex extends Component
         $legajos  = $query->orderBy('apellido')->orderBy('nombre')->paginate(25);
 
         return view('livewire.abm.legajos.index2', compact('legajos'))
-            ->layout('layouts.app', ['pageTitle' => 'Legajos de Estudiantes']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Legajos de Estudiantes']);
     }
 }

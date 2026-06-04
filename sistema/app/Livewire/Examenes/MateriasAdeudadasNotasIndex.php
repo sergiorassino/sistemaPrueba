@@ -217,6 +217,6 @@ class MateriasAdeudadasNotasIndex extends Component
             'historial' => $historial,
             'totalHistorial' => count($historial),
             'condiciones' => MateriasAdeudadasFiltros::CONDICIONES,
-        ])->layout('layouts.app', ['pageTitle' => 'Carga de notas — materias adeudadas']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Carga de notas — materias adeudadas']);
     }
 }

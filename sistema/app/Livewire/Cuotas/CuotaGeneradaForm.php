@@ -218,6 +218,6 @@ class CuotaGeneradaForm extends Component
             'becaEtiqueta' => $registro !== null ? GestionAranceles::etiquetaBeca($registro) : '',
             'puedeEliminar' => $registro !== null && EliminacionCuotaGeneradaService::puedeEliminar($registro),
             'motivoNoEliminable' => EliminacionCuotaGeneradaService::motivoRechazo($registro),
-        ])->layout('layouts.app', ['pageTitle' => 'Editar cuota']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Editar cuota']);
     }
 }

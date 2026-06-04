@@ -154,7 +154,7 @@ class SancionForm extends Component
         $tipos = $this->tipos();
 
         return view('livewire.seguimiento.disciplinario.form', compact('m', 'tipos'))
-            ->layout('layouts.app', ['pageTitle' => $this->id ? 'Editar sanción' : 'Nueva sanción']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => $this->id ? 'Editar sanción' : 'Nueva sanción']);
     }
 }
 

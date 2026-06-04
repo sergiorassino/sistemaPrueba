@@ -151,6 +151,6 @@ class GestionSolicitudEvaluacionIndex extends Component
             'cursos' => $cursos,
             'materiasFiltro' => $materiasFiltro,
             'filtrosActivos' => $filtrosActivos,
-        ])->layout('layouts.app', ['pageTitle' => 'Gestión de Solicitudes de Evaluación']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de Solicitudes de Evaluación']);
     }
 }

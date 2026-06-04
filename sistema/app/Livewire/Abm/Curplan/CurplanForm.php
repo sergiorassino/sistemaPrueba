@@ -280,7 +280,7 @@ class CurplanForm extends Component
         }
 
         return view('livewire.abm.curplan.form', compact('planes', 'materias'))
-            ->layout('layouts.app', ['pageTitle' => $this->id ? 'Editar curso modelo' : 'Nuevo curso modelo']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => $this->id ? 'Editar curso modelo' : 'Nuevo curso modelo']);
     }
 }
 

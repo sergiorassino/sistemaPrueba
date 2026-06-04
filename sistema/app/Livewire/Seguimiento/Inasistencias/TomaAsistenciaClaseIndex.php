@@ -195,6 +195,6 @@ class TomaAsistenciaClaseIndex extends Component
             'tiposEdFis' => TomaAsistenciaClase::tiposEducacionFisica(),
             'puedeCargarGrilla' => $this->filtrosCompletos(),
             'resumen' => $this->resumenTotales,
-        ])->layout('layouts.app', ['pageTitle' => 'Toma de asistencia a clase']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Toma de asistencia a clase']);
     }
 }

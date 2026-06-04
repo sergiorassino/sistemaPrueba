@@ -118,7 +118,7 @@ class SolicitudDePaseIndex extends Component
         return view('livewire.certificados.solicitud-de-pase-index', [
             'alumnos' => $alumnos,
         ])
-            ->layout('layouts.app', ['pageTitle' => 'Solicitud de Pase']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Solicitud de Pase']);
     }
 
     /**

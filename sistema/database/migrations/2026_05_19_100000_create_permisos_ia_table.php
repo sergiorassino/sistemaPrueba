@@ -35,7 +35,7 @@ return new class extends Migration
             ['id' => 9, 'orden' => 8, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Acceder a la bandeja de revisión de comunicados.'],
             ['id' => 10, 'orden' => 9, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Importar calificaciones desde CIDI/GE y carga manual de calificaciones (secundario).'],
             ['id' => 11, 'orden' => 10, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Carga de coloquios Dic / Feb (secundario).'],
-            ['id' => 12, 'orden' => 11, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Crear, editar y eliminar legajos de docentes; asignar y quitar docentes en materias (ppc).'],
+            ['id' => 12, 'orden' => 11, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Crear, editar y eliminar legajos de docentes (ABM legajo docente).'],
             ['id' => 13, 'orden' => 12, 'tema' => 'EXÁMENES', 'descripcion' => 'Módulo de exámenes: materias adeudadas, gestión, listados y borrado de inscripciones.'],
             ['id' => 14, 'orden' => 13, 'tema' => 'HORARIOS', 'descripcion' => 'Configuración de horarios (turnos, días, reloj) y carga de horas cátedra por docente.'],
             ['id' => 15, 'orden' => 14, 'tema' => 'ADMINISTRACIÓN', 'descripcion' => 'Consultar permisos concedidos por usuario (módulo Permisos por Usuario).'],

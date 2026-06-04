@@ -38,7 +38,7 @@ class MateriasAdeudadasGestionIndex extends Component
             'totalAlumnos' => count($alumnos),
             'esSecundario' => $esSecundario,
             'preparacionLista' => $preparacionLista,
-        ])->layout('layouts.app', ['pageTitle' => 'Gestión de materias adeudadas']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de materias adeudadas']);
     }
 
     #[On('materias-adeudadas-preparacion-confirmada')]

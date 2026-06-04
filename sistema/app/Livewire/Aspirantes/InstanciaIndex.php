@@ -60,6 +60,6 @@ class InstanciaIndex extends Component
         return view('livewire.aspirantes.instancia-index', [
             'instancias'      => $instancias,
             'idTerlecActivo'  => $ctx->idTerlec,
-        ])->layout('layouts.app', ['pageTitle' => 'Aspirantes — Instancias de registro']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Aspirantes — Instancias de registro']);
     }
 }

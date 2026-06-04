@@ -12,6 +12,7 @@ class DatoVario extends Model
 
     protected $fillable = [
         'ultimoComprobante',
+        'ultimaSoliBeca',
         'textoInicNotDeuda',
         'textoFinalNotDeuda',
         'textoFinalNotDeudaBec',
@@ -19,6 +20,7 @@ class DatoVario extends Model
 
     protected $casts = [
         'ultimoComprobante' => 'integer',
+        'ultimaSoliBeca' => 'integer',
     ];
 
     /**

@@ -59,7 +59,7 @@ class AntecedentesIndex extends Component
         return view('livewire.seguimiento.disciplinario.antecedentes', [
             'base' => $base,
             'porAno' => $porAno,
-        ])->layout('layouts.app', ['pageTitle' => 'Antecedentes disciplinarios']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Antecedentes disciplinarios']);
     }
 }
 

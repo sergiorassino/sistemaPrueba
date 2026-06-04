@@ -152,6 +152,6 @@ class NivelesIndex extends Component
         $niveles = Nivel::orderBy('id')->get();
 
         return view('livewire.abm.niveles.index', compact('niveles'))
-            ->layout('layouts.app', ['pageTitle' => 'Niveles Educativos']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Niveles Educativos']);
     }
 }

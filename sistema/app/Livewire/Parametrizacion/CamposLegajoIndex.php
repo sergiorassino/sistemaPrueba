@@ -110,6 +110,6 @@ class CamposLegajoIndex extends Component
             ->get(['id', 'nombre']);
 
         return view('listados::parametrizacion.campos-listado-alumnos-index', compact('campos', 'solapas'))
-            ->layout('layouts.app', ['pageTitle' => 'Campos activos (Legajo del estudiante)']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Campos activos (Legajo del estudiante)']);
     }
 }

@@ -99,7 +99,7 @@ class TercerMateriaIndex extends Component
             'filas' => $filas,
             'pdfUrl' => $pdfUrl,
             'totalFilas' => count($filas),
-        ])->layout('layouts.app', ['pageTitle' => 'Gestión de tercer materia']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de tercer materia']);
     }
 
     private function cargarEdiciones(): void

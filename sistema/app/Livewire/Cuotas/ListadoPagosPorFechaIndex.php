@@ -88,6 +88,6 @@ class ListadoPagosPorFechaIndex extends Component
             'mediosDePago' => ListadoPagosPorFechaDatos::mediosDePagoParaSelector(),
             'cuotas' => ListadoPagosPorFechaDatos::cuotasDelCicloParaSelector(),
             'pdfUrl' => $this->pdfUrl,
-        ])->layout('layouts.app', ['pageTitle' => "Listado de pagos por fecha — {$ano}"]);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => "Listado de pagos por fecha — {$ano}"]);
     }
 }

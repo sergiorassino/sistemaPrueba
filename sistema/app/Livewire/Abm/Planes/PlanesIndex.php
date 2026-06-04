@@ -82,7 +82,7 @@ class PlanesIndex extends Component
             ->get(['id', 'plan', 'abrev']);
 
         return view('livewire.abm.planes.index', compact('planes'))
-            ->layout('layouts.app', ['pageTitle' => 'Gestión de planes de estudio']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de planes de estudio']);
     }
 }
 

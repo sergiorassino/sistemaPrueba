@@ -75,6 +75,14 @@ if (! function_exists('schoolEsAdministracion')) {
     }
 }
 
+if (! function_exists('layoutMenuStaff')) {
+    /** Layout del portal staff: Administración o Secretaría pedagógica. */
+    function layoutMenuStaff(): string
+    {
+        return \App\Support\ProfesorMenuPortal::layoutStaff();
+    }
+}
+
 if (! function_exists('schoolIdNivelPedagogico')) {
     /**
      * Nivel único de filtro (login 1–4). En Administración devuelve 0: usar

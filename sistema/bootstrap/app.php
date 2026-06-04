@@ -46,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permiso'        => \App\Http\Middleware\CheckPermiso::class,
             'permiso-config' => \App\Http\Middleware\CheckPermisoConfiguracion::class,
             'menu.portal'    => EnsureMenuPortal::class,
+            'administracion.nivel' => \App\Http\Middleware\EnsureNivelAdministracion::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

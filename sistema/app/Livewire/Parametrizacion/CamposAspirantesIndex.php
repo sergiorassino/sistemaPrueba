@@ -194,6 +194,6 @@ class CamposAspirantesIndex extends Component
         }
 
         return view('livewire.parametrizacion.campos-aspirantes-index', compact('campos', 'niveles', 'idNivel'))
-            ->layout('layouts.app', ['pageTitle' => 'Campos activos (Aspirantes)']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Campos activos (Aspirantes)']);
     }
 }

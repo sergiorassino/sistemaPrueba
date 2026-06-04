@@ -1,8 +1,8 @@
 # Menús de navegación (terminología oficial)
 
-Este documento fija los **nombres** que usamos en el equipo para los tres portales con sidebar.
+Este documento fija los **nombres** que usamos en el equipo para los portales con sidebar.
 Evita confusiones entre “docentes” como usuarios de `profesores`, el grupo **DOCENTES** del menú de secretaría
-y el futuro **menú de Docentes** para profesores en el aula.
+y el **Menú de Docentes** para profesores en el aula.
 
 ---
 
@@ -10,17 +10,18 @@ y el futuro **menú de Docentes** para profesores en el aula.
 
 | Nombre oficial | Qué es | Layout Blade | Login / guard |
 |----------------|--------|--------------|---------------|
-| **Menú de Secretaría** | Sistema grande de gestión (legajos, calificaciones, exámenes, configuración, etc.) | `resources/views/layouts/app.blade.php` | `/loginUsuario` · guard `web` · tabla `profesores` |
+| **Menú de Secretaría** | Gestión pedagógica (Inicial / Primario / Secundario): calificaciones, exámenes, legajos del nivel, etc. | `resources/views/layouts/app.blade.php` | `/loginUsuario` · `menu.portal:staff` + pedagógico `menu.portal:secretaria` |
+| **Menú de Administración** | Aranceles, becas, mora y módulos financieros; legajos/comunicación/config transversales | `resources/views/layouts/administracion.blade.php` | Mismo login · `school.idNivel = 5` · `menu.portal:administracion` en `/cuotas` y `/mora` |
 | **Menú de Alumnos** | Autogestión familia / estudiante | `resources/views/layouts/alumno.blade.php` | `/loginEstudiante` · guard `alumno` · tabla `legajos` |
-| **Menú de Docentes** | Portal reducido: pocas tareas para el profesor en el aula | `resources/views/layouts/docente.blade.php` | Mismo login que secretaría (`profesores`); rutas bajo prefijo `/portal-docente` (ver abajo) |
+| **Menú de Docentes** | Portal reducido: pocas tareas para el profesor en el aula | `resources/views/layouts/docente.blade.php` | Mismo login que secretaría (`profesores`); rutas bajo prefijo `/portal-docente` |
 
-**Cantidad de sidebars implementados:** 3 layouts. Solo el de Secretaría usa grupos acordeón extensos; Alumnos y Docentes son listas cortas (Docentes aún en armado).
+**Cantidad de sidebars implementados:** 4 layouts. Secretaría y Administración comparten módulos vía `menu.portal:staff` (legajos, comunicación, configuración); las rutas sensibles de cuotas/mora solo admiten Administración.
 
 ---
 
 ## 1. Menú de Secretaría
 
-- **Audiencia:** secretaría, preceptores, administración, personal con permisos amplios en `profesores.permisos`.
+- **Audiencia:** secretaría, preceptores, directivos y personal con sesión en niveles pedagógicos 1–4 (`profesores.nivel` distinto de 5).
 - **Antes se decía:** “gestión”, “staff”, “layout app”, “sistema grande”.
 - **Rutas:** prefijo raíz (`/dashboard`, `/abm/…`, `/calificacionesSecundario/…`, etc.) con middleware `auth` + `school.context`.
 - **Contexto de sesión:** `schoolCtx()` (nivel + ciclo lectivo elegidos en el login o en el context-switcher del sidebar).
@@ -111,9 +112,13 @@ En código y PRs, preferir comentarios del tipo:
 
 ---
 
-## 4. Perfil Administración (`niveles.id = 5`)
+## 4. Menú de Administración (`niveles.id = 5`)
 
-Usuario distinto en tabla `profesores` (`profesores.nivel = 5`) respecto de Inicial, Primario o Secundario. Mismo Menú de Secretaría (`layouts/app.blade.php`) con reglas de perfil.
+Usuario distinto en tabla `profesores` (`profesores.nivel = 5`) respecto de Inicial, Primario o Secundario. **Layout propio:** `layouts/administracion.blade.php` (sidebar en `layouts/partials/sidebar-nav-administracion.blade.php`).
+
+- **Post-login:** mismo `dashboard` que staff; el layout lo elige `ProfesorMenuPortal::layoutStaff()`.
+- **Rutas exclusivas:** prefijos `/cuotas` y `/mora` con middleware `menu.portal:administracion` + `administracion.nivel`.
+- **Rutas compartidas con secretaría:** legajos, listados, comunicación, configuración, etc. bajo `menu.portal:staff` (accesibles desde ambos menús, con el sidebar que corresponda).
 
 | Bloque visible (según permisos) | Oculto en este perfil |
 |--------------------------------|------------------------|
@@ -121,7 +126,7 @@ Usuario distinto en tabla `profesores` (`profesores.nivel = 5`) respecto de Inic
 | **Gestión de cuotas** (solo nivel 5) | |
 | **Becas** (solo nivel 5; p. ej. Tipos de Beca) | |
 | Comunicación institucional | |
-| Docentes | |
+| **DOCENTES / USUARIOS** (mismo bloque que Secretaría: legajos docente, ppc, inasistencias docentes; según permisos 11, 48 y 23) | |
 | Configuración (incl. Permisos del sistema) | |
 
 **Legajos:** consulta y listados para **todos** los usuarios del menú. En sesión Administración se ven alumnos de **Inicial, Primario y Secundario** del ciclo activo (sin selector de nivel en el sidebar).
@@ -137,7 +142,7 @@ En cada colegio se activa o no el orden **47** en el usuario de Administración 
 
 **Viajes / salidas educativas (Excel):** solo en el **Menú de Secretaría** (`layouts/app`) para usuarios con portal secretaría en nivel pedagógico (Inicial, Primario o Secundario). No en Administración, Menú de Docentes ni Menú de Alumnos (`MenuSecretariaPerfil::muestraViajesSalidasEducativas()` + rutas `menu.portal:secretaria`).
 
-Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogico`, `App\Support\Navegacion\MenuSecretariaPerfil`.
+Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogico`, `App\Support\Navegacion\MenuSecretariaPerfil`, `App\Support\ProfesorMenuPortal`, `App\Http\Middleware\EnsureMenuPortal`.
 
 ---
 
@@ -149,3 +154,4 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-05-26:** "Autogestión Docente" en el Menú de Secretaría (antes del Manual) para usuarios con rol mixto (Preceptor + Profesor): override de sesión `school.menu_portal_override` y cambio de identidad si hay legajo paralelo con PPC. Logout para volver a Secretaría.
 - **2026-06-01:** Perfil Administración (nivel 5): menú acotado, selector de nivel de trabajo, bloque Gestión de cuotas (acceso por nivel, sin permiso_ia); consulta de legajos para todos, edición con orden 2.
 - **2026-06-01:** Viajes / salidas educativas: solo Menú de Secretaría en niveles 1–4; no Administración, Docentes ni Alumnos.
+- **2026-06-04:** Menú de Administración como layout y portal propios; rutas `/cuotas` y `/mora` aisladas con `menu.portal:administracion`.

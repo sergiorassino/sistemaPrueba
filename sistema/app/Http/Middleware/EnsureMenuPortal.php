@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Restringe rutas al Menú de Secretaría o al Menú de Docentes según IdTipoProf.
+ * Restringe rutas al Menú de Docentes, Administración o Secretaría pedagógica.
+ *
+ * @see docs/08-menus-de-navegacion.md
  */
 class EnsureMenuPortal
 {
@@ -22,13 +24,45 @@ class EnsureMenuPortal
             return $next($request);
         }
 
-        $esDocente = ProfesorMenuPortal::usaMenuDocentes($profesor);
+        return match ($portal) {
+            'docente' => $this->asegurarDocente($profesor, $next, $request),
+            'administracion' => $this->asegurarAdministracion($profesor, $next, $request),
+            'secretaria' => $this->asegurarSecretariaPedagogica($profesor, $next, $request),
+            'staff' => $this->asegurarStaff($profesor, $next, $request),
+            default => $next($request),
+        };
+    }
 
-        if ($portal === 'docente' && ! $esDocente) {
+    private function asegurarDocente(Profesor $profesor, Closure $next, Request $request): Response
+    {
+        if (! ProfesorMenuPortal::usaMenuDocentes($profesor)) {
             return ProfesorMenuPortal::redirectInicio($profesor);
         }
 
-        if ($portal === 'secretaria' && $esDocente) {
+        return $next($request);
+    }
+
+    private function asegurarAdministracion(Profesor $profesor, Closure $next, Request $request): Response
+    {
+        if (ProfesorMenuPortal::usaMenuDocentes($profesor) || ! ProfesorMenuPortal::usaMenuAdministracion()) {
+            return ProfesorMenuPortal::redirectInicio($profesor);
+        }
+
+        return $next($request);
+    }
+
+    private function asegurarSecretariaPedagogica(Profesor $profesor, Closure $next, Request $request): Response
+    {
+        if (! ProfesorMenuPortal::usaMenuSecretariaPedagogica($profesor)) {
+            return ProfesorMenuPortal::redirectInicio($profesor);
+        }
+
+        return $next($request);
+    }
+
+    private function asegurarStaff(Profesor $profesor, Closure $next, Request $request): Response
+    {
+        if (! ProfesorMenuPortal::usaMenuStaff($profesor)) {
             return ProfesorMenuPortal::redirectInicio($profesor);
         }
 

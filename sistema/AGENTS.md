@@ -49,7 +49,7 @@ Todo desplegable de ciclo lectivo: **orden decreciente** (año más reciente pri
 
 ## Menús de navegación (terminología)
 
-Usar siempre: **Menú de Secretaría** (`layouts/app`), **Menú de Alumnos** (`layouts/alumno`), **Menú de Docentes** (`layouts/docente`). No llamar “staff” ni mezclar con el grupo sidebar “DOCENTES” de secretaría. Detalle: `docs/08-menus-de-navegacion.md`.
+Usar siempre: **Menú de Secretaría** (`layouts/app`), **Menú de Administración** (`layouts/administracion`), **Menú de Alumnos** (`layouts/alumno`), **Menú de Docentes** (`layouts/docente`). En Livewire compartido: `layoutMenuStaff()` o `ProfesorMenuPortal::layoutStaff()`. No mezclar con el grupo sidebar “DOCENTES” de secretaría. Detalle: `docs/08-menus-de-navegacion.md`.
 
 ## Diálogos al usuario (SweetAlert2)
 

@@ -130,7 +130,7 @@ class ListadoPorCurso extends Component
             'cantidadSeleccionados' => $cantidadSeleccionados,
             'cursosSeleccionadosResumen' => $cursosSeleccionadosResumen,
             'camposPorGrupo' => $camposPorGrupo,
-        ])->layout('layouts.app', ['pageTitle' => 'Alumnos por curso']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Alumnos por curso']);
     }
 
     public function getPdfUrlProperty(): string

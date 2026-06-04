@@ -23,7 +23,8 @@ INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (8, 7, '
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (9, 8, 'COMUNICACIONES', 'Acceder a la bandeja de revisión de comunicados.');
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (10, 9, 'CALIFICACIONES SECUNDARIO', 'Importar calificaciones desde CIDI/GE y carga manual de calificaciones (secundario).');
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (11, 10, 'CALIFICACIONES SECUNDARIO', 'Carga de coloquios Dic / Feb (secundario).');
-INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (12, 11, 'LEGAJOS DOCENTES', 'Crear, editar y eliminar legajos de docentes; asignar y quitar docentes en materias (ppc).');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (12, 11, 'LEGAJOS DOCENTES', 'Crear, editar y eliminar legajos de docentes (ABM legajo docente).');
+INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (48, 48, 'LEGAJOS DOCENTES', 'Asignar y quitar docentes en materias por curso (ppc); consultar cursos por profesor.');
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (13, 12, 'EXÁMENES', 'Módulo de exámenes: materias adeudadas, gestión, listados y borrado de inscripciones.');
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (14, 13, 'HORARIOS', 'Configuración de horarios (turnos, días, reloj) y carga de horas cátedra por docente.');
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (15, 14, 'ADMINISTRACIÓN', 'Consultar permisos concedidos por usuario (módulo Permisos por Usuario).');
@@ -59,6 +60,6 @@ INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (45, 45,
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (46, 46, 'LEGAJOS ESTUDIANTES', 'Gestionar familias de estudiantes: crear, editar, eliminar y asignar o quitar vínculos con legajos (la consulta permanece disponible para todos).');
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES (47, 47, 'LEGAJOS ESTUDIANTES', 'Nivel Administración: crear, editar, eliminar legajos y matrículas en Inicial, Primario y Secundario (cualquier nivel pedagógico del ciclo activo).');
 
-ALTER TABLE `permisos_ia` AUTO_INCREMENT = 48;
+ALTER TABLE `permisos_ia` AUTO_INCREMENT = 49;
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -464,7 +464,7 @@ class MateriasAnioIndex extends Component
         $matplanesByCurplan = $matplanes->groupBy('idCurPlan');
 
         return view('livewire.abm.materias-anio.index', compact('materias', 'cursos', 'curplanes', 'matplanesByCurplan'))
-            ->layout('layouts.app', ['pageTitle' => 'Gestión de Asignaturas del Año']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de Asignaturas del Año']);
     }
 }
 

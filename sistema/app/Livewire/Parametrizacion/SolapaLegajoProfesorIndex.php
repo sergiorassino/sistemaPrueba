@@ -141,6 +141,6 @@ class SolapaLegajoProfesorIndex extends Component
         $solapas = SolapaLegajoProfesor::orderBy('orden')->get();
 
         return view('listados::parametrizacion.solapa-legajo-profesor-index', compact('solapas'))
-            ->layout('layouts.app', ['pageTitle' => 'Solapas del Legajo del docente']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Solapas del Legajo del docente']);
     }
 }

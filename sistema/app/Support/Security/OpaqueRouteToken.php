@@ -22,6 +22,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_ADMIN_RESUMEN_PAGOS = 'cuotas.resumen-pagos';
 
+    public const PURPOSE_ADMIN_SOLICITUD_AYUDA_FAMILIAR = 'cuotas.solicitud-ayuda-familiar';
+
     public const PURPOSE_MORA_ESTADO_DEUDA = 'mora.estado-deuda-familiar';
 
     public const PURPOSE_MORA_LISTADO_DEUDA = 'mora.listado-deuda';
@@ -46,6 +48,11 @@ final class OpaqueRouteToken
     public static function forResumenPagosEstudiante(int $idLegajo): string
     {
         return self::encode(self::PURPOSE_ADMIN_RESUMEN_PAGOS, $idLegajo, $idLegajo);
+    }
+
+    public static function forSolicitudAyudaFamiliar(int $nroSolicitud, int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_ADMIN_SOLICITUD_AYUDA_FAMILIAR, $nroSolicitud, $idLegajo);
     }
 
     public static function forEstadoDeudaFamiliar(int $idFamilia): string

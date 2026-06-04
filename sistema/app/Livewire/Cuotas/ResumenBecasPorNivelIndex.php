@@ -69,6 +69,6 @@ class ResumenBecasPorNivelIndex extends Component
             'niveles' => $resumen['niveles'],
             'totalesNivel' => $resumen['totalesNivel'],
             'totalGeneral' => $resumen['totalGeneral'],
-        ])->layout('layouts.app', ['pageTitle' => "Resumen de Becas por Nivel — {$ano}"]);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => "Resumen de Becas por Nivel — {$ano}"]);
     }
 }

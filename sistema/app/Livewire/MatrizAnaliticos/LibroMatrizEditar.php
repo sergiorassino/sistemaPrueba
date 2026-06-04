@@ -204,6 +204,6 @@ class LibroMatrizEditar extends Component
     public function render()
     {
         return view('livewire.matriz-analiticos.libro-matriz-editar')
-            ->layout('layouts.app', ['pageTitle' => 'Editar matriz · '.$this->alumno['apellido']]);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Editar matriz · '.$this->alumno['apellido']]);
     }
 }

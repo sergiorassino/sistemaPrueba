@@ -408,7 +408,7 @@ class CursosIndex extends Component
             ->get(['id', 'nombre', 'codigo']);
 
         return view('livewire.abm.cursos.index', compact('cursos', 'curplanes', 'terlecs', 'niveles', 'turnosClase'))
-            ->layout('layouts.app', ['pageTitle' => 'Gestión de Cursos / Grados / Salas']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de Cursos / Grados / Salas']);
     }
 }
 

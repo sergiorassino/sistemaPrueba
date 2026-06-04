@@ -281,6 +281,6 @@ class InstanciaForm extends Component
             'nivelNombre'    => schoolCtx()->nivelNombre(),
             'tieneInsti'     => Schema::hasColumn('aspiento', 'insti'),
             'tieneTitulo3'   => Schema::hasColumn('aspiento', 'titulo3'),
-        ])->layout('layouts.app', ['pageTitle' => $tituloPagina]);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => $tituloPagina]);
     }
 }

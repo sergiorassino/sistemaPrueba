@@ -136,7 +136,7 @@ class GestionSolicitudEvaluacionForm extends Component
             'cursos' => $cursos,
             'materias' => $materias,
             'esEdicion' => $esEdicion,
-        ])->layout('layouts.app', [
+        ])->layout(layoutMenuStaff(), [
             'pageTitle' => $esEdicion ? 'Editar evaluación' : 'Nueva evaluación',
         ]);
     }

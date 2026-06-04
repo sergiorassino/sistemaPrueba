@@ -161,6 +161,6 @@ class GestionMorososIndex extends Component
             'pdfUrl' => $this->pdfUrl,
             'pdfNotificacionUrl' => $this->pdfNotificacionUrl,
             'anoContexto' => schoolCtx()->terlecAno(),
-        ])->layout('layouts.app', ['pageTitle' => 'Gestión de Morosos']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de Morosos']);
     }
 }

@@ -117,6 +117,6 @@ class CargosDocenteIndex extends Component
             'listado' => $listado,
             'catalogoCargos' => $catalogoCargos,
             'nivelNombre' => schoolCtx()->nivelNombre(),
-        ])->layout('layouts.app', ['pageTitle' => 'Cargos del docente']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Cargos del docente']);
     }
 }

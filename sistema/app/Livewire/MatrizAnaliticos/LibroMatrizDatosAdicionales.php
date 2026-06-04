@@ -121,6 +121,6 @@ class LibroMatrizDatosAdicionales extends Component
     public function render()
     {
         return view('livewire.matriz-analiticos.libro-matriz-datos-adicionales')
-            ->layout('layouts.app', ['pageTitle' => 'Datos adicionales · '.$this->alumno['apellido']]);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Datos adicionales · '.$this->alumno['apellido']]);
     }
 }

@@ -41,6 +41,6 @@ class InformeBimestreShow extends Component
             'rango' => $rango,
             'resumen' => $resumen,
             'inasistencias' => $inasistencias,
-        ])->layout('layouts.app', ['pageTitle' => 'Informe de inasistencias']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Informe de inasistencias']);
     }
 }

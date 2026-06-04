@@ -66,6 +66,6 @@ class TextosNotificacionDeudaForm extends Component
     public function render()
     {
         return view('livewire.mora.textos-notificacion-deuda-form')
-            ->layout('layouts.app', ['pageTitle' => 'Textos de la Notificación de Deuda']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Textos de la Notificación de Deuda']);
     }
 }

@@ -66,7 +66,7 @@ final class MenuSecretariaPerfil
 
         $profesor = Auth::user();
 
-        return ProfesorMenuPortal::usaMenuSecretaria($profesor instanceof Profesor ? $profesor : null);
+        return ProfesorMenuPortal::usaMenuSecretariaPedagogica($profesor instanceof Profesor ? $profesor : null);
     }
 
     public static function abortSiNoViajesSalidasEducativas(): void

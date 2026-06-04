@@ -114,7 +114,7 @@ class PaseParcialIndex extends Component
         return view('livewire.certificados.pase-parcial-index', [
             'alumnos' => $alumnos,
         ])
-            ->layout('layouts.app', ['pageTitle' => 'Pase Parcial']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Pase Parcial']);
     }
 
     /**

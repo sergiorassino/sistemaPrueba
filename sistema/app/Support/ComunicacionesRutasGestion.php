@@ -51,7 +51,7 @@ final class ComunicacionesRutasGestion
 
     public static function layout(): string
     {
-        return self::esPortalDocente() ? 'layouts.docente' : 'layouts.app';
+        return self::esPortalDocente() ? 'layouts.docente' : \App\Support\ProfesorMenuPortal::layoutStaff();
     }
 
     /** Bandeja e hilos: en portal docente todos los profesores; en secretaría, permiso 3. */

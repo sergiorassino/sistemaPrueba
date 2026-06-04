@@ -262,7 +262,7 @@ class ComCanalesIndex extends Component
             'canales'           => $canales,
             'etiquetas'         => $etiquetas,
             'mediosDisponibles' => $mediosDisponibles,
-        ])->layout('layouts.app', ['pageTitle' => 'Canales de Comunicación']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Canales de Comunicación']);
     }
 
     private function canalDelNivel(int $id): ComCanal

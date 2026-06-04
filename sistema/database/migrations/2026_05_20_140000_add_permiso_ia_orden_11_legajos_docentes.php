@@ -18,7 +18,7 @@ return new class extends Migration
                 'id' => 12,
                 'orden' => 11,
                 'tema' => 'LEGAJOS DOCENTES',
-                'descripcion' => 'Crear, editar y eliminar legajos de docentes; asignar y quitar docentes en materias (ppc).',
+                'descripcion' => 'Crear, editar y eliminar legajos de docentes (ABM legajo docente).',
             ]
         );
     }

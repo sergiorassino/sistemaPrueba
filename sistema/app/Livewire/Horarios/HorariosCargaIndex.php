@@ -214,6 +214,6 @@ class HorariosCargaIndex extends Component
             'asignacionActual' => $asignacionActual,
             'grillasCarga' => $this->grillasCarga(),
             'consultaSqlDepuracion' => $consultaSqlDepuracion,
-        ])->layout('layouts.app', ['pageTitle' => 'Carga de horarios']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Carga de horarios']);
     }
 }

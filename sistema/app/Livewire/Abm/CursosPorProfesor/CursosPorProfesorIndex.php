@@ -4,6 +4,7 @@ namespace App\Livewire\Abm\CursosPorProfesor;
 
 use App\Models\Curso;
 use App\Models\SituacionRevista;
+use App\Support\PermisosIaCatalog;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ class CursosPorProfesorIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(11), 403, 'Sin permiso para consultar cursos por profesor.');
+        abort_unless(tienePermiso(PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO), 403, 'Sin permiso para consultar cursos por profesor.');
     }
 
     public function updatedSearch(): void
@@ -105,7 +106,7 @@ class CursosPorProfesorIndex extends Component
             'totalesPorProfesor' => $totalesPorProfesor,
             'cursos' => $cursos,
             'situaciones' => $situaciones,
-        ])->layout('layouts.app', ['pageTitle' => 'Cursos por profesor']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Cursos por profesor']);
     }
 
     /**

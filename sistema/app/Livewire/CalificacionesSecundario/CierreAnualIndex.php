@@ -124,6 +124,6 @@ class CierreAnualIndex extends Component
         return view('livewire.calificaciones-secundario.cierre-anual-index', [
             'alumnos' => $alumnos,
         ])
-            ->layout('layouts.app', ['pageTitle' => 'Cierre anual (secundario)']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Cierre anual (secundario)']);
     }
 }

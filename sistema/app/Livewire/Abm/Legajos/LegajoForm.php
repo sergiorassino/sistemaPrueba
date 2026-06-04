@@ -1406,6 +1406,6 @@ class LegajoForm extends Component
             'camposActivos', 'showField', 'showFieldEnTab', 'tabsVisibles', 'tabSlugToPanel',
             'modoParametrizadoLegajo', 'columnasPorSolapaSlug', 'puedeEditar', 'puedeGestionarFamilias',
             'matriculaEditFueraDeAnioActivo', 'matriculaCursoEtiqueta',
-        ))->layout('layouts.app', ['pageTitle' => $pageTitle]);
+        ))->layout(layoutMenuStaff(), ['pageTitle' => $pageTitle]);
     }
 }

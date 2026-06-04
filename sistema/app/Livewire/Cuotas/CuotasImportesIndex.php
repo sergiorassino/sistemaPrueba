@@ -50,6 +50,6 @@ class CuotasImportesIndex extends Component
         return view('livewire.cuotas.importes-index', [
             'cuotas' => $query->get(),
             'ano' => $ano,
-        ])->layout('layouts.app', ['pageTitle' => "Importes por curso — {$ano}"]);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => "Importes por curso — {$ano}"]);
     }
 }

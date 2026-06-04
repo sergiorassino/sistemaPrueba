@@ -196,6 +196,6 @@ class InformeInasistenciasLoteIndex extends Component
             'todasMarcadas' => $this->todasLasMatriculasMarcadas(),
             'hayMatriculas' => $matriculas->isNotEmpty(),
             'maxMatriculasPdf' => InformeInasistenciasLoteParams::MAX_MATRICULAS,
-        ])->layout('layouts.app', ['pageTitle' => 'Informe de Inasistencias']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Informe de Inasistencias']);
     }
 }

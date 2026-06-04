@@ -157,6 +157,6 @@ class TerlecIndex extends Component
         $terlecs = Terlec::ordenado()->get();
 
         return view('livewire.abm.terlec.index', compact('terlecs'))
-            ->layout('layouts.app', ['pageTitle' => 'Términos Lectivos']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Términos Lectivos']);
     }
 }

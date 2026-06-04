@@ -147,6 +147,6 @@ class PlanillaCalificacionesSecundario extends Component
             'cantidadMateriasSeleccionadas',
             'pdfUrl',
         ))
-            ->layout('layouts.app', ['pageTitle' => 'Planilla de calificaciones']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Planilla de calificaciones']);
     }
 }

@@ -112,7 +112,7 @@ class CertificadoAsistenciaProfesorIndex extends Component
         return view('livewire.certificados.certificado-asistencia-profesor-index', [
             'profesores' => $profesores,
         ])
-            ->layout('layouts.app', ['pageTitle' => 'Certificado de Asistencia del Profesor']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Certificado de Asistencia del Profesor']);
     }
 
     /**

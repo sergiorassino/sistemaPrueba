@@ -155,7 +155,7 @@ class PermisoExamenIndex extends Component
             'preparacionLista',
             'etiquetaTurno',
         ))
-            ->layout('layouts.app', ['pageTitle' => 'Permiso de examen']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Permiso de examen']);
     }
 
     #[On('materias-adeudadas-preparacion-confirmada')]

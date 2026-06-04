@@ -291,7 +291,7 @@ class ParametrosSistemaForm extends Component
     {
         return view('livewire.parametrizacion.parametros-sistema-form', [
             'nivelNombre' => schoolCtx()->nivelNombre(),
-        ])->layout('layouts.app', ['pageTitle' => 'Parámetros del sistema']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Parámetros del sistema']);
     }
 }
 

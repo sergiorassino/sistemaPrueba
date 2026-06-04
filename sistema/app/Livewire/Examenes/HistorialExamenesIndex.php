@@ -224,6 +224,6 @@ class HistorialExamenesIndex extends Component
             'totalMaterias' => count($materias),
             'totalRegistros' => $totalRegistros,
             'condiciones' => MateriasAdeudadasFiltros::CONDICIONES,
-        ])->layout('layouts.app', ['pageTitle' => 'Historial de exámenes — materias adeudadas']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Historial de exámenes — materias adeudadas']);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Livewire\Abm\ProfesoresPorMateria;
 use App\Models\Curso;
 use App\Models\Profesor;
 use App\Models\SituacionRevista;
+use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -45,7 +46,7 @@ class ProfesoresPorMateriaIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(11), 403, 'Sin permiso para asignar docentes a materias.');
+        abort_unless(tienePermiso(PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO), 403, 'Sin permiso para asignar docentes a materias.');
 
         $ctx = schoolCtx();
 
@@ -256,7 +257,7 @@ TXT;
 
     public function agregarProfesor(): void
     {
-        abort_unless(tienePermiso(11), 403, 'Sin permiso para asignar docentes a la materia.');
+        abort_unless(tienePermiso(PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO), 403, 'Sin permiso para asignar docentes a la materia.');
 
         $key = 'ppc-assign:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 40)) {
@@ -329,7 +330,7 @@ TXT;
      */
     public function actualizarSituacionRevista(int $ppcId, $idSituRevis): void
     {
-        abort_unless(tienePermiso(11), 403, 'Sin permiso para modificar la situación de revista.');
+        abort_unless(tienePermiso(PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO), 403, 'Sin permiso para modificar la situación de revista.');
 
         $key = 'ppc-siturev:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 60)) {
@@ -378,7 +379,7 @@ TXT;
 
     public function confirmarQuitarProfesor(int $ppcId): void
     {
-        abort_unless(tienePermiso(11), 403, 'Sin permiso para quitar asignaciones de docentes.');
+        abort_unless(tienePermiso(PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO), 403, 'Sin permiso para quitar asignaciones de docentes.');
 
         if ((int) ($this->cursoId ?? 0) < 1) {
             abort(404);
@@ -421,7 +422,7 @@ TXT;
 
     public function quitarProfesor(): void
     {
-        abort_unless(tienePermiso(11), 403, 'Sin permiso para quitar asignaciones de docentes.');
+        abort_unless(tienePermiso(PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO), 403, 'Sin permiso para quitar asignaciones de docentes.');
 
         $ppcId = (int) ($this->quitarPpcId ?? 0);
         if ($ppcId < 1) {
@@ -554,6 +555,6 @@ TXT;
             'situacionesRevista',
             'selectedMateria',
         ) + ['consultaEjecutadaClic' => ''])
-            ->layout('layouts.app', ['pageTitle' => 'Docentes por materia y curso']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Docentes por materia y curso']);
     }
 }

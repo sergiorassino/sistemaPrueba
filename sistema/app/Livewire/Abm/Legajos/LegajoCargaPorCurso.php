@@ -18,6 +18,6 @@ class LegajoCargaPorCurso extends Component
     public function render()
     {
         return view('livewire.abm.legajos.carga-por-curso', $this->datosPanelCargaPorCurso())
-            ->layout('layouts.app', ['pageTitle' => 'Carga de legajo por curso']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Carga de legajo por curso']);
     }
 }

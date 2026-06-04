@@ -110,7 +110,7 @@ class PlanesForm extends Component
     public function render()
     {
         return view('livewire.abm.planes.form')
-            ->layout('layouts.app', ['pageTitle' => $this->id ? 'Editar plan de estudio' : 'Nuevo plan de estudio']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => $this->id ? 'Editar plan de estudio' : 'Nuevo plan de estudio']);
     }
 }
 

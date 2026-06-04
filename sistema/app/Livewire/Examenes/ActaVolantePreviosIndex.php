@@ -107,7 +107,7 @@ class ActaVolantePreviosIndex extends Component
             'pdfUrl',
             'preparacionLista',
         ))
-            ->layout('layouts.app', ['pageTitle' => 'Actas volantes de examen']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Actas volantes de examen']);
     }
 
     #[On('materias-adeudadas-preparacion-confirmada')]

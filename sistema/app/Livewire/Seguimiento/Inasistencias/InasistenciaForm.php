@@ -186,6 +186,6 @@ class InasistenciaForm extends Component
         $tipos = $this->tipos();
 
         return view('livewire.seguimiento.inasistencias.form', compact('m', 'tipos'))
-            ->layout('layouts.app', ['pageTitle' => $this->id ? 'Editar inasistencia' : 'Nueva inasistencia']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => $this->id ? 'Editar inasistencia' : 'Nueva inasistencia']);
     }
 }

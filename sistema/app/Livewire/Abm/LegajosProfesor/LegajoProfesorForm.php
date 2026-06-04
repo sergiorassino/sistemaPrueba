@@ -8,6 +8,8 @@ use App\Models\Profesor;
 use App\Models\ProfesorTipo;
 use App\Models\Sexo;
 use App\Models\SolapaLegajoProfesor;
+use App\Support\PermisosIaCatalog;
+use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -87,7 +89,7 @@ class LegajoProfesorForm extends Component
 
     public function mount(?int $id = null): void
     {
-        if (! $id && ! tienePermiso(11)) {
+        if (! $id && ! tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES)) {
             abort(403, 'Sin permiso para crear legajos de docentes.');
         }
 
@@ -99,12 +101,12 @@ class LegajoProfesorForm extends Component
 
     private function requireModificarLegajoDocente(): void
     {
-        abort_unless(tienePermiso(11), 403, 'Sin permiso para modificar legajos de docentes.');
+        abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES), 403, 'Sin permiso para modificar legajos de docentes.');
     }
 
     protected function rules(): array
     {
-        $idNivel = (int) (\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico() ?? 0);
+        $idNivel = (int) (SchoolAlcancePedagogico::idNivelLegajosDocente() ?? 0);
         $dniUnique = Rule::unique('profesores', 'dni')
             ->where(fn ($q) => $q->where('nivel', $idNivel));
         if ($this->id) {
@@ -176,7 +178,7 @@ class LegajoProfesorForm extends Component
             $allData = array_filter($allData, fn ($col) => isset($set[$col]), ARRAY_FILTER_USE_KEY);
         }
 
-        $idNivel = (int) (\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico() ?? 0);
+        $idNivel = (int) (SchoolAlcancePedagogico::idNivelLegajosDocente() ?? 0);
         if ($idNivel < 1) {
             session()->flash('warning', 'No hay nivel activo en el contexto. Seleccione nivel en el login.');
 
@@ -214,7 +216,7 @@ class LegajoProfesorForm extends Component
     protected function scopedProfesorOrFail(int $id): Profesor
     {
         return Profesor::query()
-            ->delNivel(\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico())
+            ->delNivel(SchoolAlcancePedagogico::idNivelLegajosDocente())
             ->whereKey($id)
             ->firstOrFail();
     }
@@ -351,7 +353,7 @@ class LegajoProfesorForm extends Component
 
     private function pageForProfesor(int $id, int $perPage): int
     {
-        $idNivel = (int) (\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico() ?? 0);
+        $idNivel = (int) (SchoolAlcancePedagogico::idNivelLegajosDocente() ?? 0);
         $p = Profesor::query()->delNivel($idNivel)->find($id);
         if (! $p) {
             return 1;
@@ -398,13 +400,13 @@ class LegajoProfesorForm extends Component
             $this->activeTab = array_key_first($tabsVisibles) ?? 'docente';
         }
 
-        $puedeEditar = tienePermiso(11);
+        $puedeEditar = tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES);
         $pageTitle = $this->id
             ? ($puedeEditar ? 'Editar legajo docente' : 'Consultar legajo docente')
             : 'Nuevo legajo docente';
 
         return view('livewire.abm.legajos-profesor.form', compact(
             'roles', 'sexosOpciones', 'estadosCivilesOpciones', 'tabsVisibles', 'modoParametrizado', 'columnasPorSolapaSlug', 'puedeEditar',
-        ))->layout('layouts.app', ['pageTitle' => $pageTitle]);
+        ))->layout(layoutMenuStaff(), ['pageTitle' => $pageTitle]);
     }
 }

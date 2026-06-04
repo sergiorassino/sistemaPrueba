@@ -86,6 +86,6 @@ class ListadoEstudiantesPorCuotaIndex extends Component
             'opcionesComparador' => FiltroComparacionNumerica::opcionesEtiquetas(),
             'pdfUrl' => $this->pdfUrl,
             'etiquetaCurso' => fn ($curso) => GeneracionMasivaCuotasConsulta::etiquetaCursoConNivel($curso),
-        ])->layout('layouts.app', ['pageTitle' => "Listado de estudiantes por cuota — {$ano}"]);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => "Listado de estudiantes por cuota — {$ano}"]);
     }
 }

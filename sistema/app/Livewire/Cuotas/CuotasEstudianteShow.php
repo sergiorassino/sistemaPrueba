@@ -38,6 +38,6 @@ class CuotasEstudianteShow extends Component
             'cuotas' => $this->mostrarHistorial
                 ? GestionAranceles::cuotasAbonadasHistorial($this->idLegajo)
                 : GestionAranceles::cuotasDelEstudiante($this->idLegajo),
-        ])->layout('layouts.app', ['pageTitle' => 'Gestión de aranceles']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de aranceles']);
     }
 }

@@ -41,6 +41,6 @@ class LibroMatrizIndex extends Component
         return view('livewire.matriz-analiticos.libro-matriz-index', [
             'alumnos' => $alumnos,
         ])
-            ->layout('layouts.app', ['pageTitle' => 'Libro Matriz / Pase / Analítico']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Libro Matriz / Pase / Analítico']);
     }
 }

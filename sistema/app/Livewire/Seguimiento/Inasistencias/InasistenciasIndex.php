@@ -270,6 +270,6 @@ class InasistenciasIndex extends Component
             'fechaMinimaFiltro',
             'fechaMaximaFiltro',
         ))
-            ->layout('layouts.app', ['pageTitle' => 'Gestión de Inasistencias del Estudiante']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de Inasistencias del Estudiante']);
     }
 }

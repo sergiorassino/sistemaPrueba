@@ -207,7 +207,7 @@ class MateriasAdeudadasCargaManualIndex extends Component
 
             'totalMaterias' => count($todas),
 
-        ])->layout('layouts.app', ['pageTitle' => 'Carga manual — materias adeudadas']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Carga manual — materias adeudadas']);
 
     }
 

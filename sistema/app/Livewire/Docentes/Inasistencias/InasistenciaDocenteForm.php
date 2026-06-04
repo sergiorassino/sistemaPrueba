@@ -242,6 +242,6 @@ class InasistenciaDocenteForm extends Component
             'filasDetalle' => $this->filasDetalleIds(),
             'nivelNombre' => schoolCtx()->nivelNombre(),
             'urlVolver' => $this->urlVolver(),
-        ])->layout('layouts.app', ['pageTitle' => $this->id ? 'Editar inasistencia docente' : 'Nueva inasistencia docente']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => $this->id ? 'Editar inasistencia docente' : 'Nueva inasistencia docente']);
     }
 }

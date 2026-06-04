@@ -70,7 +70,7 @@ class MateriasAdeudadasListadoIndex extends Component
             'totalFilas' => count($filas),
             'pdfUrl' => route('examenes.materias-adeudadas.pdf', $pdfParams),
             'preparacionLista' => $preparacionLista,
-        ])->layout('layouts.app', ['pageTitle' => 'Listado de materias adeudadas']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Listado de materias adeudadas']);
     }
 
     #[On('materias-adeudadas-preparacion-confirmada')]

@@ -139,7 +139,7 @@ class ConstanciaDocumentosIndex extends Component
             'alumnos' => $alumnos,
             'anoLectivo' => (int) ($ctx->terlecAno() ?? 0),
         ])
-            ->layout('layouts.app', ['pageTitle' => 'Constancia de Documentos']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Constancia de Documentos']);
     }
 
     /**

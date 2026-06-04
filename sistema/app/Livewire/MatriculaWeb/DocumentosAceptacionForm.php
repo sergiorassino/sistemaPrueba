@@ -273,6 +273,6 @@ class DocumentosAceptacionForm extends Component
             'nivelNombre' => schoolCtx()->nivelNombre(),
             'definiciones' => MatriculaWebDocumentos::definiciones(),
             'propiedades' => $this->mapaPropiedades(),
-        ])->layout('layouts.app', ['pageTitle' => 'Documentos — Matrícula web']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Documentos — Matrícula web']);
     }
 }

@@ -125,6 +125,6 @@ class MateriasAdeudadasInscripcionIndex extends Component
             'filas' => $filas,
             'totalFilas' => count($filas),
             'condiciones' => MateriasAdeudadasFiltros::CONDICIONES,
-        ])->layout('layouts.app', ['pageTitle' => 'Inscribir — materias adeudadas']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Inscribir — materias adeudadas']);
     }
 }

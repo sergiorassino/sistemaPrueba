@@ -151,7 +151,7 @@ class CuotasImportesForm extends Component
             'opcionesSigno' => CuotasImportesCatalog::opcionesSigno(),
             'opcionesPorcan' => CuotasImportesCatalog::opcionesPorcan(),
             'ano' => $ano,
-        ])->layout('layouts.app', [
+        ])->layout(layoutMenuStaff(), [
             'pageTitle' => 'Importes — '.trim((string) $cuota->nombre),
         ]);
     }

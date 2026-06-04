@@ -153,6 +153,6 @@ class EnvioMasivoInasistenciasDocentes extends Component
         return view('livewire.docentes.inasistencias.envio-masivo', [
             'bimestres' => InasistenciasDocentes::BIMESTRES,
             'pdfsRevision' => $this->pdfsGeneradosParaRevision(),
-        ])->layout('layouts.app', ['pageTitle' => 'Envío masivo — Inasistencias docentes']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Envío masivo — Inasistencias docentes']);
     }
 }

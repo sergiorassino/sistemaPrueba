@@ -277,6 +277,6 @@ class SincroGe extends Component
     public function render()
     {
         return view('livewire.calificaciones-secundario.sincro-ge')
-            ->layout('layouts.app', ['pageTitle' => 'Descargar calificaciones desde CIDI']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Descargar calificaciones desde CIDI']);
     }
 }

@@ -281,7 +281,7 @@ class CuotasPlantillaIndex extends Component
             'ano' => $ano,
             'hayCuotasModelo' => $cuotasModelo->isNotEmpty(),
             'cuotasModelo' => $cuotasModelo,
-        ])->layout('layouts.app', ['pageTitle' => "Crear / Editar Cuotas — {$ano}"]);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => "Crear / Editar Cuotas — {$ano}"]);
     }
 
     private function cargarFilas(): void

@@ -27,6 +27,6 @@ class InasistenciasDocenteShow extends Component
             'profesor' => $profesor,
             'inasistencias' => $inasistencias,
             'anoLectivo' => InasistenciasDocentes::anoLectivo(),
-        ])->layout('layouts.app', ['pageTitle' => 'Inasistencias del docente']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Inasistencias del docente']);
     }
 }

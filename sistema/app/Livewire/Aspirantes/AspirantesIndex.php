@@ -114,6 +114,6 @@ class AspirantesIndex extends Component
             'aspirantes'   => $aspirantes,
             'columnas'     => $columnas,
             'cursosModelo' => $cursosModelo,
-        ])->layout('layouts.app', ['pageTitle' => 'Aspirantes registrados']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Aspirantes registrados']);
     }
 }

@@ -38,6 +38,6 @@ class InasistenciasDocentesIndex extends Component
             'resumenPorProfesor' => $resumenPorProfesor,
             'bimestres' => InasistenciasDocentes::BIMESTRES,
             'anoLectivo' => $anoLectivo,
-        ])->layout('layouts.app', ['pageTitle' => 'Inasistencias docentes']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Inasistencias docentes']);
     }
 }

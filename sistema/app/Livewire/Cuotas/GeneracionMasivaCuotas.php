@@ -291,6 +291,6 @@ class GeneracionMasivaCuotas extends Component
             'cursosSeleccionadosResumen' => $cursosSeleccionadosResumen,
             'plantillas' => $plantillas,
             'ano' => $ano,
-        ])->layout('layouts.app', ['pageTitle' => "Generación masiva de cuotas — {$ano}"]);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => "Generación masiva de cuotas — {$ano}"]);
     }
 }

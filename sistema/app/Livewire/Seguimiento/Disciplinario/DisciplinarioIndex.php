@@ -178,7 +178,7 @@ class DisciplinarioIndex extends Component
         }
 
         return view('livewire.seguimiento.disciplinario.index', compact('cursos', 'alumnos', 'matricula', 'sanciones'))
-            ->layout('layouts.app', ['pageTitle' => 'Seguimiento disciplinario']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Seguimiento disciplinario']);
     }
 }
 

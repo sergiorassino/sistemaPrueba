@@ -70,6 +70,6 @@ class GenerarCuotaEstudiante extends Component
             'encabezado' => GestionAranceles::encabezadoEstudiante($this->idLegajo),
             'esRegular' => $esRegular,
             'plantillas' => $plantillas,
-        ])->layout('layouts.app', ['pageTitle' => 'Generar cuota']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Generar cuota']);
     }
 }

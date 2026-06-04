@@ -102,6 +102,6 @@ class CursosModeloIndex extends Component
             ->get();
 
         return view('livewire.aspirantes.cursos-modelo-index', compact('cursos'))
-            ->layout('layouts.app', ['pageTitle' => 'Aspirantes — Cursos modelo']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Aspirantes — Cursos modelo']);
     }
 }

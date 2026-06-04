@@ -339,6 +339,6 @@ class SincroCidiInasistencias extends Component
         return view('livewire.seguimiento.inasistencias.sincro-cidi', [
             'tiposInasistencia' => $tiposInasistencia,
             'textosCidiConfigurados' => $textosCidiConfigurados,
-        ])->layout('layouts.app', ['pageTitle' => 'Descargar inasistencias desde CIDI']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Descargar inasistencias desde CIDI']);
     }
 }

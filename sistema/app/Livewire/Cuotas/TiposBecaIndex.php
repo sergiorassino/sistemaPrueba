@@ -172,7 +172,7 @@ class TiposBecaIndex extends Component
         $becas = CuotasBeca::query()->orderBy('porcentaje')->orderBy('nombreBeca')->get();
 
         return view('livewire.cuotas.tipos-beca-index', compact('becas'))
-            ->layout('layouts.app', ['pageTitle' => 'Tipos de Beca']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Tipos de Beca']);
     }
 
     private function formatearPorcentaje(float $valor): string

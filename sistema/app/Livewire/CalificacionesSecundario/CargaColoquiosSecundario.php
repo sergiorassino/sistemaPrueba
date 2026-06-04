@@ -547,6 +547,6 @@ class CargaColoquiosSecundario extends Component
                 'notasPermitidasActiva',
             ),
         )
-            ->layout('layouts.app', ['pageTitle' => 'Coloquios Dic / Feb (secundario)']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Coloquios Dic / Feb (secundario)']);
     }
 }

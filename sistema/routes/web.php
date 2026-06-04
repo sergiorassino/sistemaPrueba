@@ -96,7 +96,10 @@ use App\Http\Controllers\Cuotas\ResumenBecasPorNivelCsvController;
 use App\Http\Controllers\Cuotas\ListadoEstudiantesPorCuotaPdfController;
 use App\Http\Controllers\Cuotas\ListadoPagosPorFechaPdfController;
 use App\Http\Controllers\Cuotas\ResumenPagosEstudiantePdfController;
+use App\Http\Controllers\Cuotas\SolicitudAyudaFamiliarPdfController;
 use App\Livewire\Cuotas\CuotaGeneradaForm;
+use App\Livewire\Cuotas\EdicionCuotasGeneradasIndex;
+use App\Livewire\Cuotas\CancelarTodasReservas;
 use App\Livewire\Cuotas\EliminacionMasivaCuotas;
 use App\Livewire\Cuotas\GeneracionMasivaCuotas;
 use App\Livewire\Cuotas\LibroArancelesIndex;
@@ -111,6 +114,7 @@ use App\Livewire\Cuotas\CuotasPlantillaIndex;
 use App\Livewire\Cuotas\TiposBecaIndex;
 use App\Livewire\Cuotas\AsignacionBecasIndex;
 use App\Livewire\Cuotas\ResumenBecasPorNivelIndex;
+use App\Livewire\Cuotas\SolicitudAyudaFamiliarIndex;
 use App\Livewire\Cuotas\HistorialPagosCuota;
 use App\Livewire\Cuotas\ImputarPagoForm;
 use App\Http\Controllers\Mora\EstadoDeudaFamiliarPdfController;
@@ -320,8 +324,66 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
         ->name('portalDocente.push.suscribir');
 });
 
-// Menú de Secretaría — directivos, secretarios, preceptores, administración, gabinete, etc.
-Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(function () {
+// Menú de Administración — cuotas, mora y módulos financieros (solo `niveles.id = 5`).
+Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'administracion.nivel'])->group(function () {
+    Route::prefix('cuotas')->group(function () {
+        Route::get('/tipos-beca', TiposBecaIndex::class)->name('cuotas.tipos-beca');
+        Route::get('/asignacion-becas', AsignacionBecasIndex::class)->name('cuotas.asignacion-becas');
+        Route::get('/resumen-becas-por-nivel', ResumenBecasPorNivelIndex::class)->name('cuotas.resumen-becas-por-nivel');
+        Route::get('/resumen-becas-por-nivel/csv', ResumenBecasPorNivelCsvController::class)->name('cuotas.resumen-becas-por-nivel.csv');
+        Route::get('/solicitud-ayuda-familiar', SolicitudAyudaFamiliarIndex::class)->name('cuotas.solicitud-ayuda-familiar');
+        Route::get('/solicitud-ayuda-familiar/pdf/{ref}', SolicitudAyudaFamiliarPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('cuotas.solicitud-ayuda-familiar.pdf');
+        Route::get('/', CuotasIndex::class)->name('cuotas.index');
+        Route::get('/plantillas', CuotasPlantillaIndex::class)->name('cuotas.plantillas');
+        Route::get('/importes', CuotasImportesIndex::class)->name('cuotas.importes.index');
+        Route::get('/importes/editar', CuotasImportesForm::class)->name('cuotas.importes.editar');
+        Route::get('/generacion-masiva', GeneracionMasivaCuotas::class)->name('cuotas.generacion-masiva');
+        Route::get('/eliminacion-masiva', EliminacionMasivaCuotas::class)->name('cuotas.eliminacion-masiva');
+        Route::get('/edicion-cuotas-generadas', EdicionCuotasGeneradasIndex::class)->name('cuotas.edicion-generadas');
+        Route::get('/cancelar-todas-reservas', CancelarTodasReservas::class)->name('cuotas.cancelar-todas-reservas');
+        Route::get('/libro-aranceles', LibroArancelesIndex::class)->name('cuotas.libro-aranceles');
+        Route::get('/libro-aranceles/pdf', LibroArancelesPdfController::class)->name('cuotas.libro-aranceles.pdf');
+        Route::get('/listado-pagos-por-fecha', ListadoPagosPorFechaIndex::class)->name('cuotas.listado-pagos-por-fecha');
+        Route::get('/listado-pagos-por-fecha/pdf', ListadoPagosPorFechaPdfController::class)->name('cuotas.listado-pagos-por-fecha.pdf');
+        Route::get('/listado-estudiantes-por-cuota', ListadoEstudiantesPorCuotaIndex::class)->name('cuotas.listado-estudiantes-por-cuota');
+        Route::get('/listado-estudiantes-por-cuota/pdf', ListadoEstudiantesPorCuotaPdfController::class)->name('cuotas.listado-estudiantes-por-cuota.pdf');
+        Route::get('/estudiante', CuotasEstudianteShow::class)->name('cuotas.estudiante');
+        Route::get('/estudiante/generar', GenerarCuotaEstudiante::class)->name('cuotas.estudiante.generar');
+        Route::get('/estudiante/cuota/editar', CuotaGeneradaForm::class)->name('cuotas.cuota.editar');
+        Route::get('/estudiante/cuota/imputar', ImputarPagoForm::class)->name('cuotas.cuota.imputar');
+        Route::get('/estudiante/cuota/historial-pagos', HistorialPagosCuota::class)->name('cuotas.cuota.historial-pagos');
+        Route::get('/comprobante/{ref}', ComprobantePagoCuotasPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('cuotas.comprobante');
+        Route::get('/comprobante-imputacion/{ref}', ComprobantePagoImputacionPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('cuotas.comprobante-imputacion');
+        Route::get('/resumen-pagos/{ref}', ResumenPagosEstudiantePdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('cuotas.resumen-pagos');
+    });
+
+    Route::prefix('mora')->group(function () {
+        Route::get('/estado-deuda-familiar', EstadoDeudaFamiliarIndex::class)->name('mora.estado-deuda-familiar');
+        Route::get('/estado-deuda-familiar/pdf/{ref}', EstadoDeudaFamiliarPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('mora.estado-deuda-familiar.pdf');
+        Route::get('/gestion-morosos', GestionMorososIndex::class)->name('mora.gestion-morosos');
+        Route::get('/gestion-morosos/textos-notificacion', TextosNotificacionDeudaForm::class)
+            ->name('mora.gestion-morosos.textos-notificacion');
+        Route::get('/gestion-morosos/pdf/{ref}', ListadoMorososPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('mora.gestion-morosos.pdf');
+        Route::get('/gestion-morosos/notificacion/{ref}', NotificacionDeudaPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('mora.gestion-morosos.notificacion');
+    });
+});
+
+// Menú de Secretaría / Administración — módulos compartidos (legajos, comunicación, configuración, etc.).
+Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(function () {
 
     Route::get('/', function () {
         return redirect()->route(\App\Support\ProfesorMenuPortal::rutaInicio());
@@ -391,6 +453,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
         ->middleware('permiso-config:'.\App\Support\PermisosConfiguracion::ASPIRANTES_CAMPOS)
         ->name('param.campos-aspirantes');
 
+    // Módulos pedagógicos (no disponibles en sesión Administración).
+    Route::middleware('menu.portal:secretaria')->group(function () {
+
     Route::middleware('permiso:'.PermisosMatriculaWeb::DOCUMENTOS_ACEPTACION)->prefix('matricula-web')->group(function () {
         Route::get('/documentos', DocumentosAceptacionForm::class)->name('matricula-web.documentos');
         Route::get('/documentos/{tipo}/archivo', DocumentoAceptacionArchivoController::class)
@@ -409,96 +474,10 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
             Route::get('/listado', AspirantesIndex::class)->name('aspirantes.listado');
         });
 
-    Route::get('/abm/profesores-por-materia', ProfesoresPorMateriaIndex::class)->middleware('permiso:11')->name('abm.profesores-por-materia');
-    Route::get('/abm/cursos-por-profesor', CursosPorProfesorIndex::class)->middleware('permiso:11')->name('abm.cursos-por-profesor');
     Route::get('/horarios/configuracion', HorariosConfigIndex::class)
         ->middleware('permiso:13')
         ->name('horarios.config');
-    Route::get('/parametrizacion/com-canales', ComCanalesIndex::class)
-        ->middleware('permiso:5')
-        ->name('param.com-canales');
-    Route::prefix('cuotas')->group(function () {
-        Route::get('/tipos-beca', TiposBecaIndex::class)->name('cuotas.tipos-beca');
-        Route::get('/asignacion-becas', AsignacionBecasIndex::class)->name('cuotas.asignacion-becas');
-        Route::get('/resumen-becas-por-nivel', ResumenBecasPorNivelIndex::class)->name('cuotas.resumen-becas-por-nivel');
-        Route::get('/resumen-becas-por-nivel/csv', ResumenBecasPorNivelCsvController::class)->name('cuotas.resumen-becas-por-nivel.csv');
-        Route::get('/', CuotasIndex::class)->name('cuotas.index');
-        Route::get('/plantillas', CuotasPlantillaIndex::class)->name('cuotas.plantillas');
-        Route::get('/importes', CuotasImportesIndex::class)->name('cuotas.importes.index');
-        Route::get('/importes/editar', CuotasImportesForm::class)->name('cuotas.importes.editar');
-        Route::get('/generacion-masiva', GeneracionMasivaCuotas::class)->name('cuotas.generacion-masiva');
-        Route::get('/eliminacion-masiva', EliminacionMasivaCuotas::class)->name('cuotas.eliminacion-masiva');
-        Route::get('/libro-aranceles', LibroArancelesIndex::class)->name('cuotas.libro-aranceles');
-        Route::get('/libro-aranceles/pdf', LibroArancelesPdfController::class)->name('cuotas.libro-aranceles.pdf');
-        Route::get('/listado-pagos-por-fecha', ListadoPagosPorFechaIndex::class)->name('cuotas.listado-pagos-por-fecha');
-        Route::get('/listado-pagos-por-fecha/pdf', ListadoPagosPorFechaPdfController::class)->name('cuotas.listado-pagos-por-fecha.pdf');
-        Route::get('/listado-estudiantes-por-cuota', ListadoEstudiantesPorCuotaIndex::class)->name('cuotas.listado-estudiantes-por-cuota');
-        Route::get('/listado-estudiantes-por-cuota/pdf', ListadoEstudiantesPorCuotaPdfController::class)->name('cuotas.listado-estudiantes-por-cuota.pdf');
-        Route::get('/estudiante', CuotasEstudianteShow::class)->name('cuotas.estudiante');
-        Route::get('/estudiante/generar', GenerarCuotaEstudiante::class)->name('cuotas.estudiante.generar');
-        Route::get('/estudiante/cuota/editar', CuotaGeneradaForm::class)->name('cuotas.cuota.editar');
-        Route::get('/estudiante/cuota/imputar', ImputarPagoForm::class)->name('cuotas.cuota.imputar');
-        Route::get('/estudiante/cuota/historial-pagos', HistorialPagosCuota::class)->name('cuotas.cuota.historial-pagos');
-        Route::get('/comprobante/{ref}', ComprobantePagoCuotasPdfController::class)
-            ->where('ref', '[A-Za-z0-9_-]+')
-            ->name('cuotas.comprobante');
-        Route::get('/comprobante-imputacion/{ref}', ComprobantePagoImputacionPdfController::class)
-            ->where('ref', '[A-Za-z0-9_-]+')
-            ->name('cuotas.comprobante-imputacion');
-        Route::get('/resumen-pagos/{ref}', ResumenPagosEstudiantePdfController::class)
-            ->where('ref', '[A-Za-z0-9_-]+')
-            ->name('cuotas.resumen-pagos');
-    });
 
-    Route::prefix('mora')->group(function () {
-        Route::get('/estado-deuda-familiar', EstadoDeudaFamiliarIndex::class)->name('mora.estado-deuda-familiar');
-        Route::get('/estado-deuda-familiar/pdf/{ref}', EstadoDeudaFamiliarPdfController::class)
-            ->where('ref', '[A-Za-z0-9_-]+')
-            ->name('mora.estado-deuda-familiar.pdf');
-        Route::get('/gestion-morosos', GestionMorososIndex::class)->name('mora.gestion-morosos');
-        Route::get('/gestion-morosos/textos-notificacion', TextosNotificacionDeudaForm::class)
-            ->name('mora.gestion-morosos.textos-notificacion');
-        Route::get('/gestion-morosos/pdf/{ref}', ListadoMorososPdfController::class)
-            ->where('ref', '[A-Za-z0-9_-]+')
-            ->name('mora.gestion-morosos.pdf');
-        Route::get('/gestion-morosos/notificacion/{ref}', NotificacionDeudaPdfController::class)
-            ->where('ref', '[A-Za-z0-9_-]+')
-            ->name('mora.gestion-morosos.notificacion');
-    });
-
-    Route::get('/abm/legajos', LegajosIndex::class)->name('abm.legajos');
-    Route::get('/abm/legajos/carga-por-curso', LegajoCargaPorCurso::class)->middleware('permiso:2')->name('abm.legajos.carga-por-curso');
-    Route::get('/abm/legajos/nuevo', LegajoForm::class)->middleware('permiso:2')->name('abm.legajos.create');
-    Route::get('/abm/legajos/editar', LegajoForm::class)->name('abm.legajos.edit');
-    Route::get('/abm/legajos/familia', LegajoFamilia::class)->name('abm.legajos.familia');
-    Route::get('/abm/legajos/buscar-familias', LegajoBuscarFamilias::class)->name('abm.legajos.buscar-familias');
-
-    Route::get('/abm/legajos-profesor', LegajosProfesorIndex::class)->middleware('permiso:11')->name('abm.legajos-profesor');
-    Route::get('/abm/legajos-profesor/nuevo', LegajoProfesorForm::class)->middleware('permiso:11')->name('abm.legajos-profesor.create');
-    Route::get('/abm/legajos-profesor/{id}/editar', LegajoProfesorForm::class)->whereNumber('id')->name('abm.legajos-profesor.edit');
-
-    Route::middleware('permiso:'.InasistenciasDocentes::PERMISO_ORDEN)->prefix('docentes/inasistencias')->group(function () {
-        Route::get('/', InasistenciasDocentesIndex::class)->name('docentes.inasistencias');
-        Route::get('/envio-masivo', EnvioMasivoInasistenciasDocentes::class)->name('docentes.inasistencias.envio-masivo');
-        Route::get('/ranking', RankingInasistenciasMateriasCursos::class)->name('docentes.inasistencias.ranking');
-        Route::get('/ranking/exportar-csv', RankingInasistenciasMateriasCursosCsvController::class)->name('docentes.inasistencias.ranking.csv');
-        Route::get('/{idProfesor}', InasistenciasDocenteShow::class)->whereNumber('idProfesor')->name('docentes.inasistencias.show');
-        Route::get('/{idProfesor}/nuevo', InasistenciaDocenteForm::class)->whereNumber('idProfesor')->name('docentes.inasistencias.create');
-        Route::get('/{idProfesor}/{id}/editar', InasistenciaDocenteForm::class)->whereNumber(['idProfesor', 'id'])->name('docentes.inasistencias.edit');
-        Route::get('/{idProfesor}/cargos/{idCxp?}', CargosDocenteIndex::class)->whereNumber(['idProfesor', 'idCxp'])->name('docentes.inasistencias.cargos');
-        Route::get('/{idProfesor}/informe/{bimestre}', InformeBimestreShow::class)->whereNumber(['idProfesor', 'bimestre'])->name('docentes.inasistencias.informe');
-        Route::get('/{idProfesor}/informe/{bimestre}/pdf', InformeInasistenciasDocentePdfController::class)
-            ->whereNumber(['idProfesor', 'bimestre'])
-            ->name('docentes.inasistencias.informe.pdf');
-    });
-
-    Route::get('/listados/por-curso', ListadoPorCurso::class)->name('listados.por-curso');
-    Route::get('/listados/por-curso/listado', ListadoCursoPdfController::class)->name('listados.por-curso.pdf');
-    Route::get('/listados/exportar-excel', EstudiantesExcelController::class)
-        ->name('listados.exportar-excel');
-    Route::get('/listados/libro-matricula', LibroMatricula::class)->name('listados.libro-matricula');
-    Route::get('/listados/libro-matricula/pdf', LibroMatriculaPdfController::class)
-        ->name('listados.libro-matricula.pdf');
     Route::get('/listados/estudiantes-datos', EstudiantesDatosExport::class)
         ->name('listados.estudiantes-datos');
     Route::get('/listados/estudiantes-datos/excel', EstudiantesDatosExcelController::class)
@@ -720,4 +699,46 @@ Route::middleware(['auth', 'school.context', 'menu.portal:secretaria'])->group(f
         ->name('seguimiento.partes-diarios');
     Route::get('/seguimiento/partes-diarios/pdf', ParteDiarioPreceptorPdfController::class)
         ->name('seguimiento.partes-diarios.pdf');
+
+    }); // fin menu.portal:secretaria (pedagógico)
+
+    Route::get('/abm/profesores-por-materia', ProfesoresPorMateriaIndex::class)->middleware('permiso:'.\App\Support\PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO)->name('abm.profesores-por-materia');
+    Route::get('/abm/cursos-por-profesor', CursosPorProfesorIndex::class)->middleware('permiso:'.\App\Support\PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO)->name('abm.cursos-por-profesor');
+    Route::get('/parametrizacion/com-canales', ComCanalesIndex::class)
+        ->middleware('permiso:5')
+        ->name('param.com-canales');
+
+    Route::get('/abm/legajos', LegajosIndex::class)->name('abm.legajos');
+    Route::get('/abm/legajos/carga-por-curso', LegajoCargaPorCurso::class)->middleware('permiso:2')->name('abm.legajos.carga-por-curso');
+    Route::get('/abm/legajos/nuevo', LegajoForm::class)->middleware('permiso:2')->name('abm.legajos.create');
+    Route::get('/abm/legajos/editar', LegajoForm::class)->name('abm.legajos.edit');
+    Route::get('/abm/legajos/familia', LegajoFamilia::class)->name('abm.legajos.familia');
+    Route::get('/abm/legajos/buscar-familias', LegajoBuscarFamilias::class)->name('abm.legajos.buscar-familias');
+
+    Route::get('/abm/legajos-profesor', LegajosProfesorIndex::class)->middleware('permiso:'.\App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES)->name('abm.legajos-profesor');
+    Route::get('/abm/legajos-profesor/nuevo', LegajoProfesorForm::class)->middleware('permiso:'.\App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES)->name('abm.legajos-profesor.create');
+    Route::get('/abm/legajos-profesor/{id}/editar', LegajoProfesorForm::class)->whereNumber('id')->name('abm.legajos-profesor.edit');
+
+    Route::middleware('permiso:'.InasistenciasDocentes::PERMISO_ORDEN)->prefix('docentes/inasistencias')->group(function () {
+        Route::get('/', InasistenciasDocentesIndex::class)->name('docentes.inasistencias');
+        Route::get('/envio-masivo', EnvioMasivoInasistenciasDocentes::class)->name('docentes.inasistencias.envio-masivo');
+        Route::get('/ranking', RankingInasistenciasMateriasCursos::class)->name('docentes.inasistencias.ranking');
+        Route::get('/ranking/exportar-csv', RankingInasistenciasMateriasCursosCsvController::class)->name('docentes.inasistencias.ranking.csv');
+        Route::get('/{idProfesor}', InasistenciasDocenteShow::class)->whereNumber('idProfesor')->name('docentes.inasistencias.show');
+        Route::get('/{idProfesor}/nuevo', InasistenciaDocenteForm::class)->whereNumber('idProfesor')->name('docentes.inasistencias.create');
+        Route::get('/{idProfesor}/{id}/editar', InasistenciaDocenteForm::class)->whereNumber(['idProfesor', 'id'])->name('docentes.inasistencias.edit');
+        Route::get('/{idProfesor}/cargos/{idCxp?}', CargosDocenteIndex::class)->whereNumber(['idProfesor', 'idCxp'])->name('docentes.inasistencias.cargos');
+        Route::get('/{idProfesor}/informe/{bimestre}', InformeBimestreShow::class)->whereNumber(['idProfesor', 'bimestre'])->name('docentes.inasistencias.informe');
+        Route::get('/{idProfesor}/informe/{bimestre}/pdf', InformeInasistenciasDocentePdfController::class)
+            ->whereNumber(['idProfesor', 'bimestre'])
+            ->name('docentes.inasistencias.informe.pdf');
+    });
+
+    Route::get('/listados/por-curso', ListadoPorCurso::class)->name('listados.por-curso');
+    Route::get('/listados/por-curso/listado', ListadoCursoPdfController::class)->name('listados.por-curso.pdf');
+    Route::get('/listados/exportar-excel', EstudiantesExcelController::class)
+        ->name('listados.exportar-excel');
+    Route::get('/listados/libro-matricula', LibroMatricula::class)->name('listados.libro-matricula');
+    Route::get('/listados/libro-matricula/pdf', LibroMatriculaPdfController::class)
+        ->name('listados.libro-matricula.pdf');
 });

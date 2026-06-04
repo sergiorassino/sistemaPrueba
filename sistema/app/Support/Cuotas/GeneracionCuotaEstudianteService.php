@@ -277,6 +277,34 @@ final class GeneracionCuotaEstudianteService
         return max(0, $importe);
     }
 
+    /**
+     * Importe neto desde importe base (curso) y la beca del registro en cuotasgeneradas.
+     * Null si la plantilla es matrícula (no aplica recálculo masivo por beca).
+     */
+    public static function importeDesdeBaseYBecaEnRegistro(CuotaGenerada $registro, float $importeBase): ?float
+    {
+        $importeBase = round($importeBase, 2);
+        $cuota = $registro->cuota;
+
+        if ($cuota === null) {
+            return max(0.0, $importeBase);
+        }
+
+        if ((int) ($cuota->idCuotastipo ?? 0) === self::TIPO_MATRICULA) {
+            return null;
+        }
+
+        if ((int) ($cuota->sinConBeca ?? 0) === 1) {
+            $idBeca = (int) ($registro->idCuotasbecas ?? self::BECA_CUOTA_ENTERA);
+            $porcentaje = (float) (CuotasBeca::query()->whereKey($idBeca)->value('porcentaje') ?? 0);
+            $importe = round($importeBase - ($importeBase * $porcentaje / 100), 2);
+
+            return max(0.0, $importe);
+        }
+
+        return max(0.0, $importeBase);
+    }
+
     private static function importeMatriculaConDescuentoReservas(Matricula $matricula, float $importeBase): float
     {
         $totales = CuotaGenerada::query()

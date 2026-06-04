@@ -69,6 +69,6 @@ class CierreAnualHistorial extends Component
         return view('livewire.calificaciones-secundario.cierre-anual-historial', [
             'filas' => $filas,
         ])
-            ->layout('layouts.app', ['pageTitle' => 'Historial · Cierre anual']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Historial · Cierre anual']);
     }
 }

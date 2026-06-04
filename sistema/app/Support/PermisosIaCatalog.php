@@ -34,6 +34,9 @@ final class PermisosIaCatalog
 
     public const LEGAJOS_DOCENTES = 11;
 
+    /** Asignación ppc y consulta cursos por profesor (separado del ABM de legajo docente). */
+    public const ASIGNACION_PROFESORES_POR_CURSO = 48;
+
     public const EXAMENES = 12;
 
     public const HORARIOS = 13;
@@ -97,7 +100,8 @@ final class PermisosIaCatalog
             ['id' => 9, 'orden' => self::COM_REVISION, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Acceder a la bandeja de revisión de comunicados.'],
             ['id' => 10, 'orden' => self::CALIF_SINCRO_CARGA, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Importar calificaciones desde CIDI/GE y carga manual de calificaciones (secundario).'],
             ['id' => 11, 'orden' => self::CALIF_COLOQUIOS, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Carga de coloquios Dic / Feb (secundario).'],
-            ['id' => 12, 'orden' => self::LEGAJOS_DOCENTES, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Crear, editar y eliminar legajos de docentes; asignar y quitar docentes en materias (ppc).'],
+            ['id' => 12, 'orden' => self::LEGAJOS_DOCENTES, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Crear, editar y eliminar legajos de docentes (ABM legajo docente).'],
+            ['id' => 48, 'orden' => self::ASIGNACION_PROFESORES_POR_CURSO, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Asignar y quitar docentes en materias por curso (ppc); consultar cursos por profesor.'],
             ['id' => 13, 'orden' => self::EXAMENES, 'tema' => 'EXÁMENES', 'descripcion' => 'Módulo de exámenes: materias adeudadas, gestión, listados y borrado de inscripciones.'],
             ['id' => 14, 'orden' => self::HORARIOS, 'tema' => 'HORARIOS', 'descripcion' => 'Configuración de horarios (turnos, días, reloj) y carga de horas cátedra por docente.'],
             ['id' => 15, 'orden' => self::PERMISOS_POR_USUARIO, 'tema' => 'ADMINISTRACIÓN', 'descripcion' => 'Consultar permisos concedidos por usuario (módulo Permisos por Usuario).'],

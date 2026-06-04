@@ -168,6 +168,6 @@ class ActaVolanteColoquiosSecundario extends Component
             'cantidadMateriasSeleccionadas',
             'pdfUrl',
         ))
-            ->layout('layouts.app', ['pageTitle' => 'Actas volantes de coloquio']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Actas volantes de coloquio']);
     }
 }

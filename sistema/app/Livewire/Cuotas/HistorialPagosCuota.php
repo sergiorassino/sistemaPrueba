@@ -68,6 +68,6 @@ class HistorialPagosCuota extends Component
                 $this->idCuotaGenerada,
                 $this->idLegajo,
             ),
-        ])->layout('layouts.app', ['pageTitle' => 'Historial de pagos']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Historial de pagos']);
     }
 }

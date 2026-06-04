@@ -78,6 +78,6 @@ class ConsultaCalificacionesSecundario extends Component
             'cursos' => $cursos,
             'matriculas' => $matriculas,
         ])
-            ->layout('layouts.app', ['pageTitle' => 'Consulta de calificaciones (secundario)']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Consulta de calificaciones (secundario)']);
     }
 }

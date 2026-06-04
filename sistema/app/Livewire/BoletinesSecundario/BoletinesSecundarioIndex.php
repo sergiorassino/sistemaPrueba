@@ -174,6 +174,6 @@ class BoletinesSecundarioIndex extends Component
             'todasMarcadas' => $this->todasLasMatriculasMarcadas(),
             'hayMatriculas' => $matriculas->isNotEmpty(),
         ])
-            ->layout('layouts.app', ['pageTitle' => 'Boletines (secundario) v1.0']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Boletines (secundario) v1.0']);
     }
 }

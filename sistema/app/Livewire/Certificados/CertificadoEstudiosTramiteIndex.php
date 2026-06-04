@@ -133,7 +133,7 @@ class CertificadoEstudiosTramiteIndex extends Component
             'alumnos' => $alumnos,
             'anoLectivo' => (int) ($ctx->terlecAno() ?? 0),
         ])
-            ->layout('layouts.app', ['pageTitle' => 'Constancia de Certificado en Trámite']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Constancia de Certificado en Trámite']);
     }
 
     /**

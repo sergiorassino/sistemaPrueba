@@ -96,6 +96,6 @@ class CamposProfesorIndex extends Component
             ->get(['id', 'nombre']);
 
         return view('listados::parametrizacion.campos-legajo-profesor-index', compact('campos', 'solapas'))
-            ->layout('layouts.app', ['pageTitle' => 'Campos activos (Legajo del docente)']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Campos activos (Legajo del docente)']);
     }
 }

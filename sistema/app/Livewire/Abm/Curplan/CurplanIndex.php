@@ -89,7 +89,7 @@ class CurplanIndex extends Component
             ->get();
 
         return view('livewire.abm.curplan.index', compact('curplanes', 'planes'))
-            ->layout('layouts.app', ['pageTitle' => 'Cursos modelo (CurPlan)']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Cursos modelo (CurPlan)']);
     }
 }
 

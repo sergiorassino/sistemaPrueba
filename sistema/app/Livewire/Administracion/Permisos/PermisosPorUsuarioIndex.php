@@ -124,6 +124,6 @@ class PermisosPorUsuarioIndex extends Component
         return view('livewire.administracion.permisos.por-usuario-index', [
             'filas' => $filas,
             'totalUsuarios' => $filas->count(),
-        ])->layout('layouts.app', ['pageTitle' => 'Permisos por Usuario']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Permisos por Usuario']);
     }
 }

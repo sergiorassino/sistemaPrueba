@@ -137,6 +137,6 @@ class SolapaLegajoIndex extends Component
         $solapas = SolapaLegajo::orderBy('orden')->get();
 
         return view('listados::parametrizacion.solapa-legajo-index', compact('solapas'))
-            ->layout('layouts.app', ['pageTitle' => 'Solapas del Legajo']);
+            ->layout(layoutMenuStaff(), ['pageTitle' => 'Solapas del Legajo']);
     }
 }

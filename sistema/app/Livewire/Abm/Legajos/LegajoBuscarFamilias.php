@@ -151,6 +151,6 @@ class LegajoBuscarFamilias extends Component
             'hijos' => $hijos,
             'minCharsBusqueda' => self::MIN_CHARS_BUSQUEDA,
             'etiquetasFamilia' => self::etiquetasColumnasFamilia(),
-        ])->layout('layouts.app', ['pageTitle' => 'Buscar familias']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Buscar familias']);
     }
 }

@@ -136,6 +136,6 @@ class ComAuditoriaIndex extends Component
 
         return view('comunicaciones::livewire.comunicaciones.com-auditoria-index', [
             'registros' => $registros,
-        ])->layout('layouts.app', ['pageTitle' => 'Auditoría comunicación institucional']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Auditoría comunicación institucional']);
     }
 }

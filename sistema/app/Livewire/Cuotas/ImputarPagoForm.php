@@ -269,6 +269,6 @@ class ImputarPagoForm extends Component
             'registro' => $registro,
             'encabezado' => GestionAranceles::encabezadoEstudiante($this->idLegajo),
             'mediosPago' => GestionAranceles::mediosDePagoImputacion(),
-        ])->layout('layouts.app', ['pageTitle' => 'Imputar pago']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Imputar pago']);
     }
 }

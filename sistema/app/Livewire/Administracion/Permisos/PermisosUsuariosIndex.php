@@ -177,7 +177,7 @@ class PermisosUsuariosIndex extends Component
             'profesorSeleccionado' => $profesorSeleccionado,
             'catalogo' => $catalogo,
             'porTema' => $porTema,
-        ])->layout('layouts.app', ['pageTitle' => 'Permisos de Usuarios']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Permisos de Usuarios']);
     }
 }
 

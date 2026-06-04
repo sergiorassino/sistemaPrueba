@@ -161,6 +161,6 @@ class EnviarPush extends Component
 
         return view('livewire.push.enviar-push', [
             'cursos' => $cursos,
-        ])->layout('layouts.app', ['pageTitle' => 'Enviar notificación push']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Enviar notificación push']);
     }
 }

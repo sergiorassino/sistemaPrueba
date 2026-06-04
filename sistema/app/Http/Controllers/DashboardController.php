@@ -25,7 +25,7 @@ class DashboardController extends Controller
         }
 
         return view('dashboard', [
-            'layout'            => $modoPortalDocente ? 'layouts.docente' : 'layouts.app',
+            'layout'            => $modoPortalDocente ? 'layouts.docente' : ProfesorMenuPortal::layoutStaff(),
             'modoPortalDocente' => $modoPortalDocente,
             'nombreUsuario'     => $nombre !== '' ? $nombre : 'Usuario',
             'bandeja'           => $bandeja,

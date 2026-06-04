@@ -291,6 +291,6 @@ class EliminacionMasivaCuotas extends Component
             'cursosSeleccionadosResumen' => $cursosSeleccionadosResumen,
             'plantillas' => $plantillas,
             'ano' => $ano,
-        ])->layout('layouts.app', ['pageTitle' => "Eliminar masivamente cuotas — {$ano}"]);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => "Eliminar masivamente cuotas — {$ano}"]);
     }
 }

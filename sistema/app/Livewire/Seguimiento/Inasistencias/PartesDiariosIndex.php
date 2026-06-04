@@ -252,6 +252,6 @@ class PartesDiariosIndex extends Component
             'puedeGenerarPdf' => $this->puedeGenerarPdf(),
             'cantidadSeleccionados' => $cantidadSeleccionados,
             'pdfUrl' => $pdfUrl,
-        ])->layout('layouts.app', ['pageTitle' => 'Parte diario del preceptor']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Parte diario del preceptor']);
     }
 }

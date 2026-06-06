@@ -2,21 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Listados\EstudiantesDatosConsulta;
 use App\Support\Listados\EstudiantesDatosExporter;
+use App\Support\Listados\EstudiantesDatosTcpdf;
 use App\Support\Navegacion\MenuSecretariaPerfil;
+use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class EstudiantesDatosExcelController extends Controller
+class EstudiantesDatosPdfController extends Controller
 {
-    public function __invoke(Request $request, EstudiantesDatosExporter $exporter): StreamedResponse
+    public function __invoke(Request $request, EstudiantesDatosExporter $exporter)
     {
         MenuSecretariaPerfil::abortSiNoViajesSalidasEducativas();
 
-        $key = 'estudiantes-datos-xlsx:'.(auth()->id() ?? $request->ip());
+        $key = 'estudiantes-datos-pdf:'.(auth()->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 10)) {
             abort(429, 'Demasiadas solicitudes. Intente nuevamente en breve.');
         }
@@ -48,15 +50,18 @@ class EstudiantesDatosExcelController extends Controller
             abort(404);
         }
 
-        $resultado = $exporter->buildXlsx($matriculaIds);
+        $pdf = EstudiantesDatosTcpdf::generar([
+            'filas' => $filas,
+            'exporter' => $exporter,
+            'nivelNombre' => SchoolAlcancePedagogico::etiquetaNivelParaInformes(),
+            'ano' => $ctx->terlecAno(),
+            'totalAlumnos' => $filas->count(),
+            'pdfHeader' => schoolPdfHeaderData(),
+        ]);
 
-        return response()->streamDownload(
-            fn () => $exporter->escribirEnSalida($resultado['spreadsheet']),
-            $resultado['filename'],
-            [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'Cache-Control' => 'max-age=0, no-cache, no-store, must-revalidate',
-            ],
+        return EstudiantesDatosTcpdf::respuestaHttp(
+            $pdf,
+            EstudiantesDatosConsulta::nombreArchivoPdf(),
         );
     }
 }

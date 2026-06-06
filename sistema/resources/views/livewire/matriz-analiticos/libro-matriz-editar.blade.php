@@ -19,15 +19,11 @@
                     @endif
                 </div>
                 <div class="flex shrink-0 flex-wrap gap-1.5">
-                    <x-nav-contexto-estudiante
-                        destino="matrizAnaliticos.libroMatriz.datosAdicionales"
-                        :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::MATRIZ_ANALITICOS"
-                        :id-legajos="$idLegajos"
-                        class="inline">
-                        <span class="inline-flex items-center justify-center rounded-lg border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20">
-                            Datos adicionales
-                        </span>
-                    </x-nav-contexto-estudiante>
+                    <button type="button"
+                            wire:click="abrirModalDatosAdicionales"
+                            class="inline-flex items-center justify-center rounded-lg border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                        Datos Adicionales
+                    </button>
                     <button type="button"
                             wire:click="solicitarVolver"
                             class="inline-flex items-center justify-center gap-1 rounded-lg border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
@@ -59,11 +55,7 @@
                       'se-matriz-edit-panel--solo-grilla' => count($lineas) === 0,
                   ])>
                 @if (count($lineas) > 0)
-                    <div class="se-matriz-edit-bar se-matriz-edit-bar--top">
-                        <p class="se-matriz-edit-hint min-w-0 flex-1">
-                            Calif · Mes · Año · Cond. · Escuapro editables.
-                            <span class="text-neutral-500">Apro: 0=Cursando, 1=Adeudada, 2=Aprobada.</span>
-                        </p>
+                    <div class="se-matriz-edit-bar se-matriz-edit-bar--top justify-end">
                         <button type="submit"
                                 wire:loading.attr="disabled"
                                 wire:target="guardar"
@@ -247,4 +239,73 @@
         </div>
         @endteleport
     @endif
+
+    @if ($modalDatosAdicionalesAbierto)
+        @teleport('body')
+        <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="matriz-datos-adicionales-titulo"
+             wire:key="matriz-modal-datos-adicionales">
+            <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm"
+                 wire:click="cerrarModalDatosAdicionales"
+                 aria-hidden="true"></div>
+
+            <div class="relative z-10 my-auto flex w-full max-w-2xl max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl border border-accent-200 bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),44rem)]"
+                 @click.stop>
+                <div class="flex shrink-0 items-center justify-between gap-3 border-b border-accent-200 px-5 py-4">
+                    <h3 id="matriz-datos-adicionales-titulo" class="text-base font-bold text-neutral-900">
+                        Datos Adicionales
+                    </h3>
+                    <button type="button"
+                            wire:click="guardarDatosAdicionales"
+                            wire:loading.attr="disabled"
+                            wire:target="guardarDatosAdicionales"
+                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-60">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" wire:loading.remove wire:target="guardarDatosAdicionales" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                        </svg>
+                        <span wire:loading.remove wire:target="guardarDatosAdicionales">Guardar</span>
+                        <span wire:loading wire:target="guardarDatosAdicionales">Guardando…</span>
+                    </button>
+                </div>
+
+                <form wire:submit="guardarDatosAdicionales" class="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+                    @error('guardarDatosAdicionales')
+                        <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
+                            {{ $message }}
+                        </div>
+                    @enderror
+
+                    @include('livewire.matriz-analiticos.partials.libro-matriz-datos-adicionales-campos', ['idPrefijo' => 'modal-da-'])
+
+                    @if ($idAnaliticoDato)
+                        <p class="mt-4 text-xs text-neutral-400">Registro existente · se actualizará al guardar.</p>
+                    @else
+                        <p class="mt-4 text-xs text-neutral-400">Sin registro previo: al guardar se creará uno nuevo para este legajo.</p>
+                    @endif
+                </form>
+
+                <div class="flex shrink-0 justify-end border-t border-accent-200 bg-accent-50/80 px-5 py-3">
+                    <button type="button"
+                            wire:click="cerrarModalDatosAdicionales"
+                            class="btn-secondary">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+        @endteleport
+    @endif
 </div>
+
+@script
+<script>
+    $wire.on('se-swal-exito', ({ mensaje }) => {
+        if (typeof seSwalExito === 'function') {
+            seSwalExito(mensaje ?? 'Guardado.');
+        }
+    });
+</script>
+@endscript

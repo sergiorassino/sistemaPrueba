@@ -85,6 +85,7 @@
                                             destino="matrizAnaliticos.libroMatriz.editar"
                                             :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::MATRIZ_ANALITICOS"
                                             :id-legajos="$a['idLegajos']"
+                                            :buscar="$buscar"
                                             class="inline">
                                             <span class="se-matriz-list-iconbtn" title="Editar calificaciones en matriz">
                                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

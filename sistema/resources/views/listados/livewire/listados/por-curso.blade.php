@@ -26,6 +26,8 @@
                         <span class="text-xl font-bold tabular-nums">{{ count($cursosElegidos) }}</span>
                     </span>
                     <a href="{{ $this->excelUrlCompleto }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
                        @class([
                            'inline-flex items-center justify-center rounded-2xl border px-4 py-3 text-sm font-semibold shadow-sm transition-colors',
                            'border-white/20 bg-white text-primary-700 hover:bg-accent-50' => $this->puedeExportarExcelCompleto(),
@@ -226,6 +228,107 @@
                 </div>
             </div>
 
+            <div class="border-t border-accent-100 bg-accent-50/40 px-5 py-4">
+                <div class="flex flex-col gap-3">
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">Plantillas guardadas</p>
+                        <p class="mt-1 text-sm text-neutral-600">Elija una plantilla para cargar sus columnas y condición. Puede actualizar o eliminar la seleccionada, o guardar la configuración actual como plantilla nueva.</p>
+                    </div>
+
+                    @if (count($plantillas) > 0)
+                        <div class="se-toolbar-pocos-campos flex flex-wrap gap-2">
+                            <button type="button"
+                                    wire:click="actualizarPlantilla"
+                                    @class([
+                                        'btn-secondary btn-sm whitespace-nowrap',
+                                        'pointer-events-none opacity-50' => $plantillaSeleccionada === null,
+                                    ])
+                                    @disabled($plantillaSeleccionada === null)>
+                                Actualizar seleccionada
+                            </button>
+                            <button type="button"
+                                    x-on:click="seSwalConfirmar('¿Eliminar la plantilla seleccionada?', 'Eliminar plantilla').then(ok => ok && $wire.eliminarPlantillaSeleccionada())"
+                                    @class([
+                                        'btn-secondary btn-sm whitespace-nowrap text-red-700 hover:border-red-200 hover:bg-red-50',
+                                        'pointer-events-none opacity-50' => $plantillaSeleccionada === null,
+                                    ])
+                                    @disabled($plantillaSeleccionada === null)>
+                                Eliminar seleccionada
+                            </button>
+                        </div>
+
+                        <div class="w-full overflow-x-auto rounded-2xl border border-accent-200 bg-white">
+                            <table class="min-w-full border-collapse text-sm">
+                                <thead class="bg-accent-50">
+                                    <tr>
+                                        <th class="table-header w-12 text-center" scope="col">
+                                            <span class="sr-only">Seleccionar</span>
+                                        </th>
+                                        <th class="table-header min-w-[10rem]" scope="col">Nombre</th>
+                                        <th class="table-header w-28" scope="col">Condición</th>
+                                        <th class="table-header min-w-[14rem]" scope="col">Campos</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-accent-200">
+                                    @foreach ($plantillas as $plantilla)
+                                        <tr wire:key="plantilla-{{ $plantilla['id'] }}"
+                                            wire:click="$set('plantillaSeleccionada', {{ $plantilla['id'] }})"
+                                            @class([
+                                                'cursor-pointer transition-colors hover:bg-accent-50/70',
+                                                'bg-primary-50/60' => $plantillaSeleccionada === $plantilla['id'],
+                                            ])>
+                                            <td class="table-cell text-center" wire:click.stop>
+                                                <input type="radio"
+                                                       name="plantilla-listado"
+                                                       value="{{ $plantilla['id'] }}"
+                                                       wire:model.live="plantillaSeleccionada"
+                                                       class="h-4 w-4 border-accent-300 text-primary-600 focus:ring-primary-500"
+                                                       aria-label="Usar plantilla {{ $plantilla['nombre'] }}" />
+                                            </td>
+                                            <td class="table-cell font-semibold text-neutral-900">
+                                                {{ $plantilla['nombre'] }}
+                                            </td>
+                                            <td class="table-cell text-neutral-700">
+                                                <span class="se-pill">{{ $plantilla['condicionEtiqueta'] }}</span>
+                                            </td>
+                                            <td class="table-cell text-neutral-600">
+                                                @if ($plantilla['camposCantidad'] > 0)
+                                                    {{ implode(', ', $plantilla['camposEtiquetas']) }}
+                                                @else
+                                                    <span class="text-neutral-400">Sin columnas</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <p class="text-sm text-neutral-500">Todavía no hay plantillas guardadas para este nivel.</p>
+                    @endif
+
+                    <div class="flex flex-col gap-2 border-t border-accent-200/80 pt-4 sm:flex-row sm:items-end">
+                        <div class="min-w-0 flex-1">
+                            <label for="nombre-plantilla-listado" class="form-label">Nombre de la plantilla</label>
+                            <input id="nombre-plantilla-listado"
+                                   type="text"
+                                   maxlength="120"
+                                   wire:model="nombrePlantilla"
+                                   placeholder="Ej.: Padrón con sexo y fecha de nac."
+                                   class="form-input max-w-md" />
+                            @error('nombrePlantilla')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" wire:click="guardarComoPlantilla" class="btn-primary btn-sm whitespace-nowrap">
+                                Guardar como nueva
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="max-h-[22rem] overflow-y-auto border-t border-accent-100 bg-white p-5 sm:p-6">
                 <div class="space-y-6">
                     @foreach ($camposPorGrupo as $bloque)
@@ -251,15 +354,43 @@
                 </div>
             </div>
 
+            <div class="border-t border-accent-200 bg-white px-5 py-4">
+                <label for="subtitulo-listado-curso" class="form-label">Subtítulo del listado (PDF)</label>
+                <input id="subtitulo-listado-curso"
+                       type="text"
+                       maxlength="200"
+                       wire:model="subtituloListado"
+                       placeholder="Opcional. Aparece en el PDF entre el encabezado y las columnas."
+                       class="form-input max-w-2xl" />
+                <p class="mt-1 text-xs text-neutral-500">No se guarda en la base de datos; se mantiene mientras permanezca en este módulo.</p>
+            </div>
+
             <div class="flex flex-col gap-3 border-t border-accent-200 bg-accent-50/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex flex-wrap items-center gap-3">
-                    <a class="btn-primary @if(!$this->puedeGenerarPdf()) pointer-events-none opacity-50 @endif"
+                    <button type="button"
+                            data-pdf-base="{{ $this->pdfUrlBase }}"
+                            @class([
+                                'btn-primary',
+                                'pointer-events-none opacity-50' => ! $this->puedeGenerarPdf(),
+                            ])
+                            @disabled(! $this->puedeGenerarPdf())
+                            x-on:click="
+                                const base = $el.dataset.pdfBase;
+                                if (!base || base === '#') return;
+                                const input = document.getElementById('subtitulo-listado-curso');
+                                const texto = input ? String(input.value || '').trim().slice(0, 200) : '';
+                                let url = base;
+                                if (texto) {
+                                    url += (url.includes('?') ? '&' : '?') + 'subtitulo=' + encodeURIComponent(texto);
+                                }
+                                $wire.set('subtituloListado', texto);
+                                window.open(url, '_blank', 'noopener,noreferrer');
+                            ">
+                        Abrir PDF en pestaña nueva
+                    </button>
+                    <a class="btn-secondary @if(!$this->puedeGenerarPdf()) pointer-events-none opacity-50 @endif"
                        target="_blank"
                        rel="noopener noreferrer"
-                       href="{{ $this->pdfUrl }}">
-                        Abrir PDF en pestaña nueva
-                    </a>
-                    <a class="btn-secondary @if(!$this->puedeGenerarPdf()) pointer-events-none opacity-50 @endif"
                        href="{{ $this->excelUrlSeleccion }}">
                         Descargar Excel (selección)
                     </a>
@@ -270,4 +401,28 @@
             </div>
         </div>
     @endif
+
+    @script
+    <script>
+        (function () {
+            function mensajeDeEvento(event, fallback) {
+                return event?.mensaje ?? event?.detail?.mensaje ?? fallback;
+            }
+
+            $wire.on('se-swal-exito', (event) => {
+                const mensaje = mensajeDeEvento(event, 'Operación realizada correctamente.');
+                if (typeof window.seSwalExito === 'function') {
+                    window.seSwalExito(mensaje);
+                }
+            });
+
+            $wire.on('se-swal-error', (event) => {
+                const mensaje = mensajeDeEvento(event, 'No se pudo completar la operación.');
+                if (typeof window.seSwalError === 'function') {
+                    window.seSwalError(mensaje);
+                }
+            });
+        })();
+    </script>
+    @endscript
 </div>

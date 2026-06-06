@@ -5,6 +5,7 @@ namespace App\Livewire\Listados;
 use App\Support\Listados\EstudiantesDatosConsulta;
 use App\Support\Navegacion\MenuSecretariaPerfil;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -82,7 +83,7 @@ class EstudiantesDatosExport extends Component
         }
     }
 
-    public function getCsvUrlProperty(): string
+    public function getExcelUrlProperty(): string
     {
         $ids = $this->matriculasIncluidas();
         if ($ids === []) {
@@ -94,7 +95,28 @@ class EstudiantesDatosExport extends Component
         ]);
     }
 
-    public function puedeGenerarCsv(): bool
+    public function getPdfUrlProperty(): string
+    {
+        if (! Route::has('listados.estudiantes-datos.pdf')) {
+            return '#';
+        }
+
+        $ids = $this->matriculasIncluidas();
+        if ($ids === []) {
+            return '#';
+        }
+
+        return route('listados.estudiantes-datos.pdf', [
+            'matriculas' => implode(',', $ids),
+        ]);
+    }
+
+    public function puedeGenerarPdf(): bool
+    {
+        return Route::has('listados.estudiantes-datos.pdf') && $this->puedeGenerarExport();
+    }
+
+    public function puedeGenerarExport(): bool
     {
         return $this->matriculasIncluidas() !== [];
     }

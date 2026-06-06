@@ -18,6 +18,7 @@ use App\Http\Controllers\PortalDocente\PortalDocentePlanillaCalificacionesPdfCon
 use App\Http\Controllers\CalificacionesSecundario\ActaVolanteColoquiosPdfController;
 use App\Http\Controllers\CalificacionesSecundario\PlanillaResumenCalificacionesPdfController;
 use App\Http\Controllers\EstudiantesDatosExcelController;
+use App\Http\Controllers\EstudiantesDatosPdfController;
 use App\Http\Controllers\EstudiantesExcelController;
 use App\Http\Controllers\InformeInasistenciasPdfController;
 use App\Http\Controllers\InformeInasistenciasLotePdfController;
@@ -551,6 +552,8 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->name('listados.estudiantes-datos');
     Route::get('/listados/estudiantes-datos/excel', EstudiantesDatosExcelController::class)
         ->name('listados.estudiantes-datos.excel');
+    Route::get('/listados/estudiantes-datos/pdf', EstudiantesDatosPdfController::class)
+        ->name('listados.estudiantes-datos.pdf');
 
     Route::middleware('permiso:12')->group(function () {
         Route::get('/examenes/materias-adeudadas/entrar', [MateriasAdeudadasEntradaController::class, 'listado'])

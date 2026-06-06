@@ -210,11 +210,17 @@ final class EstudiantesDatosConsulta
         return implode(' — ', $partes);
     }
 
-    public static function nombreArchivo(?Carbon $momento = null): string
+    public static function nombreArchivo(?Carbon $momento = null, string $extension = 'xlsx'): string
     {
         $momento ??= now();
+        $extension = ltrim(strtolower(trim($extension)), '.');
 
-        return 'ESTUDIANTES DATOS '.$momento->format('d-m-Y H-i-s').'.csv';
+        return 'ESTUDIANTES DATOS '.$momento->format('d-m-Y H-i-s').'.'.$extension;
+    }
+
+    public static function nombreArchivoPdf(?Carbon $momento = null): string
+    {
+        return self::nombreArchivo($momento, 'pdf');
     }
 
     public static function columnaGrupoSanguineo(): ?string

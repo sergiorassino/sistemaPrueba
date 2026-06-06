@@ -27,10 +27,13 @@ class LibroMatrizIndex extends Component
         if (! str_contains(mb_strtolower($ctx->nivelNombre()), 'secundari')) {
             abort(403, 'Este módulo requiere contexto de Secundario.');
         }
+
+        LibroMatrizAnalitico::persistirBuscarListado($this->buscar);
     }
 
     public function updatedBuscar(): void
     {
+        LibroMatrizAnalitico::persistirBuscarListado($this->buscar);
         $this->resetPage();
     }
 

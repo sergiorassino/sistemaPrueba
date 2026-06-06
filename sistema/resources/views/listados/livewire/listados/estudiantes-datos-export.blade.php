@@ -147,23 +147,36 @@
 
         <div class="se-card mt-4 p-5 sm:p-6">
             <p class="text-sm text-neutral-600">
-                El archivo CSV se genera con las mismas columnas de la plantilla «ESTUDIANTES DATOS», incluyendo fecha y hora en el nombre.
-                Ábralo con Excel; usa punto y coma como separador.
+                El archivo Excel (.xlsx) o PDF incluye las columnas de la plantilla «ESTUDIANTES DATOS», con fecha y hora en el nombre del archivo.
             </p>
             <div class="mt-4 flex flex-wrap gap-3">
-                <a href="{{ $this->csvUrl }}"
+                <a href="{{ $this->excelUrl }}"
                    @class([
                        'inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors',
-                       'bg-primary-600 text-white hover:bg-primary-700' => $this->puedeGenerarCsv(),
-                       'pointer-events-none bg-neutral-200 text-neutral-400' => ! $this->puedeGenerarCsv(),
+                       'bg-primary-600 text-white hover:bg-primary-700' => $this->puedeGenerarExport(),
+                       'pointer-events-none bg-neutral-200 text-neutral-400' => ! $this->puedeGenerarExport(),
                    ])>
                     <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
-                    Generar CSV
+                    Generar Excel
                 </a>
-                @if (! $this->puedeGenerarCsv())
+                <a href="{{ $this->pdfUrl }}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   @class([
+                       'inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors',
+                       'border border-accent-200 bg-white text-primary-700 hover:bg-accent-50' => $this->puedeGenerarPdf(),
+                       'pointer-events-none border border-neutral-200 bg-neutral-100 text-neutral-400' => ! $this->puedeGenerarPdf(),
+                   ])>
+                    <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    Generar PDF
+                </a>
+                @if (! $this->puedeGenerarExport())
                     <span class="text-sm text-neutral-500">Incluya al menos un alumno para descargar.</span>
                 @endif
             </div>

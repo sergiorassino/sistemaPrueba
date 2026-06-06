@@ -24,6 +24,28 @@ class LibroMatrizEditar extends Component
 
     public bool $modalSalirAbierto = false;
 
+    public bool $modalDatosAdicionalesAbierto = false;
+
+    public ?int $idAnaliticoDato = null;
+
+    public string $analCohorte = '';
+
+    public string $analObservaciones = '';
+
+    public string $analParaCompletar = '';
+
+    public string $analValidez = '';
+
+    public string $serie = '';
+
+    public string $numero = '';
+
+    public string $analLibroFolio = '';
+
+    public string $analFechaEmision = '';
+
+    public string $analParaPre = '';
+
     public string $buscarRetorno = '';
 
     public function mount(): void
@@ -47,7 +69,7 @@ class LibroMatrizEditar extends Component
 
         $this->idLegajos = $idLegajos;
         $this->alumno = $alumno;
-        $this->buscarRetorno = LibroMatrizAnalitico::buscarDesdeRequest();
+        $this->buscarRetorno = LibroMatrizAnalitico::buscarRetornoListado();
         $this->cargarLineasDesdeServidor($idLegajos, (int) $ctx->idNivel);
     }
 
@@ -88,6 +110,58 @@ class LibroMatrizEditar extends Component
         if ($this->persistirLineas()) {
             session()->flash('success', $this->mensajeExitoGuardado);
         }
+    }
+
+    public function abrirModalDatosAdicionales(): void
+    {
+        $this->cargarDatosAdicionalesDesdeServidor();
+        $this->resetErrorBag('guardarDatosAdicionales');
+        $this->modalDatosAdicionalesAbierto = true;
+    }
+
+    public function cerrarModalDatosAdicionales(): void
+    {
+        $this->modalDatosAdicionalesAbierto = false;
+    }
+
+    public function guardarDatosAdicionales(): void
+    {
+        abort_unless(tienePermiso(16), 403);
+
+        $key = 'matrizAnaliticos:datos-adicionales:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 20)) {
+            $this->addError('guardarDatosAdicionales', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $validated = $this->validate(LibroMatrizAnalitico::reglasDatosAdicionales());
+
+        if (! LibroMatrizAnalitico::guardarDatosAdicionales($this->idLegajos, $validated)) {
+            $this->addError('guardarDatosAdicionales', 'No se pudo guardar. Verifique los datos.');
+
+            return;
+        }
+
+        $this->cargarDatosAdicionalesDesdeServidor();
+        $this->modalDatosAdicionalesAbierto = false;
+        $this->dispatch('se-swal-exito', mensaje: 'Datos adicionales guardados.');
+    }
+
+    private function cargarDatosAdicionalesDesdeServidor(): void
+    {
+        $datos = LibroMatrizAnalitico::datosAdicionales($this->idLegajos);
+        $this->idAnaliticoDato = $datos['id'];
+        $this->analCohorte = $datos['analCohorte'];
+        $this->analObservaciones = $datos['analObservaciones'];
+        $this->analParaCompletar = $datos['analParaCompletar'];
+        $this->analValidez = $datos['analValidez'];
+        $this->serie = $datos['serie'];
+        $this->numero = $datos['numero'];
+        $this->analLibroFolio = $datos['analLibroFolio'];
+        $this->analFechaEmision = $datos['analFechaEmision'];
+        $this->analParaPre = $datos['analParaPre'];
     }
 
     private string $mensajeExitoGuardado = '';

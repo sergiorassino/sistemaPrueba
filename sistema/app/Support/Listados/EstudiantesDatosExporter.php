@@ -5,9 +5,12 @@ namespace App\Support\Listados;
 use App\Models\Curso;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /**
- * Exporta el listado «ESTUDIANTES DATOS» en CSV (compatible con Excel).
+ * Exporta el listado «ESTUDIANTES DATOS» (Excel y PDF).
  */
 final class EstudiantesDatosExporter
 {
@@ -35,9 +38,56 @@ final class EstudiantesDatosExporter
     }
 
     /**
+     * @param  list<int>  $matriculaIds
+     * @return array{spreadsheet: Spreadsheet, filename: string}
+     */
+    public function buildXlsx(array $matriculaIds): array
+    {
+        $filas = $this->filas($matriculaIds);
+
+        $spreadsheet = new Spreadsheet;
+        $hoja = $spreadsheet->getActiveSheet();
+        $hoja->setTitle('Estudiantes');
+
+        $col = 1;
+        foreach (self::ENCABEZADOS as $encabezado) {
+            $hoja->setCellValue([$col, 1], $encabezado);
+            $col++;
+        }
+
+        $fila = 2;
+        $numero = 1;
+        foreach ($filas as $alumno) {
+            $col = 1;
+            foreach ($this->filaExport($alumno, $numero) as $valor) {
+                $hoja->setCellValue([$col, $fila], $valor);
+                $col++;
+            }
+            $fila++;
+            $numero++;
+        }
+
+        $this->estilizarEncabezado($hoja, count(self::ENCABEZADOS));
+
+        return [
+            'spreadsheet' => $spreadsheet,
+            'filename' => EstudiantesDatosConsulta::nombreArchivo(),
+        ];
+    }
+
+    public function escribirEnSalida(Spreadsheet $spreadsheet): void
+    {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        (new Xlsx($spreadsheet))->save('php://output');
+    }
+
+    /**
      * @return list<string|int>
      */
-    public function filaCsv(object $alumno, int $numero): array
+    public function filaExport(object $alumno, int $numero): array
     {
         return [
             $numero,
@@ -125,5 +175,28 @@ final class EstudiantesDatosExporter
             })
             ->filter()
             ->values();
+    }
+
+    private function estilizarEncabezado(Worksheet $hoja, int $totalColumnas): void
+    {
+        $ultimaCol = $this->indiceColumnaExcel($totalColumnas);
+        $hoja->getStyle('A1:'.$ultimaCol.'1')->getFont()->setBold(true);
+        for ($c = 1; $c <= $totalColumnas; $c++) {
+            $hoja->getColumnDimensionByColumn($c)->setAutoSize(true);
+        }
+        $hoja->freezePane('A2');
+    }
+
+    private function indiceColumnaExcel(int $numeroColumna): string
+    {
+        $letras = '';
+        $n = $numeroColumna;
+        while ($n > 0) {
+            $n--;
+            $letras = chr(65 + ($n % 26)).$letras;
+            $n = intdiv($n, 26);
+        }
+
+        return $letras;
     }
 }

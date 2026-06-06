@@ -1130,6 +1130,43 @@
     .btn-matriz-save {
         @apply inline-flex items-center justify-center rounded border border-primary-700 bg-primary-600 px-3 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 disabled:opacity-60;
     }
+    /* Formulario datos adicionales del analítico (analiticodatos) */
+    .se-analitico-datos-form {
+        @apply text-sm;
+    }
+    .se-analitico-datos-row {
+        @apply grid grid-cols-1 items-start gap-x-4 gap-y-1 sm:grid-cols-[11rem_minmax(0,1fr)];
+    }
+    .se-analitico-datos-label-wrap {
+        @apply sm:text-right;
+    }
+    .se-analitico-datos-label {
+        @apply block pt-2 text-sm font-medium text-neutral-700 sm:text-right;
+    }
+    .se-analitico-datos-field {
+        @apply min-w-0;
+    }
+    .se-analitico-datos-field--leyenda {
+        @apply relative pr-8;
+    }
+    .se-analitico-datos-input {
+        @apply form-input w-full rounded-lg bg-accent-50/60 px-3 py-2 text-sm;
+    }
+    .se-analitico-datos-input--corto {
+        @apply max-w-[8rem];
+    }
+    .se-analitico-datos-input--fecha {
+        @apply max-w-[11rem];
+    }
+    .se-analitico-datos-textarea {
+        @apply min-h-[5.5rem] resize-y leading-relaxed;
+    }
+    .se-analitico-datos-hint {
+        @apply mt-1 text-[11px] text-neutral-500;
+    }
+    .se-analitico-datos-ayuda {
+        @apply absolute right-0 top-2 flex h-6 w-6 cursor-help items-center justify-center rounded-full bg-neutral-800 text-xs font-bold text-white;
+    }
     /* Grilla: cabecera fuera del scroll vertical (no depende de position:sticky ni del transform del layout). */
     .se-cierre-anual-grilla {
         @apply flex h-full min-h-0 flex-1 flex-col;

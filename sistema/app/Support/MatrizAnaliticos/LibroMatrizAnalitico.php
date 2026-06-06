@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\DB;
  */
 final class LibroMatrizAnalitico
 {
+    private const SESSION_BUSCAR_LISTADO = 'matriz_analiticos_listado_buscar';
+
+    /** Leyenda por defecto del campo «Para completar» cuando está en blanco en el formulario. */
+    private const LEYENDA_PARA_COMPLETAR_DEFAULT = 'Para completar los estudios correspondientes a la Educación Secundaria Obligatoria Ley de Educación Nacional 26.206, Ley Provincial de Educación 9870, Res. Min. 344/11, Res. Min. 668/11, deberá cursar y aprobar todos los espacios curriculares de:';
+
     public static function etiquetaApro(?int $apro): string
     {
         return CierreAnualSecundario::etiquetaApro($apro);
@@ -75,15 +80,7 @@ final class LibroMatrizAnalitico
             ->orderBy('l.nombre')
             ->orderBy('l.id');
 
-        $termino = self::normalizarBusqueda($buscar);
-        if ($termino !== '') {
-            $like = '%'.$termino.'%';
-            $q->where(function ($w) use ($like) {
-                $w->where('l.apellido', 'like', $like)
-                    ->orWhere('l.nombre', 'like', $like)
-                    ->orWhere('l.dni', 'like', $like);
-            });
-        }
+        self::aplicarFiltroBusquedaLegajos($q, $buscar, 'l');
 
         return $q->paginate(max(10, min(100, $porPagina)))
             ->through(static function (object $r): array {
@@ -253,6 +250,7 @@ final class LibroMatrizAnalitico
      *     analParaCompletar: string,
      *     analValidez: string,
      *     serie: string,
+     *     numero: string,
      *     analLibroFolio: string,
      *     analFechaEmision: string,
      *     analParaPre: string
@@ -264,9 +262,10 @@ final class LibroMatrizAnalitico
             'id' => null,
             'analCohorte' => '',
             'analObservaciones' => '',
-            'analParaCompletar' => '',
+            'analParaCompletar' => self::leyendaParaCompletarParaFormulario(''),
             'analValidez' => '',
             'serie' => '',
+            'numero' => '',
             'analLibroFolio' => '',
             'analFechaEmision' => '',
             'analParaPre' => '',
@@ -289,14 +288,33 @@ final class LibroMatrizAnalitico
             'id' => (int) $row->id,
             'analCohorte' => self::cohorteParaFormulario($row->analCohorte),
             'analObservaciones' => trim((string) ($row->analObservaciones ?? '')),
-            'analParaCompletar' => trim((string) ($row->analParaCompletar ?? '')),
+            'analParaCompletar' => self::leyendaParaCompletarParaFormulario($row->analParaCompletar),
             'analValidez' => trim((string) ($row->analValidez ?? '')),
             'serie' => trim((string) ($row->serie ?? '')),
+            'numero' => trim((string) ($row->numero ?? '')),
             'analLibroFolio' => trim((string) ($row->analLibroFolio ?? '')),
             'analFechaEmision' => $row->analFechaEmision
                 ? $row->analFechaEmision->format('Y-m-d')
                 : '',
             'analParaPre' => trim((string) ($row->analParaPre ?? '')),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function reglasDatosAdicionales(): array
+    {
+        return [
+            'analCohorte' => ['nullable', 'string', 'max:30'],
+            'analObservaciones' => ['nullable', 'string', 'max:65535'],
+            'analParaCompletar' => ['nullable', 'string', 'max:65535'],
+            'analValidez' => ['nullable', 'string', 'max:50'],
+            'serie' => ['nullable', 'string', 'max:6'],
+            'numero' => ['nullable', 'string', 'max:20'],
+            'analLibroFolio' => ['nullable', 'string', 'max:50'],
+            'analFechaEmision' => ['nullable', 'date'],
+            'analParaPre' => ['nullable', 'string', 'max:200'],
         ];
     }
 
@@ -307,6 +325,7 @@ final class LibroMatrizAnalitico
      *     analParaCompletar?: string,
      *     analValidez?: string,
      *     serie?: string,
+     *     numero?: string,
      *     analLibroFolio?: string,
      *     analFechaEmision?: string|null,
      *     analParaPre?: string
@@ -325,6 +344,7 @@ final class LibroMatrizAnalitico
             'analParaCompletar' => self::textoNullable($datos['analParaCompletar'] ?? ''),
             'analValidez' => self::truncar((string) ($datos['analValidez'] ?? ''), 50),
             'serie' => self::truncar((string) ($datos['serie'] ?? ''), 6),
+            'numero' => self::truncar((string) ($datos['numero'] ?? ''), 20),
             'analLibroFolio' => self::truncar((string) ($datos['analLibroFolio'] ?? ''), 50),
             'analFechaEmision' => self::fechaNullable($datos['analFechaEmision'] ?? null),
             'analParaPre' => self::truncar((string) ($datos['analParaPre'] ?? ''), 200),
@@ -344,6 +364,13 @@ final class LibroMatrizAnalitico
         AnaliticoDato::query()->create($payload);
 
         return true;
+    }
+
+    private static function leyendaParaCompletarParaFormulario(mixed $valor): string
+    {
+        $t = trim((string) ($valor ?? ''));
+
+        return $t !== '' ? $t : self::LEYENDA_PARA_COMPLETAR_DEFAULT;
     }
 
     private static function cohorteParaFormulario(mixed $valor): string
@@ -437,6 +464,43 @@ final class LibroMatrizAnalitico
         return mb_strlen($t) >= 2 ? $t : '';
     }
 
+    /**
+     * @param  \Illuminate\Database\Query\Builder  $query
+     */
+    private static function aplicarFiltroBusquedaLegajos($query, ?string $buscar, string $alias = 'l'): void
+    {
+        $termino = self::normalizarBusqueda($buscar);
+        if ($termino === '') {
+            return;
+        }
+
+        $like = '%'.$termino.'%';
+        $palabras = preg_split('/\s+/u', $termino, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        $query->where(function ($w) use ($alias, $like, $termino, $palabras) {
+            $w->where("{$alias}.apellido", 'like', $like)
+                ->orWhere("{$alias}.nombre", 'like', $like)
+                ->orWhere("{$alias}.dni", 'like', $like)
+                ->orWhereRaw("CONCAT({$alias}.apellido, ' ', {$alias}.nombre) LIKE ?", [$like])
+                ->orWhereRaw("CONCAT({$alias}.apellido, ', ', {$alias}.nombre) LIKE ?", [$like]);
+
+            if (count($palabras) >= 2) {
+                $apellido = $palabras[0];
+                $nombre = implode(' ', array_slice($palabras, 1));
+
+                $w->orWhere(function ($sub) use ($alias, $apellido, $nombre) {
+                    $sub->where("{$alias}.apellido", 'like', '%'.$apellido.'%')
+                        ->where("{$alias}.nombre", 'like', '%'.$nombre.'%');
+                });
+
+                $w->orWhere(function ($sub) use ($alias, $apellido, $nombre) {
+                    $sub->where("{$alias}.nombre", 'like', '%'.$apellido.'%')
+                        ->where("{$alias}.apellido", 'like', '%'.$nombre.'%');
+                });
+            }
+        });
+    }
+
     private static function cursoLabelDesdeFila(object $r): string
     {
         $sec = trim((string) ($r->cursec ?? ''));
@@ -468,6 +532,21 @@ final class LibroMatrizAnalitico
         return trim((string) request()->query('buscar', ''));
     }
 
+    public static function persistirBuscarListado(?string $buscar): void
+    {
+        session([self::SESSION_BUSCAR_LISTADO => trim((string) $buscar)]);
+    }
+
+    public static function buscarRetornoListado(): string
+    {
+        $desdeRequest = self::buscarDesdeRequest();
+        if ($desdeRequest !== '') {
+            return $desdeRequest;
+        }
+
+        return trim((string) session(self::SESSION_BUSCAR_LISTADO, ''));
+    }
+
     /**
      * @return array<string, string>
      */
@@ -483,13 +562,13 @@ final class LibroMatrizAnalitico
         return route('matrizAnaliticos.libroMatriz', self::queryFiltroListado($buscar));
     }
 
-    public static function rutaEditar(): string
+    public static function rutaEditar(?string $buscar = null): string
     {
-        return route('matrizAnaliticos.libroMatriz.editar', self::queryFiltroListado(null));
+        return route('matrizAnaliticos.libroMatriz.editar', self::queryFiltroListado($buscar));
     }
 
-    public static function rutaDatosAdicionales(): string
+    public static function rutaDatosAdicionales(?string $buscar = null): string
     {
-        return route('matrizAnaliticos.libroMatriz.datosAdicionales', self::queryFiltroListado(null));
+        return route('matrizAnaliticos.libroMatriz.datosAdicionales', self::queryFiltroListado($buscar));
     }
 }

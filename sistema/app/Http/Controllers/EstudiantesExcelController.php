@@ -12,10 +12,11 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EstudiantesExcelController extends Controller
 {
-    public function __invoke(Request $request, EstudiantesExcelExporter $exporter)
+    public function __invoke(Request $request, EstudiantesExcelExporter $exporter): StreamedResponse
     {
         $key = 'estudiantes-excel:'.(auth()->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 10)) {
@@ -34,11 +35,15 @@ class EstudiantesExcelController extends Controller
         $spec = $this->resolverSpec($request);
 
         $resultado = $exporter->build($idTerlec, $ctx->terlecAno(), $spec);
-        $tempPath = $exporter->guardarEnTemporal($resultado['spreadsheet']);
 
-        return response()->download($tempPath, $resultado['filename'], [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ])->deleteFileAfterSend(true);
+        return response()->streamDownload(
+            fn () => $exporter->escribirEnSalida($resultado['spreadsheet']),
+            $resultado['filename'],
+            [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Cache-Control' => 'max-age=0, no-cache, no-store, must-revalidate',
+            ],
+        );
     }
 
     private function resolverSpec(Request $request): EstudiantesExcelExportSpec

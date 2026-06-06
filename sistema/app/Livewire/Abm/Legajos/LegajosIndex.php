@@ -115,6 +115,7 @@ class LegajosIndex extends Component
             'familia',
             'matriculas' => function ($q) {
                 $q->with(['terlec', 'curso', 'condicion', 'nivel'])
+                    ->where('matricula.idCondiciones', '<', 5)
                     ->leftJoin('terlec', 'terlec.id', '=', 'matricula.idTerlec')
                     ->orderBy('terlec.ano')
                     ->orderBy('matricula.id')
@@ -127,12 +128,15 @@ class LegajosIndex extends Component
         }
 
         if ($this->soloMatricula) {
-            $query->whereHas('matriculas', fn ($q) => $q->where('idTerlec', $idTerlec));
+            $query->whereHas('matriculas', fn ($q) => $q
+                ->where('idTerlec', $idTerlec)
+                ->where('idCondiciones', '<', 5));
         }
 
         if ($this->soloMiNivel) {
             $query->whereHas('matriculas', function ($q) use ($idTerlec) {
-                $q->where('idTerlec', $idTerlec);
+                $q->where('idTerlec', $idTerlec)
+                    ->where('idCondiciones', '<', 5);
                 SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($q, 'idNivel');
             });
         }

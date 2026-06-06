@@ -3,10 +3,13 @@
 namespace App\Livewire\Listados;
 
 use App\Models\CampoLegajo;
+use App\Models\ListadoPlantilla;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\Listados\ListadoCursoConsulta;
+use App\Support\Listados\ListadoCursoExportParams;
 use App\Support\Listados\ListadoCursoPdfFieldCatalog;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class ListadoPorCurso extends Component
@@ -21,6 +24,15 @@ class ListadoPorCurso extends Component
 
     /** @var list<string> */
     public array $camposSeleccionados = ListadoCursoPdfFieldCatalog::DEFAULT_KEYS;
+
+    /** Plantilla aplicada actualmente (null = ninguna). */
+    public ?int $plantillaSeleccionada = null;
+
+    /** Nombre para guardar una plantilla nueva. */
+    public string $nombrePlantilla = '';
+
+    /** Subtítulo opcional del PDF; solo en memoria Livewire (no se persiste en BD). */
+    public string $subtituloListado = '';
 
     public function mount(): void
     {
@@ -124,16 +136,216 @@ class ListadoPorCurso extends Component
 
         $camposPorGrupo = ListadoCursoPdfFieldCatalog::groupedForUiPorSolapas();
 
+        $plantillas = ListadoPlantilla::paraNivel($this->idNivelContexto())
+            ->map(function (ListadoPlantilla $p) {
+                $camposEtiquetas = $p->etiquetasCampos();
+
+                return [
+                    'id' => (int) $p->id,
+                    'nombre' => (string) $p->nombre,
+                    'condicionEtiqueta' => $p->etiquetaCondicionUi(),
+                    'camposEtiquetas' => $camposEtiquetas,
+                    'camposCantidad' => count($camposEtiquetas),
+                ];
+            })
+            ->all();
+
         return view('listados::livewire.listados.por-curso', [
             'cursos' => $cursos,
             'cursosPorNivel' => array_values($cursosPorNivel),
             'cantidadSeleccionados' => $cantidadSeleccionados,
             'cursosSeleccionadosResumen' => $cursosSeleccionadosResumen,
             'camposPorGrupo' => $camposPorGrupo,
+            'plantillas' => $plantillas,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Alumnos por curso']);
     }
 
+    /** Al elegir un radio de plantilla, aplica columnas y condición automáticamente. */
+    public function updatedPlantillaSeleccionada(mixed $value): void
+    {
+        if ($value === null || $value === '') {
+            return;
+        }
+
+        $this->aplicarPlantilla((int) $value);
+    }
+
+    /** Elimina la plantilla marcada en la grilla. */
+    public function eliminarPlantillaSeleccionada(): void
+    {
+        if ($this->plantillaSeleccionada === null) {
+            $this->dispatch('se-swal-error', mensaje: 'Seleccione una plantilla de la lista.');
+
+            return;
+        }
+
+        $this->eliminarPlantilla($this->plantillaSeleccionada);
+    }
+
+    /** Carga columnas y condición de una plantilla del nivel actual. */
+    public function aplicarPlantilla(int $id): void
+    {
+        $plantilla = $this->buscarPlantillaDelNivel($id);
+        if ($plantilla === null) {
+            $this->dispatch('se-swal-error', mensaje: 'No se encontró la plantilla seleccionada.');
+
+            return;
+        }
+
+        $campos = ListadoCursoPdfFieldCatalog::normalizeSelection(
+            is_array($plantilla->campos) ? $plantilla->campos : [],
+        );
+        $this->camposSeleccionados = CampoLegajo::aplicarVisibilidadListadoPdf($campos);
+        $this->filtroCondicion = ListadoCursoCondicionFiltro::normalize($plantilla->condicion);
+        $this->nombrePlantilla = (string) $plantilla->nombre;
+    }
+
+    /** Guarda la selección actual como una plantilla nueva del nivel. */
+    public function guardarComoPlantilla(): void
+    {
+        if (! $this->rateLimitOk('listados-plantilla:guardar:', 30)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
+
+            return;
+        }
+
+        $idNivel = $this->idNivelContexto();
+        if ($idNivel < 1) {
+            $this->dispatch('se-swal-error', mensaje: 'No hay un nivel activo en el contexto.');
+
+            return;
+        }
+
+        $this->validate([
+            'nombrePlantilla' => ['required', 'string', 'max:120'],
+        ], [
+            'nombrePlantilla.required' => 'Escriba un nombre para la plantilla.',
+            'nombrePlantilla.max' => 'El nombre no puede superar los 120 caracteres.',
+        ]);
+
+        $nombre = trim($this->nombrePlantilla);
+
+        $existe = ListadoPlantilla::query()
+            ->where('idNivel', $idNivel)
+            ->whereRaw('LOWER(nombre) = ?', [mb_strtolower($nombre)])
+            ->exists();
+        if ($existe) {
+            $this->addError('nombrePlantilla', 'Ya existe una plantilla con ese nombre en este nivel.');
+
+            return;
+        }
+
+        $campos = ListadoCursoPdfFieldCatalog::normalizeSelection($this->camposSeleccionados);
+
+        $proximoOrden = (int) ListadoPlantilla::query()->where('idNivel', $idNivel)->max('orden');
+
+        $plantilla = ListadoPlantilla::create([
+            'idNivel' => $idNivel,
+            'nombre' => $nombre,
+            'campos' => $campos,
+            'condicion' => ListadoCursoCondicionFiltro::normalize($this->filtroCondicion),
+            'orden' => $proximoOrden + 1,
+        ]);
+
+        $this->plantillaSeleccionada = (int) $plantilla->id;
+        $this->nombrePlantilla = $nombre;
+
+        $this->dispatch('se-swal-exito', mensaje: 'Plantilla «'.$nombre.'» guardada.');
+    }
+
+    /** Sobrescribe la plantilla aplicada con la selección actual. */
+    public function actualizarPlantilla(): void
+    {
+        if ($this->plantillaSeleccionada === null) {
+            return;
+        }
+
+        if (! $this->rateLimitOk('listados-plantilla:actualizar:', 30)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
+
+            return;
+        }
+
+        $plantilla = $this->buscarPlantillaDelNivel($this->plantillaSeleccionada);
+        if ($plantilla === null) {
+            $this->dispatch('se-swal-error', mensaje: 'No se encontró la plantilla a actualizar.');
+
+            return;
+        }
+
+        $plantilla->update([
+            'campos' => ListadoCursoPdfFieldCatalog::normalizeSelection($this->camposSeleccionados),
+            'condicion' => ListadoCursoCondicionFiltro::normalize($this->filtroCondicion),
+        ]);
+
+        $this->dispatch('se-swal-exito', mensaje: 'Plantilla «'.$plantilla->nombre.'» actualizada.');
+    }
+
+    public function eliminarPlantilla(int $id): void
+    {
+        if (! $this->rateLimitOk('listados-plantilla:eliminar:', 10)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
+
+            return;
+        }
+
+        $plantilla = $this->buscarPlantillaDelNivel($id);
+        if ($plantilla === null) {
+            $this->dispatch('se-swal-error', mensaje: 'No se encontró la plantilla a eliminar.');
+
+            return;
+        }
+
+        $nombre = (string) $plantilla->nombre;
+        $plantilla->delete();
+
+        if ($this->plantillaSeleccionada === $id) {
+            $this->plantillaSeleccionada = null;
+            $this->nombrePlantilla = '';
+        }
+
+        $this->dispatch('se-swal-exito', mensaje: 'Plantilla «'.$nombre.'» eliminada.');
+    }
+
+    private function idNivelContexto(): int
+    {
+        return (int) (schoolCtx()->idNivel ?? 0);
+    }
+
+    private function buscarPlantillaDelNivel(int $id): ?ListadoPlantilla
+    {
+        if ($id < 1) {
+            return null;
+        }
+
+        return ListadoPlantilla::query()
+            ->where('idNivel', $this->idNivelContexto())
+            ->find($id);
+    }
+
+    private function rateLimitOk(string $prefijo, int $maxIntentos): bool
+    {
+        $key = $prefijo.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, $maxIntentos)) {
+            return false;
+        }
+        RateLimiter::hit($key, 60);
+
+        return true;
+    }
+
     public function getPdfUrlProperty(): string
+    {
+        return $this->armarUrlPdf(ListadoCursoExportParams::normalizarSubtitulo($this->subtituloListado));
+    }
+
+    /** URL del PDF sin subtítulo (el subtítulo se agrega en el navegador al abrir). */
+    public function getPdfUrlBaseProperty(): string
+    {
+        return $this->armarUrlPdf('');
+    }
+
+    private function armarUrlPdf(string $subtitulo): string
     {
         if (! $this->puedeGenerarPdf()) {
             return '#';
@@ -148,11 +360,17 @@ class ListadoPorCurso extends Component
             ->unique()
             ->values();
 
-        return route('listados.por-curso.pdf', [
+        $params = [
             'cursos' => $ids->implode(','),
             'campos' => implode(',', $campos),
             'condicion' => $filtro,
-        ]);
+        ];
+
+        if ($subtitulo !== '') {
+            $params['subtitulo'] = $subtitulo;
+        }
+
+        return route('listados.por-curso.pdf', $params);
     }
 
     public function puedeGenerarPdf(): bool

@@ -238,15 +238,20 @@ final class AnaliticoFrenteTcpdf extends TCPDF
 
         $bordeDer = self::MARGEN_IZQ + self::ANCHO_TABLA;
         $h = self::ALTURA_LINEA_ENC;
+        $labelInsti = 'La autoridad del Establecimiento Educativo';
+        $sepInstiMm = 5.0;
 
         $this->Ln(1);
         $this->SetFont(self::FUENTE, '', 8);
 
         $y = $this->GetY();
+        $anchoLabelInsti = $this->GetStringWidth($labelInsti);
+        $xCampoInsti = self::MARGEN_IZQ + $anchoLabelInsti + $sepInstiMm;
         $this->SetXY(self::MARGEN_IZQ, $y);
-        $this->Cell(55, $h, 'La autoridad del Establecimiento Educativo', 0, 0, 'L');
-        $this->Cell(80, $h, '      '.$lineaInsti, 0, 1, 'L');
-        $this->subrayadoEncabezado(80, $bordeDer, $y);
+        $this->Cell($anchoLabelInsti, $h, $labelInsti, 0, 0, 'L');
+        $this->SetXY($xCampoInsti, $y);
+        $this->Cell($bordeDer - $xCampoInsti, $h, $lineaInsti, 0, 1, 'L');
+        $this->subrayadoEncabezado($xCampoInsti, $bordeDer, $y);
 
         $y = $this->GetY();
         $this->SetX(self::MARGEN_IZQ);

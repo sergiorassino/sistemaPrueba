@@ -32,8 +32,8 @@
         permisosSistema: {{ (($route ?? '') === 'admin.permisos' || ($route ?? '') === 'admin.permisos-por-usuario') ? 'true' : 'false' }},
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
-        students: {{ (str_starts_with($route ?? '', 'abm.legajos') || (str_starts_with($route ?? '', 'listados.') && ! request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel'))) ? 'true' : 'false' }},
-        viajesSalidas: {{ request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel') ? 'true' : 'false' }},
+        students: {{ (str_starts_with($route ?? '', 'abm.legajos') || (str_starts_with($route ?? '', 'listados.') && ! request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf'))) ? 'true' : 'false' }},
+        viajesSalidas: {{ request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf') ? 'true' : 'false' }},
         cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales' || ($route ?? '') === 'push.suscribir') && (tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5))) ? 'true' : 'false' }},
         calificacionesInicial: {{ str_starts_with($route ?? '', 'calificacionesInicial.') ? 'true' : 'false' }},
         calificacionesPrimario: {{ str_starts_with($route ?? '', 'calificacionesPrimario.') ? 'true' : 'false' }},
@@ -342,7 +342,7 @@
                 <a href="{{ route('listados.estudiantes-datos') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel'),
+                       'is-active shadow-sm' => request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf'),
                    ])
                    title="Generar Excel Viaje v1.0">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

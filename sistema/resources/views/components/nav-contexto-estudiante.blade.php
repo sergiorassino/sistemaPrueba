@@ -10,6 +10,7 @@
     'desde' => null,
     'hasta' => null,
     'abrirMatriculas' => false,
+    'buscar' => null,
     'tag' => 'button',
 ])
 
@@ -49,6 +50,9 @@
     @endif
     @if ($abrirMatriculas)
         <input type="hidden" name="abrir_matriculas" value="1">
+    @endif
+    @if ($buscar !== null && trim((string) $buscar) !== '')
+        <input type="hidden" name="buscar" value="{{ trim((string) $buscar) }}">
     @endif
     @if ($tag === 'a')
         <button type="submit" class="inline p-0 border-0 bg-transparent font-inherit text-inherit cursor-pointer">

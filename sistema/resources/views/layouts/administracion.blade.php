@@ -30,7 +30,7 @@
     groups: {
         config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'param.') || ($route ?? '') === 'admin.permisos' || ($route ?? '') === 'admin.permisos-por-usuario') ? 'true' : 'false' }},
         permisosSistema: {{ (($route ?? '') === 'admin.permisos' || ($route ?? '') === 'admin.permisos-por-usuario') ? 'true' : 'false' }},
-        students: {{ (str_starts_with($route ?? '', 'abm.legajos') || (str_starts_with($route ?? '', 'listados.') && ! request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel'))) ? 'true' : 'false' }},
+        students: {{ (str_starts_with($route ?? '', 'abm.legajos') || (str_starts_with($route ?? '', 'listados.') && ! request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf'))) ? 'true' : 'false' }},
         cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales' || ($route ?? '') === 'push.suscribir') && (tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5))) ? 'true' : 'false' }},
         docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.cursos-por-profesor') || str_starts_with($route ?? '', 'abm.legajos-profesor') || str_starts_with($route ?? '', 'docentes.inasistencias')) ? 'true' : 'false' }},
         gestionCuotas: {{ str_starts_with($route ?? '', 'cuotas.')

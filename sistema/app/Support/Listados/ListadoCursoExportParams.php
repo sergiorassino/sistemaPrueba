@@ -58,4 +58,16 @@ final class ListadoCursoExportParams
 
         return $campos;
     }
+
+    public static function normalizarSubtitulo(?string $valor): string
+    {
+        $texto = trim((string) $valor);
+        if ($texto === '') {
+            return '';
+        }
+
+        $texto = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $texto) ?? '';
+
+        return mb_substr($texto, 0, 200);
+    }
 }

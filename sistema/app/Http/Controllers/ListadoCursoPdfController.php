@@ -6,8 +6,8 @@ use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\Listados\ListadoCursoConsulta;
 use App\Support\Listados\ListadoCursoExportParams;
 use App\Support\Listados\ListadoCursoPdfFieldCatalog;
+use App\Support\Listados\ListadoCursoTcpdf;
 use App\Support\SchoolAlcancePedagogico;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
@@ -18,12 +18,6 @@ use Illuminate\Validation\Rule;
 
 class ListadoCursoPdfController extends Controller
 {
-    /**
-     * Filas de alumnos por hoja en el PDF (membrete + contexto + encabezado de tabla).
-     * A4 vertical, filas compactas (~4 mm); 35 dejaba mucho margen inferior y cortaba de más.
-     */
-    private const ALUMNOS_POR_HOJA_PDF = 52;
-
     public function __invoke(Request $request)
     {
         $key = 'listado-curso-pdf:'.(auth()->id() ?? $request->ip());
@@ -42,11 +36,13 @@ class ListadoCursoPdfController extends Controller
                 'cursos' => $cursosInput,
                 'campos' => $request->query('campos'),
                 'condicion' => $request->query('condicion'),
+                'subtitulo' => $request->query('subtitulo'),
             ],
             [
                 'cursos' => ['required', 'string', 'max:8000'],
                 'campos' => ['nullable', 'string', 'max:12000'],
                 'condicion' => ['nullable', 'string', Rule::in(ListadoCursoCondicionFiltro::keys())],
+                'subtitulo' => ['nullable', 'string', 'max:200'],
             ]
         );
 
@@ -102,6 +98,7 @@ class ListadoCursoPdfController extends Controller
             $query->leftJoin('condiciones', 'condiciones.id', '=', 'matricula.idCondiciones');
         }
 
+        $camposVisibles = ListadoCursoPdfFieldCatalog::fusionarApellidoNombre($campos);
         $columnasMeta = ListadoCursoPdfFieldCatalog::columnsForPdf($campos);
 
         $filas = $query->select($select)->get();
@@ -128,18 +125,20 @@ class ListadoCursoPdfController extends Controller
             $slug = 'listado_estudiantes';
         }
 
-        $orientation = count($campos) > 7 ? 'landscape' : 'portrait';
+        $subtitulo = ListadoCursoExportParams::normalizarSubtitulo($data['subtitulo'] ?? null);
 
-        $pdf = Pdf::loadView('listados::pdf.listado-curso-alumnos', [
+        $pdf = ListadoCursoTcpdf::generar([
             'bloques' => $bloques,
             'modoEstudiantesPdf' => $modoEstudiantesPdf,
             'nivelNombre' => $nivelNombre,
             'ano' => $ano,
+            'subtitulo' => $subtitulo,
             'columnasMeta' => $columnasMeta,
+            'campos' => $camposVisibles,
+            'apaisado' => count($camposVisibles) > 7,
             'pdfHeader' => schoolPdfHeaderData(),
-            'alumnosPorHoja' => self::ALUMNOS_POR_HOJA_PDF,
-        ])->setPaper('a4', $orientation);
+        ]);
 
-        return $pdf->stream($slug.'.pdf');
+        return ListadoCursoTcpdf::respuestaHttp($pdf, $slug.'.pdf');
     }
 }

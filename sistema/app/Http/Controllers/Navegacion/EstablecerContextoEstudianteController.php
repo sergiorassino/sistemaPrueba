@@ -24,6 +24,7 @@ class EstablecerContextoEstudianteController extends Controller
             'desde' => ['nullable', 'date_format:Y-m-d'],
             'hasta' => ['nullable', 'date_format:Y-m-d'],
             'abrir_matriculas' => ['nullable', 'boolean'],
+            'buscar' => ['nullable', 'string', 'max:120'],
         ]);
 
         $destino = (string) $validated['destino'];
@@ -51,11 +52,19 @@ class EstablecerContextoEstudianteController extends Controller
             session()->flash('legajo_abrir_matriculas', true);
         }
 
+        $buscarListado = trim((string) ($validated['buscar'] ?? ''));
+        if ($buscarListado !== '') {
+            \App\Support\MatrizAnaliticos\LibroMatrizAnalitico::persistirBuscarListado($buscarListado);
+        }
+
         $parametrosRuta = match ($destino) {
             'portalDocente.cuadernoSeguimiento.alumno' => array_filter([
                 'curso' => (int) ($validated['curso'] ?? 0),
                 'materia' => (int) ($validated['materia'] ?? 0),
             ], fn ($v) => $v > 0),
+            'matrizAnaliticos.libroMatriz.editar', 'matrizAnaliticos.libroMatriz.datosAdicionales' => \App\Support\MatrizAnaliticos\LibroMatrizAnalitico::queryFiltroListado(
+                $buscarListado !== '' ? $buscarListado : null,
+            ),
             default => [],
         };
 

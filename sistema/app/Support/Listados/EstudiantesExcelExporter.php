@@ -125,7 +125,7 @@ final class EstudiantesExcelExporter
         array $columnasMeta
     ): void {
         $hoja = $spreadsheet->createSheet();
-        $hoja->setTitle($this->nombreHojaUnico($curso->nombreParaListado()));
+        $this->asignarTituloHoja($hoja, $curso);
 
         $col = 1;
         $hoja->setCellValue([$col, 1], 'Nº');
@@ -142,7 +142,7 @@ final class EstudiantesExcelExporter
             $hoja->setCellValue([$col, $fila], $num);
             $col++;
             foreach ($columnasMeta as $meta) {
-                $valor = $this->formatearValorCelda($alumno->{$meta['alias']} ?? null, $meta['key']);
+                $valor = $this->valorCeldaAlumno($alumno, $meta);
                 $hoja->setCellValue([$col, $fila], $valor);
                 $col++;
             }
@@ -176,6 +176,18 @@ final class EstudiantesExcelExporter
         return $letras;
     }
 
+    /**
+     * @param  array{key: string, label: string, alias: string}  $meta
+     */
+    private function valorCeldaAlumno(object $alumno, array $meta): string|int|float
+    {
+        if ($meta['key'] === ListadoCursoPdfFieldCatalog::KEY_APELLIDO_NOMBRE) {
+            return ListadoCursoPdfFieldCatalog::valorApellidoNombre($alumno, false);
+        }
+
+        return $this->formatearValorCelda($alumno->{$meta['alias']} ?? null, $meta['key']);
+    }
+
     private function formatearValorCelda(mixed $valor, string $catalogKey): string|int|float
     {
         if ($valor === null || $valor === '') {
@@ -206,7 +218,37 @@ final class EstudiantesExcelExporter
             return $valor ? 'Sí' : 'No';
         }
 
-        return is_scalar($valor) ? $valor : (string) $valor;
+        if (is_int($valor) || is_float($valor)) {
+            return $valor;
+        }
+
+        return $this->sanitizarTextoCelda((string) $valor);
+    }
+
+    private function asignarTituloHoja(Worksheet $hoja, Curso $curso): void
+    {
+        $candidatos = [
+            $this->nombreHojaUnico($curso->nombreParaListado()),
+            $this->nombreHojaUnico('Curso '.(int) $curso->Id),
+            $this->nombreHojaUnico('Curso'),
+        ];
+
+        foreach ($candidatos as $titulo) {
+            try {
+                $hoja->setTitle($titulo);
+
+                return;
+            } catch (\Throwable) {
+                continue;
+            }
+        }
+    }
+
+    private function sanitizarTextoCelda(string $texto): string
+    {
+        $limpio = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/u', '', $texto);
+
+        return $limpio ?? '';
     }
 
     private function esCampoFecha(string $catalogKey): bool
@@ -251,20 +293,12 @@ final class EstudiantesExcelExporter
         return $nombre;
     }
 
-    public function guardarEnTemporal(Spreadsheet $spreadsheet): string
+    public function escribirEnSalida(Spreadsheet $spreadsheet): void
     {
-        $path = tempnam(sys_get_temp_dir(), 'est_xlsx_');
-        if ($path === false) {
-            throw new \RuntimeException('No se pudo crear archivo temporal para Excel.');
-        }
-        $destino = $path.'.xlsx';
-        if (! @rename($path, $destino)) {
-            @unlink($path);
-            throw new \RuntimeException('No se pudo preparar archivo temporal para Excel.');
+        while (ob_get_level() > 0) {
+            ob_end_clean();
         }
 
-        (new Xlsx($spreadsheet))->save($destino);
-
-        return $destino;
+        (new Xlsx($spreadsheet))->save('php://output');
     }
 }

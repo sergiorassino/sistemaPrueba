@@ -54,4 +54,14 @@ final class ListadoCursoCondicionFiltro
             default => 'REGULARES',
         };
     }
+
+    /** Etiqueta para UI (selector de condición y resumen de plantillas). */
+    public static function etiquetaUi(string $normalizado): string
+    {
+        return match (self::normalize($normalizado)) {
+            self::SALIDOS => 'Salidos',
+            self::TODOS => 'Todas',
+            default => 'Regulares',
+        };
+    }
 }

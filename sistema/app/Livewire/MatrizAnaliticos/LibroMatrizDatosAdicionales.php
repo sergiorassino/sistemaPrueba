@@ -28,6 +28,8 @@ class LibroMatrizDatosAdicionales extends Component
 
     public string $serie = '';
 
+    public string $numero = '';
+
     public string $analLibroFolio = '';
 
     public string $analFechaEmision = '';
@@ -57,7 +59,7 @@ class LibroMatrizDatosAdicionales extends Component
 
         $this->idLegajos = $idLegajos;
         $this->alumno = $alumno;
-        $this->buscarRetorno = LibroMatrizAnalitico::buscarDesdeRequest();
+        $this->buscarRetorno = LibroMatrizAnalitico::buscarRetornoListado();
 
         $datos = LibroMatrizAnalitico::datosAdicionales($idLegajos);
         $this->idAnaliticoDato = $datos['id'];
@@ -66,6 +68,7 @@ class LibroMatrizDatosAdicionales extends Component
         $this->analParaCompletar = $datos['analParaCompletar'];
         $this->analValidez = $datos['analValidez'];
         $this->serie = $datos['serie'];
+        $this->numero = $datos['numero'];
         $this->analLibroFolio = $datos['analLibroFolio'];
         $this->analFechaEmision = $datos['analFechaEmision'];
         $this->analParaPre = $datos['analParaPre'];
@@ -83,7 +86,7 @@ class LibroMatrizDatosAdicionales extends Component
         }
         RateLimiter::hit($key, 60);
 
-        $validated = $this->validate($this->reglas());
+        $validated = $this->validate(LibroMatrizAnalitico::reglasDatosAdicionales());
 
         if (! LibroMatrizAnalitico::guardarDatosAdicionales($this->idLegajos, $validated)) {
             $this->addError('guardar', 'No se pudo guardar. Verifique los datos.');
@@ -98,24 +101,7 @@ class LibroMatrizDatosAdicionales extends Component
             ['idLegajos' => $this->idLegajos],
         );
 
-        $this->redirect(LibroMatrizAnalitico::rutaEditar(), navigate: true);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function reglas(): array
-    {
-        return [
-            'analCohorte' => ['nullable', 'string', 'max:30'],
-            'analObservaciones' => ['nullable', 'string', 'max:65535'],
-            'analParaCompletar' => ['nullable', 'string', 'max:65535'],
-            'analValidez' => ['nullable', 'string', 'max:50'],
-            'serie' => ['nullable', 'string', 'max:6'],
-            'analLibroFolio' => ['nullable', 'string', 'max:50'],
-            'analFechaEmision' => ['nullable', 'date'],
-            'analParaPre' => ['nullable', 'string', 'max:200'],
-        ];
+        $this->redirect(LibroMatrizAnalitico::rutaEditar($this->buscarRetorno), navigate: true);
     }
 
     public function render()

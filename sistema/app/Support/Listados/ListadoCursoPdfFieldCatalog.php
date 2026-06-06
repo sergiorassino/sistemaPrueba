@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Schema;
  */
 final class ListadoCursoPdfFieldCatalog
 {
+    /** Columna virtual: apellido y nombre del alumno en una sola celda. */
+    public const KEY_APELLIDO_NOMBRE = 'legajos.apellido_nombre';
+
+    private const KEYS_APELLIDO_NOMBRE = ['legajos.apellido', 'legajos.nombre'];
+
     public const DEFAULT_KEYS = [
         'legajos.apellido',
         'legajos.nombre',
@@ -174,13 +179,59 @@ final class ListadoCursoPdfFieldCatalog
     }
 
     /**
+     * Si el listado incluye apellido y/o nombre, los reemplaza por una sola columna virtual.
+     *
+     * @param  list<string>  $keys
+     * @return list<string>
+     */
+    public static function fusionarApellidoNombre(array $keys): array
+    {
+        $tieneApellido = in_array('legajos.apellido', $keys, true);
+        $tieneNombre = in_array('legajos.nombre', $keys, true);
+        if (! $tieneApellido && ! $tieneNombre) {
+            return $keys;
+        }
+
+        $out = [];
+        $fusionInsertada = false;
+        foreach ($keys as $key) {
+            if (in_array($key, self::KEYS_APELLIDO_NOMBRE, true)) {
+                if (! $fusionInsertada) {
+                    $out[] = self::KEY_APELLIDO_NOMBRE;
+                    $fusionInsertada = true;
+                }
+
+                continue;
+            }
+            $out[] = $key;
+        }
+
+        return $out;
+    }
+
+    public static function incluyeApellidoONombre(array $keys): bool
+    {
+        return in_array('legajos.apellido', $keys, true) || in_array('legajos.nombre', $keys, true);
+    }
+
+    /**
      * @param  list<string>  $keys
      * @return list<array{key: string, label: string, alias: string}>
      */
     public static function columnsForPdf(array $keys): array
     {
         $cols = [];
-        foreach ($keys as $key) {
+        foreach (self::fusionarApellidoNombre($keys) as $key) {
+            if ($key === self::KEY_APELLIDO_NOMBRE) {
+                $cols[] = [
+                    'key' => $key,
+                    'label' => 'Apellido y nombre',
+                    'alias' => self::alias($key),
+                ];
+
+                continue;
+            }
+
             $def = self::definition($key);
             if ($def === null) {
                 continue;
@@ -195,14 +246,36 @@ final class ListadoCursoPdfFieldCatalog
         return $cols;
     }
 
+    public static function valorApellidoNombre(object $fila, bool $vacioComoGuion = true): string
+    {
+        $apellido = trim((string) ($fila->{self::alias('legajos.apellido')} ?? ''));
+        $nombre = trim((string) ($fila->{self::alias('legajos.nombre')} ?? ''));
+        $texto = EstudiantesDatosConsulta::formatearApellidoNombre($apellido, $nombre);
+
+        if ($texto === '') {
+            return $vacioComoGuion ? '—' : '';
+        }
+
+        return $texto;
+    }
+
     /**
      * @param  list<string>  $keys
      * @return list<string> expresiones para select()
      */
     public static function selectExpressions(array $keys): array
     {
+        $keysConsulta = $keys;
+        if (self::incluyeApellidoONombre($keys)) {
+            foreach (self::KEYS_APELLIDO_NOMBRE as $fijo) {
+                if (! in_array($fijo, $keysConsulta, true)) {
+                    $keysConsulta[] = $fijo;
+                }
+            }
+        }
+
         $expr = [];
-        foreach ($keys as $key) {
+        foreach ($keysConsulta as $key) {
             $def = self::definition($key);
             if ($def === null) {
                 continue;
